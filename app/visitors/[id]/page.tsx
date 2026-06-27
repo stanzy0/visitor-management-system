@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/audit'
 import { generateVisitQRCode } from '@/lib/qrcode'
-import { Loader2, QrCode, Printer, Edit, ArrowLeft } from 'lucide-react'
+import { Loader2, QrCode, Printer, Edit, ArrowLeft, X, Upload } from 'lucide-react'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 
 interface Visitor {
   id: string
@@ -42,6 +43,13 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
   const [generatingQR, setGeneratingQR] = useState<string | null>(null)
   const [visitorId, setVisitorId] = useState<string | null>(null)
   const [authChecking, setAuthChecking] = useState(true)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [qrModalOpen, setQrModalOpen] = useState(false)
+  const [editSubmitting, setEditSubmitting] = useState(false)
+  const [editFormData, setEditFormData] = useState({ full_name: '', email: '', phone: '', company: '' })
+  const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null)
+  const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null)
+  const [editPhotoError, setEditPhotoError] = useState<string | null>(null)
 
   useEffect(() => {
     const unwrapParams = async () => {
@@ -55,9 +63,7 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
     if (!visitorId) return
 
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getCurrentUser()
       if (!user) {
         window.location.href = '/login'
         return
@@ -128,6 +134,78 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
     } finally {
       setGeneratingQR(null)
     }
+  }
+
+  const validatePhotoFile = (file: File): string | null => {
+    if (!file) return null
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
+    if (!allowedTypes.includes(file.type)) return 'Only JPG, JPEG, and PNG files are allowed'
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) return 'File size must be less than 5MB'
+    return null
+  }
+
+  const handleEditPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const error = validatePhotoFile(file)
+    if (error) { setEditPhotoError(error); return }
+    setEditPhotoError(null)
+    setEditPhotoFile(file)
+    setEditPhotoPreview(URL.createObjectURL(file))
+  }
+
+  const handleEditPhotoUpload = async (): Promise<string | null> => {
+    if (!editPhotoFile) return null
+    const sanitizedFileName = editPhotoFile.name.replace(/[^a-zA-Z0-9.-]/g, '-').replace(/-+/g, '-')
+    const fileName = `${Date.now()}-${sanitizedFileName}`
+    try {
+      const { error } = await supabase.storage.from('visitor-photos').upload(fileName, editPhotoFile)
+      if (error) throw error
+      const { data: publicUrlData } = supabase.storage.from('visitor-photos').getPublicUrl(fileName)
+      setEditPhotoPreview(null)
+      setEditPhotoFile(null)
+      return publicUrlData.publicUrl
+    } catch (err) {
+      const errorObj = err as { message?: string }
+      setEditPhotoError(errorObj.message || 'Failed to upload photo')
+      return null
+    }
+  }
+
+  const openEditModal = () => {
+    if (visitor) {
+      setEditFormData({ full_name: visitor.full_name, email: visitor.email, phone: visitor.phone, company: visitor.company })
+      setEditModalOpen(true)
+    }
+  }
+
+  const openQrModal = async () => {
+    setQrModalOpen(true)
+  }
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!visitorId) return
+    setEditSubmitting(true)
+    let photoUrl = visitor?.photo_url
+    if (editPhotoFile) {
+      const uploadedUrl = await handleEditPhotoUpload()
+      if (!uploadedUrl && editPhotoFile) { setEditSubmitting(false); return }
+      photoUrl = uploadedUrl
+    }
+    const { error } = await supabase
+      .from('visitors')
+      .update({ full_name: editFormData.full_name, email: editFormData.email, phone: editFormData.phone, company: editFormData.company, photo_url: photoUrl })
+      .eq('id', visitorId)
+    if (error) {
+      console.error('Error updating visitor:', error)
+    } else {
+      logAuditAction('Visitor Updated', 'visitor', visitorId, `Visitor ${editFormData.full_name} updated`)
+      setEditModalOpen(false)
+      fetchVisitor()
+    }
+    setEditSubmitting(false)
   }
 
   const fetchAuditLogs = async () => {
@@ -216,15 +294,17 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-2xl font-bold text-gray-900">Visitor Details</h1>
           <div className="flex gap-2">
-            <button className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
-              <Edit className="h-4 w-4" />
-              Edit Visitor
-            </button>
-            <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            {PERMISSIONS['Admin']?.includes('delete-records') && (
+              <button onClick={openEditModal} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+                <Edit className="h-4 w-4" />
+                Edit Visitor
+              </button>
+            )}
+            <a href={`/visitors/${visitorId}/badge`} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
               <Printer className="h-4 w-4" />
               Print Badge
-            </button>
-            <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            </a>
+            <button onClick={openQrModal} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
               <QrCode className="h-4 w-4" />
               QR Code
             </button>
@@ -381,6 +461,97 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
           </div>
         </div>
       </div>
+
+      {editModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
+            <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
+              <h2 className="text-lg font-semibold text-gray-900">Edit Visitor</h2>
+              <button onClick={() => setEditModalOpen(false)} className="p-1 rounded-md hover:bg-gray-100" aria-label="Close">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleEditSubmit} className="flex-1 overflow-y-auto">
+              <div className="p-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                  <input type="text" value={editFormData.full_name} onChange={(e) => setEditFormData({ ...editFormData, full_name: e.target.value })} required className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input type="email" value={editFormData.email} onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })} required className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <input type="tel" value={editFormData.phone} onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                  <input type="text" value={editFormData.company} onChange={(e) => setEditFormData({ ...editFormData, company: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Photo (JPG/PNG, max 5MB)</label>
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors">
+                      <Upload className="h-4 w-4 text-gray-500" /><span className="text-sm text-gray-600">Upload Photo</span>
+                      <input type="file" accept="image/jpeg,image/jpg,image/png" onChange={handleEditPhotoChange} className="hidden" />
+                    </label>
+                  </div>
+                  {editPhotoPreview && <img src={editPhotoPreview} alt="Preview" className="h-24 w-24 rounded-lg object-cover mt-3" />}
+                  {editPhotoError && <p className="mt-1 text-sm text-red-600">{editPhotoError}</p>}
+                </div>
+              </div>
+              <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t border-gray-200">
+                <button type="button" onClick={() => setEditModalOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
+                <button type="submit" disabled={editSubmitting} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">{editSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {qrModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-xl bg-white shadow-xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">QR Code</h2>
+              <button onClick={() => setQrModalOpen(false)} className="p-1 rounded-md hover:bg-gray-100" aria-label="Close">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-2">{visitor?.full_name}</p>
+              <p className="text-xs text-gray-500 mb-4">Badge #: {visits.find(v => v.status === 'approved')?.id?.slice(0, 8) || '—'}</p>
+              {visits.find(v => v.status === 'approved')?.qr_code ? (
+                <img src={visits.find(v => v.status === 'approved')?.qr_code || ''} alt="QR Code" width={256} height={256} className="mx-auto mb-4" />
+              ) : (
+                <div className="w-64 h-64 mx-auto mb-4 bg-gray-100 rounded-lg flex items-center justify-center">
+                  <p className="text-gray-500">No QR Available</p>
+                </div>
+              )}
+              <div className="flex gap-2 justify-center">
+                <button onClick={() => {
+                  const qr = visits.find(v => v.status === 'approved')?.qr_code
+                  if (qr) {
+                    const link = document.createElement('a')
+                    link.href = qr
+                    link.download = `visitor-badge-${visitor?.id.slice(0, 8)}.png`
+                    link.click()
+                  }
+                }} className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50">Download</button>
+                <button onClick={async () => {
+                  const approvedVisit = visits.find(v => v.status === 'approved')
+                  if (approvedVisit) {
+                    const qrCode = await generateVisitQRCode(approvedVisit.id)
+                    await supabase.from('visits').update({ qr_code: qrCode }).eq('id', approvedVisit.id)
+                    fetchVisits()
+                  }
+                }} disabled={!visits.some(v => v.status === 'approved')} className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">Regenerate</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

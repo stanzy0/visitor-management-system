@@ -1,19 +1,21 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
 import { Loader2 } from 'lucide-react'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getCurrentUser()
       if (!user) {
         window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('settings')) {
+        window.location.href = '/unauthorized'
         return
       }
       setLoading(false)

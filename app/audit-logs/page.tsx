@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Search, Loader2 } from 'lucide-react'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 
 interface AuditLog {
   id: string
@@ -20,20 +21,30 @@ export default function AuditLogsPage() {
   const [authChecking, setAuthChecking] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [dateFilter, setDateFilter] = useState('')
+  const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getCurrentUser()
       if (!user) {
         window.location.href = '/login'
         return
       }
+      if (!PERMISSIONS[user.role]?.includes('audit-logs')) {
+        window.location.href = '/unauthorized'
+        return
+      }
       setAuthChecking(false)
       fetchLogs()
+      setupRealtime()
     }
     checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -61,6 +72,23 @@ export default function AuditLogsPage() {
       setLogs(data || [])
     }
     setLoading(false)
+  }
+
+  const setupRealtime = () => {
+    if (realtimeChannel.current) {
+      supabase.removeChannel(realtimeChannel.current)
+    }
+
+    realtimeChannel.current = supabase
+      .channel('audit-changes')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'audit_logs' },
+        (payload) => {
+          setLogs(prev => [payload.new as AuditLog, ...prev])
+        }
+      )
+      .subscribe()
   }
 
   if (authChecking) {

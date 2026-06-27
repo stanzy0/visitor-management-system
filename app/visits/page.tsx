@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/audit'
 import { Search, Loader2, CheckCircle, XCircle, LogIn, LogOut } from 'lucide-react'
 import { generateVisitQRCode } from '@/lib/qrcode'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 
 interface Visit {
   id: string
@@ -19,6 +20,9 @@ interface Visit {
   employee: { full_name: string } | null
 }
 
+const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+const selectClasses = "rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+
 export default function VisitsPage() {
   const [visits, setVisits] = useState<Visit[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,20 +31,30 @@ export default function VisitsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getCurrentUser()
       if (!user) {
         window.location.href = '/login'
         return
       }
+      if (!PERMISSIONS[user.role]?.includes('visits')) {
+        window.location.href = '/unauthorized'
+        return
+      }
       setAuthChecking(false)
       fetchVisits()
+      setupRealtime()
     }
     checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
   }, [])
 
   const fetchVisits = async () => {
@@ -62,21 +76,39 @@ export default function VisitsPage() {
     setLoading(false)
   }
 
+  const setupRealtime = () => {
+    if (realtimeChannel.current) {
+      supabase.removeChannel(realtimeChannel.current)
+    }
+
+    realtimeChannel.current = supabase
+      .channel('visits-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'visits' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setVisits(prev => [payload.new as Visit, ...prev])
+          } else if (payload.eventType === 'UPDATE') {
+            setVisits(prev => prev.map(v => v.id === (payload.new as Visit).id ? payload.new as Visit : v))
+          } else if (payload.eventType === 'DELETE') {
+            setVisits(prev => prev.filter(v => v.id !== (payload.old as Visit).id))
+          }
+        }
+      )
+      .subscribe()
+  }
+
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message })
     setTimeout(() => setNotification(null), 3000)
   }
 
   const handleStatusChange = async (visitId: string, newStatus: string) => {
-    console.log('Visit ID:', visitId)
-    console.log('New Status:', newStatus)
-
     setActionLoading(visitId)
     const updates: Record<string, unknown> = { status: newStatus }
     if (newStatus === 'checked_in') updates.check_in_time = new Date().toISOString()
     if (newStatus === 'checked_out') updates.check_out_time = new Date().toISOString()
-
-    console.log('Updates:', updates)
 
     const { data: updatedVisit, error } = await supabase
       .from('visits')
@@ -88,46 +120,27 @@ export default function VisitsPage() {
         employee:employees(full_name)
       `)
 
-    console.log('Returned Data:', updatedVisit)
-    console.log('Supabase Error:', error)
-
     if (error) {
-      console.error('Visit Update Error:', error)
-      setNotification({
-        type: 'error',
-        message: error.message
-      })
-      setActionLoading(null)
-      return
+      setNotification({ type: 'error', message: error.message })
+    } else {
+      setNotification({ type: 'success', message: `Visit ${newStatus.replace('_', ' ')} successfully` })
+      const visitorName = updatedVisit?.[0]?.visitor?.full_name || 'Unknown Visitor'
+      const hostName = updatedVisit?.[0]?.employee?.full_name || 'Unknown Host'
+      const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+
+      if (newStatus === 'approved') {
+        logAuditAction('Visit Approved', 'visit', visitId, `${visitorName}'s visit to ${hostName} approved`)
+        const qrCodeDataUrl = await generateVisitQRCode(visitId)
+        await supabase.from('visits').update({ qr_code: qrCodeDataUrl }).eq('id', visitId)
+        logAuditAction('QR Code Generated', 'visit', visitId, `QR code generated for visitor ${visitorName}`)
+      } else if (newStatus === 'rejected') {
+        logAuditAction('Visit Rejected', 'visit', visitId, `${visitorName}'s visit to ${hostName} rejected`)
+      } else if (newStatus === 'checked_in') {
+        logAuditAction('Visitor Checked In', 'visit', visitId, `${visitorName} checked in at ${currentTime}`)
+      } else if (newStatus === 'checked_out') {
+        logAuditAction('Visitor Checked Out', 'visit', visitId, `${visitorName} checked out at ${currentTime}`)
+      }
     }
-
-    setNotification({
-      type: 'success',
-      message: `Visit ${newStatus.replace('_', ' ')} successfully`
-    })
-
-    // Log audit action
-    const visitorName = updatedVisit?.[0]?.visitor?.full_name || 'Unknown Visitor'
-    const hostName = updatedVisit?.[0]?.employee?.full_name || 'Unknown Host'
-    const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
-    if (newStatus === 'approved') {
-      logAuditAction('Visit Approved', 'visit', visitId, `${visitorName}'s visit to ${hostName} approved`)
-      const qrCodeDataUrl = await generateVisitQRCode(visitId)
-      await supabase
-        .from('visits')
-        .update({ qr_code: qrCodeDataUrl })
-        .eq('id', visitId)
-      logAuditAction('QR Code Generated', 'visit', visitId, `QR code generated for visitor ${visitorName}`)
-    } else if (newStatus === 'rejected') {
-      logAuditAction('Visit Rejected', 'visit', visitId, `${visitorName}'s visit to ${hostName} rejected`)
-    } else if (newStatus === 'checked_in') {
-      logAuditAction('Visitor Checked In', 'visit', visitId, `${visitorName} checked in at ${currentTime}`)
-    } else if (newStatus === 'checked_out') {
-      logAuditAction('Visitor Checked Out', 'visit', visitId, `${visitorName} checked out at ${currentTime}`)
-    }
-
-    fetchVisits()
     setActionLoading(null)
   }
 
@@ -175,28 +188,26 @@ export default function VisitsPage() {
                 placeholder="Search visits..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+                className={searchInputClasses}
               />
             </div>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 bg-white"
+              className={selectClasses}
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
               <option value="checked_in">Checked In</option>
-              <option value="checked_out">Checked Out</option>
+              <option value="checked_out">Checked out</option>
             </select>
           </div>
         </div>
 
         {notification && (
-          <div className={`rounded-lg p-4 text-sm ${notification.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-            {notification.message}
-          </div>
+          <div className={`rounded-lg p-4 text-sm ${notification.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{notification.message}</div>
         )}
 
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -295,9 +306,9 @@ export default function VisitsPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
 

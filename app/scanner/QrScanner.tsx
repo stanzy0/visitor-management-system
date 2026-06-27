@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/audit'
 import { Loader2, Camera, StopCircle, RefreshCw, QrCode } from 'lucide-react'
 import { Html5Qrcode } from 'html5-qrcode'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 
 interface VisitData {
   id: string
@@ -27,16 +28,15 @@ export default function QrScanner() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const scannerRef = useRef<Html5Qrcode | null>(null)
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 3000)
-  }
-
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const user = await getCurrentUser()
       if (!user) {
         window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('scanner')) {
+        window.location.href = '/unauthorized'
         return
       }
       setAuthChecking(false)
@@ -165,7 +165,7 @@ export default function QrScanner() {
         if (!updateError) {
           logAuditAction('Visitor Checked In', 'visit', visitData.id, `${visitData.visitor?.full_name} checked in`)
           setScanResult({ ...visitData, status: 'checked_in', check_in_time: new Date().toISOString() })
-          showNotification('success', 'Visitor Checked In Successfully')
+          setNotification({ type: 'success', message: 'Visitor Checked In Successfully' })
         }
       }
 

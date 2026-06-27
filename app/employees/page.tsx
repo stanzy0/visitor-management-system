@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/audit'
 import { Search, Plus, Edit, Trash2, X, Loader2 } from 'lucide-react'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 
 interface Employee {
   id: string
@@ -31,6 +32,9 @@ const initialFormData: EmployeeFormData = {
   position: '',
 }
 
+const inputClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(true)
@@ -41,20 +45,30 @@ export default function EmployeesPage() {
   const [formData, setFormData] = useState<EmployeeFormData>(initialFormData)
   const [submitting, setSubmitting] = useState(false)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getCurrentUser()
       if (!user) {
         window.location.href = '/login'
         return
       }
+      if (!PERMISSIONS[user.role]?.includes('employees')) {
+        window.location.href = '/unauthorized'
+        return
+      }
       setAuthChecking(false)
       fetchEmployees()
+      setupRealtime()
     }
     checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
   }, [])
 
   const fetchEmployees = async () => {
@@ -69,12 +83,35 @@ export default function EmployeesPage() {
     setLoading(false)
   }
 
+  const setupRealtime = () => {
+    if (realtimeChannel.current) {
+      supabase.removeChannel(realtimeChannel.current)
+    }
+
+    realtimeChannel.current = supabase
+      .channel('employees-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'employees' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setEmployees(prev => [payload.new as Employee, ...prev])
+          } else if (payload.eventType === 'UPDATE') {
+            setEmployees(prev => prev.map(e => e.id === (payload.new as Employee).id ? payload.new as Employee : e))
+          } else if (payload.eventType === 'DELETE') {
+            setEmployees(prev => prev.filter(e => e.id !== (payload.old as Employee).id))
+          }
+        }
+      )
+      .subscribe()
+  }
+
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message })
     setTimeout(() => setNotification(null), 3000)
   }
 
-const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
 
@@ -150,214 +187,217 @@ const handleSubmit = async (e: React.FormEvent) => {
     setModalOpen(true)
   }
 
+  if (authChecking) {
+    return (
+      <div className="flex h-screen bg-gray-50 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {authChecking ? (
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        </div>
-      ) : (
-        <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search employees..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
-                />
-              </div>
-              <button
-                onClick={openAddModal}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                Add Employee
-              </button>
+      <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search employees..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={searchInputClasses}
+              />
             </div>
-          </div>
-
-          {/* Notification */}
-          {notification && (
-            <div
-              className={`rounded-lg p-4 text-sm ${
-                notification.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-              }`}
+            <button
+              onClick={openAddModal}
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
             >
-              {notification.message}
-            </div>
-          )}
+              <Plus className="h-4 w-4" />
+              Add Employee
+            </button>
+          </div>
+        </div>
 
-          {/* Employee Table */}
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                </div>
-              ) : (
-                <table className="w-full text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3 font-semibold text-gray-700">Full Name</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Email</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Phone</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Department</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Position</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700 w-24">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {filteredEmployees.map((employee) => (
-                      <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 font-medium text-gray-900">{employee.full_name}</td>
-                        <td className="px-4 py-3 text-gray-600">{employee.email}</td>
-                        <td className="px-4 py-3 text-gray-600">{employee.phone || '—'}</td>
-                        <td className="px-4 py-3 text-gray-600">{employee.department || '—'}</td>
-                        <td className="px-4 py-3 text-gray-600">{employee.position || '—'}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleEdit(employee)}
-                              className="p-1 rounded-md hover:bg-gray-100 transition-colors"
-                              aria-label="Edit employee"
-                            >
-                              <Edit className="h-4 w-4 text-gray-600" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(employee.id)}
-                              className="p-1 rounded-md hover:bg-red-50 transition-colors"
-                              aria-label="Delete employee"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
+        {notification && (
+          <div
+            className={`rounded-lg p-4 text-sm ${
+              notification.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+            }`}
+          >
+            {notification.message}
+          </div>
+        )}
 
-            {!loading && filteredEmployees.length === 0 && (
-              <div className="py-12 text-center">
-                <p className="text-gray-500">
-                  {searchTerm ? 'No employees match your search' : 'No employees found'}
-                </p>
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
               </div>
+            ) : (
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="px-4 py-3 font-semibold text-gray-700">Full Name</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Email</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Phone</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Department</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Position</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700 w-24">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredEmployees.map((employee) => (
+                    <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-gray-900">{employee.full_name}</td>
+                      <td className="px-4 py-3 text-gray-600">{employee.email}</td>
+                      <td className="px-4 py-3 text-gray-600">{employee.phone || '—'}</td>
+                      <td className="px-4 py-3 text-gray-600">{employee.department || '—'}</td>
+                      <td className="px-4 py-3 text-gray-600">{employee.position || '—'}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEdit(employee)}
+                            className="p-1 rounded-md hover:bg-gray-100 transition-colors"
+                            aria-label="Edit employee"
+                          >
+                            <Edit className="h-4 w-4 text-gray-600" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(employee.id)}
+                            className="p-1 rounded-md hover:bg-red-50 transition-colors"
+                            aria-label="Delete employee"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
 
-          {/* Modal */}
-          {modalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-              <div className="w-full max-w-md rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
-                <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    {editingEmployee ? 'Edit Employee' : 'Add Employee'}
-                  </h2>
-                  <button
-                    onClick={() => setModalOpen(false)}
-                    className="p-1 rounded-md hover:bg-gray-100"
-                    aria-label="Close modal"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-                  <div className="p-4 space-y-4">
-                    <div>
-                      <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">
-                        Full Name
-                      </label>
-                      <input
-                        id="full_name"
-                        type="text"
-                        value={formData.full_name}
-                        onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                        required
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                        Email
-                      </label>
-                      <input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        required
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                        Phone
-                      </label>
-                      <input
-                        id="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
-                        Department
-                      </label>
-                      <input
-                        id="department"
-                        type="text"
-                        value={formData.department}
-                        onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-1">
-                        Position
-                      </label>
-                      <input
-                        id="position"
-                        type="text"
-                        value={formData.position}
-                        onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t border-gray-200">
-                    <button
-                      type="button"
-                      onClick={() => setModalOpen(false)}
-                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={submitting}
-                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                    >
-                      {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                      {editingEmployee ? 'Update' : 'Add'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+          {!loading && filteredEmployees.length === 0 && (
+            <div className="py-12 text-center">
+              <p className="text-gray-500">
+                {searchTerm ? 'No employees match your search' : 'No employees found'}
+              </p>
             </div>
           )}
         </div>
-      )}
+
+        {modalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
+              <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {editingEmployee ? 'Edit Employee' : 'Add Employee'}
+                </h2>
+                <button
+                  onClick={() => setModalOpen(false)}
+                  className="p-1 rounded-md hover:bg-gray-100"
+                  aria-label="Close modal"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+                <div className="p-4 space-y-4">
+                  <div>
+                    <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      id="full_name"
+                      type="text"
+                      value={formData.full_name}
+                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                      required
+                      placeholder="Enter full name"
+                      className={inputClasses}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                      Email
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      required
+                      placeholder="Enter email"
+                      className={inputClasses}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone
+                    </label>
+                    <input
+                      id="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="Enter phone number"
+                      className={inputClasses}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
+                      Department
+                    </label>
+                    <input
+                      id="department"
+                      type="text"
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      placeholder="Enter department"
+                      className={inputClasses}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-1">
+                      Position
+                    </label>
+                    <input
+                      id="position"
+                      type="text"
+                      value={formData.position}
+                      onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                      placeholder="Enter position"
+                      className={inputClasses}
+                    />
+                  </div>
+                </div>
+                <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  >
+                    {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {editingEmployee ? 'Update' : 'Add'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

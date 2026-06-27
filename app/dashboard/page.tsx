@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
+import { getCurrentUser, UserRole, PERMISSIONS } from '@/lib/auth'
 import {
   LayoutDashboard,
   Users,
@@ -19,17 +20,6 @@ import {
   Scan,
 } from 'lucide-react'
 
-const navItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-  { label: 'Visitors', icon: Users, href: '/visitors' },
-  { label: 'Visits', icon: Clock, href: '/visits' },
-  { label: 'Employees', icon: UserCheck, href: '/employees' },
-  { label: 'Reports', icon: FileText, href: '/reports' },
-  { label: 'Audit Logs', icon: ShieldCheck, href: '/audit-logs' },
-  { label: 'QR Scanner', icon: Scan, href: '/scanner' },
-  { label: 'Settings', icon: Settings, href: '/settings' },
-]
-
 interface Stats {
   totalEmployees: number
   totalVisitors: number
@@ -39,6 +29,18 @@ interface Stats {
   checkedOutVisits: number
   todaysVisitors: number
 }
+
+const ALL_NAV_ITEMS = [
+  { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', permission: 'dashboard' },
+  { label: 'Visitors', icon: Users, href: '/visitors', permission: 'visitors' },
+  { label: 'Visits', icon: Clock, href: '/visits', permission: 'visits' },
+  { label: 'Employees', icon: UserCheck, href: '/employees', permission: 'employees' },
+  { label: 'Reports', icon: FileText, href: '/reports', permission: 'reports' },
+  { label: 'Audit Logs', icon: ShieldCheck, href: '/audit-logs', permission: 'audit-logs' },
+  { label: 'QR Scanner', icon: Scan, href: '/scanner', permission: 'scanner' },
+  { label: 'Users', icon: Users, href: '/users', permission: 'users' },
+  { label: 'Settings', icon: Settings, href: '/settings', permission: 'settings' },
+]
 
 export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -53,20 +55,30 @@ export default function DashboardPage() {
     todaysVisitors: 0,
   })
   const [loadingStats, setLoadingStats] = useState(true)
+  const [userRole, setUserRole] = useState<UserRole>('Receptionist')
+  const [userEmail, setUserEmail] = useState('')
+  const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getCurrentUser()
       if (!user) {
         window.location.href = '/login'
         return
       }
+      setUserRole(user.role)
+      setUserEmail(user.email)
       setAuthChecking(false)
-      fetchStats()
+      await fetchStats()
+      setupRealtime()
     }
     checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
   }, [])
 
   const fetchStats = async () => {
@@ -94,6 +106,23 @@ export default function DashboardPage() {
     })
     setLoadingStats(false)
   }
+
+  const setupRealtime = () => {
+    if (realtimeChannel.current) {
+      supabase.removeChannel(realtimeChannel.current)
+    }
+
+    realtimeChannel.current = supabase
+      .channel('dashboard-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, () => fetchStats())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors' }, () => fetchStats())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => fetchStats())
+      .subscribe()
+  }
+
+  const navItems = ALL_NAV_ITEMS.filter(item => 
+    PERMISSIONS[userRole]?.includes(item.permission)
+  )
 
   const statCards = [
     { title: "Today's Visitors", value: stats.todaysVisitors.toString(), trend: 'up' as const, icon: Users },
@@ -162,11 +191,13 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:block text-right">
-              <p className="text-sm font-medium text-gray-900">admin@company.com</p>
-              <p className="text-xs text-gray-500">System Administrator</p>
+              <p className="text-sm font-medium text-gray-900">{userEmail}</p>
+              <p className="text-xs text-gray-500 capitalize">{userRole}</p>
             </div>
             <div className="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-semibold text-white">A</span>
+              <span className="text-sm font-semibold text-white">
+                {userRole.charAt(0).toUpperCase()}
+              </span>
             </div>
           </div>
         </header>

@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/audit'
-import { Search, Plus, Loader2, Upload, X } from 'lucide-react'
+import { Search, Plus, Loader2, Upload, X, Camera, RefreshCw } from 'lucide-react'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 
 interface Visitor {
   id: string
@@ -38,6 +39,10 @@ const initialFormData: VisitorFormData = {
   purpose: '',
 }
 
+const inputClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+const selectClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+
 export default function VisitorsPage() {
   const [visitors, setVisitors] = useState<Visitor[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -51,22 +56,157 @@ export default function VisitorsPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
+  const [cameraActive, setCameraActive] = useState(false)
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([])
+  const [currentCameraIndex, setCurrentCameraIndex] = useState(0)
+  const [cameraPermissionError, setCameraPermissionError] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await getCurrentUser()
       if (!user) {
         window.location.href = '/login'
         return
       }
+      if (!PERMISSIONS[user.role]?.includes('visitors')) {
+        window.location.href = '/unauthorized'
+        return
+      }
       setAuthChecking(false)
-      await Promise.all([fetchVisitors(), fetchEmployees()])
+      fetchVisitors()
+      fetchEmployees()
+      setupRealtime()
     }
     checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
   }, [])
+
+  useEffect(() => {
+    if (cameraActive) {
+      startCamera()
+    } else {
+      stopCamera()
+    }
+    return () => stopCamera()
+  }, [cameraActive, currentCameraIndex])
+
+  const setupRealtime = () => {
+    if (realtimeChannel.current) {
+      supabase.removeChannel(realtimeChannel.current)
+    }
+
+    realtimeChannel.current = supabase
+      .channel('visitors-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'visitors' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setVisitors(prev => [payload.new as Visitor, ...prev])
+          } else if (payload.eventType === 'UPDATE') {
+            setVisitors(prev => prev.map(v => v.id === (payload.new as Visitor).id ? payload.new as Visitor : v))
+          } else if (payload.eventType === 'DELETE') {
+            setVisitors(prev => prev.filter(v => v.id !== (payload.old as Visitor).id))
+          }
+        }
+      )
+      .subscribe()
+  }
+
+  const getCameraDevices = async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const videoDevices = devices.filter(d => d.kind === 'videoinput')
+      setCameras(videoDevices)
+      return videoDevices
+    } catch {
+      return []
+    }
+  }
+
+  const startCamera = async () => {
+    setCameraPermissionError(null)
+    try {
+      const devices = await getCameraDevices()
+      const deviceId = devices[currentCameraIndex]?.deviceId
+      
+      const constraints: MediaStreamConstraints = {
+        video: deviceId ? { deviceId: { exact: deviceId } } : { facingMode: 'environment' }
+      }
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints)
+      streamRef.current = stream
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+      }
+    } catch (err) {
+      const errorObj = err as Error
+      if (errorObj.name === 'NotAllowedError' || errorObj.name === 'PermissionDeniedError') {
+        setCameraPermissionError('Camera permission denied. Please allow camera access.')
+      } else if (errorObj.name === 'NotFoundError') {
+        setCameraPermissionError('No camera available.')
+      } else {
+        setCameraPermissionError('Failed to start camera: ' + errorObj.message)
+      }
+    }
+  }
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop())
+      streamRef.current = null
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
+    }
+  }
+
+  const switchCamera = () => {
+    if (cameras.length > 1) {
+      stopCamera()
+      setCurrentCameraIndex((prev) => (prev + 1) % cameras.length)
+    }
+  }
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return
+
+    const video = videoRef.current
+    const canvas = canvasRef.current
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const file = new File([blob], `camera-photo-${Date.now()}.jpg`, { type: 'image/jpeg' })
+        setPhotoFile(file)
+        setPhotoPreview(URL.createObjectURL(blob))
+        stopCamera()
+      }
+    }, 'image/jpeg', 0.9)
+  }
+
+  const retakePhoto = () => {
+    setPhotoFile(null)
+    setPhotoPreview(null)
+    setCameraActive(true)
+  }
 
   const fetchVisitors = async () => {
     const { data, error } = await supabase
@@ -133,18 +273,10 @@ export default function VisitorsPage() {
     const sanitizedFileName = photoFile.name.replace(/[^a-zA-Z0-9.-]/g, '-').replace(/-+/g, '-')
     const fileName = `${Date.now()}-${sanitizedFileName}`
 
-    console.log('File name:', photoFile.name)
-    console.log('File size:', photoFile.size)
-    console.log('File type:', photoFile.type)
-    console.log('Generated fileName:', fileName)
-
     try {
       const { data, error } = await supabase.storage
         .from('visitor-photos')
         .upload(fileName, photoFile)
-
-      console.log('Upload Data:', data)
-      console.log('Upload Error:', error)
 
       if (error) throw error
 
@@ -152,15 +284,9 @@ export default function VisitorsPage() {
         .from('visitor-photos')
         .getPublicUrl(fileName)
       setUploadProgress(100)
-      setPhotoPreview(null)
-      setPhotoFile(null)
       return publicUrlData.publicUrl
     } catch (error: unknown) {
       const errorObj = error as { message?: string; statusCode?: number }
-      console.error('Storage Upload Error:', error)
-      console.error('Error Message:', errorObj.message)
-      console.error('Status Code:', errorObj.statusCode)
-      console.error('Full Error:', JSON.stringify(error, null, 2))
       setPhotoError(errorObj.message || 'Failed to upload photo')
       return null
     } finally {
@@ -173,7 +299,9 @@ export default function VisitorsPage() {
     setSubmitting(true)
 
     let photoUrl: string | null = null
+    let photoSourceType: 'upload' | 'camera' = 'upload'
     if (photoFile) {
+      photoSourceType = photoFile.name.startsWith('camera-photo') ? 'camera' : 'upload'
       photoUrl = await handlePhotoUpload()
       if (photoFile && !photoUrl) {
         setSubmitting(false)
@@ -194,7 +322,7 @@ export default function VisitorsPage() {
       ])
       .select()
 
-if (visitorError) {
+    if (visitorError) {
       showNotification('error', visitorError.message)
       setSubmitting(false)
       return
@@ -202,17 +330,21 @@ if (visitorError) {
 
     const hostEmployee = employees.find((e) => e.id === formData.host_employee_id)?.full_name || 'Unknown'
     if (photoUrl) {
-      logAuditAction('Visitor Photo Uploaded', 'visitor', visitorData[0].id, `${formData.full_name}'s photo uploaded`)
+      if (photoSourceType === 'camera') {
+        logAuditAction('Visitor Photo Captured', 'visitor', visitorData[0].id, 'Visitor photo captured using device camera')
+      } else {
+        logAuditAction('Visitor Photo Uploaded', 'visitor', visitorData[0].id, `${formData.full_name}'s photo uploaded`)
+      }
     }
 
-    const { error: visitError, data: visitData } = await supabase.from('visits').insert([
+    const { error: visitError } = await supabase.from('visits').insert([
       {
         visitor_id: visitorData[0].id,
         employee_id: formData.host_employee_id,
         purpose: formData.purpose,
         status: 'pending',
       },
-    ]).select()
+    ])
 
     if (visitError) {
       showNotification('error', visitError.message)
@@ -223,7 +355,7 @@ if (visitorError) {
       setFormData(initialFormData)
       setPhotoPreview(null)
       setPhotoFile(null)
-      fetchVisitors()
+      setCameraActive(false)
     }
     setSubmitting(false)
   }
@@ -262,7 +394,7 @@ if (visitorError) {
                 placeholder="Search visitors..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+                className={searchInputClasses}
               />
             </div>
             <button
@@ -315,9 +447,9 @@ if (visitorError) {
                         )}
                         <span className="font-medium text-gray-900">
                            <a href={`/visitors/${visitor.id}`} className="hover:text-blue-600 hover:underline">
-                             {visitor.full_name}
-                           </a>
-                         </span>
+                              {visitor.full_name}
+                            </a>
+                          </span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{visitor.company || '—'}</td>
@@ -353,7 +485,8 @@ if (visitorError) {
                       value={formData.full_name}
                       onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                       required
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                      placeholder="Enter full name"
+                      className={inputClasses}
                     />
                   </div>
                   <div>
@@ -363,7 +496,8 @@ if (visitorError) {
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       required
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                      placeholder="Enter email"
+                      className={inputClasses}
                     />
                   </div>
                   <div>
@@ -372,7 +506,8 @@ if (visitorError) {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                      placeholder="Enter phone number"
+                      className={inputClasses}
                     />
                   </div>
                   <div>
@@ -381,34 +516,109 @@ if (visitorError) {
                       type="text"
                       value={formData.company}
                       onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                      placeholder="Enter company"
+                      className={inputClasses}
                     />
                   </div>
+                  
+                  {/* Photo Section */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Photo (JPG/PNG, max 5MB)
+                      Visitor Photo
                     </label>
-                    <div className="flex items-center gap-3">
-                      <label className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors">
-                        <Upload className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm text-gray-600">Upload Photo</span>
-                        <input
-                          type="file"
-                          accept="image/jpeg,image/jpg,image/png"
-                          onChange={handlePhotoChange}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-                    {photoPreview && (
-                      <div className="mt-3">
-                        <img
-                          src={photoPreview}
-                          alt="Preview"
-                          className="h-24 w-24 rounded-lg object-cover"
-                        />
+                    <div className="flex flex-col gap-3">
+                      {cameraActive ? (
+                        <div className="space-y-3">
+                          {cameraPermissionError ? (
+                            <div className="p-4 text-center">
+                              <p className="text-red-600 text-sm">{cameraPermissionError}</p>
+                            </div>
+                          ) : (
+                            <>
+                              <video
+                                ref={videoRef}
+                                autoPlay
+                                playsInline
+                                className="w-full rounded-lg bg-black object-cover"
+                                style={{ aspectRatio: '4/3' }}
+                              />
+                              <canvas ref={canvasRef} className="hidden" />
+                              
+                              <div className="flex flex-col gap-2">
+                                <div className="flex justify-center gap-2">
+                                  {cameras.length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={switchCamera}
+                                      className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                                    >
+                                      <RefreshCw className="h-3 w-3" />
+                                      Switch Camera
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={capturePhoto}
+                                    className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+                                  >
+                                    <Camera className="h-3 w-3" />
+                                    Capture
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="w-full h-32 rounded-lg border border-gray-300 bg-gray-50 flex items-center justify-center overflow-hidden">
+                          {photoPreview ? (
+                            <img
+                              src={photoPreview}
+                              alt="Preview"
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-gray-400 text-sm">No photo</span>
+                          )}
+                        </div>
+                      )}
+                      
+                      <div className="flex gap-2">
+                        {!cameraActive && (
+                          <button
+                            type="button"
+                            onClick={() => setCameraActive(true)}
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            <Camera className="h-4 w-4" />
+                            Take Photo
+                          </button>
+                        )}
+                        {!cameraActive && photoPreview && (
+                          <button
+                            type="button"
+                            onClick={retakePhoto}
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            <RefreshCw className="h-4 w-4" />
+                            Retake
+                          </button>
+                        )}
+                        {!cameraActive && (
+                          <label className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+                            <Upload className="h-4 w-4" />
+                            Upload Photo
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/jpg,image/png"
+                              onChange={handlePhotoChange}
+                              className="hidden"
+                            />
+                          </label>
+                        )}
                       </div>
-                    )}
+                    </div>
+                    
                     {uploading && (
                       <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
                         <div
@@ -419,13 +629,14 @@ if (visitorError) {
                     )}
                     {photoError && <p className="mt-1 text-sm text-red-600">{photoError}</p>}
                   </div>
+                  
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Host Employee</label>
                     <select
                       value={formData.host_employee_id}
                       onChange={(e) => setFormData({ ...formData, host_employee_id: e.target.value })}
                       required
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 bg-white"
+                      className={selectClasses}
                     >
                       <option value="">Select employee</option>
                       {employees.map((emp) => (
@@ -442,7 +653,8 @@ if (visitorError) {
                       value={formData.purpose}
                       onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
                       required
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                      placeholder="Enter purpose"
+                      className={inputClasses}
                     />
                   </div>
                 </div>
