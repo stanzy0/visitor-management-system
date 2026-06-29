@@ -21,6 +21,7 @@ import {
   Scan,
   Car,
   Bell,
+  AlertTriangle,
 } from 'lucide-react'
 
 interface Stats {
@@ -51,6 +52,7 @@ const ALL_NAV_ITEMS = [
   { label: 'Audit Logs', icon: ShieldCheck, href: '/audit-logs', permission: 'audit-logs' },
   { label: 'QR Scanner', icon: Scan, href: '/scanner', permission: 'scanner' },
   { label: 'Vehicles', icon: Car, href: '/vehicles', permission: 'vehicles' },
+  { label: 'Emergency', icon: AlertTriangle, href: '/emergency', permission: 'emergency' },
   { label: 'Users', icon: Users, href: '/users', permission: 'users' },
   { label: 'Settings', icon: Settings, href: '/settings', permission: 'settings' },
 ]
