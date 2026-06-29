@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/audit'
-import { Search, Plus, Loader2, Upload, X, Camera, RefreshCw } from 'lucide-react'
+import { Search, Plus, Loader2, Upload, X, Camera, RefreshCw, Trash2 } from 'lucide-react'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 
 interface Visitor {
@@ -61,6 +61,7 @@ export default function VisitorsPage() {
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0)
   const [cameraPermissionError, setCameraPermissionError] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -233,6 +234,22 @@ export default function VisitorsPage() {
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message })
     setTimeout(() => setNotification(null), 3000)
+  }
+
+  const handleDelete = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) return
+
+    setDeletingId(id)
+    const { error } = await supabase.from('visitors').delete().eq('id', id)
+
+    if (error) {
+      showNotification('error', error.message)
+    } else {
+      logAuditAction('Visitor Deleted', 'visitor', id, `Visitor ${name} deleted`)
+      showNotification('success', 'Visitor deleted successfully')
+      setVisitors(prev => prev.filter(v => v.id !== id))
+    }
+    setDeletingId(null)
   }
 
   const validatePhotoFile = (file: File): string | null => {
@@ -425,6 +442,7 @@ export default function VisitorsPage() {
                   <th className="px-4 py-3 font-semibold text-gray-700">Name</th>
                   <th className="px-4 py-3 font-semibold text-gray-700">Company</th>
                   <th className="px-4 py-3 font-semibold text-gray-700">Created</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700 w-24">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -455,6 +473,21 @@ export default function VisitorsPage() {
                     <td className="px-4 py-3 text-gray-600">{visitor.company || '—'}</td>
                     <td className="px-4 py-3 text-gray-600">
                       {visitor.created_at ? new Date(visitor.created_at).toLocaleDateString() : '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <a href={`/visitors/${visitor.id}`} className="p-1 rounded-md hover:bg-gray-100 transition-colors" title="View">
+                          <Search className="h-4 w-4 text-gray-600" />
+                        </a>
+                        <button
+                          onClick={() => handleDelete(visitor.id, visitor.full_name)}
+                          disabled={deletingId === visitor.id}
+                          className="p-1 rounded-md hover:bg-red-50 transition-colors"
+                          title="Delete"
+                        >
+                          {deletingId === visitor.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-red-600" />}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

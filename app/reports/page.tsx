@@ -5,6 +5,9 @@ import { supabase } from '@/lib/supabase'
 import { Loader2, Search, Download, FileText, FileSpreadsheet } from 'lucide-react'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 import { logAuditAction } from '@/lib/audit'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import * as XLSX from 'xlsx'
 import {
   LineChart,
   Line,
@@ -198,17 +201,16 @@ export default function ReportsPage() {
   }
 
   const fetchStats = async (start: Date, end: Date) => {
-    const [visitorsRes, visitsRes, pendingRes, approvedRes, rejectedRes, checkedInRes, checkedOutRes] = await Promise.all([
+    const [visitorsRes, visitsRes, pendingRes, approvedRes, rejectedRes, checkedOutRes] = await Promise.all([
       supabase.from('visitors').select('id', { count: 'exact' }),
-      supabase.from('visits').select('id,check_in_time,check_out_time', { count: 'exact' }).gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('visits').select('id,status,check_in_time,check_out_time', { count: 'exact' }).gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
-      supabase.from('visits').select('id,check_in_time,check_out_time', { count: 'exact' }).eq('status', 'checked_in').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'approved').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'rejected').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
-      supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'checked_in').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'checked_out').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
     ])
 
-    const checkedInVisits = checkedInRes.data || []
+    const checkedInVisits = (visitsRes.data || []).filter((v: any) => v.status === 'checked_in') as any as Array<{ check_in_time: string | null; check_out_time: string | null }>
     const avgDuration = calculateAvgDuration(checkedInVisits)
 
     setStats({
@@ -217,10 +219,10 @@ export default function ReportsPage() {
       approvedVisits: approvedRes.count ?? 0,
       pendingVisits: pendingRes.count ?? 0,
       rejectedVisits: rejectedRes.count ?? 0,
-      checkedInVisits: checkedInRes.count ?? 0,
+      checkedInVisits: checkedInVisits.length,
       checkedOutVisits: checkedOutRes.count ?? 0,
       avgVisitDuration: avgDuration,
-      activeVisitors: checkedInRes.count ?? 0,
+      activeVisitors: checkedInVisits.length,
     })
   }
 
@@ -289,7 +291,7 @@ export default function ReportsPage() {
       .from('visits')
       .select('employee:employees(department)')
       .gte('created_at', start.toISOString())
-      .lt('created_at', end.toISOString())
+      .lt('created_at', end.toISOString()) as { data: Array<{ employee?: { department?: string } }> | null }
 
     const deptCounts: Record<string, number> = {}
     data?.forEach(v => {
@@ -305,7 +307,7 @@ export default function ReportsPage() {
       .from('visits')
       .select('employee:employees(full_name)')
       .gte('created_at', start.toISOString())
-      .lt('created_at', end.toISOString())
+      .lt('created_at', end.toISOString()) as { data: Array<{ employee?: { full_name?: string } }> | null }
 
     const hostCounts: Record<string, number> = {}
     data?.forEach(v => {
@@ -321,7 +323,7 @@ export default function ReportsPage() {
       .from('visits')
       .select('visitor:visitors(company)')
       .gte('created_at', start.toISOString())
-      .lt('created_at', end.toISOString())
+      .lt('created_at', end.toISOString()) as { data: Array<{ visitor?: { company?: string } }> | null }
 
     const companyCounts: Record<string, number> = {}
     data?.forEach(v => {
@@ -364,32 +366,74 @@ export default function ReportsPage() {
   const exportData = async (format: 'pdf' | 'excel' | 'csv') => {
     setExporting(true)
     logAuditAction('Report Exported', 'report', null, `Report exported in ${format.toUpperCase()} format`)
-    
-    if (format === 'csv') {
-      const headers = ['Visitor', 'Company', 'Host', 'Purpose', 'Status', 'Check-In', 'Check-Out']
-      const csvContent = [
-        headers.join(','),
-        ...recentVisits.map(v => [
-          v.visitor?.full_name || '',
-          v.visitor?.company || '',
-          v.employee?.full_name || '',
-          v.purpose || '',
-          v.status,
-          v.check_in_time ? new Date(v.check_in_time).toLocaleString() : '',
-          v.check_out_time ? new Date(v.check_out_time).toLocaleString() : '',
-        ].join(','))
-      ].join('\n')
 
-      const blob = new Blob([csvContent], { type: 'text/csv' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `visits-report-${dateFilter}.csv`
-      a.click()
-      URL.revokeObjectURL(url)
+    try {
+      if (format === 'csv') {
+        const headers = ['Visitor', 'Company', 'Host', 'Purpose', 'Status', 'Check-In', 'Check-Out']
+        const csvContent = [
+          headers.join(','),
+          ...recentVisits.map(v => [
+            v.visitor?.full_name || '',
+            v.visitor?.company || '',
+            v.employee?.full_name || '',
+            v.purpose || '',
+            v.status,
+            v.check_in_time ? new Date(v.check_in_time).toLocaleString() : '',
+            v.check_out_time ? new Date(v.check_out_time).toLocaleString() : '',
+          ].join(','))
+        ].join('\n')
+
+        const blob = new Blob([csvContent], { type: 'text/csv' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `visits-report-${dateFilter}.csv`
+        a.click()
+        URL.revokeObjectURL(url)
+      } else if (format === 'excel') {
+        const worksheet = XLSX.utils.json_to_sheet(
+          recentVisits.map(v => ({
+            'Visitor': v.visitor?.full_name || '',
+            'Company': v.visitor?.company || '',
+            'Host': v.employee?.full_name || '',
+            'Purpose': v.purpose || '',
+            'Status': v.status,
+            'Check-In': v.check_in_time ? new Date(v.check_in_time).toLocaleString() : '',
+            'Check-Out': v.check_out_time ? new Date(v.check_out_time).toLocaleString() : '',
+          }))
+        )
+        const workbook = XLSX.utils.book_new()
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Visits')
+        XLSX.writeFile(workbook, `visits-report-${dateFilter}.xlsx`)
+      } else if (format === 'pdf') {
+        const doc = new jsPDF()
+        doc.setFontSize(18)
+        doc.text('Visits Report', 14, 22)
+        doc.setFontSize(11)
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 32)
+        doc.text(`Period: ${dateFilter}`, 14, 40)
+
+        autoTable(doc, {
+          startY: 50,
+          head: [['Visitor', 'Company', 'Host', 'Purpose', 'Status', 'Check-In', 'Check-Out']],
+          body: recentVisits.map(v => [
+            v.visitor?.full_name || '',
+            v.visitor?.company || '',
+            v.employee?.full_name || '',
+            v.purpose || '',
+            v.status,
+            v.check_in_time ? new Date(v.check_in_time).toLocaleString() : '',
+            v.check_out_time ? new Date(v.check_out_time).toLocaleString() : '',
+          ]),
+        })
+
+        doc.save(`visits-report-${dateFilter}.pdf`)
+      }
+    } catch (err) {
+      console.error('Export error:', err)
+    } finally {
+      setExporting(false)
     }
-    
-    setExporting(false)
   }
 
   const statusColors = {

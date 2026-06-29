@@ -4,11 +4,14 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { ensureUserInDatabase } from '@/lib/auth'
 
+const MAX_FAILED_ATTEMPTS = 6
+
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [failedAttempts, setFailedAttempts] = useState(0)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,7 +24,12 @@ export default function LoginPage() {
     })
 
     if (error) {
-      setError(error.message)
+      setFailedAttempts(prev => prev + 1)
+      if (failedAttempts + 1 >= MAX_FAILED_ATTEMPTS) {
+        setError('Account locked due to too many failed attempts. Please try again later or contact an administrator.')
+      } else {
+        setError(error.message)
+      }
     } else if (data.user) {
       await ensureUserInDatabase(data.user.id, data.user.email || '')
       window.location.href = '/dashboard'

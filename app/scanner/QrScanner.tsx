@@ -17,10 +17,26 @@ interface VisitData {
   employee: { full_name: string; department: string } | null
 }
 
+interface VehicleData {
+  id: string
+  registration_number: string
+  vehicle_type: string
+  vehicle_make: string | null
+  vehicle_model: string | null
+  vehicle_color: string | null
+  parking_slot: string | null
+  gate_pass_number: string
+  driver_name: string | null
+  driver_phone: string | null
+  is_blacklisted: boolean
+  visitor: { full_name: string; visitor_organization: string | null; photo_url: string | null } | null
+}
+
 export default function QrScanner() {
   const [authChecking, setAuthChecking] = useState(true)
   const [scanning, setScanning] = useState(false)
   const [scanResult, setScanResult] = useState<VisitData | null>(null)
+  const [vehicleResult, setVehicleResult] = useState<VehicleData | null>(null)
   const [scanned, setScanned] = useState(false)
   const [cameras, setCameras] = useState<string[]>([])
   const [currentCamera, setCurrentCamera] = useState(0)
@@ -102,6 +118,7 @@ export default function QrScanner() {
     setError(null)
     setScanned(false)
     setScanResult(null)
+    setVehicleResult(null)
     setScanning(true)
   }
 
@@ -134,6 +151,36 @@ export default function QrScanner() {
   const handleScan = async (decodedText: string) => {
     try {
       const payload = JSON.parse(decodedText)
+      
+      // Handle vehicle pass QR
+      if (payload.gate_pass || payload.reg) {
+        const regNumber = payload.reg
+        if (!regNumber) {
+          setError('Invalid Vehicle QR Code')
+          return
+        }
+
+        const { data, error } = await supabase
+          .from('vehicles')
+          .select('*, visitor:visitors(full_name, visitor_organization, photo_url)')
+          .eq('registration_number', regNumber)
+          .single()
+
+        if (error || !data) {
+          setError('Vehicle not found')
+          return
+        }
+
+        const vehicleData = data as VehicleData
+        setVehicleResult(vehicleData)
+        await stopScanner()
+
+        logAuditAction('Vehicle QR Scanned', 'vehicle', vehicleData.id, `QR scanned for vehicle ${vehicleData.registration_number}`)
+        setScanned(true)
+        return
+      }
+
+      // Handle visitor pass QR
       if (payload.type !== 'visitor-pass' || !payload.visitId) {
         setError('Invalid QR Code')
         return
@@ -246,9 +293,9 @@ export default function QrScanner() {
             )}
           </div>
         ) : (
-          <button onClick={() => { setScanned(false); setScanResult(null) }} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 mx-auto">
+          <button onClick={() => { setScanned(false); setScanResult(null); setVehicleResult(null); }} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 mx-auto">
             <QrCode className="h-4 w-4" />
-            Scan Next Visitor
+            Scan Next
           </button>
         )}
 
@@ -282,6 +329,27 @@ export default function QrScanner() {
             </div>
 
             <div className="mt-4">{getStatusMessage()}</div>
+          </div>
+        )}
+
+        {vehicleResult && (
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6 max-w-md mx-auto">
+            <div className="flex flex-col items-center">
+              {vehicleResult.is_blacklisted && (
+                <div className="mb-2 px-3 py-1 rounded-full bg-red-100">
+                  <span className="text-xs font-medium text-red-700">BLACKLISTED</span>
+                </div>
+              )}
+              <h2 className="text-xl font-bold text-gray-900">{vehicleResult.registration_number}</h2>
+              <p className="text-gray-600">{vehicleResult.vehicle_make} {vehicleResult.vehicle_model} ({vehicleResult.vehicle_type})</p>
+            </div>
+
+            <div className="mt-6 space-y-3 text-sm">
+              <div><span className="text-gray-500">Visitor:</span><span className="ml-2 text-gray-900">{vehicleResult.visitor?.full_name || '—'}</span></div>
+              <div><span className="text-gray-500">Driver:</span><span className="ml-2 text-gray-900">{vehicleResult.driver_name || '—'}</span></div>
+              <div><span className="text-gray-500">Parking Slot:</span><span className="ml-2 text-gray-900">{vehicleResult.parking_slot || 'Not parked'}</span></div>
+              <div><span className="text-gray-500">Gate Pass #:</span><span className="ml-2 font-mono text-gray-900">{vehicleResult.gate_pass_number}</span></div>
+            </div>
           </div>
         )}
       </div>

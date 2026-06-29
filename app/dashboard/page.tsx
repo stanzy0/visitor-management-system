@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, UserRole, PERMISSIONS } from '@/lib/auth'
+import NotificationBell from '@/components/NotificationBell'
 import {
   LayoutDashboard,
   Users,
@@ -18,6 +19,8 @@ import {
   Minus,
   Loader2,
   Scan,
+  Car,
+  Bell,
 } from 'lucide-react'
 
 interface Stats {
@@ -30,6 +33,15 @@ interface Stats {
   todaysVisitors: number
 }
 
+interface RecentNotification {
+  id: string
+  title: string
+  message: string
+  type: string
+  created_at: string
+  is_read: boolean
+}
+
 const ALL_NAV_ITEMS = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', permission: 'dashboard' },
   { label: 'Visitors', icon: Users, href: '/visitors', permission: 'visitors' },
@@ -38,6 +50,7 @@ const ALL_NAV_ITEMS = [
   { label: 'Reports', icon: FileText, href: '/reports', permission: 'reports' },
   { label: 'Audit Logs', icon: ShieldCheck, href: '/audit-logs', permission: 'audit-logs' },
   { label: 'QR Scanner', icon: Scan, href: '/scanner', permission: 'scanner' },
+  { label: 'Vehicles', icon: Car, href: '/vehicles', permission: 'vehicles' },
   { label: 'Users', icon: Users, href: '/users', permission: 'users' },
   { label: 'Settings', icon: Settings, href: '/settings', permission: 'settings' },
 ]
@@ -57,6 +70,7 @@ export default function DashboardPage() {
   const [loadingStats, setLoadingStats] = useState(true)
   const [userRole, setUserRole] = useState<UserRole>('Receptionist')
   const [userEmail, setUserEmail] = useState('')
+  const [recentNotifications, setRecentNotifications] = useState<RecentNotification[]>([])
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   useEffect(() => {
@@ -70,6 +84,7 @@ export default function DashboardPage() {
       setUserEmail(user.email)
       setAuthChecking(false)
       await fetchStats()
+      await fetchRecentNotifications()
       setupRealtime()
     }
     checkAuth()
@@ -107,6 +122,20 @@ export default function DashboardPage() {
     setLoadingStats(false)
   }
 
+  const fetchRecentNotifications = async () => {
+    const user = await getCurrentUser()
+    if (!user) return
+    const { data: userRoleData } = await supabase.from('user_roles').select('role').eq('user_id', user.id).single()
+    let query = supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(5)
+    if (userRoleData?.role) {
+      query = query.or(`user_id.eq.${user.id},recipient_role.eq.${userRoleData.role}`)
+    }
+    const { data } = await query
+    if (data) {
+      setRecentNotifications(data as RecentNotification[])
+    }
+  }
+
   const setupRealtime = () => {
     if (realtimeChannel.current) {
       supabase.removeChannel(realtimeChannel.current)
@@ -117,6 +146,7 @@ export default function DashboardPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, () => fetchStats())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors' }, () => fetchStats())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => fetchStats())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => fetchRecentNotifications())
       .subscribe()
   }
 
@@ -190,6 +220,7 @@ export default function DashboardPage() {
             <h1 className="text-lg font-semibold text-gray-900">Dashboard Overview</h1>
           </div>
           <div className="flex items-center gap-4">
+            <NotificationBell />
             <div className="hidden sm:block text-right">
               <p className="text-sm font-medium text-gray-900">{userEmail}</p>
               <p className="text-xs text-gray-500 capitalize">{userRole}</p>
@@ -230,6 +261,25 @@ export default function DashboardPage() {
                 )
               })}
             </div>
+
+          {recentNotifications.length > 0 && (
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">Recent Notifications</h3>
+              </div>
+              <div className="divide-y divide-gray-100">
+                {recentNotifications.map((notif) => (
+                  <div key={notif.id} className={`p-4 ${!notif.is_read ? 'bg-blue-50/30' : ''}`}>
+                    <p className="text-sm font-medium text-gray-900">{notif.title}</p>
+                    <p className="text-sm text-gray-600 mt-1 line-clamp-1">{notif.message}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(notif.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           </div>
         </main>
       </div>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/audit'
 import { generateVisitQRCode } from '@/lib/qrcode'
-import { Loader2, QrCode, Printer, Edit, ArrowLeft, X, Upload } from 'lucide-react'
+import { Loader2, QrCode, Printer, Edit, ArrowLeft, X, Upload, Trash2 } from 'lucide-react'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 
 interface Visitor {
@@ -50,6 +50,7 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
   const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null)
   const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null)
   const [editPhotoError, setEditPhotoError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     const unwrapParams = async () => {
@@ -208,6 +209,19 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
     setEditSubmitting(false)
   }
 
+  const handleDelete = async () => {
+    if (!visitorId) return
+    setDeleting(true)
+    const { error } = await supabase.from('visitors').delete().eq('id', visitorId)
+    if (error) {
+      console.error('Error deleting visitor:', error)
+    } else {
+      logAuditAction('Visitor Deleted', 'visitor', visitorId, `Visitor ${visitor?.full_name} deleted`)
+      window.location.href = '/visitors'
+    }
+    setDeleting(false)
+  }
+
   const fetchAuditLogs = async () => {
     if (!visitorId) return
     const visitIds = visits.map((v) => v.id)
@@ -298,6 +312,12 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
               <button onClick={openEditModal} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
                 <Edit className="h-4 w-4" />
                 Edit Visitor
+              </button>
+            )}
+            {PERMISSIONS['Admin']?.includes('delete-records') && (
+              <button onClick={handleDelete} disabled={deleting} className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors">
+                <Trash2 className="h-4 w-4" />
+                Delete Visitor
               </button>
             )}
             <a href={`/visitors/${visitorId}/badge`} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
