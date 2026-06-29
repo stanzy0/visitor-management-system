@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
-import { Search, Users, UserCheck, Building2, Loader2, AlertTriangle } from 'lucide-react'
+import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
+import { logAuditAction } from '@/lib/audit'
+import { Search, Users, UserCheck, Building2, Loader2, AlertTriangle, CheckCircle2, XCircle, Heart, UserX, Play, Square } from 'lucide-react'
 
 interface Visit {
   id: string
@@ -21,7 +22,27 @@ interface Summary {
   buildings: number
 }
 
+interface RollCallEntry {
+  id: string
+  session_id: string
+  visit_id: string
+  visitor_id: string
+  status: string
+  marked_by: string | null
+  marked_at: string | null
+  visit: Visit
+}
+
+interface EmergencySession {
+  id: string
+  is_active: boolean
+  started_by: string
+  started_at: string
+  ended_at: string | null
+}
+
 export default function EmergencyPage() {
+  const [userRole, setUserRole] = useState<UserRole>('Receptionist')
   const [visits, setVisits] = useState<Visit[]>([])
   const [loading, setLoading] = useState(true)
   const [authChecking, setAuthChecking] = useState(true)
@@ -34,7 +55,18 @@ export default function EmergencyPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [departmentFilter, setDepartmentFilter] = useState('')
   const [buildingFilter, setBuildingFilter] = useState('')
+
+  // Phase 2: Roll Call
+  const [emergencyMode, setEmergencyMode] = useState(false)
+  const [session, setSession] = useState<EmergencySession | null>(null)
+  const [rollCallEntries, setRollCallEntries] = useState<RollCallEntry[]>([])
+  const [rollCallSummary, setRollCallSummary] = useState({ total: 0, accountedFor: 0, evacuated: 0, injured: 0, missing: 0 })
+  const [startingEmergency, setStartingEmergency] = useState(false)
+  const [endingEmergency, setEndingEmergency] = useState(false)
+  const [showEndConfirm, setShowEndConfirm] = useState(false)
+
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const rollCallChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -47,8 +79,10 @@ export default function EmergencyPage() {
         window.location.href = '/unauthorized'
         return
       }
+      setUserRole(user.role)
       setAuthChecking(false)
       fetchCheckedIn()
+      checkActiveSession()
       setupRealtime()
     }
     checkAuth()
@@ -57,8 +91,27 @@ export default function EmergencyPage() {
       if (realtimeChannel.current) {
         supabase.removeChannel(realtimeChannel.current)
       }
+      if (rollCallChannel.current) {
+        supabase.removeChannel(rollCallChannel.current)
+      }
     }
   }, [])
+
+  const checkActiveSession = async () => {
+    const { data } = await supabase
+      .from('emergency_sessions')
+      .select('*')
+      .eq('is_active', true)
+      .order('started_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (data) {
+      setSession(data as EmergencySession)
+      setEmergencyMode(true)
+      fetchRollCallEntries((data as EmergencySession).id)
+    }
+  }
 
   const fetchCheckedIn = async () => {
     setLoading(true)
@@ -94,6 +147,149 @@ export default function EmergencyPage() {
     })
   }
 
+  // Phase 2: Start Emergency
+  const startEmergency = async () => {
+    if (userRole !== 'Admin') return
+    setStartingEmergency(true)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('emergency_sessions')
+        .insert({
+          is_active: true,
+          started_by: user.id,
+        })
+        .select()
+        .single()
+
+      if (sessionError || !sessionData) {
+        console.error('Failed to create emergency session:', sessionError)
+        setStartingEmergency(false)
+        return
+      }
+
+      const newSession = sessionData as EmergencySession
+      const { data: checkedIn } = await supabase
+        .from('visits')
+        .select('id, visitor_id, employee_id')
+        .eq('status', 'checked_in')
+
+      if (checkedIn && checkedIn.length > 0) {
+        const entries = checkedIn.map((v: any) => ({
+          session_id: newSession.id,
+          visit_id: v.id,
+          visitor_id: v.visitor_id,
+          status: 'missing',
+        }))
+
+        await supabase.from('roll_call_entries').insert(entries)
+      }
+
+      setSession(newSession)
+      setEmergencyMode(true)
+      await fetchRollCallEntries(newSession.id)
+      await logAuditAction('Emergency Started', 'emergency', newSession.id, `Emergency session started. ${checkedIn?.length || 0} visitors on site.`)
+    } catch (err) {
+      console.error('Error starting emergency:', err)
+    }
+
+    setStartingEmergency(false)
+  }
+
+  // Phase 2: Fetch Roll Call Entries
+  const fetchRollCallEntries = async (sessionId: string) => {
+    const { data } = await supabase
+      .from('roll_call_entries')
+      .select(`
+        *,
+        visit:visits(
+          *,
+          visitor:visitors(full_name, visitor_organization, photo_url),
+          employee:employees(full_name, department, office_location)
+        )
+      `)
+      .eq('session_id', sessionId)
+      .order('created_at', { ascending: true })
+
+    if (data) {
+      const entries = data as RollCallEntry[]
+      setRollCallEntries(entries)
+      computeRollCallSummary(entries)
+    }
+  }
+
+  const computeRollCallSummary = (entries: RollCallEntry[]) => {
+    setRollCallSummary({
+      total: entries.length,
+      accountedFor: entries.filter(e => e.status === 'accounted_for').length,
+      evacuated: entries.filter(e => e.status === 'evacuated').length,
+      injured: entries.filter(e => e.status === 'injured').length,
+      missing: entries.filter(e => e.status === 'missing').length,
+    })
+  }
+
+  // Phase 2: Update Roll Call Status
+  const updateRollCallStatus = async (entryId: string, newStatus: string) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { error } = await supabase
+      .from('roll_call_entries')
+      .update({
+        status: newStatus,
+        marked_by: user.id,
+        marked_at: new Date().toISOString(),
+      })
+      .eq('id', entryId)
+
+    if (error) {
+      console.error('Error updating roll call status:', error)
+    } else {
+      setRollCallEntries(prev => prev.map(e => e.id === entryId ? { ...e, status: newStatus, marked_by: user.id, marked_at: new Date().toISOString() } : e))
+      const statusLabel = newStatus.replace(/_/g, ' ')
+      await logAuditAction(`Visitor Marked ${statusLabel}`, 'roll_call', entryId, `Visitor marked as ${newStatus}`)
+    }
+  }
+
+  // Phase 2: End Emergency
+  const endEmergency = async () => {
+    if (userRole !== 'Admin' || !session) return
+    setEndingEmergency(true)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { error } = await supabase
+        .from('emergency_sessions')
+        .update({
+          is_active: false,
+          ended_at: new Date().toISOString(),
+          ended_by: user.id,
+        })
+        .eq('id', session.id)
+
+      if (error) {
+        console.error('Error ending emergency:', error)
+      } else {
+        await logAuditAction('Emergency Ended', 'emergency', session.id, 'Emergency session ended and archived')
+        setSession(null)
+        setEmergencyMode(false)
+        setRollCallEntries([])
+        setRollCallSummary({ total: 0, accountedFor: 0, evacuated: 0, injured: 0, missing: 0 })
+      }
+    } catch (err) {
+      console.error('Error ending emergency:', err)
+    }
+
+    setEndingEmergency(false)
+    setShowEndConfirm(false)
+  }
+
+  // Phase 1 Realtime
   const setupRealtime = () => {
     if (realtimeChannel.current) {
       supabase.removeChannel(realtimeChannel.current)
@@ -141,6 +337,72 @@ export default function EmergencyPage() {
       .subscribe()
   }
 
+  // Phase 2: Roll Call Realtime
+  useEffect(() => {
+    if (!emergencyMode || !session) {
+      if (rollCallChannel.current) {
+        supabase.removeChannel(rollCallChannel.current)
+        rollCallChannel.current = null
+      }
+      return
+    }
+
+    if (rollCallChannel.current) {
+      supabase.removeChannel(rollCallChannel.current)
+    }
+
+    rollCallChannel.current = supabase
+      .channel('roll-call-updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'roll_call_entries', filter: `session_id=eq.${session.id}` },
+        (payload) => {
+          const newEntry = payload.new as RollCallEntry | null
+          const oldEntry = payload.old as RollCallEntry | null
+
+          if (payload.eventType === 'INSERT' && newEntry) {
+            setRollCallEntries(prev => {
+              const exists = prev.some(e => e.id === newEntry.id)
+              return exists ? prev : [...prev, newEntry]
+            })
+          } else if (payload.eventType === 'UPDATE' && newEntry) {
+            setRollCallEntries(prev => prev.map(e => e.id === newEntry.id ? newEntry : e))
+          } else if (payload.eventType === 'DELETE' && oldEntry) {
+            setRollCallEntries(prev => prev.filter(e => e.id !== oldEntry.id))
+          }
+
+          setTimeout(() => {
+            supabase
+              .from('roll_call_entries')
+              .select(`
+                *,
+                visit:visits(
+                  *,
+                  visitor:visitors(full_name, visitor_organization, photo_url),
+                  employee:employees(full_name, department, office_location)
+                )
+              `)
+              .eq('session_id', session.id)
+              .then(({ data }) => {
+                if (data) {
+                  const entries = data as RollCallEntry[]
+                  setRollCallEntries(entries)
+                  computeRollCallSummary(entries)
+                }
+              })
+          }, 100)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      if (rollCallChannel.current) {
+        supabase.removeChannel(rollCallChannel.current)
+        rollCallChannel.current = null
+      }
+    }
+  }, [emergencyMode, session?.id])
+
   const getTimeOnSite = (checkInTime: string | null) => {
     if (!checkInTime) return '—'
     const diff = Date.now() - new Date(checkInTime).getTime()
@@ -173,6 +435,13 @@ export default function EmergencyPage() {
     )
   }
 
+  const statusOptions = [
+    { value: 'missing', label: 'Missing', icon: UserX, color: 'bg-red-50 text-red-700' },
+    { value: 'accounted_for', label: 'Accounted For', icon: CheckCircle2, color: 'bg-green-50 text-green-700' },
+    { value: 'evacuated', label: 'Evacuated', icon: XCircle, color: 'bg-blue-50 text-blue-700' },
+    { value: 'injured', label: 'Injured', icon: Heart, color: 'bg-amber-50 text-amber-700' },
+  ]
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
@@ -185,150 +454,373 @@ export default function EmergencyPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-8 w-8 text-red-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Emergency Occupancy Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {emergencyMode ? 'Emergency Roll Call — Active' : 'Emergency Occupancy Dashboard'}
+            </h1>
           </div>
-          <div className="text-sm text-gray-500">
-            Live updates via Supabase Realtime
+          <div className="flex items-center gap-3">
+            {emergencyMode && (
+              <span className="inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-sm font-medium text-red-700 animate-pulse">
+                ACTIVE EMERGENCY
+              </span>
+            )}
+            <div className="text-sm text-gray-500">
+              {emergencyMode ? 'Roll call in progress' : 'Live updates via Supabase Realtime'}
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Visitors On Site</p>
-              <Users className="h-5 w-5 text-blue-600" />
+        {/* Phase 2: Start / End Emergency Controls */}
+        {!emergencyMode && userRole === 'Admin' && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Initiate Emergency Roll Call</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  This will capture a snapshot of all visitors currently on site and freeze the list for roll call tracking.
+                </p>
+              </div>
+              <button
+                onClick={startEmergency}
+                disabled={startingEmergency}
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-6 py-3 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+              >
+                {startingEmergency ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                Start Emergency
+              </button>
             </div>
-            <p className="mt-2 text-3xl font-bold text-gray-900">{loading ? '...' : summary.visitorsOnSite}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Hosts Present</p>
-              <UserCheck className="h-5 w-5 text-green-600" />
-            </div>
-            <p className="mt-2 text-3xl font-bold text-gray-900">{loading ? '...' : summary.hosts}</p>
-          </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Departments</p>
-              <Building2 className="h-5 w-5 text-purple-600" />
-            </div>
-            <p className="mt-2 text-3xl font-bold text-gray-900">{loading ? '...' : summary.departments}</p>
-          </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Buildings</p>
-              <Building2 className="h-5 w-5 text-amber-600" />
-            </div>
-            <p className="mt-2 text-3xl font-bold text-gray-900">{loading ? '...' : summary.buildings}</p>
-          </div>
-        </div>
+        )}
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h2 className="text-lg font-semibold text-gray-900">Current Occupancy</h2>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search visitors..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
-                />
+        {emergencyMode && userRole === 'Admin' && (
+          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Control Emergency</h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  Session started: {session ? new Date(session.started_at).toLocaleString() : '—'}
+                </p>
               </div>
-              <select
-                value={departmentFilter}
-                onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <button
+                onClick={() => setShowEndConfirm(true)}
+                disabled={endingEmergency}
+                className="inline-flex items-center gap-2 rounded-lg bg-gray-800 px-6 py-3 text-sm font-medium text-white hover:bg-gray-900 disabled:opacity-50 transition-colors"
               >
-                <option value="">All Departments</option>
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
-              <select
-                value={buildingFilter}
-                onChange={(e) => setBuildingFilter(e.target.value)}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Buildings</option>
-                {buildings.map(building => (
-                  <option key={building} value={building}>{building}</option>
-                ))}
-              </select>
+                <Square className="h-4 w-4" />
+                End Emergency
+              </button>
             </div>
           </div>
-          <div className="overflow-x-auto">
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+        )}
+
+        {/* End Emergency Confirmation Dialog */}
+        {showEndConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <div className="w-full max-w-md rounded-xl bg-white shadow-xl p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">End Emergency?</h3>
+              <p className="text-sm text-gray-600 mb-6">
+                This will close the current emergency and archive the roll call.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowEndConfirm(false)}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={endEmergency}
+                  disabled={endingEmergency}
+                  className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                >
+                  {endingEmergency && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Confirm End Emergency
+                </button>
               </div>
-            ) : (
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Organization</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Department</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Office Location</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Purpose</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Check In Time</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Time On Site</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredVisits.map((visit) => (
-                    <tr key={visit.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          {visit.visitor?.photo_url ? (
-                            <img
-                              src={visit.visitor.photo_url}
-                              alt={visit.visitor.full_name}
-                              className="h-8 w-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                              <span className="text-xs text-gray-500">
-                                {(visit.visitor?.full_name || '').charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                          )}
-                          <span className="font-medium text-gray-900">{visit.visitor?.full_name || '—'}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">{visit.visitor?.visitor_organization || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600">{visit.employee?.full_name || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600">{visit.employee?.department || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600">{visit.employee?.office_location || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600">{visit.purpose || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                        {visit.check_in_time ? new Date(visit.check_in_time).toLocaleTimeString() : '—'}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600 font-mono">
-                        {getTimeOnSite(visit.check_in_time)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
-                          On Site
-                        </span>
-                      </td>
-                    </tr>
+            </div>
+          </div>
+        )}
+
+        {/* Phase 2: Roll Call Summary */}
+        {emergencyMode && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-500">Total Visitors</p>
+                <Users className="h-5 w-5 text-gray-600" />
+              </div>
+              <p className="mt-2 text-3xl font-bold text-gray-900">{rollCallSummary.total}</p>
+            </div>
+            <div className="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-green-700">Accounted For</p>
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              </div>
+              <p className="mt-2 text-3xl font-bold text-green-900">{rollCallSummary.accountedFor}</p>
+            </div>
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-blue-700">Evacuated</p>
+                <XCircle className="h-5 w-5 text-blue-600" />
+              </div>
+              <p className="mt-2 text-3xl font-bold text-blue-900">{rollCallSummary.evacuated}</p>
+            </div>
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-amber-700">Injured</p>
+                <Heart className="h-5 w-5 text-amber-600" />
+              </div>
+              <p className="mt-2 text-3xl font-bold text-amber-900">{rollCallSummary.injured}</p>
+            </div>
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-red-700">Missing</p>
+                <UserX className="h-5 w-5 text-red-600" />
+              </div>
+              <p className="mt-2 text-3xl font-bold text-red-900">{rollCallSummary.missing}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Phase 1: Occupancy Summary Cards */}
+        {!emergencyMode && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-500">Visitors On Site</p>
+                <Users className="h-5 w-5 text-blue-600" />
+              </div>
+              <p className="mt-2 text-3xl font-bold text-gray-900">{loading ? '...' : summary.visitorsOnSite}</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-500">Hosts Present</p>
+                <UserCheck className="h-5 w-5 text-green-600" />
+              </div>
+              <p className="mt-2 text-3xl font-bold text-gray-900">{loading ? '...' : summary.hosts}</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-500">Departments</p>
+                <Building2 className="h-5 w-5 text-purple-600" />
+              </div>
+              <p className="mt-2 text-3xl font-bold text-gray-900">{loading ? '...' : summary.departments}</p>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-gray-500">Buildings</p>
+                <Building2 className="h-5 w-5 text-amber-600" />
+              </div>
+              <p className="mt-2 text-3xl font-bold text-gray-900">{loading ? '...' : summary.buildings}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Phase 1: Normal Occupancy Table */}
+        {!emergencyMode && (
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <h2 className="text-lg font-semibold text-gray-900">Current Occupancy</h2>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search visitors..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+                  />
+                </div>
+                <select
+                  value={departmentFilter}
+                  onChange={(e) => setDepartmentFilter(e.target.value)}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Departments</option>
+                  {departments.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
                   ))}
-                </tbody>
-              </table>
-            )}
-
-            {!loading && filteredVisits.length === 0 && (
-              <div className="py-12 text-center">
-                <p className="text-gray-500">No visitors currently on site</p>
+                </select>
+                <select
+                  value={buildingFilter}
+                  onChange={(e) => setBuildingFilter(e.target.value)}
+                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Buildings</option>
+                  {buildings.map(building => (
+                    <option key={building} value={building}>{building}</option>
+                  ))}
+                </select>
               </div>
-            )}
+            </div>
+            <div className="overflow-x-auto">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                </div>
+              ) : (
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 bg-gray-50">
+                      <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Organization</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Department</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Office Location</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Purpose</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Check In Time</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Time On Site</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredVisits.map((visit) => (
+                      <tr key={visit.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            {visit.visitor?.photo_url ? (
+                              <img
+                                src={visit.visitor.photo_url}
+                                alt={visit.visitor.full_name}
+                                className="h-8 w-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                <span className="text-xs text-gray-500">
+                                  {(visit.visitor?.full_name || '').charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                            )}
+                            <span className="font-medium text-gray-900">{visit.visitor?.full_name || '—'}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">{visit.visitor?.visitor_organization || '—'}</td>
+                        <td className="px-4 py-3 text-gray-600">{visit.employee?.full_name || '—'}</td>
+                        <td className="px-4 py-3 text-gray-600">{visit.employee?.department || '—'}</td>
+                        <td className="px-4 py-3 text-gray-600">{visit.employee?.office_location || '—'}</td>
+                        <td className="px-4 py-3 text-gray-600">{visit.purpose || '—'}</td>
+                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                          {visit.check_in_time ? new Date(visit.check_in_time).toLocaleTimeString() : '—'}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 font-mono">
+                          {getTimeOnSite(visit.check_in_time)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                            On Site
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+
+              {!loading && filteredVisits.length === 0 && (
+                <div className="py-12 text-center">
+                  <p className="text-gray-500">No visitors currently on site</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Phase 2: Roll Call Table */}
+        {emergencyMode && (
+          <div className="rounded-xl border border-red-200 bg-white shadow-sm">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Roll Call — Snapshot</h2>
+              <p className="text-xs text-gray-500 mt-1">
+                This list is frozen. Visitors who check out will remain visible until the emergency ends.
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              {rollCallEntries.length === 0 ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                </div>
+              ) : (
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 bg-gray-50">
+                      <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Organization</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Department</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Office Location</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Purpose</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Check In Time</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Time On Site</th>
+                      <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {rollCallEntries.map((entry) => {
+                      const v = entry.visit
+                      const currentStatus = statusOptions.find(s => s.value === entry.status) || statusOptions[0]
+                      const StatusIcon = currentStatus.icon
+
+                      return (
+                        <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              {v.visitor?.photo_url ? (
+                                <img
+                                  src={v.visitor.photo_url}
+                                  alt={v.visitor.full_name}
+                                  className="h-8 w-8 rounded-full object-cover"
+                                />
+                              ) : (
+                                <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                  <span className="text-xs text-gray-500">
+                                    {(v.visitor?.full_name || '').charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                              )}
+                              <span className="font-medium text-gray-900">{v.visitor?.full_name || '—'}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">{v.visitor?.visitor_organization || '—'}</td>
+                          <td className="px-4 py-3 text-gray-600">{v.employee?.full_name || '—'}</td>
+                          <td className="px-4 py-3 text-gray-600">{v.employee?.department || '—'}</td>
+                          <td className="px-4 py-3 text-gray-600">{v.employee?.office_location || '—'}</td>
+                          <td className="px-4 py-3 text-gray-600">{v.purpose || '—'}</td>
+                          <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                            {v.check_in_time ? new Date(v.check_in_time).toLocaleTimeString() : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600 font-mono">
+                            {getTimeOnSite(v.check_in_time)}
+                          </td>
+                          <td className="px-4 py-3">
+                            {userRole === 'Admin' || userRole === 'Security' ? (
+                              <select
+                                value={entry.status}
+                                onChange={(e) => updateRollCallStatus(entry.id, e.target.value)}
+                                className={`rounded-lg border px-2 py-1 text-xs font-medium ${currentStatus.color} border-current focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                              >
+                                {statusOptions.map(opt => (
+                                  <option key={opt.value} value={opt.value} className="bg-white text-gray-900">
+                                    {opt.label}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${currentStatus.color}`}>
+                                <StatusIcon className="h-3 w-3" />
+                                {currentStatus.label}
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
