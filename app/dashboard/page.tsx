@@ -22,6 +22,12 @@ import {
   Car,
   Bell,
   AlertTriangle,
+  ShieldAlert,
+  Crown,
+  Monitor,
+  Calendar,
+  Building2,
+  BarChart3,
 } from 'lucide-react'
 
 interface Stats {
@@ -32,6 +38,12 @@ interface Stats {
   checkedInVisits: number
   checkedOutVisits: number
   todaysVisitors: number
+  watchlistHitsToday: number
+  activeWatchlist: number
+  vipOnSite: number
+  documentsVerifiedToday: number
+  pendingDocumentVerification: number
+  expiredDocuments: number
 }
 
 interface RecentNotification {
@@ -43,18 +55,51 @@ interface RecentNotification {
   is_read: boolean
 }
 
-const ALL_NAV_ITEMS = [
-  { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', permission: 'dashboard' },
-  { label: 'Visitors', icon: Users, href: '/visitors', permission: 'visitors' },
-  { label: 'Visits', icon: Clock, href: '/visits', permission: 'visits' },
-  { label: 'Employees', icon: UserCheck, href: '/employees', permission: 'employees' },
-  { label: 'Reports', icon: FileText, href: '/reports', permission: 'reports' },
-  { label: 'Audit Logs', icon: ShieldCheck, href: '/audit-logs', permission: 'audit-logs' },
-  { label: 'QR Scanner', icon: Scan, href: '/scanner', permission: 'scanner' },
-  { label: 'Vehicles', icon: Car, href: '/vehicles', permission: 'vehicles' },
-  { label: 'Emergency', icon: AlertTriangle, href: '/emergency', permission: 'emergency' },
-  { label: 'Users', icon: Users, href: '/users', permission: 'users' },
-  { label: 'Settings', icon: Settings, href: '/settings', permission: 'settings' },
+const NAV_SECTIONS = [
+  {
+    title: 'MAIN',
+    items: [
+      { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', permission: 'dashboard' },
+      { label: 'Reception Kiosk', icon: Monitor, href: '/kiosk', permission: 'dashboard' },
+      { label: 'Visitors', icon: Users, href: '/visitors', permission: 'visitors' },
+      { label: 'Appointments', icon: Calendar, href: '/appointments', permission: 'appointments' },
+      { label: 'Visits', icon: Clock, href: '/visits', permission: 'visits' },
+      { label: 'QR Scanner', icon: Scan, href: '/scanner', permission: 'scanner' },
+    ],
+  },
+  {
+    title: 'SECURITY',
+    items: [
+      { label: 'Watchlist', icon: ShieldAlert, href: '/watchlist', permission: 'watchlist' },
+      { label: 'ID Verification', icon: FileText, href: '/documents', permission: 'documents' },
+      { label: 'Emergency Occupancy', icon: AlertTriangle, href: '/emergency', permission: 'emergency' },
+      { label: 'Host Portal', icon: Users, href: '/host', permission: 'host' },
+    ],
+  },
+  {
+    title: 'ADMINISTRATION',
+    items: [
+      { label: 'Employees', icon: UserCheck, href: '/employees', permission: 'employees' },
+      { label: 'Office Locations', icon: Building2, href: '/office-locations', permission: 'settings' },
+      { label: 'Vehicle Management', icon: Car, href: '/vehicles', permission: 'vehicles' },
+      { label: 'Users', icon: Users, href: '/users', permission: 'users' },
+    ],
+  },
+  {
+    title: 'MONITORING',
+    items: [
+      { label: 'Notifications', icon: Bell, href: '/notifications', permission: 'dashboard' },
+      { label: 'Audit Logs', icon: ShieldCheck, href: '/audit-logs', permission: 'audit-logs' },
+      { label: 'Reports', icon: FileText, href: '/reports', permission: 'reports' },
+      { label: 'Analytics', icon: BarChart3, href: '/analytics', permission: 'analytics' },
+    ],
+  },
+  {
+    title: 'CONFIGURATION',
+    items: [
+      { label: 'Settings', icon: Settings, href: '/settings', permission: 'settings' },
+    ],
+  },
 ]
 
 export default function DashboardPage() {
@@ -68,6 +113,12 @@ export default function DashboardPage() {
     checkedInVisits: 0,
     checkedOutVisits: 0,
     todaysVisitors: 0,
+    watchlistHitsToday: 0,
+    activeWatchlist: 0,
+    vipOnSite: 0,
+    documentsVerifiedToday: 0,
+    pendingDocumentVerification: 0,
+    expiredDocuments: 0,
   })
   const [loadingStats, setLoadingStats] = useState(true)
   const [userRole, setUserRole] = useState<UserRole>('Receptionist')
@@ -102,7 +153,7 @@ export default function DashboardPage() {
     setLoadingStats(true)
     const today = new Date().toISOString().split('T')[0]
 
-    const [employeesRes, visitorsRes, pendingRes, approvedRes, checkedInRes, checkedOutRes, todaysRes] = await Promise.all([
+    const [employeesRes, visitorsRes, pendingRes, approvedRes, checkedInRes, checkedOutRes, todaysRes, watchlistHitsRes, activeWatchlistRes, vipOnSiteRes, docsVerifiedRes, docsPendingRes, docsExpiredRes] = await Promise.all([
       supabase.from('employees').select('id', { count: 'exact' }),
       supabase.from('visitors').select('id', { count: 'exact' }),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'pending'),
@@ -110,6 +161,12 @@ export default function DashboardPage() {
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'checked_in'),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'checked_out'),
       supabase.from('visits').select('id', { count: 'exact' }).gte('created_at', today),
+      supabase.from('notifications').select('id', { count: 'exact' }).eq('type', 'watchlist_match').gte('created_at', today),
+      supabase.from('visitor_watchlist').select('id', { count: 'exact' }).eq('status', 'Active'),
+      supabase.from('visitor_watchlist').select('id', { count: 'exact' }).eq('status', 'Active').eq('category', 'VIP'),
+      supabase.from('visitor_documents').select('id', { count: 'exact' }).eq('verified', true).gte('verification_date', today),
+      supabase.from('visitor_documents').select('id', { count: 'exact' }).eq('verified', false),
+      supabase.from('visitor_documents').select('id', { count: 'exact' }).lt('expiry_date', new Date().toISOString().split('T')[0]),
     ])
 
     setStats({
@@ -120,6 +177,12 @@ export default function DashboardPage() {
       checkedInVisits: checkedInRes.count ?? 0,
       checkedOutVisits: checkedOutRes.count ?? 0,
       todaysVisitors: todaysRes.count ?? 0,
+      watchlistHitsToday: watchlistHitsRes.count ?? 0,
+      activeWatchlist: activeWatchlistRes.count ?? 0,
+      vipOnSite: vipOnSiteRes.count ?? 0,
+      documentsVerifiedToday: docsVerifiedRes.count ?? 0,
+      pendingDocumentVerification: docsPendingRes.count ?? 0,
+      expiredDocuments: docsExpiredRes.count ?? 0,
     })
     setLoadingStats(false)
   }
@@ -149,12 +212,13 @@ export default function DashboardPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors' }, () => fetchStats())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => fetchStats())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => fetchRecentNotifications())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_watchlist' }, () => fetchStats())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_documents' }, () => fetchStats())
       .subscribe()
   }
 
-  const navItems = ALL_NAV_ITEMS.filter(item => 
-    PERMISSIONS[userRole]?.includes(item.permission)
-  )
+  const getNavItems = (sectionItems: typeof NAV_SECTIONS[0]['items']) =>
+    sectionItems.filter(item => PERMISSIONS[userRole]?.includes(item.permission))
 
   const statCards = [
     { title: "Today's Visitors", value: stats.todaysVisitors.toString(), trend: 'up' as const, icon: Users },
@@ -162,6 +226,12 @@ export default function DashboardPage() {
     { title: 'Checked Out', value: stats.checkedOutVisits.toString(), trend: 'down' as const, icon: LogOut },
     { title: 'Pending Approvals', value: stats.pendingVisits.toString(), trend: 'neutral' as const, icon: Clock },
     { title: 'Total Employees', value: stats.totalEmployees.toString(), trend: 'up' as const, icon: ShieldCheck },
+    { title: 'Watchlist Hits Today', value: stats.watchlistHitsToday.toString(), trend: 'neutral' as const, icon: ShieldAlert },
+    { title: 'Active Watchlist', value: stats.activeWatchlist.toString(), trend: 'neutral' as const, icon: ShieldAlert },
+    { title: 'VIP On Site', value: stats.vipOnSite.toString(), trend: 'up' as const, icon: Crown },
+    { title: 'Docs Verified Today', value: stats.documentsVerifiedToday.toString(), trend: 'up' as const, icon: FileText },
+    { title: 'Pending Verification', value: stats.pendingDocumentVerification.toString(), trend: 'neutral' as const, icon: FileText },
+    { title: 'Expired Documents', value: stats.expiredDocuments.toString(), trend: 'down' as const, icon: FileText },
   ]
 
   if (authChecking) {
@@ -179,35 +249,46 @@ export default function DashboardPage() {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-white border-r border-gray-200 transition-transform duration-200 ease-in-out lg:relative lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-white border-r border-gray-200 transition-transform duration-200 ease-in-out lg:relative lg:translate-x-0 flex flex-col ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex items-center gap-2 p-4 border-b border-gray-200">
+        <div className="flex items-center gap-2 p-4 border-b border-gray-200 flex-shrink-0">
           <ShieldCheck className="h-8 w-8 text-blue-600" />
           <span className="text-xl font-bold text-gray-900">VMS Admin</span>
         </div>
-        <nav className="flex-1 overflow-y-auto p-4">
-          <ul className="space-y-1">
-            {navItems.map((item) => (
-              <li key={item.label}>
-                <a
-                  href={item.href}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-8 pt-4 border-t border-gray-200">
-            <a href="/login" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
-              <LogOut className="h-5 w-5" />
-              Logout
-            </a>
-          </div>
+        <nav className="flex-1 overflow-y-auto p-4 scrollbar-thin">
+          {NAV_SECTIONS.map((section) => {
+            const items = getNavItems(section.items)
+            if (items.length === 0) return null
+            return (
+              <div key={section.title} className="mb-6">
+                <h3 className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  {section.title}
+                </h3>
+                <ul className="space-y-1">
+                  {items.map((item) => (
+                    <li key={item.label}>
+                      <a
+                        href={item.href}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                      >
+                        <item.icon className="h-5 w-5" />
+                        {item.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          })}
         </nav>
+        <div className="flex-shrink-0 p-4 border-t border-gray-200">
+          <a href="/login" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+            <LogOut className="h-5 w-5" />
+            Logout
+          </a>
+        </div>
       </aside>
 
       <div className="flex flex-1 flex-col min-w-0">
@@ -237,7 +318,7 @@ export default function DashboardPage() {
 
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {statCards.map((stat) => {
                 const TrendIcon = stat.trend === 'up' ? TrendingUp : stat.trend === 'down' ? TrendingDown : Minus
                 const trendColors = {

@@ -3,8 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/audit'
-import { Search, Plus, Loader2, Upload, X, Camera, RefreshCw, Trash2 } from 'lucide-react'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { Search, Plus, Loader2, Upload, X, Camera, RefreshCw, Trash2, ShieldAlert } from 'lucide-react'
+import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
 
 interface Visitor {
   id: string
@@ -38,6 +38,17 @@ interface VisitorFormData {
   driver_phone: string
   parking_slot: string
   notes: string
+  id_number: string
+  id_verification: boolean
+  doc_type: string
+  doc_number: string
+  issuing_country: string
+  expiry_date: string
+  doc_front_image: File | null
+  doc_back_image: File | null
+  doc_front_url: string
+  doc_back_url: string
+  doc_notes: string
 }
 
 const initialFormData: VisitorFormData = {
@@ -57,6 +68,17 @@ const initialFormData: VisitorFormData = {
   driver_phone: '',
   parking_slot: '',
   notes: '',
+  id_number: '',
+  id_verification: false,
+  doc_type: 'National ID',
+  doc_number: '',
+  issuing_country: '',
+  expiry_date: '',
+  doc_front_image: null,
+  doc_back_image: null,
+  doc_front_url: '',
+  doc_back_url: '',
+  doc_notes: '',
 }
 
 const inputClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -160,12 +182,19 @@ export default function VisitorsPage() {
   const [cameraPermissionError, setCameraPermissionError] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [watchlistMatch, setWatchlistMatch] = useState<any | null>(null)
+  const [watchlistModalOpen, setWatchlistModalOpen] = useState(false)
+  const [pendingRegistration, setPendingRegistration] = useState<VisitorFormData | null>(null)
+  const [userRole, setUserRole] = useState<UserRole>('Receptionist')
+  const [docFrontFile, setDocFrontFile] = useState<File | null>(null)
+  const [docBackFile, setDocBackFile] = useState<File | null>(null)
+  const [docUploading, setDocUploading] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
+   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
       if (!user) {
@@ -176,6 +205,7 @@ export default function VisitorsPage() {
         window.location.href = '/unauthorized'
         return
       }
+      setUserRole(user.role)
       setAuthChecking(false)
       fetchVisitors()
       fetchEmployees()
@@ -410,6 +440,65 @@ export default function VisitorsPage() {
     }
   }
 
+  const uploadDocumentImage = async (file: File, prefix: string): Promise<string | null> => {
+    setDocUploading(true)
+    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-').replace(/-+/g, '-')
+    const fileName = `${prefix}-${Date.now()}-${sanitizedName}`
+    try {
+      const { error } = await supabase.storage.from('visitor-photos').upload(fileName, file)
+      if (error) throw error
+      const { data: publicUrlData } = supabase.storage.from('visitor-photos').getPublicUrl(fileName)
+      return publicUrlData.publicUrl
+    } catch (err: unknown) {
+      const errorObj = err as { message?: string }
+      showNotification('error', errorObj.message || 'Failed to upload document image')
+      return null
+    } finally {
+      setDocUploading(false)
+    }
+  }
+
+  const checkWatchlist = async (): Promise<boolean> => {
+    const { data } = await supabase
+      .from('visitor_watchlist')
+      .select('*')
+      .eq('status', 'Active')
+      .or(
+        `full_name.ilike.%${formData.full_name}%,phone.ilike.%${formData.phone}%,email.ilike.%${formData.email}%,id_number.ilike.%${formData.id_number}%,vehicle_registration.ilike.%${formData.registration_number}%`
+      )
+      .maybeSingle()
+
+    if (data) {
+      setWatchlistMatch(data)
+      setPendingRegistration(formData)
+      setWatchlistModalOpen(true)
+      return true
+    }
+
+    if (formData.id_verification && formData.doc_number) {
+      const { data: docMatch } = await supabase
+        .from('visitor_documents')
+        .select('*, visitor:visitors(full_name, email)')
+        .eq('document_number', formData.doc_number)
+        .maybeSingle()
+
+      if (docMatch) {
+        setWatchlistMatch({
+          id: docMatch.id,
+          full_name: docMatch.visitor?.full_name || 'Unknown',
+          category: 'Document Alert',
+          status: 'Active',
+          reason: `Document number ${formData.doc_number} is already registered for ${docMatch.visitor?.full_name}`,
+        })
+        setPendingRegistration(formData)
+        setWatchlistModalOpen(true)
+        return true
+      }
+    }
+
+    return false
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
@@ -425,14 +514,26 @@ export default function VisitorsPage() {
       }
     }
 
+    const hasWatchlistHit = await checkWatchlist()
+    if (hasWatchlistHit) {
+      setSubmitting(false)
+      return
+    }
+
+    await createVisitor(formData, photoUrl, photoSourceType)
+  }
+
+  const createVisitor = async (data: VisitorFormData, photoUrl: string | null, photoSourceType: 'upload' | 'camera') => {
+    setSubmitting(true)
+
     const { data: visitorData, error: visitorError } = await supabase
       .from('visitors')
       .insert([
         {
-          full_name: formData.full_name,
-          email: formData.email,
-          phone: formData.phone,
-          visitor_organization: formData.visitor_organization,
+          full_name: data.full_name,
+          email: data.email,
+          phone: data.phone,
+          visitor_organization: data.visitor_organization,
           photo_url: photoUrl || null,
         },
       ])
@@ -444,20 +545,20 @@ export default function VisitorsPage() {
       return
     }
 
-    const hostEmployee = employees.find((e) => e.id === formData.host_employee_id)?.full_name || 'Unknown'
+    const hostEmployee = employees.find((e) => e.id === data.host_employee_id)?.full_name || 'Unknown'
     if (photoUrl) {
       if (photoSourceType === 'camera') {
-        logAuditAction('Visitor Photo Captured', 'visitor', visitorData[0].id, 'Visitor photo captured using device camera')
+        logAuditAction('Visitor Photo Captured', 'visitor', visitorData![0].id, 'Visitor photo captured using device camera')
       } else {
-        logAuditAction('Visitor Photo Uploaded', 'visitor', visitorData[0].id, `${formData.full_name}'s photo uploaded`)
+        logAuditAction('Visitor Photo Uploaded', 'visitor', visitorData![0].id, `${data.full_name}'s photo uploaded`)
       }
     }
 
     const { error: visitError } = await supabase.from('visits').insert([
       {
-        visitor_id: visitorData[0].id,
-        employee_id: formData.host_employee_id,
-        purpose: formData.purpose,
+        visitor_id: visitorData![0].id,
+        employee_id: data.host_employee_id,
+        purpose: data.purpose,
         status: 'pending',
       },
     ])
@@ -465,32 +566,96 @@ export default function VisitorsPage() {
     if (visitError) {
       showNotification('error', visitError.message)
     } else {
-      if (formData.has_vehicle && formData.registration_number) {
+      if (data.has_vehicle && data.registration_number) {
         await supabase.from('vehicles').insert([
           {
-            visitor_id: visitorData[0].id,
-            registration_number: formData.registration_number,
-            vehicle_type: formData.vehicle_type,
-            vehicle_make: formData.vehicle_make || null,
-            vehicle_model: formData.vehicle_model || null,
-            vehicle_color: formData.vehicle_color || null,
-            driver_name: formData.driver_name || null,
-            driver_phone: formData.driver_phone || null,
-            parking_slot: formData.parking_slot || null,
-            notes: formData.notes || null,
+            visitor_id: visitorData![0].id,
+            registration_number: data.registration_number,
+            vehicle_type: data.vehicle_type,
+            vehicle_make: data.vehicle_make || null,
+            vehicle_model: data.vehicle_model || null,
+            vehicle_color: data.vehicle_color || null,
+            driver_name: data.driver_name || null,
+            driver_phone: data.driver_phone || null,
+            parking_slot: data.parking_slot || null,
+            notes: data.notes || null,
           },
         ])
       }
 
-      logAuditAction('Visitor Registered', 'visitor', visitorData[0].id, `${formData.full_name} registered to meet ${hostEmployee} for ${formData.purpose}`)
+      logAuditAction('Visitor Registered', 'visitor', visitorData![0].id, `${data.full_name} registered to meet ${hostEmployee} for ${data.purpose}`)
+
+      if (data.id_verification && data.doc_number) {
+        const docPayload: any = {
+          visitor_id: visitorData![0].id,
+          document_type: data.doc_type,
+          document_number: data.doc_number,
+          issuing_country: data.issuing_country || null,
+          expiry_date: data.expiry_date || null,
+          notes: data.doc_notes || null,
+        }
+
+        if (docFrontFile) {
+          const frontUrl = await uploadDocumentImage(docFrontFile, 'doc-front')
+          if (frontUrl) docPayload.front_image_url = frontUrl
+        }
+        if (docBackFile) {
+          const backUrl = await uploadDocumentImage(docBackFile, 'doc-back')
+          if (backUrl) docPayload.back_image_url = backUrl
+        }
+
+        await supabase.from('visitor_documents').insert([docPayload])
+        logAuditAction('Document Added', 'visitor_document', null, `Document added for ${data.full_name}`)
+      }
+
       showNotification('success', 'Visitor registered successfully')
       setModalOpen(false)
       setFormData(initialFormData)
       setPhotoPreview(null)
       setPhotoFile(null)
       setCameraActive(false)
+      setDocFrontFile(null)
+      setDocBackFile(null)
     }
     setSubmitting(false)
+  }
+
+  const handleWatchlistOverride = async () => {
+    if (!pendingRegistration) return
+
+    const user = await getCurrentUser()
+    if (!user) return
+
+    await supabase.from('notifications').insert([
+      {
+        user_id: user.id,
+        title: 'Watchlist Override Approved',
+        message: `${pendingRegistration.full_name} was registered despite being on the watchlist.`,
+        type: 'watchlist_override',
+        is_read: false,
+      },
+    ])
+
+    logAuditAction('Override Approved', 'watchlist', watchlistMatch?.id, `Watchlist override approved for ${pendingRegistration.full_name}`)
+
+    setWatchlistModalOpen(false)
+    setWatchlistMatch(null)
+    setPendingRegistration(null)
+    setDocFrontFile(null)
+    setDocBackFile(null)
+
+    let photoUrl: string | null = null
+    let photoSourceType: 'upload' | 'camera' = 'upload'
+    if (photoFile) {
+      photoSourceType = photoFile.name.startsWith('camera-photo') ? 'camera' : 'upload'
+      photoUrl = await handlePhotoUpload()
+      if (photoFile && !photoUrl) {
+        setSubmitting(false)
+        return
+      }
+    }
+
+    await createVisitor(pendingRegistration, photoUrl, photoSourceType)
   }
 
   const filteredVisitors = visitors.filter(
@@ -656,6 +821,16 @@ export default function VisitorsPage() {
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       placeholder="Enter phone number"
+                      className={inputClasses}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ID Number</label>
+                    <input
+                      type="text"
+                      value={formData.id_number}
+                      onChange={(e) => setFormData({ ...formData, id_number: e.target.value })}
+                      placeholder="Enter ID number"
                       className={inputClasses}
                     />
                   </div>
@@ -932,9 +1107,108 @@ export default function VisitorsPage() {
                            className={inputClasses}
                          />
                        </div>
-                     </div>
-                   )}
-                 </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.id_verification}
+                          onChange={(e) => setFormData({ ...formData, id_verification: e.target.checked })}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">ID Verification</span>
+                      </label>
+                    </div>
+
+                    {formData.id_verification && (
+                      <div className="space-y-4 border-t border-gray-200 pt-4">
+                        <p className="text-sm font-medium text-gray-700">Document Details</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Document Type</label>
+                            <select
+                              value={formData.doc_type}
+                              onChange={(e) => setFormData({ ...formData, doc_type: e.target.value })}
+                              className={selectClasses}
+                            >
+                              {['National ID', 'Driver\'s Licence', 'Passport', 'Military ID', 'Staff ID', 'Other'].map((t) => (
+                                <option key={t} value={t}>{t}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Document Number</label>
+                            <input
+                              type="text"
+                              value={formData.doc_number}
+                              onChange={(e) => setFormData({ ...formData, doc_number: e.target.value })}
+                              placeholder="Enter document number"
+                              className={inputClasses}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Issuing Country</label>
+                            <input
+                              type="text"
+                              value={formData.issuing_country}
+                              onChange={(e) => setFormData({ ...formData, issuing_country: e.target.value })}
+                              placeholder="Enter country"
+                              className={inputClasses}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+                            <input
+                              type="date"
+                              value={formData.expiry_date}
+                              onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
+                              className={inputClasses}
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Front Image</label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) setDocFrontFile(file)
+                              }}
+                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Back Image (Optional)</label>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) setDocBackFile(file)
+                              }}
+                              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                          <textarea
+                            value={formData.doc_notes}
+                            onChange={(e) => setFormData({ ...formData, doc_notes: e.target.value })}
+                            placeholder="Additional notes about the document"
+                            rows={2}
+                            className={inputClasses}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t border-gray-200">
                   <button
                     type="button"
@@ -953,6 +1227,62 @@ export default function VisitorsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Watchlist Security Alert Modal */}
+        {watchlistModalOpen && watchlistMatch && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+            <div className="w-full max-w-md rounded-xl bg-white shadow-2xl border-2 border-red-500">
+              <div className="p-6 text-center border-b border-red-100 bg-red-50">
+                <ShieldAlert className="h-16 w-16 text-red-600 mx-auto mb-3" />
+                <h2 className="text-2xl font-bold text-red-900">SECURITY ALERT</h2>
+                <p className="text-sm text-red-700 mt-2">This visitor appears on the Watchlist.</p>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="space-y-2">
+                  <div>
+                    <span className="text-xs font-medium text-gray-500 uppercase">Name</span>
+                    <p className="text-sm font-semibold text-gray-900">{watchlistMatch.full_name}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-gray-500 uppercase">Category</span>
+                    <p className="text-sm text-gray-900">{watchlistMatch.category}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-gray-500 uppercase">Status</span>
+                    <p className={`text-sm font-medium ${watchlistMatch.status === 'Active' ? 'text-red-600' : 'text-gray-600'}`}>{watchlistMatch.status}</p>
+                  </div>
+                  {watchlistMatch.reason && (
+                    <div>
+                      <span className="text-xs font-medium text-gray-500 uppercase">Reason</span>
+                      <p className="text-sm text-gray-900">{watchlistMatch.reason}</p>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-3 pt-4">
+                  <button
+                    onClick={() => {
+                      setWatchlistModalOpen(false)
+                      setWatchlistMatch(null)
+                      setPendingRegistration(null)
+                    }}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel Registration
+                  </button>
+                  {(userRole === 'Admin' || userRole === 'Security') && (
+                    <button
+                      onClick={handleWatchlistOverride}
+                      disabled={submitting}
+                      className="w-full rounded-lg bg-red-600 px-4 py-3 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                    >
+                      {submitting ? 'Processing...' : 'Request Security Override'}
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}

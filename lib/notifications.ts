@@ -1,7 +1,7 @@
 import { supabase } from './supabase'
 import { logAuditAction } from './audit'
 
-export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'visitor' | 'appointment' | 'employee' | 'system'
+export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'visitor' | 'appointment' | 'employee' | 'system' | 'watchlist_match' | 'watchlist_added' | 'watchlist_updated' | 'watchlist_override'
 
 export interface Notification {
   id: string
@@ -219,6 +219,117 @@ export async function createHostAlert(
     hostUserId,
     null,
     'visit',
+    undefined
+  )
+}
+
+export async function createDocumentUploadedNotification(
+  visitorName: string,
+  documentType: string,
+  uploadedBy: string
+) {
+  return createNotification(
+    'Document Uploaded',
+    `${documentType} uploaded for visitor ${visitorName} by ${uploadedBy}.`,
+    'info',
+    null,
+    'Admin',
+    'visitor_document',
+    undefined
+  )
+}
+
+export async function createDocumentVerifiedNotification(
+  visitorName: string,
+  documentType: string,
+  verifiedBy: string
+) {
+  return createNotification(
+    'Document Verified',
+    `${documentType} for visitor ${visitorName} verified by ${verifiedBy}.`,
+    'success',
+    null,
+    'Admin',
+    'visitor_document',
+    undefined
+  )
+}
+
+export async function createVerificationFailedNotification(
+  visitorName: string,
+  documentType: string,
+  reason: string
+) {
+  return createNotification(
+    'Verification Failed',
+    `${documentType} for visitor ${visitorName} failed verification: ${reason}.`,
+    'error',
+    null,
+    'Admin',
+    'visitor_document',
+    undefined
+  )
+}
+
+export async function createWatchlistMatchNotification(
+  visitorName: string,
+  category: string,
+  reason: string | null
+) {
+  return createNotification(
+    'Watchlist Match',
+    `Visitor ${visitorName} matches watchlist entry: ${category}. ${reason || ''}`,
+    'watchlist_match',
+    null,
+    'Admin',
+    'visitor_watchlist',
+    undefined
+  )
+}
+
+export async function createWatchlistAddedNotification(
+  entryName: string,
+  category: string,
+  addedBy: string
+) {
+  return createNotification(
+    'Watchlist Entry Added',
+    `New watchlist entry for ${entryName} (${category}) added by ${addedBy}.`,
+    'watchlist_added',
+    null,
+    'Admin',
+    'visitor_watchlist',
+    undefined
+  )
+}
+
+export async function createWatchlistUpdatedNotification(
+  entryName: string,
+  category: string,
+  updatedBy: string
+) {
+  return createNotification(
+    'Watchlist Entry Updated',
+    `Watchlist entry for ${entryName} (${category}) updated by ${updatedBy}.`,
+    'watchlist_updated',
+    null,
+    'Admin',
+    'visitor_watchlist',
+    undefined
+  )
+}
+
+export async function createWatchlistOverrideNotification(
+  visitorName: string,
+  approvedBy: string
+) {
+  return createNotification(
+    'Watchlist Override Approved',
+    `Registration override approved for ${visitorName} by ${approvedBy}.`,
+    'watchlist_override',
+    null,
+    'Admin',
+    'visitor_watchlist',
     undefined
   )
 }

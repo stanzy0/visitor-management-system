@@ -26,6 +26,10 @@ export const PERMISSIONS: Record<UserRole, string[]> = {
     'export-reports',
     'emergency',
     'vehicles',
+    'watchlist',
+    'documents',
+    'analytics',
+    'host',
   ],
   Receptionist: [
     'dashboard',
@@ -36,12 +40,18 @@ export const PERMISSIONS: Record<UserRole, string[]> = {
     'check-out',
     'appointments',
     'vehicles',
+    'watchlist',
+    'documents',
   ],
   Security: [
     'dashboard',
     'scanner',
     'emergency',
     'vehicles',
+    'watchlist',
+    'documents',
+    'analytics',
+    'host',
   ],
   'Host Employee': [
     'dashboard',
@@ -49,6 +59,7 @@ export const PERMISSIONS: Record<UserRole, string[]> = {
     'view-today-visits',
     'view-visit-history',
     'appointments',
+    'host',
   ],
 }
 

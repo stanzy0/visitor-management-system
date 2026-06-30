@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/audit'
 import { generateVisitQRCode } from '@/lib/qrcode'
-import { Loader2, QrCode, Printer, Edit, ArrowLeft, X, Upload, Trash2 } from 'lucide-react'
+import { Loader2, QrCode, Printer, Edit, ArrowLeft, X, Upload, Trash2, FileText, CheckCircle, XCircle, Eye } from 'lucide-react'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 
 interface Visitor {
@@ -51,6 +51,8 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
   const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null)
   const [editPhotoError, setEditPhotoError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [documents, setDocuments] = useState<any[]>([])
+  const [previewDoc, setPreviewDoc] = useState<any | null>(null)
 
   useEffect(() => {
     const unwrapParams = async () => {
@@ -60,7 +62,7 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
     unwrapParams()
   }, [params])
 
-  useEffect(() => {
+   useEffect(() => {
     if (!visitorId) return
 
     const checkAuth = async () => {
@@ -72,6 +74,7 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
       setAuthChecking(false)
       await fetchVisitor()
       await fetchVisits()
+      await fetchDocuments()
     }
     checkAuth()
   }, [visitorId])
@@ -81,6 +84,19 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
       fetchAuditLogs()
     }
   }, [visits, visitorId])
+
+  const fetchDocuments = async () => {
+    if (!visitorId) return
+    const { data } = await supabase
+      .from('visitor_documents')
+      .select('*')
+      .eq('visitor_id', visitorId)
+      .order('created_at', { ascending: false })
+
+    if (data) {
+      setDocuments(data)
+    }
+  }
 
   const fetchVisitor = async () => {
     if (!visitorId) return
@@ -445,6 +461,62 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
 
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
               <div className="p-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">Documents</h3>
+              </div>
+              <div className="overflow-x-auto">
+                {documents.length > 0 ? (
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200 bg-gray-50">
+                        <th className="px-4 py-3 font-semibold text-gray-700">Type</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700">Number</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700">Expiry</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700">Verified By</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700 w-20">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {documents.map((doc) => (
+                        <tr key={doc.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 text-gray-600">{doc.document_type}</td>
+                          <td className="px-4 py-3 text-gray-600 font-mono">{doc.document_number}</td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {doc.expiry_date ? new Date(doc.expiry_date).toLocaleDateString() : '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${doc.verified ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                              {doc.verified ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                              {doc.verified ? 'Verified' : 'Unverified'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {doc.verified_by || '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => setPreviewDoc(doc)}
+                              className="p-1 rounded-md hover:bg-gray-100 transition-colors"
+                              title="View Images"
+                            >
+                              <Eye className="h-4 w-4 text-gray-600" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="p-12 text-center">
+                    <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                    <p className="text-gray-500">No documents uploaded</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+              <div className="p-4 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900">Audit History</h3>
               </div>
               <div className="overflow-x-auto">
@@ -568,6 +640,39 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
                   }
                 }} disabled={!visits.some(v => v.status === 'approved')} className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">Regenerate</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {previewDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setPreviewDoc(null)}>
+          <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-white">Document Preview - {previewDoc.document_type}</h3>
+              <button onClick={() => setPreviewDoc(null)} className="text-white hover:text-gray-300">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {previewDoc.front_image_url && (
+                <div>
+                  <p className="text-sm text-gray-300 mb-2">Front</p>
+                  <img src={previewDoc.front_image_url} alt="Front" className="w-full rounded-lg" />
+                </div>
+              )}
+              {previewDoc.back_image_url && (
+                <div>
+                  <p className="text-sm text-gray-300 mb-2">Back</p>
+                  <img src={previewDoc.back_image_url} alt="Back" className="w-full rounded-lg" />
+                </div>
+              )}
+            </div>
+            <div className="mt-4 text-white text-sm space-y-1">
+              <p><strong>Number:</strong> {previewDoc.document_number}</p>
+              <p><strong>Status:</strong> {previewDoc.verified ? 'Verified' : 'Unverified'}</p>
+              <p><strong>Issuing Country:</strong> {previewDoc.issuing_country || '—'}</p>
+              <p><strong>Expiry:</strong> {previewDoc.expiry_date ? new Date(previewDoc.expiry_date).toLocaleDateString() : '—'}</p>
             </div>
           </div>
         </div>
