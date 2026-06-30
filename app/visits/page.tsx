@@ -88,9 +88,9 @@ export default function VisitsPage() {
         { event: '*', schema: 'public', table: 'visits' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setVisits(prev => [payload.new as Visit, ...prev])
+            fetchVisits()
           } else if (payload.eventType === 'UPDATE') {
-            setVisits(prev => prev.map(v => v.id === (payload.new as Visit).id ? payload.new as Visit : v))
+            fetchVisits()
           } else if (payload.eventType === 'DELETE') {
             setVisits(prev => prev.filter(v => v.id !== (payload.old as Visit).id))
           }
@@ -128,6 +128,10 @@ export default function VisitsPage() {
       const hostName = updatedVisit?.[0]?.employee?.full_name || 'Unknown Host'
       const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
+      if (updatedVisit && updatedVisit.length > 0) {
+        setVisits(prev => prev.map(v => v.id === visitId ? updatedVisit[0] : v))
+      }
+
       if (newStatus === 'approved') {
         logAuditAction('Visit Approved', 'visit', visitId, `${visitorName}'s visit to ${hostName} approved`)
         const qrCodeDataUrl = await generateVisitQRCode(visitId)
@@ -140,6 +144,8 @@ export default function VisitsPage() {
       } else if (newStatus === 'checked_out') {
         logAuditAction('Visitor Checked Out', 'visit', visitId, `${visitorName} checked out at ${currentTime}`)
       }
+
+      fetchVisits()
     }
     setActionLoading(null)
   }
@@ -262,24 +268,24 @@ export default function VisitsPage() {
                       {visit.created_at ? new Date(visit.created_at).toLocaleDateString() : '—'}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
+                      <div className="flex flex-wrap items-center gap-2">
                         {visit.status === 'pending' && (
                           <>
                             <button
                               onClick={() => handleStatusChange(visit.id, 'approved')}
                               disabled={actionLoading === visit.id}
-                              className="p-1 rounded-md hover:bg-green-50 transition-colors"
-                              title="Approve"
+                              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-green-500/20 hover:shadow-lg hover:shadow-green-500/30 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200"
                             >
-                              {actionLoading === visit.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4 text-green-600" />}
+                              {actionLoading === visit.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
+                              Accept
                             </button>
                             <button
                               onClick={() => handleStatusChange(visit.id, 'rejected')}
                               disabled={actionLoading === visit.id}
-                              className="p-1 rounded-md hover:bg-red-50 transition-colors"
-                              title="Reject"
+                              className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-red-500 to-rose-600 px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-red-500/20 hover:shadow-lg hover:shadow-red-500/30 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200"
                             >
-                              {actionLoading === visit.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4 text-red-600" />}
+                              {actionLoading === visit.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <XCircle className="h-3.5 w-3.5" />}
+                              Reject
                             </button>
                           </>
                         )}
@@ -287,20 +293,20 @@ export default function VisitsPage() {
                           <button
                             onClick={() => handleStatusChange(visit.id, 'checked_in')}
                             disabled={actionLoading === visit.id}
-                            className="p-1 rounded-md hover:bg-blue-50 transition-colors"
-                            title="Check In"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200"
                           >
-                            {actionLoading === visit.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogIn className="h-4 w-4 text-blue-600" />}
+                            {actionLoading === visit.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogIn className="h-3.5 w-3.5" />}
+                            Check In
                           </button>
                         )}
                         {visit.status === 'checked_in' && (
                           <button
                             onClick={() => handleStatusChange(visit.id, 'checked_out')}
                             disabled={actionLoading === visit.id}
-                            className="p-1 rounded-md hover:bg-purple-50 transition-colors"
-                            title="Check Out"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-500 to-violet-600 px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-purple-500/20 hover:shadow-lg hover:shadow-purple-500/30 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 transition-all duration-200"
                           >
-                            {actionLoading === visit.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4 text-purple-600" />}
+                            {actionLoading === visit.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LogOut className="h-3.5 w-3.5" />}
+                            Check Out
                           </button>
                         )}
                       </div>
