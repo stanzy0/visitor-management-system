@@ -13,7 +13,7 @@ interface VisitData {
   status: 'pending' | 'approved' | 'rejected' | 'checked_in' | 'checked_out'
   check_in_time: string | null
   check_out_time: string | null
-  visitor: { full_name: string; company: string; photo_url: string | null } | null
+  visitor: { full_name: string; visitor_organization: string; photo_url: string | null } | null
   employee: { full_name: string; department: string } | null
 }
 
@@ -188,7 +188,7 @@ export default function QrScanner() {
 
       const { data, error } = await supabase
         .from('visits')
-        .select('*, visitor:visitors(full_name, company, photo_url), employee:employees(full_name, department)')
+        .select('*, visitor:visitors(full_name, visitor_organization, photo_url), employee:employees(full_name, department)')
         .eq('id', payload.visitId)
         .single()
 
@@ -316,7 +316,7 @@ export default function QrScanner() {
                 </div>
               )}
               <h2 className="text-xl font-bold text-gray-900">{scanResult.visitor?.full_name || '—'}</h2>
-              <p className="text-gray-600">{scanResult.visitor?.company || '—'}</p>
+              <p className="text-gray-600">{scanResult.visitor?.visitor_organization || '—'}</p>
             </div>
 
             <div className="mt-6 space-y-3 text-sm">

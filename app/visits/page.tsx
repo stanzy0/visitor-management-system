@@ -16,7 +16,7 @@ interface Visit {
   check_in_time: string | null
   check_out_time: string | null
   created_at: string
-  visitor: { full_name: string; company: string; photo_url?: string | null } | null
+  visitor: { full_name: string; visitor_organization: string; photo_url?: string | null } | null
   employee: { full_name: string } | null
 }
 
@@ -63,7 +63,7 @@ export default function VisitsPage() {
       .from('visits')
       .select(`
         *,
-        visitor:visitors(full_name, company, photo_url),
+        visitor:visitors(full_name, visitor_organization, photo_url),
         employee:employees(full_name)
       `)
       .order('created_at', { ascending: false })
@@ -155,7 +155,7 @@ export default function VisitsPage() {
   const filteredVisits = visits.filter((v) => {
     const matchesSearch =
       (v.visitor?.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (v.visitor?.company || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (v.visitor?.visitor_organization || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (v.employee?.full_name || '').toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === 'all' || v.status === statusFilter
     return matchesSearch && matchesStatus
@@ -221,7 +221,7 @@ export default function VisitsPage() {
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
                     <th className="px-4 py-3 font-semibold text-gray-700">Visitor Name</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Company</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Visitor Organization</th>
                     <th className="px-4 py-3 font-semibold text-gray-700">Host Employee</th>
                     <th className="px-4 py-3 font-semibold text-gray-700">Purpose</th>
                     <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
@@ -250,7 +250,7 @@ export default function VisitsPage() {
                         <span className="font-medium text-gray-900">{visit.visitor?.full_name || '—'}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{visit.visitor?.company || '—'}</td>
+                    <td className="px-4 py-3 text-gray-600">{visit.visitor?.visitor_organization || '—'}</td>
                     <td className="px-4 py-3 text-gray-600">{visit.employee?.full_name || '—'}</td>
                     <td className="px-4 py-3 text-gray-600">{visit.purpose || '—'}</td>
                     <td className="px-4 py-3">

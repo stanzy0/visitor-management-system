@@ -11,7 +11,7 @@ interface Visitor {
   full_name: string
   email: string
   phone: string
-  company: string
+  visitor_organization: string
   photo_url: string | null
   created_at: string
 }
@@ -25,23 +25,121 @@ interface VisitorFormData {
   full_name: string
   email: string
   phone: string
-  company: string
+  visitor_organization: string
   host_employee_id: string
   purpose: string
+  has_vehicle: boolean
+  registration_number: string
+  vehicle_type: string
+  vehicle_make: string
+  vehicle_model: string
+  vehicle_color: string
+  driver_name: string
+  driver_phone: string
+  parking_slot: string
+  notes: string
 }
 
 const initialFormData: VisitorFormData = {
   full_name: '',
   email: '',
   phone: '',
-  company: '',
+  visitor_organization: '',
   host_employee_id: '',
   purpose: '',
+  has_vehicle: false,
+  registration_number: '',
+  vehicle_type: '',
+  vehicle_make: '',
+  vehicle_model: '',
+  vehicle_color: '',
+  driver_name: '',
+  driver_phone: '',
+  parking_slot: '',
+  notes: '',
 }
 
 const inputClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
 const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
 const selectClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+
+const PURPOSE_OPTIONS = [
+  'Official Meeting',
+  'Training',
+  'Conference',
+  'Course',
+  'Seminar',
+  'Administrative Matter',
+  'Delivery',
+  'Maintenance',
+  'Contractor Visit',
+  'Official Assignment',
+  'Personal Visit',
+  'Other',
+]
+
+const VEHICLE_TYPE_OPTIONS = [
+  'Car',
+  'SUV',
+  'Truck',
+  'Bus',
+  'Motorcycle',
+  'Military Vehicle',
+  'Other',
+]
+
+const VEHICLE_MODEL_OPTIONS = [
+  'Corolla',
+  'Camry',
+  'Highlander',
+  'RAV4',
+  'Tacoma',
+  'Tundra',
+  'Land Cruiser',
+  'Hilux',
+  'Yaris',
+  'Avalon',
+  'Sienna',
+  '4Runner',
+  'Crown',
+  'bZ4X',
+  'Other',
+]
+
+const VEHICLE_MAKE_OPTIONS = [
+  'Toyota',
+  'Nissan',
+  'Ford',
+  'Mercedes-Benz',
+  'BMW',
+  'Audi',
+  'Volkswagen',
+  'Hyundai',
+  'Kia',
+  'Lexus',
+  'Mazda',
+  'Honda',
+  'Chevrolet',
+  'Jeep',
+  'Land Rover',
+  'Other',
+]
+
+const VEHICLE_COLOR_OPTIONS = [
+  'Black',
+  'White',
+  'Silver',
+  'Gray',
+  'Red',
+  'Blue',
+  'Green',
+  'Brown',
+  'Gold',
+  'Orange',
+  'Purple',
+  'Yellow',
+  'Other',
+]
 
 export default function VisitorsPage() {
   const [visitors, setVisitors] = useState<Visitor[]>([])
@@ -199,6 +297,7 @@ export default function VisitorsPage() {
         setPhotoFile(file)
         setPhotoPreview(URL.createObjectURL(blob))
         stopCamera()
+        setCameraActive(false)
       }
     }, 'image/jpeg', 0.9)
   }
@@ -333,7 +432,7 @@ export default function VisitorsPage() {
           full_name: formData.full_name,
           email: formData.email,
           phone: formData.phone,
-          company: formData.company,
+          visitor_organization: formData.visitor_organization,
           photo_url: photoUrl || null,
         },
       ])
@@ -366,6 +465,23 @@ export default function VisitorsPage() {
     if (visitError) {
       showNotification('error', visitError.message)
     } else {
+      if (formData.has_vehicle && formData.registration_number) {
+        await supabase.from('vehicles').insert([
+          {
+            visitor_id: visitorData[0].id,
+            registration_number: formData.registration_number,
+            vehicle_type: formData.vehicle_type,
+            vehicle_make: formData.vehicle_make || null,
+            vehicle_model: formData.vehicle_model || null,
+            vehicle_color: formData.vehicle_color || null,
+            driver_name: formData.driver_name || null,
+            driver_phone: formData.driver_phone || null,
+            parking_slot: formData.parking_slot || null,
+            notes: formData.notes || null,
+          },
+        ])
+      }
+
       logAuditAction('Visitor Registered', 'visitor', visitorData[0].id, `${formData.full_name} registered to meet ${hostEmployee} for ${formData.purpose}`)
       showNotification('success', 'Visitor registered successfully')
       setModalOpen(false)
@@ -381,7 +497,7 @@ export default function VisitorsPage() {
     (v) =>
       v.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       v.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      v.company.toLowerCase().includes(searchTerm.toLowerCase()),
+      v.visitor_organization.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   if (authChecking) {
@@ -440,7 +556,7 @@ export default function VisitorsPage() {
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
                   <th className="px-4 py-3 font-semibold text-gray-700">Name</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Company</th>
+                  <th className="px-4 py-3 font-semibold text-gray-700">Visitor Organization</th>
                   <th className="px-4 py-3 font-semibold text-gray-700">Created</th>
                   <th className="px-4 py-3 font-semibold text-gray-700 w-24">Actions</th>
                 </tr>
@@ -470,7 +586,7 @@ export default function VisitorsPage() {
                           </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{visitor.company || '—'}</td>
+                    <td className="px-4 py-3 text-gray-600">{visitor.visitor_organization || '—'}</td>
                     <td className="px-4 py-3 text-gray-600">
                       {visitor.created_at ? new Date(visitor.created_at).toLocaleDateString() : '—'}
                     </td>
@@ -544,12 +660,12 @@ export default function VisitorsPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Organization</label>
                     <input
                       type="text"
-                      value={formData.company}
-                      onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                      placeholder="Enter company"
+                      value={formData.visitor_organization}
+                      onChange={(e) => setFormData({ ...formData, visitor_organization: e.target.value })}
+                      placeholder="Enter organization"
                       className={inputClasses}
                     />
                   </div>
@@ -679,18 +795,146 @@ export default function VisitorsPage() {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Purpose</label>
-                    <input
-                      type="text"
-                      value={formData.purpose}
-                      onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
-                      required
-                      placeholder="Enter purpose"
-                      className={inputClasses}
-                    />
-                  </div>
-                </div>
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-1">Purpose</label>
+                     <select
+                       value={formData.purpose}
+                       onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
+                       required
+                       className={selectClasses}
+                     >
+                       <option value="">Select purpose</option>
+                       {PURPOSE_OPTIONS.map((option) => (
+                         <option key={option} value={option}>
+                           {option}
+                         </option>
+                       ))}
+                     </select>
+                   </div>
+
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle?</label>
+                     <select
+                       value={formData.has_vehicle ? 'Yes' : 'No'}
+                       onChange={(e) => setFormData({ ...formData, has_vehicle: e.target.value === 'Yes' })}
+                       className={selectClasses}
+                     >
+                       <option value="No">No</option>
+                       <option value="Yes">Yes</option>
+                     </select>
+                   </div>
+
+                   {formData.has_vehicle && (
+                     <div className="space-y-4 border-t border-gray-200 pt-4">
+                       <p className="text-sm font-medium text-gray-700">Vehicle Details</p>
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                         <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Registration Number</label>
+                           <input
+                             type="text"
+                             value={formData.registration_number}
+                             onChange={(e) => setFormData({ ...formData, registration_number: e.target.value })}
+                             placeholder="Enter registration number"
+                             className={inputClasses}
+                           />
+                         </div>
+                         <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
+                           <select
+                             value={formData.vehicle_type}
+                             onChange={(e) => setFormData({ ...formData, vehicle_type: e.target.value })}
+                             className={selectClasses}
+                             required={formData.has_vehicle}
+                           >
+                             <option value="">Select type</option>
+                             {VEHICLE_TYPE_OPTIONS.map((type) => (
+                               <option key={type} value={type}>{type}</option>
+                             ))}
+                           </select>
+                         </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Make</label>
+                            <select
+                              value={formData.vehicle_make}
+                              onChange={(e) => setFormData({ ...formData, vehicle_make: e.target.value })}
+                              className={selectClasses}
+                            >
+                              <option value="">Select make</option>
+                              {VEHICLE_MAKE_OPTIONS.map((make) => (
+                                <option key={make} value={make}>{make}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Model</label>
+                            <select
+                              value={formData.vehicle_model}
+                              onChange={(e) => setFormData({ ...formData, vehicle_model: e.target.value })}
+                              className={selectClasses}
+                            >
+                              <option value="">Select model</option>
+                              {VEHICLE_MODEL_OPTIONS.map((model) => (
+                                <option key={model} value={model}>{model}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Color</label>
+                            <select
+                              value={formData.vehicle_color}
+                              onChange={(e) => setFormData({ ...formData, vehicle_color: e.target.value })}
+                              className={selectClasses}
+                            >
+                              <option value="">Select color</option>
+                              {VEHICLE_COLOR_OPTIONS.map((color) => (
+                                <option key={color} value={color}>{color}</option>
+                              ))}
+                            </select>
+                          </div>
+                         <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Driver Name</label>
+                           <input
+                             type="text"
+                             value={formData.driver_name}
+                             onChange={(e) => setFormData({ ...formData, driver_name: e.target.value })}
+                             placeholder="Enter driver name"
+                             className={inputClasses}
+                           />
+                         </div>
+                         <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Driver Phone</label>
+                           <input
+                             type="tel"
+                             value={formData.driver_phone}
+                             onChange={(e) => setFormData({ ...formData, driver_phone: e.target.value })}
+                             placeholder="Enter driver phone"
+                             className={inputClasses}
+                           />
+                         </div>
+                         <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Parking Slot</label>
+                           <input
+                             type="text"
+                             value={formData.parking_slot}
+                             onChange={(e) => setFormData({ ...formData, parking_slot: e.target.value })}
+                             placeholder="e.g. A-12"
+                             className={inputClasses}
+                           />
+                         </div>
+                       </div>
+                       <div>
+                         <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                         <textarea
+                           value={formData.notes}
+                           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                           placeholder="Additional notes"
+                           rows={2}
+                           className={inputClasses}
+                         />
+                       </div>
+                     </div>
+                   )}
+                 </div>
                 <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t border-gray-200">
                   <button
                     type="button"

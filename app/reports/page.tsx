@@ -32,14 +32,14 @@ interface Visit {
   check_in_time: string | null
   check_out_time: string | null
   created_at: string
-  visitor: { full_name: string; company: string } | null
+  visitor: { full_name: string; visitor_organization: string } | null
   employee: { full_name: string; department: string } | null
 }
 
 interface Visitor {
   id: string
   full_name: string
-  company: string
+  visitor_organization: string
   created_at: string
 }
 
@@ -318,21 +318,21 @@ export default function ReportsPage() {
     setHostEmployeesData(Object.entries(hostCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10))
   }
 
-  const fetchCompaniesData = async (start: Date, end: Date) => {
-    const { data } = await supabase
-      .from('visits')
-      .select('visitor:visitors(company)')
-      .gte('created_at', start.toISOString())
-      .lt('created_at', end.toISOString()) as { data: Array<{ visitor?: { company?: string } }> | null }
+   const fetchCompaniesData = async (start: Date, end: Date) => {
+     const { data } = await supabase
+       .from('visits')
+       .select('visitor:visitors(visitor_organization)')
+       .gte('created_at', start.toISOString())
+       .lt('created_at', end.toISOString()) as { data: Array<{ visitor?: { visitor_organization?: string } }> | null }
 
-    const companyCounts: Record<string, number> = {}
-    data?.forEach(v => {
-      const company = v.visitor?.company || 'Unknown'
-      companyCounts[company] = (companyCounts[company] || 0) + 1
-    })
+     const orgCounts: Record<string, number> = {}
+     data?.forEach(v => {
+       const org = v.visitor?.visitor_organization || 'Unknown'
+       orgCounts[org] = (orgCounts[org] || 0) + 1
+     })
 
-    setCompaniesData(Object.entries(companyCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10))
-  }
+     setCompaniesData(Object.entries(orgCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10))
+   }
 
   const fetchHourlyData = async () => {
     const { data } = await supabase
@@ -353,50 +353,50 @@ export default function ReportsPage() {
     setHourlyData(Object.entries(hourlyCounts).map(([hour, count]) => ({ hour, count })))
   }
 
-  const fetchRecentVisits = async () => {
-    const { data } = await supabase
-      .from('visits')
-      .select('*, visitor:visitors(full_name, company), employee:employees(full_name)')
-      .order('created_at', { ascending: false })
-      .limit(10)
+   const fetchRecentVisits = async () => {
+     const { data } = await supabase
+       .from('visits')
+       .select('*, visitor:visitors(full_name, visitor_organization), employee:employees(full_name)')
+       .order('created_at', { ascending: false })
+       .limit(10)
 
-    setRecentVisits(data || [])
-  }
+     setRecentVisits(data || [])
+   }
 
-  const exportData = async (format: 'pdf' | 'excel' | 'csv') => {
-    setExporting(true)
-    logAuditAction('Report Exported', 'report', null, `Report exported in ${format.toUpperCase()} format`)
+   const exportData = async (format: 'pdf' | 'excel' | 'csv') => {
+     setExporting(true)
+     logAuditAction('Report Exported', 'report', null, `Report exported in ${format.toUpperCase()} format`)
 
-    try {
-      if (format === 'csv') {
-        const headers = ['Visitor', 'Company', 'Host', 'Purpose', 'Status', 'Check-In', 'Check-Out']
-        const csvContent = [
-          headers.join(','),
-          ...recentVisits.map(v => [
-            v.visitor?.full_name || '',
-            v.visitor?.company || '',
-            v.employee?.full_name || '',
-            v.purpose || '',
-            v.status,
-            v.check_in_time ? new Date(v.check_in_time).toLocaleString() : '',
-            v.check_out_time ? new Date(v.check_out_time).toLocaleString() : '',
-          ].join(','))
-        ].join('\n')
+     try {
+        if (format === 'csv') {
+          const headers = ['Visitor', 'Visitor Organization', 'Host', 'Purpose', 'Status', 'Check-In', 'Check-Out']
+         const csvContent = [
+           headers.join(','),
+           ...recentVisits.map(v => [
+             v.visitor?.full_name || '',
+             v.visitor?.visitor_organization || '',
+             v.employee?.full_name || '',
+             v.purpose || '',
+             v.status,
+             v.check_in_time ? new Date(v.check_in_time).toLocaleString() : '',
+             v.check_out_time ? new Date(v.check_out_time).toLocaleString() : '',
+           ].join(','))
+         ].join('\n')
 
-        const blob = new Blob([csvContent], { type: 'text/csv' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `visits-report-${dateFilter}.csv`
-        a.click()
-        URL.revokeObjectURL(url)
-      } else if (format === 'excel') {
-        const worksheet = XLSX.utils.json_to_sheet(
-          recentVisits.map(v => ({
-            'Visitor': v.visitor?.full_name || '',
-            'Company': v.visitor?.company || '',
-            'Host': v.employee?.full_name || '',
-            'Purpose': v.purpose || '',
+         const blob = new Blob([csvContent], { type: 'text/csv' })
+         const url = URL.createObjectURL(blob)
+         const a = document.createElement('a')
+         a.href = url
+         a.download = `visits-report-${dateFilter}.csv`
+         a.click()
+         URL.revokeObjectURL(url)
+       } else if (format === 'excel') {
+         const worksheet = XLSX.utils.json_to_sheet(
+           recentVisits.map(v => ({
+             'Visitor': v.visitor?.full_name || '',
+             'Visitor Organization': v.visitor?.visitor_organization || '',
+             'Host': v.employee?.full_name || '',
+             'Purpose': v.purpose || '',
             'Status': v.status,
             'Check-In': v.check_in_time ? new Date(v.check_in_time).toLocaleString() : '',
             'Check-Out': v.check_out_time ? new Date(v.check_out_time).toLocaleString() : '',
@@ -415,10 +415,10 @@ export default function ReportsPage() {
 
         autoTable(doc, {
           startY: 50,
-          head: [['Visitor', 'Company', 'Host', 'Purpose', 'Status', 'Check-In', 'Check-Out']],
+          head: [['Visitor', 'Visitor Organization', 'Host', 'Purpose', 'Status', 'Check-In', 'Check-Out']],
           body: recentVisits.map(v => [
             v.visitor?.full_name || '',
-            v.visitor?.company || '',
+            v.visitor?.visitor_organization || '',
             v.employee?.full_name || '',
             v.purpose || '',
             v.status,
@@ -623,7 +623,7 @@ export default function ReportsPage() {
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
                     <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Company</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Visitor Organization</th>
                     <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
                     <th className="px-4 py-3 font-semibold text-gray-700">Purpose</th>
                     <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
@@ -635,7 +635,7 @@ export default function ReportsPage() {
                   {recentVisits.map((visit) => (
                     <tr key={visit.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-3 font-medium text-gray-900">{visit.visitor?.full_name || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600">{visit.visitor?.company || '—'}</td>
+                      <td className="px-4 py-3 text-gray-600">{visit.visitor?.visitor_organization || '—'}</td>
                       <td className="px-4 py-3 text-gray-600">{visit.employee?.full_name || '—'}</td>
                       <td className="px-4 py-3 text-gray-600">{visit.purpose || '—'}</td>
                       <td className="px-4 py-3 text-gray-600">{visit.status.replace('_', ' ')}</td>

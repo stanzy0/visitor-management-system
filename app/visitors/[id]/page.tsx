@@ -12,7 +12,7 @@ interface Visitor {
   full_name: string
   email: string
   phone: string
-  company: string
+  visitor_organization: string
   photo_url: string | null
   created_at: string
 }
@@ -46,7 +46,7 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [qrModalOpen, setQrModalOpen] = useState(false)
   const [editSubmitting, setEditSubmitting] = useState(false)
-  const [editFormData, setEditFormData] = useState({ full_name: '', email: '', phone: '', company: '' })
+  const [editFormData, setEditFormData] = useState({ full_name: '', email: '', phone: '', visitor_organization: '' })
   const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null)
   const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null)
   const [editPhotoError, setEditPhotoError] = useState<string | null>(null)
@@ -174,12 +174,12 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
     }
   }
 
-  const openEditModal = () => {
-    if (visitor) {
-      setEditFormData({ full_name: visitor.full_name, email: visitor.email, phone: visitor.phone, company: visitor.company })
-      setEditModalOpen(true)
-    }
-  }
+   const openEditModal = () => {
+     if (visitor) {
+       setEditFormData({ full_name: visitor.full_name, email: visitor.email, phone: visitor.phone, visitor_organization: visitor.visitor_organization })
+       setEditModalOpen(true)
+     }
+   }
 
   const openQrModal = async () => {
     setQrModalOpen(true)
@@ -197,7 +197,7 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
     }
     const { error } = await supabase
       .from('visitors')
-      .update({ full_name: editFormData.full_name, email: editFormData.email, phone: editFormData.phone, company: editFormData.company, photo_url: photoUrl })
+      .update({ full_name: editFormData.full_name, email: editFormData.email, phone: editFormData.phone, visitor_organization: editFormData.visitor_organization, photo_url: photoUrl })
       .eq('id', visitorId)
     if (error) {
       console.error('Error updating visitor:', error)
@@ -349,7 +349,7 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
                   </div>
                 )}
                 <h2 className="text-xl font-bold text-gray-900">{visitor.full_name}</h2>
-                <p className="text-gray-600">{visitor.company || '—'}</p>
+                <p className="text-gray-600">{visitor.visitor_organization || '—'}</p>
               </div>
 
               <div className="mt-6 space-y-4">
@@ -362,8 +362,8 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
                   <p className="text-sm text-gray-900">{visitor.phone || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase">Company</p>
-                  <p className="text-sm text-gray-900">{visitor.company || '—'}</p>
+                  <p className="text-xs text-gray-500 uppercase">Visitor Organization</p>
+                  <p className="text-sm text-gray-900">{visitor.visitor_organization || '—'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 uppercase">Visitor Type</p>
@@ -506,8 +506,8 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
                   <input type="tel" value={editFormData.phone} onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
-                  <input type="text" value={editFormData.company} onChange={(e) => setEditFormData({ ...editFormData, company: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Organization</label>
+                  <input type="text" value={editFormData.visitor_organization} onChange={(e) => setEditFormData({ ...editFormData, visitor_organization: e.target.value })} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Photo (JPG/PNG, max 5MB)</label>

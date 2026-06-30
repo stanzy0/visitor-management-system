@@ -10,7 +10,7 @@ interface Visitor {
   full_name: string
   email: string
   phone: string
-  company: string
+  visitor_organization: string
   photo_url: string | null
 }
 
@@ -90,7 +90,7 @@ export default function BadgePage({ params }: { params: Promise<{ id: string }> 
               </div>
             )}
             <h2 className="text-xl font-bold text-gray-900">{visitor?.full_name || '—'}</h2>
-            <p className="text-gray-600">{visitor?.company || '—'}</p>
+            <p className="text-gray-600">{visitor?.visitor_organization || '—'}</p>
           </div>
           <div className="space-y-3 text-sm border-t pt-4">
             <div className="flex justify-between"><span className="text-gray-500">Host:</span><span className="font-medium">{approvedVisit?.employee?.full_name || '—'}</span></div>
