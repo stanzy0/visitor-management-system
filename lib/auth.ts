@@ -30,6 +30,7 @@ export const PERMISSIONS: Record<UserRole, string[]> = {
     'documents',
     'analytics',
     'host',
+    'email',
   ],
   Receptionist: [
     'dashboard',

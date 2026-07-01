@@ -44,6 +44,9 @@ interface Stats {
   documentsVerifiedToday: number
   pendingDocumentVerification: number
   expiredDocuments: number
+  emailsSentToday: number
+  failedEmails: number
+  pendingEmails: number
 }
 
 interface RecentNotification {
@@ -92,6 +95,7 @@ const NAV_SECTIONS = [
       { label: 'Audit Logs', icon: ShieldCheck, href: '/audit-logs', permission: 'audit-logs' },
       { label: 'Reports', icon: FileText, href: '/reports', permission: 'reports' },
       { label: 'Analytics', icon: BarChart3, href: '/analytics', permission: 'analytics' },
+      { label: 'Email Logs', icon: FileText, href: '/email-logs', permission: 'email' },
     ],
   },
   {
@@ -119,6 +123,9 @@ export default function DashboardPage() {
     documentsVerifiedToday: 0,
     pendingDocumentVerification: 0,
     expiredDocuments: 0,
+    emailsSentToday: 0,
+    failedEmails: 0,
+    pendingEmails: 0,
   })
   const [loadingStats, setLoadingStats] = useState(true)
   const [userRole, setUserRole] = useState<UserRole>('Receptionist')
@@ -153,7 +160,7 @@ export default function DashboardPage() {
     setLoadingStats(true)
     const today = new Date().toISOString().split('T')[0]
 
-    const [employeesRes, visitorsRes, pendingRes, approvedRes, checkedInRes, checkedOutRes, todaysRes, watchlistHitsRes, activeWatchlistRes, vipOnSiteRes, docsVerifiedRes, docsPendingRes, docsExpiredRes] = await Promise.all([
+    const [employeesRes, visitorsRes, pendingRes, approvedRes, checkedInRes, checkedOutRes, todaysRes, watchlistHitsRes, activeWatchlistRes, vipOnSiteRes, docsVerifiedRes, docsPendingRes, docsExpiredRes, emailsSentRes, failedEmailsRes, pendingEmailsRes] = await Promise.all([
       supabase.from('employees').select('id', { count: 'exact' }),
       supabase.from('visitors').select('id', { count: 'exact' }),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'pending'),
@@ -167,6 +174,9 @@ export default function DashboardPage() {
       supabase.from('visitor_documents').select('id', { count: 'exact' }).eq('verified', true).gte('verification_date', today),
       supabase.from('visitor_documents').select('id', { count: 'exact' }).eq('verified', false),
       supabase.from('visitor_documents').select('id', { count: 'exact' }).lt('expiry_date', new Date().toISOString().split('T')[0]),
+      supabase.from('email_logs').select('id', { count: 'exact' }).eq('status', 'sent').gte('created_at', today),
+      supabase.from('email_logs').select('id', { count: 'exact' }).eq('status', 'failed').gte('created_at', today),
+      supabase.from('email_logs').select('id', { count: 'exact' }).eq('status', 'pending'),
     ])
 
     setStats({
@@ -183,6 +193,9 @@ export default function DashboardPage() {
       documentsVerifiedToday: docsVerifiedRes.count ?? 0,
       pendingDocumentVerification: docsPendingRes.count ?? 0,
       expiredDocuments: docsExpiredRes.count ?? 0,
+      emailsSentToday: emailsSentRes.count ?? 0,
+      failedEmails: failedEmailsRes.count ?? 0,
+      pendingEmails: pendingEmailsRes.count ?? 0,
     })
     setLoadingStats(false)
   }
@@ -214,6 +227,7 @@ export default function DashboardPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => fetchRecentNotifications())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_watchlist' }, () => fetchStats())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_documents' }, () => fetchStats())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'email_logs' }, () => fetchStats())
       .subscribe()
   }
 

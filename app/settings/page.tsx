@@ -68,6 +68,15 @@ const DEFAULT_SETTINGS: SettingRow[] = [
   { key: 'max_login_attempts', value: 6, category: 'security', description: 'Max login attempts' },
   { key: 'force_password_change', value: false, category: 'security', description: 'Force password change on next login' },
   { key: 'auto_logout', value: true, category: 'security', description: 'Enable auto logout' },
+  // Email Settings
+  { key: 'resend_api_status', value: 'Not Configured', category: 'email', description: 'Resend API connection status' },
+  { key: 'sender_name', value: '', category: 'email', description: 'Sender display name' },
+  { key: 'sender_email', value: '', category: 'email', description: 'Sender email address' },
+  { key: 'reply_to_email', value: '', category: 'email', description: 'Reply-to email address' },
+  { key: 'enable_emails', value: true, category: 'email', description: 'Enable all email sending' },
+  { key: 'enable_appointment_emails', value: true, category: 'email', description: 'Enable appointment emails' },
+  { key: 'enable_reminder_emails', value: true, category: 'email', description: 'Enable reminder emails' },
+  { key: 'enable_emergency_emails', value: true, category: 'email', description: 'Enable emergency emails' },
   // Appearance
   { key: 'theme', value: 'light', category: 'appearance', description: 'UI theme' },
   { key: 'accent_color', value: '#2563eb', category: 'appearance', description: 'Accent color' },
@@ -80,6 +89,7 @@ const CATEGORIES = [
   { id: 'visitor', label: 'Visitor Settings', icon: UserCheck },
   { id: 'badge', label: 'Badge Settings', icon: QrCode },
   { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'email', label: 'Email', icon: Bell },
   { id: 'security', label: 'Security', icon: Shield },
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'backup', label: 'Backup', icon: Download },
