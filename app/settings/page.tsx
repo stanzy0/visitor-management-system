@@ -109,6 +109,8 @@ export default function SettingsPage() {
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   useEffect(() => {
+    let authUnsubscribe: (() => void) | null = null
+
     const checkAuth = async () => {
       const user = await getCurrentUser()
       if (!user || user.role !== 'Admin') {
@@ -119,12 +121,21 @@ export default function SettingsPage() {
       fetchSettings()
       fetchAuditInfo()
       setupRealtime()
+
+      authUnsubscribe = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.access_token) {
+          fetchEmailStatus()
+        }
+      }).data.subscription.unsubscribe
     }
     checkAuth()
 
     return () => {
       if (realtimeChannel.current) {
         supabase.removeChannel(realtimeChannel.current)
+      }
+      if (authUnsubscribe) {
+        authUnsubscribe()
       }
     }
   }, [])
@@ -141,6 +152,32 @@ export default function SettingsPage() {
 
     setSettings(map)
     setLoading(false)
+  }
+
+  const fetchEmailStatus = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = {}
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+
+      const res = await fetch('/api/admin/email-status', {
+        headers,
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setSettings((prev) => ({
+          ...prev,
+          resend_api_status: {
+            ...prev.resend_api_status,
+            value: data.configured ? 'Connected' : 'Not Configured',
+          },
+        }))
+      }
+    } catch (error) {
+      console.error('Failed to fetch email status:', error)
+    }
   }
 
   const fetchAuditInfo = async () => {
@@ -399,6 +436,10 @@ export default function SettingsPage() {
                               onChange={(e) => updateSetting(setting.key, parseInt(e.target.value) || 0)}
                               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                             />
+                          ) : setting.key === 'resend_api_status' ? (
+                            <span className={`text-sm font-medium ${
+                              setting.value === 'Connected' ? 'text-green-600' : 'text-red-600'
+                            }`}>{setting.value as string}</span>
                           ) : (
                             <input
                               type={setting.key.includes('email') ? 'email' : setting.key.includes('url') || setting.key.includes('website') ? 'url' : 'text'}

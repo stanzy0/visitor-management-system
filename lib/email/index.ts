@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import { EmailPayload, EmailLogRow } from './types'
+import { EmailPayload, EmailLogRow, EmailTemplate } from './types'
 
 const RESEND_API_URL = 'https://api.resend.com/emails'
 const MAX_RETRIES = 3
@@ -174,7 +174,7 @@ export async function retryFailedEmails(): Promise<void> {
 
 async function logEmail(payload: Partial<EmailPayload> & { status: string; error_message?: string; retry_count: number }): Promise<void> {
   const log: EmailLogRow = {
-    recipient_email: payload.to,
+    recipient_email: payload.to || '',
     recipient_name: payload.recipientName,
     subject: payload.subject || '',
     template: payload.template || 'welcome_user',
@@ -268,6 +268,8 @@ function getTemplateContent(template: EmailTemplate, data: Record<string, any>, 
   const time = data.time || new Date().toLocaleTimeString()
   const badgeNumber = data.badgeNumber || 'N/A'
   const location = data.location || 'Reception'
+  const orgEmail = data.orgEmail || 'support@visitor-management.local'
+  const orgPhone = data.orgPhone || ''
 
   switch (template) {
     case 'appointment_created':
@@ -470,6 +472,6 @@ function getTemplateContent(template: EmailTemplate, data: Record<string, any>, 
       `
 
     default:
-      return `<h2 style="margin-top: 0;">${template.replace(/_/g, ' ').toUpperCase()}</h2><p>${data.message || 'Notification from ' + orgName}</p>`
+      return `<h2 style="margin-top: 0;">${(template as string).replace(/_/g, ' ').toUpperCase()}</h2><p>${data.message || 'Notification from ' + orgName}</p>`
   }
 }
