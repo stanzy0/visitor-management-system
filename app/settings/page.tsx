@@ -122,7 +122,11 @@ export default function SettingsPage() {
       fetchAuditInfo()
       setupRealtime()
 
-      authUnsubscribe = supabase.auth.onAuthStateChange((_event, session) => {
+      authUnsubscribe = supabase.auth.onAuthStateChange((event, session) => {
+        console.log('[DEBUG] auth event:', event)
+        console.log('[DEBUG] session exists:', !!session)
+        console.log('[DEBUG] access_token exists:', !!session?.access_token)
+        console.log('[DEBUG] token length:', session?.access_token?.length || 0)
         if (session?.access_token) {
           fetchEmailStatus()
         }
@@ -156,11 +160,16 @@ export default function SettingsPage() {
 
   const fetchEmailStatus = async () => {
     try {
+      console.log('[DEBUG] fetchEmailStatus called')
       const { data: { session } } = await supabase.auth.getSession()
+      console.log('[DEBUG] getSession session exists:', !!session)
+      console.log('[DEBUG] getSession access_token exists:', !!session?.access_token)
+      console.log('[DEBUG] getSession token length:', session?.access_token?.length || 0)
       const headers: Record<string, string> = {}
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`
       }
+      console.log('[DEBUG] fetch headers:', Object.keys(headers))
 
       const res = await fetch('/api/admin/email-status', {
         headers,
