@@ -9,12 +9,20 @@ import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 
 interface VisitData {
   id: string
+  visitor_id: string
   purpose: string
   status: 'pending' | 'approved' | 'rejected' | 'checked_in' | 'checked_out'
   check_in_time: string | null
   check_out_time: string | null
   visitor: { full_name: string; visitor_organization: string; photo_url: string | null } | null
   employee: { full_name: string; department: string } | null
+  badge?: {
+    id: string
+    badge_number: string
+    badge_status: string
+    issued_at: string
+    expires_at: string
+  } | null
 }
 
 interface VehicleData {
@@ -181,42 +189,47 @@ export default function QrScanner() {
       }
 
       // Handle visitor pass QR
-      if (payload.type !== 'visitor-pass' || !payload.visitId) {
-        setError('Invalid QR Code')
-        return
-      }
-
-      const { data, error } = await supabase
-        .from('visits')
-        .select('*, visitor:visitors(full_name, visitor_organization, photo_url), employee:employees(full_name, department)')
-        .eq('id', payload.visitId)
-        .single()
-
-      if (error || !data) {
-        setError('Visit not found')
-        return
-      }
-
-      const visitData = data as VisitData
-      setScanResult(visitData)
-      await stopScanner()
-
-      logAuditAction('QR Code Scanned', 'visit', visitData.id, `QR scanned for visitor ${visitData.visitor?.full_name}`)
-
-      if (visitData.status === 'approved') {
-        const { error: updateError } = await supabase
-          .from('visits')
-          .update({ status: 'checked_in', check_in_time: new Date().toISOString() })
-          .eq('id', visitData.id)
-
-        if (!updateError) {
-          logAuditAction('Visitor Checked In', 'visit', visitData.id, `${visitData.visitor?.full_name} checked in`)
-          setScanResult({ ...visitData, status: 'checked_in', check_in_time: new Date().toISOString() })
-          setNotification({ type: 'success', message: 'Visitor Checked In Successfully' })
+      if (payload.type === 'visitor-pass' || payload.visitId) {
+        const visitId = payload.visitId || payload.visit_id
+        if (!visitId) {
+          setError('Invalid Visitor QR Code')
+          return
         }
-      }
 
-      setScanned(true)
+        const { data, error } = await supabase
+          .from('visits')
+          .select('*, visitor:visitors(full_name, visitor_organization, photo_url), employee:employees(full_name, department), badge:visitor_badges(*)')
+          .eq('id', visitId)
+          .single()
+
+        if (error || !data) {
+          setError('Visit not found')
+          return
+        }
+
+        const visitData = data as VisitData
+        setScanResult(visitData)
+        await stopScanner()
+
+        logAuditAction('QR Code Scanned', 'visit', visitData.id, `QR scanned for visitor ${visitData.visitor?.full_name}`)
+
+        if (visitData.status === 'approved') {
+          const { error: updateError } = await supabase
+            .from('visits')
+            .update({ status: 'checked_in', check_in_time: new Date().toISOString() })
+            .eq('id', visitData.id)
+
+          if (!updateError) {
+            logAuditAction('Visitor Checked In', 'visit', visitData.id, `${visitData.visitor?.full_name} checked in`)
+            setScanResult({ ...visitData, status: 'checked_in', check_in_time: new Date().toISOString() })
+            setNotification({ type: 'success', message: 'Visitor Checked In Successfully' })
+          }
+        }
+
+        setScanned(true)
+      } else {
+        setError('Invalid QR Code')
+      }
     } catch {
       setError('Invalid QR Code')
     }
@@ -324,11 +337,61 @@ export default function QrScanner() {
               <div><span className="text-gray-500">Department:</span><span className="ml-2 text-gray-900">{scanResult.employee?.department || '—'}</span></div>
               <div><span className="text-gray-500">Purpose:</span><span className="ml-2 text-gray-900">{scanResult.purpose || '—'}</span></div>
               <div><span className="text-gray-500">Status:</span><span className="ml-2 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">{scanResult.status.replace('_', ' ')}</span></div>
+              {(scanResult as any).badge && (
+                <>
+                  <div><span className="text-gray-500">Badge Status:</span><span className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                    (scanResult as any).badge.badge_status === 'Active' ? 'bg-green-50 text-green-700' :
+                    (scanResult as any).badge.badge_status === 'Expired' ? 'bg-red-50 text-red-700' :
+                    'bg-gray-50 text-gray-700'
+                  }`}>{(scanResult as any).badge.badge_status}</span></div>
+                  <div><span className="text-gray-500">Badge #:</span><span className="ml-2 font-mono text-gray-900">{(scanResult as any).badge.badge_number}</span></div>
+                  <div><span className="text-gray-500">Issued:</span><span className="ml-2 text-gray-900">{(scanResult as any).badge.issued_at ? new Date((scanResult as any).badge.issued_at).toLocaleString() : '—'}</span></div>
+                  <div><span className="text-gray-500">Expires:</span><span className="ml-2 text-gray-900">{(scanResult as any).badge.expires_at ? new Date((scanResult as any).badge.expires_at).toLocaleString() : '—'}</span></div>
+                </>
+              )}
               <div><span className="text-gray-500">Check-in Time:</span><span className="ml-2 text-gray-900">{scanResult.check_in_time ? new Date(scanResult.check_in_time).toLocaleString() : '—'}</span></div>
-              <div><span className="text-gray-500">Badge #:</span><span className="ml-2 font-mono text-gray-900">#{scanResult.id.slice(0, 8)}</span></div>
+              <div><span className="text-gray-500">Check-out Time:</span><span className="ml-2 text-gray-900">{scanResult.check_out_time ? new Date(scanResult.check_out_time).toLocaleString() : '—'}</span></div>
             </div>
 
-            <div className="mt-4">{getStatusMessage()}</div>
+            <div className="mt-4 space-y-2">
+              {getStatusMessage()}
+              {scanResult.status === 'approved' && (
+                <button
+                  onClick={async () => {
+                    const { error } = await supabase.from('visits').update({ status: 'checked_in', check_in_time: new Date().toISOString() }).eq('id', scanResult.id)
+                    if (!error) {
+                      logAuditAction('Visitor Checked In', 'visit', scanResult.id, `${scanResult.visitor?.full_name} checked in`)
+                      setScanResult({ ...scanResult, status: 'checked_in', check_in_time: new Date().toISOString() })
+                      setNotification({ type: 'success', message: 'Visitor Checked In Successfully' })
+                    }
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                >
+                  Check In
+                </button>
+              )}
+              {scanResult.status === 'checked_in' && (
+                <button
+                  onClick={async () => {
+                    const { error } = await supabase.from('visits').update({ status: 'checked_out', check_out_time: new Date().toISOString() }).eq('id', scanResult.id)
+                    if (!error) {
+                      logAuditAction('Visitor Checked Out', 'visit', scanResult.id, `${scanResult.visitor?.full_name} checked out`)
+                      setScanResult({ ...scanResult, status: 'checked_out', check_out_time: new Date().toISOString() })
+                      setNotification({ type: 'success', message: 'Visitor Checked Out Successfully' })
+                    }
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+                >
+                  Check Out
+                </button>
+              )}
+              <a
+                href={`/visitors/${scanResult.visitor_id}`}
+                className="block text-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                View Visitor
+              </a>
+            </div>
           </div>
         )}
 

@@ -28,6 +28,7 @@ import {
   Calendar,
   Building2,
   BarChart3,
+  IdCard,
 } from 'lucide-react'
 
 interface Stats {
@@ -67,6 +68,7 @@ const NAV_SECTIONS = [
       { label: 'Visitors', icon: Users, href: '/visitors', permission: 'visitors' },
       { label: 'Appointments', icon: Calendar, href: '/appointments', permission: 'appointments' },
       { label: 'Visits', icon: Clock, href: '/visits', permission: 'visits' },
+      { label: 'Badges', icon: IdCard, href: '/badges', permission: 'badges' },
       { label: 'QR Scanner', icon: Scan, href: '/scanner', permission: 'scanner' },
     ],
   },
