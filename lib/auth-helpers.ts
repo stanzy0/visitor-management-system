@@ -1,35 +1,23 @@
-import { headers } from 'next/headers'
-import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { createClient } from '@/lib/supabase/server'
 
-async function getUserFromAccessToken(token: string) {
-  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`
-  const response = await fetch(url, {
-    headers: {
-      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      Authorization: `Bearer ${token}`,
-    },
-    cache: 'no-store',
-  })
+async function getUser() {
+  const supabase = await createClient()
 
-  if (!response.ok) {
-    return null
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (session?.user) {
+    return session.user
   }
 
-  const body = await response.json()
-  const user = body.user ?? body
-  return user
+  return null
 }
 
 export async function requireAdmin() {
-  const authHeader = (await headers()).get('authorization')
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+  const user = await getUser()
 
-  if (!token) {
-    return { authorized: false, error: 'Unauthorized', status: 401 as const }
-  }
-
-  const user = await getUserFromAccessToken(token)
   if (!user) {
     return { authorized: false, error: 'Unauthorized', status: 401 as const }
   }
@@ -56,14 +44,8 @@ export async function requireAdmin() {
 }
 
 export async function requireRole(allowedRoles: string[]) {
-  const authHeader = (await headers()).get('authorization')
-  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+  const user = await getUser()
 
-  if (!token) {
-    return { authorized: false, error: 'Unauthorized', status: 401 as const }
-  }
-
-  const user = await getUserFromAccessToken(token)
   if (!user) {
     return { authorized: false, error: 'Unauthorized', status: 401 as const }
   }

@@ -51,7 +51,18 @@ export async function POST(
       return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
     }
 
-    const body = await request.json()
+    let body
+    try {
+      body = await request.json()
+    } catch (err) {
+      return NextResponse.json(
+        {
+          error: err instanceof Error ? err.message : 'Invalid JSON body',
+        },
+        { status: 400 }
+      )
+    }
+
     const { action } = body
 
     if (action === 'print') {
@@ -123,7 +134,13 @@ export async function POST(
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (err) {
-    console.error(err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Badge action error:', err)
+
+    return NextResponse.json(
+      {
+        error: err instanceof Error ? err.message : 'Internal server error',
+      },
+      { status: 500 }
+    )
   }
 }

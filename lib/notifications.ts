@@ -1,5 +1,5 @@
 import { supabase } from './supabase'
-import { logAuditAction } from './audit'
+import { logAuditAction } from '@/lib/client/audit'
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'visitor' | 'appointment' | 'employee' | 'system' | 'watchlist_match' | 'watchlist_added' | 'watchlist_updated' | 'watchlist_override'
 

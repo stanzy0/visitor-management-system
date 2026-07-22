@@ -1,11 +1,11 @@
-import { supabase } from './supabase'
+import { supabase } from '@/lib/supabase'
 
 export async function logAuditAction(
   action: string,
   entityType: string,
   entityId: string | null,
   details: string
-) {
+): Promise<void> {
   try {
     const {
       data: { user },

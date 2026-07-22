@@ -1,22 +1,27 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { createRoot } from 'react-dom/client'
 import { supabase } from '@/lib/supabase'
-import { logAuditAction } from '@/lib/audit'
+import { logAuditAction } from '@/lib/client/audit'
 import {
   Search,
   Loader2,
   Printer,
   Eye,
   RefreshCw,
-  Download,
-  Filter,
   QrCode,
 } from 'lucide-react'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
-import VisitorBadge from '@/components/VisitorBadge'
-import { VisitorBadge as VisitorBadgeType, getBadgeByVisitId, printBadge, reprintBadge, cancelBadge } from '@/lib/badges'
+import { getBadges, getBadgeById, reprintBadge, cancelBadge } from '@/lib/client/badges'
+import { printBadgeWindow } from '@/lib/badge/badge-print'
+import { buildBadgePdfFilename, getBadgeWatermark } from '@/lib/badge/badge-utils'
+import { BADGE_PDF } from '@/lib/badge/badge-constants'
 import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
+import BadgeLayout from '@/components/BadgeLayout'
+import VisitorBadge from '@/components/VisitorBadge'
+import type { VisitorBadge as VisitorBadgeType } from '@/lib/badge/badge-types'
 
 interface Visit {
   id: string
@@ -71,18 +76,18 @@ export default function BadgesPage() {
 
   const fetchBadges = async () => {
     setLoading(true)
-    let query = supabase
-      .from('visitor_badges')
-      .select('*, visit:visits(*, visitor:visitors(full_name, visitor_organization, photo_url), employee:employees(full_name, department))')
-      .order('created_at', { ascending: false })
 
-    const { data, error } = await query
+    const { data, error } = await supabase
+      .from('visitor_badges')
+      .select('*')
+      .order('created_at', { ascending: false })
 
     if (error) {
       showNotification('error', error.message)
     } else {
       setBadges(data || [])
     }
+
     setLoading(false)
   }
 
@@ -94,7 +99,19 @@ export default function BadgesPage() {
       .order('created_at', { ascending: false })
 
     if (!error && data) {
-      setVisits(data)
+      const visitIds = data.map(v => v.id)
+      const { data: badges } = await supabase
+        .from('visitor_badges')
+        .select('id, visit_id, badge_number, badge_status, qr_token, issued_at, expires_at, reprint_count')
+        .in('visit_id', visitIds)
+
+      const badgesByVisitId = new Map(badges?.map(b => [b.visit_id, b]) || [])
+      const visitsWithBadges = data.map(v => ({
+        ...v,
+        badge: badgesByVisitId.get(v.id) || null,
+      }))
+
+      setVisits(visitsWithBadges)
     }
   }
 
@@ -107,6 +124,7 @@ export default function BadgesPage() {
       .channel('badges-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_badges' }, () => {
         fetchBadges()
+        fetchVisits()
       })
       .subscribe()
   }
@@ -118,7 +136,7 @@ export default function BadgesPage() {
 
   const handleGenerateBadge = async (visitId: string) => {
     try {
-      const { createBadge } = await import('@/lib/badges')
+      const { createBadge } = await import('@/lib/client/badges')
       const badge = await createBadge(visitId, 24)
       const visitorName = visits.find(v => v.id === visitId)?.visitor?.full_name || 'Visitor'
       await logAuditAction('Badge Generated', 'badge', badge.id, `Badge ${badge.badge_number} generated for ${visitorName}`)
@@ -126,13 +144,19 @@ export default function BadgesPage() {
       fetchBadges()
       fetchVisits()
     } catch (error) {
-      showNotification('error', error instanceof Error ? error.message : 'Failed to generate badge')
+      const message = error instanceof Error ? error.message : 'Failed to generate badge'
+      if (message.includes('Badge already exists for this visit')) {
+        showNotification('error', 'This visit already has a badge.')
+      } else {
+        showNotification('error', message)
+      }
     }
   }
 
   const handleReprint = async (badgeId: string) => {
     try {
       await reprintBadge(badgeId)
+      await printBadgeWindow(badgeId)
       const badge = badges.find(b => b.id === badgeId)
       await logAuditAction('Badge Reprinted', 'badge', badgeId, `Badge ${badge?.badge_number} reprinted`)
       showNotification('success', 'Badge reprinted successfully')
@@ -156,43 +180,48 @@ export default function BadgesPage() {
 
   const handleDownloadPDF = async (badge: VisitorBadgeType) => {
     try {
-      const pdf = new jsPDF()
-      pdf.setFontSize(20)
-      pdf.setTextColor(37, 99, 235)
-      pdf.text('VISITOR BADGE', 105, 20, { align: 'center' })
+      const watermark = badge.badge_status === 'Expired' ? 'EXPIRED' : badge.badge_status === 'Cancelled' ? 'CANCELLED' : undefined
 
-      pdf.setDrawColor(200, 200, 200)
-      pdf.line(20, 25, 190, 25)
+      const container = document.createElement('div')
+      container.style.cssText = 'position:fixed;left:-9999px;top:0;background:#ffffff;padding:24px;z-index:-1;'
+      document.body.appendChild(container)
 
-      pdf.setFontSize(12)
-      pdf.setTextColor(60, 60, 60)
-      pdf.text(`Badge Number: ${badge.badge_number}`, 20, 35)
-      pdf.text(`Status: ${badge.badge_status}`, 20, 42)
-      pdf.text(`Issued: ${new Date(badge.issued_at).toLocaleString()}`, 20, 49)
-      pdf.text(`Expires: ${new Date(badge.expires_at).toLocaleString()}`, 20, 56)
+      const rootEl = document.createElement('div')
+      container.appendChild(rootEl)
 
-      if (badge.visit) {
-        pdf.text(`Visitor: ${badge.visit.visitor?.full_name || '—'}`, 20, 66)
-        pdf.text(`Organization: ${badge.visit.visitor?.visitor_organization || '—'}`, 20, 73)
-        pdf.text(`Host: ${badge.visit.employee?.full_name || '—'}`, 20, 80)
-        pdf.text(`Purpose: ${badge.visit.purpose || '—'}`, 20, 87)
-      }
+      const root = createRoot(rootEl)
+      root.render(<BadgeLayout badge={badge} watermark={watermark} />)
 
-      const qrData = JSON.stringify({
-        visitId: badge.visit_id,
-        qrToken: badge.badge_number,
-        type: 'visitor-pass',
+      await new Promise<void>(resolve => {
+        const raf = requestAnimationFrame(() => {
+          setTimeout(resolve, 150)
+        })
       })
 
-      const QRCodeToDataURL = (await import('qrcode')).default
-      const qrDataUrl = await QRCodeToDataURL(qrData, { width: 120, margin: 1 })
-      pdf.addImage(qrDataUrl, 'PNG', 140, 60, 50, 50)
+      const canvas = await html2canvas(rootEl, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      })
 
-      pdf.setFontSize(8)
-      pdf.setTextColor(150, 150, 150)
-      pdf.text('Scan for check-in/out and verification', 165, 115, { align: 'center' })
+      root.unmount()
+      document.body.removeChild(container)
 
-      pdf.save(`badge-${badge.badge_number}.pdf`)
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      })
+
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = pdf.internal.pageSize.getHeight()
+      const imgWidth = pageWidth - 20
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight)
+      pdf.save(`Visitor_Badge_${badge.badge_number}.pdf`)
       showNotification('success', 'Badge PDF downloaded')
     } catch (error) {
       showNotification('error', error instanceof Error ? error.message : 'Failed to download PDF')
@@ -200,11 +229,15 @@ export default function BadgesPage() {
   }
 
   const handlePrint = async (badgeId: string) => {
-    await printBadge(badgeId)
-    const badge = badges.find(b => b.id === badgeId)
-    await logAuditAction('Badge Printed', 'badge', badgeId, `Badge ${badge?.badge_number} printed`)
-    window.print()
-    fetchBadges()
+    try {
+      await printBadgeWindow(badgeId)
+      const badge = badges.find(b => b.id === badgeId)
+      await logAuditAction('Badge Printed', 'badge', badgeId, `Badge ${badge?.badge_number} printed`)
+      showNotification('success', 'Badge printed successfully')
+      fetchBadges()
+    } catch (error) {
+      showNotification('error', error instanceof Error ? error.message : 'Failed to print badge')
+    }
   }
 
   const filteredBadges = badges.filter(badge => {
@@ -465,7 +498,40 @@ export default function BadgesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      {!visit.badge && ['approved', 'checked_in', 'checked_out'].includes(visit.status) && (
+                      {visit.badge ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            onClick={() => setSelectedBadge(visit.badge!)}
+                            disabled={!visit.badge}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 text-blue-700 px-3 py-1.5 text-xs font-medium hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            View
+                          </button>
+                          <button
+                            onClick={() => handlePrint(visit.badge!.id)}
+                            disabled={!visit.badge}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-green-50 text-green-700 px-3 py-1.5 text-xs font-medium hover:bg-green-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Printer className="h-3.5 w-3.5" />
+                            Print
+                          </button>
+                          <button
+                            onClick={() => handleReprint(visit.badge!.id)}
+                            disabled={(visit.badge!.reprint_count || 0) >= 5}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 text-amber-700 px-3 py-1.5 text-xs font-medium hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                            Reprint
+                          </button>
+                          <button
+                            onClick={() => handleCancel(visit.badge!.id)}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-red-50 text-red-700 px-3 py-1.5 text-xs font-medium hover:bg-red-100"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : ['approved', 'checked_in', 'checked_out'].includes(visit.status) ? (
                         <button
                           onClick={() => handleGenerateBadge(visit.id)}
                           className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all duration-200"
@@ -473,10 +539,7 @@ export default function BadgesPage() {
                           <QrCode className="h-3.5 w-3.5" />
                           Generate Badge
                         </button>
-                      )}
-                      {visit.badge && (
-                        <span className="text-xs text-gray-500">Badge: {visit.badge.badge_number}</span>
-                      )}
+                      ) : null}
                     </td>
                   </tr>
                 ))}

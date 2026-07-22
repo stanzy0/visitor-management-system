@@ -1,8 +1,8 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { logAuditAction } from '@/lib/audit'
+import { logAuditAction } from '@/lib/client/audit'
 import { Loader2, Camera, StopCircle, RefreshCw, QrCode } from 'lucide-react'
 import { Html5Qrcode } from 'html5-qrcode'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
@@ -188,8 +188,62 @@ export default function QrScanner() {
         return
       }
 
-      // Handle visitor pass QR
-      if (payload.type === 'visitor-pass' || payload.visitId) {
+      // Handle invitation QR
+      if (payload.type === 'invitation' || payload.token) {
+        const token = payload.token
+        if (!token) {
+          setError('Invalid Invitation QR Code')
+          return
+        }
+
+        const { data: invitation, error: invError } = await supabase
+          .from('visitor_invitations')
+          .select('*, host:employees(*, user:user_roles(*))')
+          .eq('invitation_token', token)
+          .single()
+
+        if (invError || !invitation) {
+          setError('Invitation not found')
+          return
+        }
+
+        if (invitation.status === 'Expired' || invitation.status === 'Cancelled') {
+          setError(`Invitation is ${invitation.status.toLowerCase()}`)
+          return
+        }
+
+        const { data: existingVisit } = await supabase
+          .from('visits')
+          .select('id, status, check_in_time, check_out_time')
+          .eq('visitor_id', invitation.visitor_email)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        setScanResult({
+          id: invitation.id,
+          visitor_id: invitation.visitor_email,
+          purpose: invitation.purpose,
+          status: existingVisit?.status || 'pending',
+          check_in_time: existingVisit?.check_in_time || null,
+          check_out_time: existingVisit?.check_out_time || null,
+          created_at: invitation.created_at,
+          visitor: {
+            full_name: invitation.visitor_name,
+            visitor_organization: invitation.visitor_organization || '—',
+            photo_url: null,
+          },
+          employee: {
+            full_name: (invitation as any).host?.full_name || '—',
+            department: (invitation as any).host?.department || '—',
+          },
+          badge: null,
+        } as any)
+
+        await stopScanner()
+        logAuditAction('Invitation QR Scanned', 'invitation', invitation.id, `QR scanned for invitation ${token}`)
+        setScanned(true)
+      } else if (payload.type === 'visitor-pass' || payload.visitId) {
         const visitId = payload.visitId || payload.visit_id
         if (!visitId) {
           setError('Invalid Visitor QR Code')
@@ -265,7 +319,7 @@ export default function QrScanner() {
       <div className="max-w-4xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/dashboard" className="text-sm text-blue-600 hover:underline">
-            ← Back to Dashboard
+            ? Back to Dashboard
           </a>
         </div>
 

@@ -471,6 +471,41 @@ function getTemplateContent(template: EmailTemplate, data: Record<string, any>, 
         </div>
       `
 
+    case 'invitation_created':
+      return `
+        <h2 style="margin-top: 0;">You're Invited to Visit ${orgName}</h2>
+        <p>Dear ${visitorName},</p>
+        <p>You have been invited to visit ${orgName}. Please complete your registration using the link below:</p>
+        <div class="info-box">
+          <p><strong>Host:</strong> ${hostName}</p>
+          <p><strong>Date:</strong> ${date}</p>
+          <p><strong>Time:</strong> ${time}</p>
+          <p><strong>Purpose:</strong> ${purpose}</p>
+        </div>
+        <p style="text-align: center; margin: 24px 0;">
+          <a href="${data.registrationUrl || '#'}" class="button">Complete Registration</a>
+        </p>
+        <p style="font-size: 12px; color: #6b7280;">This link will expire on ${data.expiresAt || 'the scheduled visit date'}. Please complete your registration before then.</p>
+      `
+
+    case 'invitation_approved':
+      return `
+        <h2 style="margin-top: 0;">Registration Approved</h2>
+        <p>Dear ${visitorName},</p>
+        <p>Your registration has been approved! Here are your visit details:</p>
+        <div class="info-box">
+          <p><strong>Host:</strong> ${hostName}</p>
+          <p><strong>Date:</strong> ${date}</p>
+          <p><strong>Time:</strong> ${time}</p>
+          <p><strong>Purpose:</strong> ${purpose}</p>
+          <p><strong>Badge Number:</strong> ${badgeNumber}</p>
+        </div>
+        <p style="text-align: center; margin: 24px 0;">
+          <a href="${data.qrCodeUrl || '#'}" class="button">Download Badge</a>
+        </p>
+        <p>Please present your badge at reception upon arrival.</p>
+      `
+
     default:
       return `<h2 style="margin-top: 0;">${(template as string).replace(/_/g, ' ').toUpperCase()}</h2><p>${data.message || 'Notification from ' + orgName}</p>`
   }

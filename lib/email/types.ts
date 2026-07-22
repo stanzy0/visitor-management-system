@@ -14,6 +14,8 @@ export type EmailTemplate =
   | 'password_reset'
   | 'account_created'
   | 'welcome_user'
+  | 'invitation_created'
+  | 'invitation_approved'
 
 export interface EmailPayload {
   to: string

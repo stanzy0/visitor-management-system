@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { logAuditAction } from '@/lib/audit'
+import { logAuditAction } from '@/lib/client/audit'
 import { Search, Plus, Loader2, Upload, X, Camera, RefreshCw, Trash2, ShieldAlert } from 'lucide-react'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
 
@@ -180,6 +180,7 @@ export default function VisitorsPage() {
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([])
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0)
   const [cameraPermissionError, setCameraPermissionError] = useState<string | null>(null)
+  const [videoReady, setVideoReady] = useState(false)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [watchlistMatch, setWatchlistMatch] = useState<any | null>(null)
@@ -222,6 +223,7 @@ export default function VisitorsPage() {
 
   useEffect(() => {
     if (cameraActive) {
+      setVideoReady(false)
       startCamera()
     } else {
       stopCamera()
@@ -313,13 +315,15 @@ export default function VisitorsPage() {
 
     const video = videoRef.current
     const canvas = canvasRef.current
-    canvas.width = video.videoWidth
-    canvas.height = video.videoHeight
+    const vw = video.videoWidth || 640
+    const vh = video.videoHeight || 480
+    canvas.width = vw
+    canvas.height = vh
 
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    ctx.drawImage(video, 0, 0, vw, vh)
     
     canvas.toBlob((blob) => {
       if (blob) {
@@ -592,12 +596,17 @@ export default function VisitorsPage() {
           document_number: data.doc_number,
           issuing_country: data.issuing_country || null,
           expiry_date: data.expiry_date || null,
-          notes: data.doc_notes || null,
+          verification_notes: data.doc_notes || null,
         }
 
         if (docFrontFile) {
           const frontUrl = await uploadDocumentImage(docFrontFile, 'doc-front')
-          if (frontUrl) docPayload.front_image_url = frontUrl
+          if (frontUrl) {
+            docPayload.front_image_url = frontUrl
+            docPayload.file_url = frontUrl
+            docPayload.file_name = docFrontFile.name
+            docPayload.mime_type = docFrontFile.type
+          }
         }
         if (docBackFile) {
           const backUrl = await uploadDocumentImage(docBackFile, 'doc-back')
@@ -779,7 +788,7 @@ export default function VisitorsPage() {
 
         {modalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
+            <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
               <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
                 <h2 className="text-lg font-semibold text-gray-900">Register Visitor</h2>
                 <button
@@ -865,6 +874,7 @@ export default function VisitorsPage() {
                                 playsInline
                                 className="w-full rounded-lg bg-black object-cover"
                                 style={{ aspectRatio: '4/3' }}
+                                onLoadedMetadata={() => setVideoReady(true)}
                               />
                               <canvas ref={canvasRef} className="hidden" />
                               
@@ -883,7 +893,8 @@ export default function VisitorsPage() {
                                   <button
                                     type="button"
                                     onClick={capturePhoto}
-                                    className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+                                    disabled={!videoReady}
+                                    className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                   >
                                     <Camera className="h-3 w-3" />
                                     Capture

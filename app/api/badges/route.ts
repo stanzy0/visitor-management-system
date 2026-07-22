@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
+
     const { visit_id } = body
 
     if (!visit_id) {
@@ -83,17 +84,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Visit is not in a valid status for badge creation' }, { status: 400 })
     }
 
-    const existing = await supabaseAdmin
+    const { data: existingBadge } = await supabaseAdmin
       .from('visitor_badges')
       .select('id')
       .eq('visit_id', visit_id)
       .single()
 
-    if (existing.data) {
+    if (existingBadge) {
       return NextResponse.json({ error: 'Badge already exists for this visit' }, { status: 400 })
     }
 
     const badgeNumberRes = await supabaseAdmin.rpc('generate_visitor_badge_number')
+
     if (badgeNumberRes.error || !badgeNumberRes.data) {
       return NextResponse.json({ error: 'Failed to generate badge number' }, { status: 500 })
     }
@@ -120,7 +122,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: badge }, { status: 201 })
   } catch (err) {
-    console.error(err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Badge creation error:', err)
+
+    return NextResponse.json(
+      {
+        error: err instanceof Error ? err.message : 'Internal server error',
+      },
+      { status: 500 }
+    )
   }
 }

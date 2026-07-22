@@ -2,25 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { logAuditAction } from '@/lib/audit'
-import { Search, Loader2, CheckCircle, XCircle, LogIn, LogOut, QrCode, Eye, Printer } from 'lucide-react'
+import { logAuditAction } from '@/lib/client/audit'
+import { Search, Loader2, CheckCircle, XCircle, LogIn, LogOut, QrCode, Eye, Printer, RefreshCw, X } from 'lucide-react'
 import { generateVisitQRCode } from '@/lib/qrcode'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 import VisitorBadge from '@/components/VisitorBadge'
-import { createBadge, getBadgeByVisitId, printBadge } from '@/lib/badges'
+import { createBadge } from '@/lib/client/badges'
+import { printBadgeWindow } from '@/lib/badge/badge-print'
+import type { VisitorBadge as VisitorBadgeType } from '@/lib/badge/badge-types'
 
-interface Badge {
-  id: string
-  visit_id: string
-  badge_number: string
-  qr_token: string
-  badge_status: string
-  issued_at: string
-  expires_at: string
-  printed_at: string | null
-  printed_by: string | null
-  reprint_count: number
-}
+type Badge = VisitorBadgeType
 
 interface Visit {
   id: string
@@ -76,20 +67,88 @@ export default function VisitsPage() {
 
   const fetchVisits = async () => {
     setLoading(true)
+
     const { data, error } = await supabase
       .from('visits')
       .select(`
         *,
         visitor:visitors(full_name, visitor_organization, photo_url),
-        employee:employees(full_name),
-        badge:visitor_badges(*)
+        employee:employees(full_name)
       `)
       .order('created_at', { ascending: false })
 
     if (error) {
       showNotification('error', error.message)
-    } else {
-      setVisits(data || [])
+      setLoading(false)
+      return
+    }
+
+    if (data) {
+      const visitIds = data.map(v => v.id)
+      let badges: Array<{
+        id: string
+        visit_id: string
+        badge_number: string
+        badge_status: string
+        qr_token: string
+        issued_at: string
+        expires_at: string
+        printed_at: string | null
+        printed_by: string | null
+        reprint_count: number
+        created_at: string
+        updated_at: string
+        visit: {
+          id: string
+          visitor: { full_name: string; visitor_organization: string; photo_url?: string | null } | null
+          employee: { full_name: string; department: string } | null
+          purpose: string
+          check_in_time: string | null
+          check_out_time: string | null
+        } | null
+      }> = []
+
+      if (visitIds.length > 0) {
+        const result = await supabase
+          .from('visitor_badges')
+          .select(`
+            id,
+            visit_id,
+            badge_number,
+            badge_status,
+            qr_token,
+            issued_at,
+            expires_at,
+            printed_at,
+            printed_by,
+            reprint_count,
+            created_at,
+            updated_at,
+            visit:visits(
+              id,
+              visitor:visitors(full_name, visitor_organization, photo_url),
+              employee:employees(full_name, department),
+              purpose,
+              check_in_time,
+              check_out_time
+            )
+          `)
+          .in('visit_id', visitIds)
+
+        const rawBadges = result.data || []
+        badges = rawBadges.map((b: any) => ({
+          ...b,
+          visit: Array.isArray(b.visit) ? b.visit[0] : b.visit,
+        }))
+      }
+
+      const badgesByVisitId = new Map(badges.map(b => [b.visit_id, b]))
+      const visitsWithBadges = data.map(v => ({
+        ...v,
+        badge: badgesByVisitId.get(v.id) || null,
+      }))
+
+      setVisits(visitsWithBadges)
     }
     setLoading(false)
   }
@@ -171,9 +230,15 @@ export default function VisitsPage() {
 
   const handleGenerateBadge = async (visitId: string) => {
     try {
-      const badge = await createBadge(visitId, 24)
       const visit = visits.find(v => v.id === visitId)
-      await logAuditAction('Badge Generated', 'badge', badge.id, `Badge ${badge.badge_number} generated for ${visit?.visitor?.full_name || 'visitor'}`)
+      if (visit?.badge?.id) {
+        showNotification('error', 'This visit already has a badge.')
+        return
+      }
+
+      const badge = await createBadge(visitId, 24)
+      const visitName = visit?.visitor?.full_name || 'visitor'
+      await logAuditAction('Badge Generated', 'badge', badge.id, `Badge ${badge.badge_number} generated for ${visitName}`)
       showNotification('success', `Badge ${badge.badge_number} generated successfully`)
       fetchVisits()
     } catch (error) {
@@ -183,12 +248,34 @@ export default function VisitsPage() {
 
   const handlePrintBadge = async (badgeId: string) => {
     try {
-      await printBadge(badgeId)
-      window.print()
+      await printBadgeWindow(badgeId)
       showNotification('success', 'Badge printed successfully')
       fetchVisits()
     } catch (error) {
       showNotification('error', error instanceof Error ? error.message : 'Failed to print badge')
+    }
+  }
+
+  const handleReprintBadge = async (badgeId: string) => {
+    try {
+      const { reprintBadge } = await import('@/lib/client/badges')
+      await reprintBadge(badgeId)
+      await printBadgeWindow(badgeId)
+      showNotification('success', 'Badge reprinted successfully')
+      fetchVisits()
+    } catch (error) {
+      showNotification('error', error instanceof Error ? error.message : 'Failed to reprint badge')
+    }
+  }
+
+  const handleCancelBadge = async (badgeId: string) => {
+    try {
+      const { cancelBadge } = await import('@/lib/client/badges')
+      await cancelBadge(badgeId)
+      showNotification('success', 'Badge cancelled successfully')
+      fetchVisits()
+    } catch (error) {
+      showNotification('error', error instanceof Error ? error.message : 'Failed to cancel badge')
     }
   }
 
@@ -386,11 +473,43 @@ export default function VisitsPage() {
                                 View Badge
                               </button>
                               <button
-                                onClick={() => handlePrintBadge(visit.badge!.id)}
+                                onClick={() => {
+                                  if (!visit.badge?.id) {
+                                    showNotification('error', 'Badge information is missing.')
+                                    return
+                                  }
+                                  handlePrintBadge(visit.badge.id)
+                                }}
                                 className="inline-flex items-center gap-1.5 rounded-full bg-green-50 text-green-700 px-3 py-1.5 text-xs font-medium hover:bg-green-100"
                               >
                                 <Printer className="h-3.5 w-3.5" />
                                 Print
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (!visit.badge?.id) {
+                                    showNotification('error', 'Badge information is missing.')
+                                    return
+                                  }
+                                  handleReprintBadge(visit.badge.id)
+                                }}
+                                className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 text-amber-700 px-3 py-1.5 text-xs font-medium hover:bg-amber-100"
+                              >
+                                <RefreshCw className="h-3.5 w-3.5" />
+                                Reprint
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (!visit.badge?.id) {
+                                    showNotification('error', 'Badge information is missing.')
+                                    return
+                                  }
+                                  handleCancelBadge(visit.badge.id)
+                                }}
+                                className="inline-flex items-center gap-1.5 rounded-full bg-red-50 text-red-700 px-3 py-1.5 text-xs font-medium hover:bg-red-100"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                                Cancel
                               </button>
                             </>
                           )}
@@ -413,10 +532,7 @@ export default function VisitsPage() {
 
       {selectedBadge && (
         <VisitorBadge
-          badge={{
-            ...selectedBadge,
-            visit: visits.find(v => v.badge?.id === selectedBadge.id) as any,
-          }}
+          badge={selectedBadge}
           onClose={() => setSelectedBadge(null)}
           onPrint={() => handlePrintBadge(selectedBadge.id)}
         />

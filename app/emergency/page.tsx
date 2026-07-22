@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
-import { logAuditAction } from '@/lib/audit'
+import { logAuditAction } from '@/lib/client/audit'
 import { Search, Users, UserCheck, Building2, Loader2, AlertTriangle, CheckCircle2, XCircle, Heart, UserX, Play, Square } from 'lucide-react'
 
 interface Visit {

@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { logAuditAction } from '@/lib/audit'
+import { logAuditAction } from '@/lib/client/audit'
 import { generateVisitQRCode } from '@/lib/qrcode'
 import { Loader2, QrCode, Printer, Edit, ArrowLeft, X, Upload, Trash2, FileText, CheckCircle, XCircle, Eye } from 'lucide-react'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
+import { useVisitorDocuments } from '@/hooks/useDocuments'
+import { VisitorDocument, VerificationStatus, VERIFICATION_STATUSES, formatFileSize } from '@/lib/types/document'
+import DocumentPreview from '@/components/documents/DocumentPreview'
 
 interface Visitor {
   id: string
@@ -36,6 +39,12 @@ interface AuditLog {
   created_at: string
 }
 
+const STATUS_COLORS: Record<VerificationStatus, string> = {
+  Pending: 'bg-amber-50 text-amber-700 border-amber-200',
+  Verified: 'bg-green-50 text-green-700 border-green-200',
+  Rejected: 'bg-red-50 text-red-700 border-red-200',
+}
+
 export default function VisitorDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const [visitor, setVisitor] = useState<Visitor | null>(null)
   const [visits, setVisits] = useState<Visit[]>([])
@@ -51,8 +60,10 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
   const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null)
   const [editPhotoError, setEditPhotoError] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
-  const [documents, setDocuments] = useState<any[]>([])
-  const [previewDoc, setPreviewDoc] = useState<any | null>(null)
+  const [documents, setDocuments] = useState<VisitorDocument[]>([])
+  const [previewDoc, setPreviewDoc] = useState<VisitorDocument | null>(null)
+  const [docLoading, setDocLoading] = useState(true)
+  const [userRole, setUserRole] = useState<string>('')
 
   useEffect(() => {
     const unwrapParams = async () => {
@@ -87,15 +98,20 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
 
   const fetchDocuments = async () => {
     if (!visitorId) return
+    setDocLoading(true)
     const { data } = await supabase
       .from('visitor_documents')
-      .select('*')
+      .select(`
+        *,
+        visitor:visitors(full_name, email)
+      `)
       .eq('visitor_id', visitorId)
       .order('created_at', { ascending: false })
 
     if (data) {
-      setDocuments(data)
+      setDocuments(data as VisitorDocument[])
     }
+    setDocLoading(false)
   }
 
   const fetchVisitor = async () => {
@@ -468,12 +484,12 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
                   <table className="w-full text-left text-sm">
                     <thead>
                       <tr className="border-b border-gray-200 bg-gray-50">
-                        <th className="px-4 py-3 font-semibold text-gray-700">Type</th>
-                        <th className="px-4 py-3 font-semibold text-gray-700">Number</th>
-                        <th className="px-4 py-3 font-semibold text-gray-700">Expiry</th>
-                        <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                        <th className="px-4 py-3 font-semibold text-gray-700">Verified By</th>
-                        <th className="px-4 py-3 font-semibold text-gray-700 w-20">Actions</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Type</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Number</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">File</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Created</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700 w-20">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -481,23 +497,24 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
                         <tr key={doc.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-4 py-3 text-gray-600">{doc.document_type}</td>
                           <td className="px-4 py-3 text-gray-600 font-mono">{doc.document_number}</td>
-                          <td className="px-4 py-3 text-gray-600">
-                            {doc.expiry_date ? new Date(doc.expiry_date).toLocaleDateString() : '—'}
-                          </td>
                           <td className="px-4 py-3">
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${doc.verified ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-                              {doc.verified ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                              {doc.verified ? 'Verified' : 'Unverified'}
+                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[doc.verification_status as VerificationStatus] || STATUS_COLORS.Pending}`}>
+                              {doc.verification_status === 'Verified' && <CheckCircle className="h-3 w-3" />}
+                              {doc.verification_status === 'Rejected' && <XCircle className="h-3 w-3" />}
+                              {doc.verification_status}
                             </span>
                           </td>
                           <td className="px-4 py-3 text-gray-600">
-                            {doc.verified_by || '—'}
+                            {doc.file_name ? formatFileSize(doc.file_size) : '—'}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                            {new Date(doc.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-3">
                             <button
                               onClick={() => setPreviewDoc(doc)}
                               className="p-1 rounded-md hover:bg-gray-100 transition-colors"
-                              title="View Images"
+                              title="View"
                             >
                               <Eye className="h-4 w-4 text-gray-600" />
                             </button>
@@ -556,7 +573,7 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
 
       {editModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
+          <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
             <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
               <h2 className="text-lg font-semibold text-gray-900">Edit Visitor</h2>
               <button onClick={() => setEditModalOpen(false)} className="p-1 rounded-md hover:bg-gray-100" aria-label="Close">
@@ -646,36 +663,11 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
       )}
 
       {previewDoc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setPreviewDoc(null)}>
-          <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Document Preview - {previewDoc.document_type}</h3>
-              <button onClick={() => setPreviewDoc(null)} className="text-white hover:text-gray-300">
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {previewDoc.front_image_url && (
-                <div>
-                  <p className="text-sm text-gray-300 mb-2">Front</p>
-                  <img src={previewDoc.front_image_url} alt="Front" className="w-full rounded-lg" />
-                </div>
-              )}
-              {previewDoc.back_image_url && (
-                <div>
-                  <p className="text-sm text-gray-300 mb-2">Back</p>
-                  <img src={previewDoc.back_image_url} alt="Back" className="w-full rounded-lg" />
-                </div>
-              )}
-            </div>
-            <div className="mt-4 text-white text-sm space-y-1">
-              <p><strong>Number:</strong> {previewDoc.document_number}</p>
-              <p><strong>Status:</strong> {previewDoc.verified ? 'Verified' : 'Unverified'}</p>
-              <p><strong>Issuing Country:</strong> {previewDoc.issuing_country || '—'}</p>
-              <p><strong>Expiry:</strong> {previewDoc.expiry_date ? new Date(previewDoc.expiry_date).toLocaleDateString() : '—'}</p>
-            </div>
-          </div>
-        </div>
+        <DocumentPreview
+          document={previewDoc}
+          onClose={() => setPreviewDoc(null)}
+          showActions={false}
+        />
       )}
     </div>
   )

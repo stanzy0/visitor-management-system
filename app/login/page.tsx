@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase/client'
 import { ensureUserInDatabase } from '@/lib/auth'
 
 const MAX_FAILED_ATTEMPTS = 6
@@ -18,6 +18,7 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
+    const supabase = createClient()
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,

@@ -1,63 +1,65 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
-import { logAuditAction } from '@/lib/audit'
-import { Search, Plus, Edit, Trash2, X, Loader2, CheckCircle, XCircle, Upload, Camera, Eye } from 'lucide-react'
+import { logAuditAction } from '@/lib/client/audit'
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  X,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Eye,
+  RefreshCw,
+  Download,
+} from 'lucide-react'
+import { useDocuments, useVisitorDocuments } from '@/hooks/useDocuments'
+import {
+  VisitorDocument,
+  DocumentType,
+  VerificationStatus,
+  DOCUMENT_TYPES,
+  VERIFICATION_STATUSES,
+  getVerificationStatusColor,
+} from '@/lib/types/document'
+import { formatFileSize } from '@/lib/types/document'
+import DocumentUpload from '@/components/documents/DocumentUpload'
+import DocumentPreview from '@/components/documents/DocumentPreview'
+import DocumentVerificationModal from '@/components/documents/DocumentVerificationModal'
 
-interface VisitorDocument {
-  id: string
-  visitor_id: string
-  document_type: string
-  document_number: string
-  issuing_country: string | null
-  expiry_date: string | null
-  front_image_url: string | null
-  back_image_url: string | null
-  verified: boolean
-  verified_by: string | null
-  verification_date: string | null
-  notes: string | null
-  created_at: string
-  updated_at: string
-  visitor?: { full_name: string; email: string }
+const STATUS_COLORS: Record<VerificationStatus, string> = {
+  Pending: 'bg-amber-50 text-amber-700 border-amber-200',
+  Verified: 'bg-green-50 text-green-700 border-green-200',
+  Rejected: 'bg-red-50 text-red-700 border-red-200',
 }
 
-const DOCUMENT_TYPES = [
-  'National ID',
-  'Driver\'s Licence',
-  'Passport',
-  'Military ID',
-  'Staff ID',
-  'Other',
-]
-
 export default function DocumentsPage() {
-  const [documents, setDocuments] = useState<VisitorDocument[]>([])
-  const [loading, setLoading] = useState(true)
   const [authChecking, setAuthChecking] = useState(true)
   const [userRole, setUserRole] = useState<UserRole>('Receptionist')
   const [searchTerm, setSearchTerm] = useState('')
-  const [typeFilter, setTypeFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState<DocumentType | ''>('')
+  const [statusFilter, setStatusFilter] = useState<VerificationStatus | ''>('')
   const [modalOpen, setModalOpen] = useState(false)
-  const [editingDoc, setEditingDoc] = useState<VisitorDocument | null>(null)
-  const [submitting, setSubmitting] = useState(false)
-  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [previewDoc, setPreviewDoc] = useState<VisitorDocument | null>(null)
-  const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const [verifyDoc, setVerifyDoc] = useState<VisitorDocument | null>(null)
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [selectedVisitorId, setSelectedVisitorId] = useState<string>('')
 
-  const [formData, setFormData] = useState({
-    visitor_id: '',
-    document_type: 'National ID',
-    document_number: '',
-    issuing_country: '',
-    expiry_date: '',
-    front_image_url: '',
-    back_image_url: '',
-    notes: '',
+  const { documents, loading, error, total, refetch, create, update, remove, verify, reject } = useDocuments({
+    search: searchTerm || undefined,
+    document_type: typeFilter || undefined,
+    verification_status: statusFilter || undefined,
+    limit: 50,
   })
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 3000)
+  }
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -72,185 +74,67 @@ export default function DocumentsPage() {
       }
       setUserRole(user.role)
       setAuthChecking(false)
-      fetchDocuments()
-      setupRealtime()
     }
     checkAuth()
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-    }
   }, [])
 
-  const fetchDocuments = async () => {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('visitor_documents')
-      .select(`
-        *,
-        visitor:visitors(full_name, email)
-      `)
-      .order('created_at', { ascending: false })
+  const canDelete = userRole === 'Admin'
+  const canVerify = userRole === 'Admin' || userRole === 'Security'
 
-    if (error) {
-      showNotification('error', error.message)
-    } else {
-      setDocuments(data || [])
-    }
-    setLoading(false)
-  }
-
-  const setupRealtime = () => {
-    if (realtimeChannel.current) {
-      supabase.removeChannel(realtimeChannel.current)
-    }
-
-    realtimeChannel.current = supabase
-      .channel('documents-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'visitor_documents' },
-        () => {
-          fetchDocuments()
-        }
-      )
-      .subscribe()
-  }
-
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 3000)
-  }
-
-  const openCreateModal = () => {
-    setEditingDoc(null)
-    setFormData({
-      visitor_id: '',
-      document_type: 'National ID',
-      document_number: '',
-      issuing_country: '',
-      expiry_date: '',
-      front_image_url: '',
-      back_image_url: '',
-      notes: '',
-    })
-    setModalOpen(true)
-  }
-
-  const openEditModal = (doc: VisitorDocument) => {
-    setEditingDoc(doc)
-    setFormData({
-      visitor_id: doc.visitor_id,
-      document_type: doc.document_type,
-      document_number: doc.document_number,
-      issuing_country: doc.issuing_country || '',
-      expiry_date: doc.expiry_date || '',
-      front_image_url: doc.front_image_url || '',
-      back_image_url: doc.back_image_url || '',
-      notes: doc.notes || '',
-    })
-    setModalOpen(true)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSubmitting(true)
-
-    const user = await getCurrentUser()
-    if (!user) return
-
-    const payload = {
-      visitor_id: formData.visitor_id,
-      document_type: formData.document_type,
-      document_number: formData.document_number,
-      issuing_country: formData.issuing_country || null,
-      expiry_date: formData.expiry_date || null,
-      front_image_url: formData.front_image_url,
-      back_image_url: formData.back_image_url || null,
-      notes: formData.notes || null,
-    }
-
-    let error
-    if (editingDoc) {
-      const result = await supabase
-        .from('visitor_documents')
-        .update(payload)
-        .eq('id', editingDoc.id)
-      error = result.error
-      if (!error) {
-        showNotification('success', 'Document updated successfully')
+  const handleVerify = async (doc: VisitorDocument, status: VerificationStatus, notes?: string) => {
+    try {
+      if (status === 'Verified') {
+        await verify(doc.id, notes)
+        showNotification('success', 'Document verified successfully')
+      } else {
+        await reject(doc.id, notes)
+        showNotification('success', 'Document rejected')
       }
-    } else {
-      const result = await supabase
-        .from('visitor_documents')
-        .insert([payload])
-      error = result.error
-      if (!error) {
-        showNotification('success', 'Document added successfully')
-      }
+      refetch()
+    } catch {
+      showNotification('error', 'Action failed')
     }
+  }
 
-    if (error) {
-      showNotification('error', error.message)
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this document? This action cannot be undone.')) return
+    try {
+      await remove(id)
+      showNotification('success', 'Document deleted successfully')
+      if (previewDoc?.id === id) setPreviewDoc(null)
+    } catch {
+      showNotification('error', 'Failed to delete document')
     }
+  }
 
-    setSubmitting(false)
+  const handleUploadComplete = () => {
     setModalOpen(false)
+    refetch()
   }
 
-  const handleVerify = async (doc: VisitorDocument) => {
-    const user = await getCurrentUser()
-    if (!user) return
-
-    const { error } = await supabase
-      .from('visitor_documents')
-      .update({
-        verified: !doc.verified,
-        verified_by: user.id,
-        verification_date: new Date().toISOString(),
-      })
-      .eq('id', doc.id)
-
-    if (error) {
-      showNotification('error', error.message)
-    } else {
-      showNotification('success', doc.verified ? 'Document unverified' : 'Document verified')
-    }
-  }
-
-  const handleDelete = async (doc: VisitorDocument) => {
-    if (!confirm(`Delete document for visitor?`)) return
-
-    const { error } = await supabase
-      .from('visitor_documents')
-      .delete()
-      .eq('id', doc.id)
-
-    if (error) {
-      showNotification('error', error.message)
-    } else {
-      showNotification('success', 'Document deleted')
-    }
-  }
-
-  const filteredDocuments = documents.filter((doc) => {
-    const matchesSearch =
-      doc.document_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (doc.visitor?.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.document_type.toLowerCase().includes(searchTerm.toLowerCase())
-
-    const matchesType = !typeFilter || doc.document_type === typeFilter
-    const matchesStatus = !statusFilter || (statusFilter === 'verified' ? doc.verified : !doc.verified)
-
-    return matchesSearch && matchesType && matchesStatus
-  })
+  const filteredDocuments = useMemo(() => {
+    if (!selectedVisitorId) return documents
+    return documents.filter((d) => d.visitor_id === selectedVisitorId)
+  }, [documents, selectedVisitorId])
 
   if (authChecking) {
     return (
       <div className="flex h-screen bg-gray-50 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-screen bg-gray-50 items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-medium">Failed to load documents</p>
+          <p className="text-sm text-gray-500 mt-1">{error}</p>
+          <button onClick={refetch} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            Retry
+          </button>
+        </div>
       </div>
     )
   }
@@ -268,14 +152,15 @@ export default function DocumentsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Visitor Documents</h1>
           <div className="flex items-center gap-3">
             <button
-              onClick={fetchDocuments}
+              onClick={refetch}
               className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
+              <RefreshCw className="h-4 w-4" />
               Refresh
             </button>
             {userRole === 'Admin' && (
               <button
-                onClick={openCreateModal}
+                onClick={() => setModalOpen(true)}
                 className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
               >
                 <Plus className="h-4 w-4" />
@@ -286,7 +171,11 @@ export default function DocumentsPage() {
         </div>
 
         {notification && (
-          <div className={`rounded-lg p-4 text-sm ${notification.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+          <div
+            className={`rounded-lg p-4 text-sm ${
+              notification.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+            }`}
+          >
             {notification.message}
           </div>
         )}
@@ -298,7 +187,7 @@ export default function DocumentsPage() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search by document number or visitor name..."
+                  placeholder="Search by document number, visitor name..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
@@ -306,22 +195,27 @@ export default function DocumentsPage() {
               </div>
               <select
                 value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
+                onChange={(e) => setTypeFilter(e.target.value as DocumentType | '')}
                 className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Types</option>
                 {DOCUMENT_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
                 ))}
               </select>
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => setStatusFilter(e.target.value as VerificationStatus | '')}
                 className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Status</option>
-                <option value="verified">Verified</option>
-                <option value="unverified">Unverified</option>
+                {VERIFICATION_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -337,10 +231,10 @@ export default function DocumentsPage() {
                     <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
                     <th className="px-4 py-3 font-semibold text-gray-700">Type</th>
                     <th className="px-4 py-3 font-semibold text-gray-700">Number</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Expiry</th>
                     <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">File</th>
                     <th className="px-4 py-3 font-semibold text-gray-700">Created</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700 w-36">Actions</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700 w-44">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -352,14 +246,21 @@ export default function DocumentsPage() {
                       </td>
                       <td className="px-4 py-3 text-gray-600">{doc.document_type}</td>
                       <td className="px-4 py-3 text-gray-600 font-mono">{doc.document_number}</td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {doc.expiry_date ? new Date(doc.expiry_date).toLocaleDateString() : '—'}
-                      </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${doc.verified ? 'bg-green-50 text-green-700 border-green-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
-                          {doc.verified ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                          {doc.verified ? 'Verified' : 'Unverified'}
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[doc.verification_status as VerificationStatus] || STATUS_COLORS.Pending}`}
+                        >
+                          {doc.verification_status === 'Verified' && <CheckCircle className="h-3 w-3" />}
+                          {doc.verification_status === 'Rejected' && <XCircle className="h-3 w-3" />}
+                          {doc.verification_status}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {doc.file_name ? (
+                          <span className="text-xs">{formatFileSize(doc.file_size)}</span>
+                        ) : (
+                          '—'
+                        )}
                       </td>
                       <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
                         {new Date(doc.created_at).toLocaleDateString()}
@@ -373,23 +274,34 @@ export default function DocumentsPage() {
                           >
                             <Eye className="h-4 w-4 text-gray-600" />
                           </button>
+                          {canVerify && doc.verification_status !== 'Verified' && (
+                            <button
+                              onClick={() => setVerifyDoc(doc)}
+                              className="p-1 rounded-md hover:bg-green-50 transition-colors"
+                              title="Verify"
+                            >
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            </button>
+                          )}
+                          {canVerify && doc.verification_status === 'Verified' && (
+                            <button
+                              onClick={() => setVerifyDoc(doc)}
+                              className="p-1 rounded-md hover:bg-amber-50 transition-colors"
+                              title="Change Status"
+                            >
+                              <XCircle className="h-4 w-4 text-amber-600" />
+                            </button>
+                          )}
                           <button
-                            onClick={() => handleVerify(doc)}
-                            className={`p-1 rounded-md transition-colors ${doc.verified ? 'hover:bg-red-50' : 'hover:bg-green-50'}`}
-                            title={doc.verified ? 'Unverify' : 'Verify'}
-                          >
-                            {doc.verified ? <XCircle className="h-4 w-4 text-red-600" /> : <CheckCircle className="h-4 w-4 text-green-600" />}
-                          </button>
-                          <button
-                            onClick={() => openEditModal(doc)}
+                            onClick={() => setModalOpen(true)}
                             className="p-1 rounded-md hover:bg-gray-100 transition-colors"
                             title="Edit"
                           >
                             <Edit className="h-4 w-4 text-gray-600" />
                           </button>
-                          {userRole === 'Admin' && (
+                          {canDelete && (
                             <button
-                              onClick={() => handleDelete(doc)}
+                              onClick={() => handleDelete(doc.id)}
                               className="p-1 rounded-md hover:bg-red-50 transition-colors"
                               title="Delete"
                             >
@@ -413,154 +325,64 @@ export default function DocumentsPage() {
         </div>
       </div>
 
-      {/* Create/Edit Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
+          <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
             <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {editingDoc ? 'Edit Document' : 'Add Document'}
-              </h2>
+              <h2 className="text-lg font-semibold text-gray-900">Upload Document</h2>
               <button onClick={() => setModalOpen(false)} className="p-1 rounded-md hover:bg-gray-100">
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-              <div className="p-4 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Visitor ID *</label>
-                  <input
-                    type="text"
-                    value={formData.visitor_id}
-                    onChange={(e) => setFormData({ ...formData, visitor_id: e.target.value })}
-                    required
-                    placeholder="Enter visitor UUID"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Document Type *</label>
-                    <select
-                      value={formData.document_type}
-                      onChange={(e) => setFormData({ ...formData, document_type: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      {DOCUMENT_TYPES.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Document Number *</label>
-                    <input
-                      type="text"
-                      value={formData.document_number}
-                      onChange={(e) => setFormData({ ...formData, document_number: e.target.value })}
-                      required
-                      placeholder="Enter document number"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Issuing Country</label>
-                    <input
-                      type="text"
-                      value={formData.issuing_country}
-                      onChange={(e) => setFormData({ ...formData, issuing_country: e.target.value })}
-                      placeholder="Enter country"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-                    <input
-                      type="date"
-                      value={formData.expiry_date}
-                      onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Front Image URL *</label>
-                  <input
-                    type="url"
-                    value={formData.front_image_url}
-                    onChange={(e) => setFormData({ ...formData, front_image_url: e.target.value })}
-                    required
-                    placeholder="https://..."
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Back Image URL (Optional)</label>
-                  <input
-                    type="url"
-                    value={formData.back_image_url}
-                    onChange={(e) => setFormData({ ...formData, back_image_url: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                  <textarea
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    rows={2}
-                    placeholder="Additional notes"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-              <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t border-gray-200">
-                <button type="button" onClick={() => setModalOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                  Cancel
-                </button>
-                <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
-                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {editingDoc ? 'Update' : 'Create'}
-                </button>
-              </div>
-            </form>
+            <div className="flex-1 overflow-y-auto p-4">
+              <DocumentUpload
+                visitorId={selectedVisitorId || 'temp-id'}
+                onUploadComplete={handleUploadComplete}
+                disabled={!selectedVisitorId && userRole !== 'Admin'}
+              />
+            </div>
           </div>
         </div>
       )}
 
-      {/* Image Preview Modal */}
       {previewDoc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setPreviewDoc(null)}>
-          <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-white">Document Preview</h3>
-              <button onClick={() => setPreviewDoc(null)} className="text-white hover:text-gray-300">
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {previewDoc.front_image_url && (
-                <div>
-                  <p className="text-sm text-gray-300 mb-2">Front</p>
-                  <img src={previewDoc.front_image_url} alt="Front" className="w-full rounded-lg" />
-                </div>
-              )}
-              {previewDoc.back_image_url && (
-                <div>
-                  <p className="text-sm text-gray-300 mb-2">Back</p>
-                  <img src={previewDoc.back_image_url} alt="Back" className="w-full rounded-lg" />
-                </div>
-              )}
-            </div>
-            <div className="mt-4 text-white text-sm">
-              <p><strong>Type:</strong> {previewDoc.document_type}</p>
-              <p><strong>Number:</strong> {previewDoc.document_number}</p>
-              <p><strong>Visitor:</strong> {previewDoc.visitor?.full_name}</p>
-            </div>
-          </div>
-        </div>
+        <DocumentPreview
+          document={previewDoc}
+          onClose={() => setPreviewDoc(null)}
+          showActions={canVerify}
+          onReplace={async (file) => {
+            await remove(previewDoc.id)
+            const formData = new FormData()
+            formData.append('visitor_id', previewDoc.visitor_id)
+            formData.append('document_type', previewDoc.document_type)
+            formData.append('document_number', previewDoc.document_number)
+            formData.append('file', file)
+            await create(formData)
+            showNotification('success', 'Document replaced')
+            refetch()
+            setPreviewDoc(null)
+          }}
+          onVerify={
+            previewDoc.verification_status === 'Verified'
+              ? undefined
+              : () => setVerifyDoc(previewDoc)
+          }
+          onReject={
+            previewDoc.verification_status === 'Rejected'
+              ? undefined
+              : () => setVerifyDoc(previewDoc)
+          }
+          onDelete={canDelete ? () => handleDelete(previewDoc.id) : undefined}
+        />
+      )}
+
+      {verifyDoc && (
+        <DocumentVerificationModal
+          document={verifyDoc}
+          onClose={() => setVerifyDoc(null)}
+          onVerified={(doc) => handleVerify(doc, 'Verified')}
+          onRejected={(doc) => handleVerify(doc, 'Rejected')}
+        />
       )}
     </div>
   )

@@ -1,41 +1,6 @@
-import { supabase } from '@/lib/supabase'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import QRCode from 'qrcode'
-
-export interface VisitorBadge {
-  id: string
-  visit_id: string
-  badge_number: string
-  qr_token: string
-  badge_status: 'Active' | 'Expired' | 'Checked Out' | 'Cancelled'
-  issued_at: string
-  expires_at: string
-  printed_at: string | null
-  printed_by: string | null
-  reprint_count: number
-  created_at: string
-  updated_at: string
-  visit?: {
-    visitor: {
-      full_name: string
-      visitor_organization: string
-      photo_url?: string | null
-    } | null
-    employee: {
-      full_name: string
-      department: string
-    } | null
-    purpose: string
-  } | null
-}
-
-export interface BadgeFormData {
-  visit_id: string
-  badge_number?: string
-  qr_token?: string
-  badge_status?: string
-  expires_at?: string
-}
+import type { VisitorBadge } from '@/lib/badge/badge-types'
 
 export async function generateBadgeNumber(): Promise<string> {
   if (!supabaseAdmin) {
@@ -102,18 +67,26 @@ export async function createBadge(visitId: string, expiresInHours: number = 24):
 }
 
 export async function getBadgeByVisitId(visitId: string): Promise<VisitorBadge | null> {
-  const { data, error } = await supabase
+  if (!supabaseAdmin) {
+    throw new Error('Service role key not configured')
+  }
+
+  const { data, error } = await supabaseAdmin
     .from('visitor_badges')
-    .select('*')
+    .select('*, visit:visits(*, visitor:visitors(*), employee:employees(*))')
     .eq('visit_id', visitId)
     .single()
 
   if (error || !data) return null
-  return data as VisitorBadge
+  return data as any
 }
 
 export async function getBadgeByQrToken(qrToken: string): Promise<VisitorBadge | null> {
-  const { data, error } = await supabase
+  if (!supabaseAdmin) {
+    throw new Error('Service role key not configured')
+  }
+
+  const { data, error } = await supabaseAdmin
     .from('visitor_badges')
     .select('*, visit:visits(*, visitor:visitors(*), employee:employees(*))')
     .eq('qr_token', qrToken)
@@ -124,7 +97,11 @@ export async function getBadgeByQrToken(qrToken: string): Promise<VisitorBadge |
 }
 
 export async function getBadgeByBadgeNumber(badgeNumber: string): Promise<VisitorBadge | null> {
-  const { data, error } = await supabase
+  if (!supabaseAdmin) {
+    throw new Error('Service role key not configured')
+  }
+
+  const { data, error } = await supabaseAdmin
     .from('visitor_badges')
     .select('*, visit:visits(*, visitor:visitors(*), employee:employees(*))')
     .eq('badge_number', badgeNumber)
@@ -232,7 +209,11 @@ export async function expireBadges(): Promise<number> {
 }
 
 export async function getBadgesStats(startDate?: Date, endDate?: Date) {
-  let query = supabase
+  if (!supabaseAdmin) {
+    throw new Error('Service role key not configured')
+  }
+
+  let query = supabaseAdmin
     .from('visitor_badges')
     .select('badge_status, created_at, printed_at, reprint_count')
 
@@ -270,7 +251,11 @@ export async function getBadgesStats(startDate?: Date, endDate?: Date) {
 }
 
 export async function getBadgesByDepartment(startDate?: Date, endDate?: Date) {
-  let query = supabase
+  if (!supabaseAdmin) {
+    throw new Error('Service role key not configured')
+  }
+
+  let query = supabaseAdmin
     .from('visitor_badges')
     .select('visit:visits(employee:employees(department))')
     .neq('badge_status', 'Cancelled')

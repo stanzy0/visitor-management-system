@@ -1,0 +1,1 @@
+export { generateVisitQRCode } from '../qrcode'

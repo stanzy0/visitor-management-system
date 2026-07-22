@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
-import { logAuditAction } from '@/lib/audit'
+import { logAuditAction } from '@/lib/client/audit'
+import { getAuthHeaders } from '@/lib/client/api'
 import {
   Users,
   Calendar,
@@ -22,8 +23,10 @@ import {
   UserX,
   MessageSquare,
   X,
+  Mail,
 } from 'lucide-react'
 import { generateVisitQRCode } from '@/lib/qrcode'
+import InvitationForm from '@/components/InvitationForm'
 
 interface Employee {
   id: string
@@ -101,7 +104,9 @@ export default function HostPortalPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [showPreRegister, setShowPreRegister] = useState(false)
+  const [showInviteVisitor, setShowInviteVisitor] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [inviteLoading, setInviteLoading] = useState(false)
   const [preRegisterData, setPreRegisterData] = useState({
     full_name: '',
     email: '',
@@ -388,6 +393,49 @@ export default function HostPortalPage() {
     setSubmitting(false)
   }
 
+  const handleInviteVisitor = async (data: {
+    visitor_name: string
+    visitor_email: string
+    visitor_phone: string
+    visitor_organization: string
+    purpose: string
+    expected_date: string
+    expected_time: string
+    vehicle_required: boolean
+    number_of_visitors: number
+    notes: string
+  }) => {
+    setInviteLoading(true)
+    try {
+      const user = await getCurrentUser()
+      if (!user || !employeeId) return
+
+      const res = await fetch('/api/invitations', {
+        method: 'POST',
+        headers: await getAuthHeaders(),
+        body: JSON.stringify({
+          ...data,
+          host_employee_id: employeeId,
+        }),
+      })
+
+      const result = await res.json()
+
+      if (!res.ok) {
+        throw new Error(result.error || 'Failed to send invitation')
+      }
+
+      await logAuditAction('Invitation Sent', 'invitation', result.data.id, `Invitation sent to ${data.visitor_name} for ${data.expected_date}`)
+      showNotification('success', `Invitation sent to ${data.visitor_email}`)
+      setShowInviteVisitor(false)
+      fetchData()
+    } catch (error) {
+      showNotification('error', error instanceof Error ? error.message : 'Failed to send invitation')
+    } finally {
+      setInviteLoading(false)
+    }
+  }
+
   const checkWatchlist = async (data: typeof preRegisterData): Promise<boolean> => {
     const { data: hit } = await supabase
       .from('visitor_watchlist')
@@ -435,13 +483,22 @@ export default function HostPortalPage() {
             </p>
           </div>
           {canEdit && (
-            <button
-              onClick={() => setShowPreRegister(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              Pre-Register Visitor
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowInviteVisitor(true)}
+                className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 transition-colors"
+              >
+                <Mail className="h-4 w-4" />
+                Invite Visitor
+              </button>
+              <button
+                onClick={() => setShowPreRegister(true)}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                Pre-Register Visitor
+              </button>
+            </div>
           )}
         </div>
 
@@ -752,20 +809,29 @@ export default function HostPortalPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ID Number (Optional)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">ID Number</label>
                   <input type="text" value={preRegisterData.id_number} onChange={(e) => setPreRegisterData({ ...preRegisterData, id_number: e.target.value })} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black" />
                 </div>
               </div>
-              <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t border-gray-200">
+              <div className="border-t border-gray-200 p-4 flex justify-end gap-2">
                 <button type="button" onClick={() => setShowPreRegister(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-                <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
-                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                  Register & Create Appointment
+                <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
+                  {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                  Pre-Register
                 </button>
               </div>
             </form>
           </div>
         </div>
+      )}
+
+      {/* Invite Visitor Modal */}
+      {showInviteVisitor && (
+        <InvitationForm
+          onSubmit={handleInviteVisitor}
+          onClose={() => setShowInviteVisitor(false)}
+          loading={inviteLoading}
+        />
       )}
 
       {/* Watchlist Warning Modal */}

@@ -7,7 +7,7 @@ import { Loader2, Search, Download, FileSpreadsheet, Printer, Car, Shield, Plus,
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
-import { logAuditAction } from '@/lib/audit'
+import { logAuditAction } from '@/lib/client/audit'
 import { QRCodeSVG } from 'qrcode.react'
 
 interface Vehicle {

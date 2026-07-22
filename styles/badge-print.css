@@ -1,0 +1,29 @@
+@page {
+  size: A4 portrait;
+  margin: 15mm;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+  color-adjust: exact;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+@media print {
+  body {
+    padding: 0;
+    overflow: hidden;
+  }
+}

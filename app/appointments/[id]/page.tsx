@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { logAuditAction } from '@/lib/audit'
+import { logAuditAction } from '@/lib/client/audit'
 import { Loader2, ArrowLeft, LogIn, LogOut, Check, X } from 'lucide-react'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 

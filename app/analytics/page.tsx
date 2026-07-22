@@ -136,7 +136,7 @@ export default function AnalyticsPage() {
         supabase.from('visits').select('id', { count: 'exact' }).gte('created_at', weekAgo),
         supabase.from('visits').select('id', { count: 'exact' }).gte('created_at', monthAgo),
         supabase.from('appointments').select('id', { count: 'exact' }).eq('status', 'pending'),
-        supabase.from('visitor_documents').select('id', { count: 'exact' }).eq('verified', false),
+        supabase.from('visitor_documents').select('id', { count: 'exact' }).eq('verification_status', 'Pending'),
         supabase.from('visitor_watchlist').select('id', { count: 'exact' }).eq('status', 'Active'),
         supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'checked_in'),
         supabase.from('visits').select('check_in_time, check_out_time').not('check_out_time', 'is', null).gte('check_in_time', monthAgo),

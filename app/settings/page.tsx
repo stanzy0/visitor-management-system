@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
-import { logAuditAction } from '@/lib/audit'
+import { logAuditAction } from '@/lib/client/audit'
+import { getAuthHeaders } from '@/lib/client/api'
 import {
   Save,
   Download,
@@ -156,14 +157,8 @@ export default function SettingsPage() {
 
   const fetchEmailStatus = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const headers: Record<string, string> = {}
-      if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`
-      }
-
       const res = await fetch('/api/admin/email-status', {
-        headers,
+        headers: await getAuthHeaders(),
       })
       if (res.ok) {
         const data = await res.json()
