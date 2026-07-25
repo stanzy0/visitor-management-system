@@ -1,5 +1,8 @@
 'use client'
 
+'use client'
+
+import { KeyboardEvent } from 'react'
 import { LucideIcon } from 'lucide-react'
 
 const colorMap: Record<string, { bg: string; text: string; border: string; shadow: string }> = {
@@ -12,6 +15,7 @@ const colorMap: Record<string, { bg: string; text: string; border: string; shado
   orange: { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200', shadow: 'shadow-orange-500/10' },
   gray: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200', shadow: 'shadow-gray-500/10' },
   indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200', shadow: 'shadow-indigo-500/10' },
+  teal: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200', shadow: 'shadow-teal-500/10' },
 }
 
 interface StatCardProps {
@@ -31,10 +35,21 @@ export default function StatCard({ title, value, icon: Icon, color = 'blue', tre
   const trendColor = trendUp ? 'text-green-600 bg-green-50' : trendDown ? 'text-red-600 bg-red-50' : 'text-gray-500 bg-gray-50'
   const trendIcon = trendUp ? '▲' : trendDown ? '▼' : '●'
 
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (!onClick) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onClick()
+    }
+  }
+
   return (
     <div
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
-      className={`rounded-xl border ${c.border} bg-white p-4 shadow-sm transition-all hover:shadow-md ${onClick ? 'cursor-pointer' : ''}`}
+      onKeyDown={onClick ? handleKeyDown : undefined}
+      className={`rounded-xl border ${c.border} bg-white p-4 shadow-sm transition-all hover:shadow-md ${onClick ? 'cursor-pointer hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1' : ''}`}
     >
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-gray-500">{title}</p>

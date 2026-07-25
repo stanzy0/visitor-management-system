@@ -44,7 +44,16 @@ export default function BadgesPage() {
   const [loading, setLoading] = useState(true)
   const [authChecking, setAuthChecking] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const status = params.get('status')
+      if (status && ['Active', 'Expired', 'Checked Out', 'Cancelled'].includes(status)) {
+        return status
+      }
+    }
+    return 'all'
+  })
   const [selectedBadge, setSelectedBadge] = useState<VisitorBadgeType | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)

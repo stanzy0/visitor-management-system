@@ -42,12 +42,31 @@ export default function DocumentsPage() {
   const [userRole, setUserRole] = useState<UserRole>('Receptionist')
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState<DocumentType | ''>('')
-  const [statusFilter, setStatusFilter] = useState<VerificationStatus | ''>('')
+  const [statusFilter, setStatusFilter] = useState<VerificationStatus | ''>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const status = params.get('verification_status')
+      if (status && ['Pending', 'Verified', 'Rejected'].includes(status)) {
+        return status as VerificationStatus
+      }
+    }
+    return ''
+  })
   const [modalOpen, setModalOpen] = useState(false)
   const [previewDoc, setPreviewDoc] = useState<VisitorDocument | null>(null)
   const [verifyDoc, setVerifyDoc] = useState<VisitorDocument | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-  const [selectedVisitorId, setSelectedVisitorId] = useState<string>('')
+  const [selectedVisitorId] = useState<string>('')
+  const [clientDateFilter] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const date = params.get('date')
+      if (date === 'today') {
+        return 'today'
+      }
+    }
+    return ''
+  })
 
   const { documents, loading, error, total, refetch, create, update, remove, verify, reject } = useDocuments({
     search: searchTerm || undefined,
@@ -113,9 +132,13 @@ export default function DocumentsPage() {
   }
 
   const filteredDocuments = useMemo(() => {
-    if (!selectedVisitorId) return documents
-    return documents.filter((d) => d.visitor_id === selectedVisitorId)
-  }, [documents, selectedVisitorId])
+    let result = !selectedVisitorId ? documents : documents.filter((d) => d.visitor_id === selectedVisitorId)
+    if (clientDateFilter === 'today') {
+      const todayStr = new Date().toISOString().split('T')[0]
+      result = result.filter((d) => d.created_at && d.created_at.startsWith(todayStr))
+    }
+    return result
+  }, [documents, selectedVisitorId, clientDateFilter])
 
   if (authChecking) {
     return (

@@ -35,37 +35,50 @@ export default function VisitsPage() {
   const [loading, setLoading] = useState(true)
   const [authChecking, setAuthChecking] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const status = params.get('status')
+      if (status && ['pending', 'approved', 'rejected', 'checked_in', 'checked_out'].includes(status)) {
+        return status
+      }
+    }
+    return 'all'
+  })
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (!PERMISSIONS[user.role]?.includes('visits')) {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setAuthChecking(false)
-      fetchVisits()
-      setupRealtime()
-    }
-    checkAuth()
+  function showNotification(type: 'success' | 'error', message: string) {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 3000)
+  }
 
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
+  function setupRealtime() {
+    if (realtimeChannel.current) {
+      supabase.removeChannel(realtimeChannel.current)
     }
-  }, [])
 
-  const fetchVisits = async () => {
+    realtimeChannel.current = supabase
+      .channel('visits-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'visits' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            fetchVisits()
+          } else if (payload.eventType === 'UPDATE') {
+            fetchVisits()
+          } else if (payload.eventType === 'DELETE') {
+            setVisits(prev => prev.filter(v => v.id !== (payload.old as Visit).id))
+          }
+        }
+      )
+      .subscribe()
+  }
+
+  async function fetchVisits() {
     setLoading(true)
 
     const { data, error } = await supabase
@@ -153,33 +166,29 @@ export default function VisitsPage() {
     setLoading(false)
   }
 
-  const setupRealtime = () => {
-    if (realtimeChannel.current) {
-      supabase.removeChannel(realtimeChannel.current)
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('visits')) {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setAuthChecking(false)
+      fetchVisits()
+      setupRealtime()
     }
+    checkAuth()
 
-    realtimeChannel.current = supabase
-      .channel('visits-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'visits' },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            fetchVisits()
-          } else if (payload.eventType === 'UPDATE') {
-            fetchVisits()
-          } else if (payload.eventType === 'DELETE') {
-            setVisits(prev => prev.filter(v => v.id !== (payload.old as Visit).id))
-          }
-        }
-      )
-      .subscribe()
-  }
-
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 3000)
-  }
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
+  }, [])
 
   const handleStatusChange = async (visitId: string, newStatus: string) => {
     setActionLoading(visitId)

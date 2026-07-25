@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
+import { Loader2 } from 'lucide-react'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -15,17 +16,29 @@ export default function ForgotPasswordPage() {
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    })
+    try {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      })
 
-    if (error) {
-      setError(error.message)
-    } else {
-      logAuditAction('Password Reset Requested', 'user', null, `Reset requested for ${email}`).catch(() => {})
-      setSent(true)
+      console.log('DATA:', data)
+      console.error('ERROR:', error)
+
+      if (error) {
+        setError(error.message)
+      } else {
+        try {
+          await logAuditAction('Password Reset Requested', 'authentication', null, `Password reset request for ${email}`)
+        } catch (err) {
+          console.warn('Audit logging skipped:', err)
+        }
+        setSent(true)
+      }
+    } catch {
+      setError('An unexpected error occurred. Please try again.')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   if (sent) {
@@ -34,7 +47,7 @@ export default function ForgotPasswordPage() {
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900">Check Your Email</h1>
-            <p className="mt-2 text-gray-600">A password reset link has been sent to {email}</p>
+            <p className="mt-2 text-gray-600">If an account exists for this email, a password reset link has been sent.</p>
           </div>
           <a href="/login" className="flex w-full justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
             Back to Login
@@ -48,8 +61,8 @@ export default function ForgotPasswordPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Reset Password</h1>
-          <p className="mt-2 text-gray-600">Enter your email to receive a reset link</p>
+          <h1 className="text-3xl font-bold text-gray-900">Forgot Password</h1>
+          <p className="mt-2 text-gray-600">Enter your email address and we&apos;ll send you a password reset link.</p>
         </div>
 
         <form onSubmit={handleReset} className="space-y-6">
@@ -61,7 +74,7 @@ export default function ForgotPasswordPage() {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
+              Email Address
             </label>
             <input
               id="email"
@@ -79,7 +92,7 @@ export default function ForgotPasswordPage() {
             disabled={loading}
             className="flex w-full justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Sending...' : 'Send Reset Link'}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Reset Link'}
           </button>
 
           <a href="/login" className="block text-center text-sm text-blue-600 hover:underline">

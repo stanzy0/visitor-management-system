@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, UserRole, PERMISSIONS } from '@/lib/auth'
 import {
@@ -104,15 +105,23 @@ const NAV_SECTIONS = [
 ]
 
 export default function DashboardPage() {
+  const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [authChecking, setAuthChecking] = useState(true)
   const [userRole, setUserRole] = useState<UserRole>('Receptionist')
   const [userEmail, setUserEmail] = useState('')
+  const [authReady, setAuthReady] = useState(false)
   const [filters, setFilters] = useState<DashboardFilters>({ range: 'today' })
   const [exporting, setExporting] = useState(false)
   const [recentNotifications, setRecentNotifications] = useState<Array<{ id: string; title: string; message: string; type: string; created_at: string; is_read: boolean }>>([])
 
-  const { stats, activity, securityAlerts, visitorsByDay, visitorsByMonth, visitorsByDepartment, visitorsByHost, visitorsByCompany, visitorsByPurpose, badgeStatusDistribution, employeesByDepartment, loading, error, trendLabel, refetch } = useDashboardData(filters)
+  const { stats, activity, securityAlerts, visitorsByDay, visitorsByMonth, visitorsByDepartment, visitorsByHost, visitorsByCompany, visitorsByPurpose, badgeStatusDistribution, employeesByDepartment, loading, error, trendLabel, refetch } = useDashboardData(filters, authReady)
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.replace('/login')
+    router.refresh()
+  }
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -121,6 +130,7 @@ export default function DashboardPage() {
       setUserRole(user.role)
       setUserEmail(user.email)
       setAuthChecking(false)
+      setAuthReady(true)
     }
     checkAuth()
   }, [])
@@ -251,39 +261,39 @@ export default function DashboardPage() {
   const renderStatCards = () => {
     if (showOperational) {
       return [
-        { title: "Today's Visitors", value: stats.visitorsToday, icon: Users, color: 'blue' as const, trend: stats.visitorsTrend },
-        { title: 'Checked In', value: stats.checkedIn, icon: UserCheck, color: 'green' as const },
-        { title: 'Checked Out', value: stats.checkedOut, icon: LogOut, color: 'gray' as const },
-        { title: 'Pending Approvals', value: stats.pendingApprovals, icon: Clock, color: 'amber' as const },
+        { title: "Today's Visitors", value: stats.visitorsToday, icon: Users, color: 'blue' as const, trend: stats.visitorsTrend, href: '/visitors?date=today' },
+        { title: 'Checked In', value: stats.checkedIn, icon: UserCheck, color: 'green' as const, href: '/visits?status=checked_in' },
+        { title: 'Checked Out', value: stats.checkedOut, icon: LogOut, color: 'gray' as const, href: '/visits?status=checked_out' },
+        { title: 'Pending Approvals', value: stats.pendingApprovals, icon: Clock, color: 'amber' as const, href: '/visits?status=pending' },
       ]
     }
     if (showSecurityOnly) {
       return [
-        { title: 'Currently Inside', value: stats.visitorsCurrentlyInside, icon: Users, color: 'indigo' as const },
-        { title: 'Pending Approvals', value: stats.pendingApprovals, icon: Clock, color: 'amber' as const },
-        { title: 'Active Badges', value: stats.activeBadges, icon: IdCard, color: 'emerald' as const },
-        { title: 'Security Alerts', value: securityAlerts.length, icon: ShieldAlert, color: 'red' as const },
+        { title: 'Currently Inside', value: stats.visitorsCurrentlyInside, icon: Users, color: 'indigo' as const, href: '/visits?status=checked_in' },
+        { title: 'Pending Approvals', value: stats.pendingApprovals, icon: Clock, color: 'amber' as const, href: '/visits?status=pending' },
+        { title: 'Active Badges', value: stats.activeBadges, icon: IdCard, color: 'emerald' as const, href: '/badges?status=Active' },
+        { title: 'Security Alerts', value: securityAlerts.length, icon: ShieldAlert, color: 'red' as const, href: '/watchlist' },
       ]
     }
     return [
-      { title: "Today's Visitors", value: stats.visitorsToday, icon: Users, color: 'blue' as const, trend: stats.visitorsTrend },
-      { title: 'This Week', value: stats.visitorsThisWeek, icon: Calendar, color: 'green' as const },
-      { title: 'This Month', value: stats.visitorsThisMonth, icon: TrendingUp, color: 'purple' as const },
-      { title: 'Currently Inside', value: stats.visitorsCurrentlyInside, icon: UserCheck, color: 'indigo' as const },
-      { title: 'Pending Approvals', value: stats.pendingApprovals, icon: Clock, color: 'amber' as const },
-      { title: 'Checked In', value: stats.checkedIn, icon: UserCheck, color: 'green' as const },
-      { title: 'Checked Out', value: stats.checkedOut, icon: LogOut, color: 'gray' as const },
-      { title: 'Active Badges', value: stats.activeBadges, icon: IdCard, color: 'emerald' as const },
-      { title: 'Cancelled Badges', value: stats.cancelledBadges, icon: XCircle, color: 'orange' as const },
-      { title: 'Expired Badges', value: stats.expiredBadges, icon: ShieldAlert, color: 'red' as const },
-      { title: 'Employees', value: stats.registeredEmployees, icon: Crown, color: 'indigo' as const },
-      { title: 'Office Locations', value: stats.officeLocations, icon: Building2, color: 'purple' as const },
-      { title: 'Audit Events Today', value: stats.auditEventsToday, icon: FileText, color: 'blue' as const },
-      { title: 'Documents Today', value: stats.documentsUploadedToday, icon: FileText, color: 'teal' as const },
-      { title: 'Pending Verification', value: stats.pendingVerification, icon: Clock, color: 'amber' as const },
-      { title: 'Verified Documents', value: stats.verifiedDocuments, icon: CheckCircle, color: 'green' as const },
-      { title: 'Rejected Documents', value: stats.rejectedDocuments, icon: XCircle, color: 'red' as const },
-      { title: 'Missing Documents', value: stats.missingDocuments, icon: AlertTriangle, color: 'orange' as const },
+      { title: "Today's Visitors", value: stats.visitorsToday, icon: Users, color: 'blue' as const, trend: stats.visitorsTrend, href: '/visitors?date=today' },
+      { title: 'This Week', value: stats.visitorsThisWeek, icon: Calendar, color: 'green' as const, href: '/visitors?date=week' },
+      { title: 'This Month', value: stats.visitorsThisMonth, icon: TrendingUp, color: 'purple' as const, href: '/visitors?date=month' },
+      { title: 'Currently Inside', value: stats.visitorsCurrentlyInside, icon: UserCheck, color: 'indigo' as const, href: '/visits?status=checked_in' },
+      { title: 'Pending Approvals', value: stats.pendingApprovals, icon: Clock, color: 'amber' as const, href: '/visits?status=pending' },
+      { title: 'Checked In', value: stats.checkedIn, icon: UserCheck, color: 'green' as const, href: '/visits?status=checked_in' },
+      { title: 'Checked Out', value: stats.checkedOut, icon: LogOut, color: 'gray' as const, href: '/visits?status=checked_out' },
+      { title: 'Active Badges', value: stats.activeBadges, icon: IdCard, color: 'emerald' as const, href: '/badges?status=Active' },
+      { title: 'Cancelled Badges', value: stats.cancelledBadges, icon: XCircle, color: 'orange' as const, href: '/badges?status=Cancelled' },
+      { title: 'Expired Badges', value: stats.expiredBadges, icon: ShieldAlert, color: 'red' as const, href: '/badges?status=Expired' },
+      { title: 'Employees', value: stats.registeredEmployees, icon: Crown, color: 'indigo' as const, href: '/employees' },
+      { title: 'Office Locations', value: stats.officeLocations, icon: Building2, color: 'purple' as const, href: '/office-locations' },
+      { title: 'Audit Events Today', value: stats.auditEventsToday, icon: FileText, color: 'blue' as const, href: '/audit-logs?date=today' },
+      { title: 'Documents Today', value: stats.documentsUploadedToday, icon: FileText, color: 'teal' as const, href: '/documents?date=today' },
+      { title: 'Pending Verification', value: stats.pendingVerification, icon: Clock, color: 'amber' as const, href: '/documents?verification_status=Pending' },
+      { title: 'Verified Documents', value: stats.verifiedDocuments, icon: CheckCircle, color: 'green' as const, href: '/documents?verification_status=Verified' },
+      { title: 'Rejected Documents', value: stats.rejectedDocuments, icon: XCircle, color: 'red' as const, href: '/documents?verification_status=Rejected' },
+      { title: 'Missing Documents', value: stats.missingDocuments, icon: AlertTriangle, color: 'orange' as const, href: '/visitors?missing_documents=true' },
     ]
   }
 
@@ -322,10 +332,10 @@ export default function DashboardPage() {
           })}
         </nav>
         <div className="flex-shrink-0 p-4 border-t border-gray-200">
-          <a href="/login" className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+          <button onClick={handleLogout} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
             <LogOut className="h-5 w-5" />
             Logout
-          </a>
+          </button>
         </div>
       </aside>
 
@@ -370,6 +380,7 @@ export default function DashboardPage() {
                   icon={stat.icon}
                   color={stat.color}
                   trend={stat.trend}
+                  onClick={stat.href ? () => { router.push(stat.href) } : undefined}
                 />
               ))}
             </div>

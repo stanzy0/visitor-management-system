@@ -13,6 +13,6 @@ export async function logAuditAction(
       body: JSON.stringify({ action, entityType, entityId, details }),
     })
   } catch (err) {
-    console.error('Failed to log audit action:', err)
+    console.warn('Audit logging skipped:', err)
   }
 }

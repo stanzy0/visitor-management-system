@@ -65,39 +65,41 @@ export default function EmergencyPage() {
   const [endingEmergency, setEndingEmergency] = useState(false)
   const [showEndConfirm, setShowEndConfirm] = useState(false)
 
-  const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
-  const rollCallChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
+   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
+   const rollCallChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (!PERMISSIONS[user.role]?.includes('emergency')) {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setUserRole(user.role)
-      setAuthChecking(false)
-      fetchCheckedIn()
-      checkActiveSession()
-      setupRealtime()
-    }
-    checkAuth()
+   const computeRollCallSummary = (entries: RollCallEntry[]) => {
+     setRollCallSummary({
+       total: entries.length,
+       accountedFor: entries.filter(e => e.status === 'accounted_for').length,
+       evacuated: entries.filter(e => e.status === 'evacuated').length,
+       injured: entries.filter(e => e.status === 'injured').length,
+       missing: entries.filter(e => e.status === 'missing').length,
+     })
+   }
 
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-      if (rollCallChannel.current) {
-        supabase.removeChannel(rollCallChannel.current)
-      }
-    }
-  }, [])
+   const fetchRollCallEntries = async (sessionId: string) => {
+     const { data } = await supabase
+       .from('roll_call_entries')
+       .select(`
+         *,
+         visit:visits(
+           *,
+           visitor:visitors(full_name, visitor_organization, photo_url),
+           employee:employees(full_name, department, office_location)
+         )
+       `)
+       .eq('session_id', sessionId)
+       .order('created_at', { ascending: true })
 
-  const checkActiveSession = async () => {
+     if (data) {
+       const entries = data as RollCallEntry[]
+       setRollCallEntries(entries)
+       computeRollCallSummary(entries)
+     }
+   }
+
+   const checkActiveSession = async () => {
     const { data } = await supabase
       .from('emergency_sessions')
       .select('*')
@@ -146,6 +148,83 @@ export default function EmergencyPage() {
       buildings: buildings.size,
     })
   }
+
+  // Phase 1 Realtime
+  const setupRealtime = () => {
+    if (realtimeChannel.current) {
+      supabase.removeChannel(realtimeChannel.current)
+    }
+
+    realtimeChannel.current = supabase
+      .channel('emergency-occupancy')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'visits' },
+        (payload) => {
+          const newVisit = payload.new as Visit | null
+          const oldVisit = payload.old as Visit | null
+
+          if (payload.eventType === 'INSERT' && newVisit?.status === 'checked_in') {
+            setVisits(prev => {
+              const exists = prev.some(v => v.id === newVisit.id)
+              return exists ? prev : [...prev, newVisit]
+            })
+          } else if (payload.eventType === 'UPDATE' && newVisit) {
+            if (newVisit.status === 'checked_in') {
+              setVisits(prev => prev.some(v => v.id === newVisit.id) ? prev.map(v => v.id === newVisit.id ? newVisit : v) : [...prev, newVisit])
+            } else {
+              setVisits(prev => prev.filter(v => v.id !== newVisit.id))
+            }
+          } else if (payload.eventType === 'DELETE' && oldVisit) {
+            setVisits(prev => prev.filter(v => v.id !== oldVisit.id))
+          }
+
+          setTimeout(() => {
+            supabase
+              .from('visits')
+              .select(`
+                *,
+                visitor:visitors(full_name, visitor_organization, photo_url),
+                employee:employees(full_name, department, office_location)
+              `)
+              .eq('status', 'checked_in')
+              .then(({ data }) => {
+                if (data) computeSummary(data)
+              })
+          }, 100)
+        }
+      )
+      .subscribe()
+  }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('emergency')) {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setUserRole(user.role)
+      setAuthChecking(false)
+      fetchCheckedIn()
+      checkActiveSession()
+      setupRealtime()
+    }
+    checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+      if (rollCallChannel.current) {
+        supabase.removeChannel(rollCallChannel.current)
+      }
+    }
+  }, [])
 
   // Phase 2: Start Emergency
   const startEmergency = async () => {
@@ -199,39 +278,7 @@ export default function EmergencyPage() {
     setStartingEmergency(false)
   }
 
-  // Phase 2: Fetch Roll Call Entries
-  const fetchRollCallEntries = async (sessionId: string) => {
-    const { data } = await supabase
-      .from('roll_call_entries')
-      .select(`
-        *,
-        visit:visits(
-          *,
-          visitor:visitors(full_name, visitor_organization, photo_url),
-          employee:employees(full_name, department, office_location)
-        )
-      `)
-      .eq('session_id', sessionId)
-      .order('created_at', { ascending: true })
-
-    if (data) {
-      const entries = data as RollCallEntry[]
-      setRollCallEntries(entries)
-      computeRollCallSummary(entries)
-    }
-  }
-
-  const computeRollCallSummary = (entries: RollCallEntry[]) => {
-    setRollCallSummary({
-      total: entries.length,
-      accountedFor: entries.filter(e => e.status === 'accounted_for').length,
-      evacuated: entries.filter(e => e.status === 'evacuated').length,
-      injured: entries.filter(e => e.status === 'injured').length,
-      missing: entries.filter(e => e.status === 'missing').length,
-    })
-  }
-
-  // Phase 2: Update Roll Call Status
+   // Phase 2: Update Roll Call Status
   const updateRollCallStatus = async (entryId: string, newStatus: string) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -287,54 +334,6 @@ export default function EmergencyPage() {
 
     setEndingEmergency(false)
     setShowEndConfirm(false)
-  }
-
-  // Phase 1 Realtime
-  const setupRealtime = () => {
-    if (realtimeChannel.current) {
-      supabase.removeChannel(realtimeChannel.current)
-    }
-
-    realtimeChannel.current = supabase
-      .channel('emergency-occupancy')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'visits' },
-        (payload) => {
-          const newVisit = payload.new as Visit | null
-          const oldVisit = payload.old as Visit | null
-
-          if (payload.eventType === 'INSERT' && newVisit?.status === 'checked_in') {
-            setVisits(prev => {
-              const exists = prev.some(v => v.id === newVisit.id)
-              return exists ? prev : [...prev, newVisit]
-            })
-          } else if (payload.eventType === 'UPDATE' && newVisit) {
-            if (newVisit.status === 'checked_in') {
-              setVisits(prev => prev.some(v => v.id === newVisit.id) ? prev.map(v => v.id === newVisit.id ? newVisit : v) : [...prev, newVisit])
-            } else {
-              setVisits(prev => prev.filter(v => v.id !== newVisit.id))
-            }
-          } else if (payload.eventType === 'DELETE' && oldVisit) {
-            setVisits(prev => prev.filter(v => v.id !== oldVisit.id))
-          }
-
-          setTimeout(() => {
-            supabase
-              .from('visits')
-              .select(`
-                *,
-                visitor:visitors(full_name, visitor_organization, photo_url),
-                employee:employees(full_name, department, office_location)
-              `)
-              .eq('status', 'checked_in')
-              .then(({ data }) => {
-                if (data) computeSummary(data)
-              })
-          }, 100)
-        }
-      )
-      .subscribe()
   }
 
   // Phase 2: Roll Call Realtime
@@ -403,6 +402,7 @@ export default function EmergencyPage() {
     }
   }, [emergencyMode, session?.id])
 
+   
   const getTimeOnSite = (checkInTime: string | null) => {
     if (!checkInTime) return '—'
     const diff = Date.now() - new Date(checkInTime).getTime()

@@ -30,18 +30,49 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'User ID and action are required' }, { status: 400 })
     }
 
-    let updateData: { ban_duration?: string } = {}
+    let updateData: { ban_duration?: string; must_change_password?: boolean } = {}
 
     if (action === 'disable') {
       updateData = { ban_duration: '876000h' }
     } else if (action === 'enable') {
       updateData = { ban_duration: 'none' }
+    } else if (action === 'force-password-reset') {
+      updateData = { must_change_password: true }
     } else {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
     }
 
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+    }
+
+    if (action === 'force-password-reset') {
+      await supabaseAdmin
+        .from('user_roles')
+        .update({ must_change_password: true })
+        .eq('user_id', userId)
+
+      const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+        user_metadata: { must_change_password: true },
+      })
+
+      if (authError) {
+        return NextResponse.json({ error: authError.message }, { status: 500 })
+      }
+
+      const { data: user } = await supabase
+        .from('user_roles')
+        .select('email')
+        .eq('user_id', userId)
+        .single()
+
+      try {
+        await logAuditAction('Forced Password Reset Enabled', 'user', userId, `Password reset forced for ${user?.email}`)
+      } catch (err) {
+        console.error('Failed to log forced password reset audit:', err)
+      }
+
+      return NextResponse.json({ success: true })
     }
 
     const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, updateData)

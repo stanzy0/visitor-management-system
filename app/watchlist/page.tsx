@@ -89,6 +89,60 @@ export default function WatchlistPage() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
+  function showNotification(type: 'success' | 'error', message: string) {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 3000)
+  }
+
+  function setupRealtime() {
+    if (realtimeChannel.current) {
+      supabase.removeChannel(realtimeChannel.current)
+    }
+
+    realtimeChannel.current = supabase
+      .channel('watchlist-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'visitor_watchlist' },
+        () => {
+          fetchEntries()
+        }
+      )
+      .subscribe()
+  }
+
+  async function fetchEntries() {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('visitor_watchlist')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      showNotification('error', error.message)
+    } else {
+      setEntries(data || [])
+    }
+    setLoading(false)
+  }
+
+  async function fetchUsers() {
+    const { data } = await supabase
+      .from('user_roles')
+      .select('user_id, full_name, email')
+      .eq('role', 'Admin')
+
+    const profiles: UserProfile[] = []
+    data?.forEach((u: any) => {
+      profiles.push({
+        id: u.user_id,
+        full_name: u.full_name,
+        email: u.email,
+      })
+    })
+    setUsers(profiles)
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -114,60 +168,6 @@ export default function WatchlistPage() {
       }
     }
   }, [])
-
-  const fetchEntries = async () => {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('visitor_watchlist')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      showNotification('error', error.message)
-    } else {
-      setEntries(data || [])
-    }
-    setLoading(false)
-  }
-
-  const fetchUsers = async () => {
-    const { data } = await supabase
-      .from('user_roles')
-      .select('user_id, full_name, email')
-      .eq('role', 'Admin')
-
-    const profiles: UserProfile[] = []
-    data?.forEach((u: any) => {
-      profiles.push({
-        id: u.user_id,
-        full_name: u.full_name,
-        email: u.email,
-      })
-    })
-    setUsers(profiles)
-  }
-
-  const setupRealtime = () => {
-    if (realtimeChannel.current) {
-      supabase.removeChannel(realtimeChannel.current)
-    }
-
-    realtimeChannel.current = supabase
-      .channel('watchlist-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'visitor_watchlist' },
-        () => {
-          fetchEntries()
-        }
-      )
-      .subscribe()
-  }
-
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 3000)
-  }
 
   const openCreateModal = () => {
     setEditingEntry(null)

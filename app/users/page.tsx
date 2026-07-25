@@ -22,45 +22,17 @@ export default function UsersPage() {
   const [formData, setFormData] = useState({ email: '', full_name: '', role: 'Receptionist' as UserRole })
   const [submitting, setSubmitting] = useState(false)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [tempPassword, setTempPassword] = useState<string | null>(null)
+  const [tempPasswordEmail, setTempPasswordEmail] = useState<string | null>(null)
+  const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user || user.role !== 'Admin') {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setAuthChecking(false)
-      setUserRole(user.role)
-      fetchUsers()
-      setupRealtime()
-    }
-    checkAuth()
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-    }
-  }, [])
-
-  const fetchUsers = async () => {
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      showNotification('error', error.message)
-    } else {
-      setUsers(data || [])
-    }
-    setLoading(false)
+  function showNotification(type: 'success' | 'error', message: string) {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 3000)
   }
 
-  const setupRealtime = () => {
+  function setupRealtime() {
     if (realtimeChannel.current) {
       supabase.removeChannel(realtimeChannel.current)
     }
@@ -83,53 +55,126 @@ export default function UsersPage() {
       .subscribe()
   }
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 3000)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSubmitting(true)
-
-    const { error } = await supabase.from('user_roles').upsert({
-      user_id: editingUser?.user_id || crypto.randomUUID(),
-      email: formData.email,
-      full_name: formData.full_name,
-      role: formData.role,
-    })
+  async function fetchUsers() {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('*')
+      .order('created_at', { ascending: false })
 
     if (error) {
       showNotification('error', error.message)
     } else {
-      const action = editingUser ? 'Role Changed' : 'Role Assigned'
-      logAuditAction(action, 'user', editingUser?.user_id || null, `${formData.email} assigned ${formData.role} role`)
-      showNotification('success', `User ${editingUser ? 'updated' : 'added'} successfully`)
-      setModalOpen(false)
-      setEditingUser(null)
-      setFormData({ email: '', full_name: '', role: 'Receptionist' })
+      setUsers(data || [])
     }
-    setSubmitting(false)
+    setLoading(false)
   }
 
-  const handleEdit = (user: UserWithRole & { user_id: string }) => {
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setSubmitting(true)
+
+    try {
+      if (editingUser) {
+        const res = await fetch('/api/users/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: editingUser.user_id,
+            email: formData.email,
+            full_name: formData.full_name,
+            role: formData.role,
+          }),
+        })
+
+        const data = await res.json()
+
+        if (!res.ok) {
+          showNotification('error', data.error || 'Failed to update user')
+        } else {
+          logAuditAction('Role Changed', 'user', editingUser.user_id, `${formData.email} assigned ${formData.role} role`)
+          showNotification('success', 'User updated successfully')
+          setModalOpen(false)
+          setEditingUser(null)
+          setFormData({ email: '', full_name: '', role: 'Receptionist' })
+          fetchUsers()
+        }
+      } else {
+        const res = await fetch('/api/users/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: formData.email,
+            full_name: formData.full_name,
+            role: formData.role,
+          }),
+        })
+
+        const data = await res.json()
+
+        if (!res.ok) {
+          showNotification('error', data.error || 'Failed to create user')
+        } else {
+          logAuditAction('Role Assigned', 'user', data.user?.user_id || null, `${formData.email} assigned ${formData.role} role`)
+          showNotification('success', `User added successfully`)
+          setTempPassword(data.tempPassword)
+          setTempPasswordEmail(formData.email)
+          setResetPasswordUserId(data.user?.user_id)
+          setModalOpen(false)
+          setEditingUser(null)
+          setFormData({ email: '', full_name: '', role: 'Receptionist' })
+          fetchUsers()
+        }
+      }
+    } catch {
+      showNotification('error', 'An unexpected error occurred. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  function handleEdit(user: UserWithRole & { user_id: string }) {
     setEditingUser(user)
     setFormData({ email: user.email, full_name: user.full_name || '', role: user.role })
     setModalOpen(true)
   }
 
-  const handleDelete = async (userId: string) => {
+  async function handleDelete(userId: string) {
     if (!confirm('Are you sure you want to remove this user assignment?')) return
 
     const userToDelete = users.find((u) => u.user_id === userId)
 
-    const { error } = await supabase.from('user_roles').delete().eq('user_id', userId)
+    try {
+      const res = await fetch('/api/users/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      })
 
-    if (error) {
-      showNotification('error', error.message)
-    } else {
-      logAuditAction('Role Removed', 'user', userId, `Role removed for ${userToDelete?.email}`)
-      showNotification('success', 'User role removed successfully')
+      const data = await res.json()
+
+      if (!res.ok) {
+        showNotification('error', data.error || 'Failed to delete user')
+      } else {
+        logAuditAction('Role Removed', 'user', userId, `Role removed for ${userToDelete?.email}`)
+        showNotification('success', 'User role removed successfully')
+      }
+      fetchUsers()
+    } catch {
+      showNotification('error', 'An unexpected error occurred. Please try again.')
+    }
+  }
+
+  async function fetchEmailStatus() {
+    try {
+      const res = await fetch('/api/admin/email-status')
+      const data = await res.json()
+      if (data.configured) {
+        setTempPassword(data.temporaryPassword || null)
+        setResetPasswordUserId(data.userId || null)
+      }
+    } catch {
+      console.error('Failed to fetch email status')
     }
   }
 
@@ -140,6 +185,28 @@ export default function UsersPage() {
     const matchesRole = roleFilter === 'all' || u.role === roleFilter
     return matchesSearch && matchesRole
   })
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user || user.role !== 'Admin') {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setAuthChecking(false)
+      setUserRole(user.role)
+      fetchUsers()
+      setupRealtime()
+      fetchEmailStatus()
+    }
+    checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
+  }, [])
 
   if (authChecking) {
     return (
@@ -203,6 +270,27 @@ export default function UsersPage() {
             }`}
           >
             {notification.message}
+          </div>
+        )}
+
+        {tempPassword && (
+          <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
+            <h3 className="text-sm font-semibold text-yellow-800">Temporary Credentials</h3>
+            <p className="mt-1 text-sm text-yellow-700">
+              Email: <span className="font-mono">{tempPasswordEmail}</span>
+            </p>
+            <p className="mt-1 text-sm text-yellow-700">
+              Temporary Password: <span className="font-mono font-bold">{tempPassword}</span>
+            </p>
+            <p className="mt-2 text-xs text-yellow-600">
+              Share this password securely with the user. They must change it on first login.
+            </p>
+            <button
+              onClick={() => { setTempPassword(null); setTempPasswordEmail(null); setResetPasswordUserId(null) }}
+              className="mt-3 rounded-lg bg-yellow-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-yellow-700"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 

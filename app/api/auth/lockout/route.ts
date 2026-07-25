@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'fail') {
-      let newFailedAttempts = failedAttempts + 1
+      const newFailedAttempts = failedAttempts + 1
 
       if (newFailedAttempts >= MAX_FAILED_ATTEMPTS) {
         await supabaseAdmin.auth.admin.updateUserById(userId, {

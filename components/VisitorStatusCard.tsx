@@ -45,6 +45,7 @@ export default function VisitorStatusCard({ invitation }: VisitorStatusCardProps
   const [badge, setBadge] = useState(invitation.badge)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBadge(invitation.badge)
   }, [invitation.badge])
 

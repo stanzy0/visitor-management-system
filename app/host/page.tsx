@@ -81,6 +81,12 @@ interface Stats {
   avgDuration: string
 }
 
+interface WatchlistHit {
+  full_name: string
+  category: string
+  reason?: string | null
+}
+
 export default function HostPortalPage() {
   const [userRole, setUserRole] = useState<UserRole>('Receptionist')
   const [employeeId, setEmployeeId] = useState<string | null>(null)
@@ -119,49 +125,11 @@ export default function HostPortalPage() {
     registration_number: '',
     id_number: '',
   })
-  const [watchlistHit, setWatchlistHit] = useState<any | null>(null)
+  const [watchlistHit, setWatchlistHit] = useState<WatchlistHit | null>(null)
   const [showWatchlistWarning, setShowWatchlistWarning] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (!PERMISSIONS[user.role]?.includes('host')) {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setUserRole(user.role)
-
-      if (user.role === 'Host Employee') {
-        const { data: empData } = await supabase
-          .from('employees')
-          .select('*')
-          .eq('user_id', user.id)
-          .single()
-        if (empData) {
-          setEmployee(empData)
-          setEmployeeId(empData.id)
-        }
-      }
-
-      setAuthChecking(false)
-      fetchData()
-      setupRealtime()
-    }
-    checkAuth()
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-    }
-  }, [])
 
   const fetchData = async () => {
     if (!employeeId && userRole === 'Host Employee') return
@@ -247,6 +215,44 @@ export default function HostPortalPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => fetchData())
       .subscribe()
   }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('host')) {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setUserRole(user.role)
+
+      if (user.role === 'Host Employee') {
+        const { data: empData } = await supabase
+          .from('employees')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
+        if (empData) {
+          setEmployee(empData)
+          setEmployeeId(empData.id)
+        }
+      }
+
+      setAuthChecking(false)
+      fetchData()
+      setupRealtime()
+    }
+    checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
+  }, [])
 
   const handleApproveAppointment = async (appointment: Appointment) => {
     setActionLoading(appointment.id)
@@ -911,7 +917,7 @@ export default function HostPortalPage() {
   )
 }
 
-function SummaryCard({ title, value, icon: Icon, color }: { title: string; value: string; icon: any; color: string }) {
+function SummaryCard({ title, value, icon: Icon, color }: { title: string; value: string; icon: React.ComponentType<{ className?: string }>; color: string }) {
   const colorClasses: Record<string, string> = {
     blue: 'bg-blue-50 text-blue-600',
     green: 'bg-green-50 text-green-600',

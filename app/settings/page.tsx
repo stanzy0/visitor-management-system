@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth'
 import { logAuditAction } from '@/lib/client/audit'
 import { getAuthHeaders } from '@/lib/client/api'
 import {
@@ -15,34 +15,27 @@ import {
   Palette,
   Shield,
   Bell,
-  Settings as SettingsIcon,
   Building2,
-  Clock,
-  FileText,
   UserCheck,
-  Car,
   QrCode,
-  Printer,
 } from 'lucide-react'
 
 interface SettingRow {
   id?: string
   key: string
-  value: any
+  value: SettingValue
   category: string
   description?: string
   is_sensitive?: boolean
 }
 
 const DEFAULT_SETTINGS: SettingRow[] = [
-  // General
   { key: 'org_name', value: 'Organization Name', category: 'general', description: 'Organization display name' },
   { key: 'org_logo', value: '', category: 'general', description: 'Logo URL' },
   { key: 'org_address', value: '', category: 'general', description: 'Address' },
   { key: 'org_phone', value: '', category: 'general', description: 'Phone number' },
   { key: 'org_email', value: '', category: 'general', description: 'Email address' },
   { key: 'org_website', value: '', category: 'general', description: 'Website URL' },
-  // Visitor Settings
   { key: 'working_hours_start', value: '08:00', category: 'visitor', description: 'Working hours start' },
   { key: 'working_hours_end', value: '18:00', category: 'visitor', description: 'Working hours end' },
   { key: 'max_visit_duration', value: 480, category: 'visitor', description: 'Max visit duration in minutes' },
@@ -52,24 +45,20 @@ const DEFAULT_SETTINGS: SettingRow[] = [
   { key: 'require_vehicle_registration', value: false, category: 'visitor', description: 'Require vehicle registration' },
   { key: 'auto_checkout', value: true, category: 'visitor', description: 'Auto check-out after hours' },
   { key: 'badge_expiry_hours', value: 24, category: 'visitor', description: 'Badge expiry in hours' },
-  // Badge Settings
   { key: 'badge_logo', value: '', category: 'badge', description: 'Badge logo URL' },
   { key: 'badge_background', value: '#ffffff', category: 'badge', description: 'Badge background color' },
   { key: 'badge_footer', value: '', category: 'badge', description: 'Badge footer text' },
   { key: 'badge_qr_position', value: 'right', category: 'badge', description: 'QR code position' },
-  // Notifications
   { key: 'notify_email', value: true, category: 'notifications', description: 'Enable email notifications' },
   { key: 'notify_inapp', value: true, category: 'notifications', description: 'Enable in-app notifications' },
   { key: 'notify_emergency', value: true, category: 'notifications', description: 'Enable emergency alerts' },
   { key: 'notify_watchlist', value: true, category: 'notifications', description: 'Enable watchlist alerts' },
   { key: 'notify_appointments', value: true, category: 'notifications', description: 'Enable appointment alerts' },
-  // Security
   { key: 'session_timeout', value: 30, category: 'security', description: 'Session timeout in minutes' },
   { key: 'password_expiry_days', value: 90, category: 'security', description: 'Password expiry in days' },
   { key: 'max_login_attempts', value: 6, category: 'security', description: 'Max login attempts' },
   { key: 'force_password_change', value: false, category: 'security', description: 'Force password change on next login' },
   { key: 'auto_logout', value: true, category: 'security', description: 'Enable auto logout' },
-  // Email Settings
   { key: 'resend_api_status', value: 'Not Configured', category: 'email', description: 'Resend API connection status' },
   { key: 'sender_name', value: '', category: 'email', description: 'Sender display name' },
   { key: 'sender_email', value: '', category: 'email', description: 'Sender email address' },
@@ -78,7 +67,6 @@ const DEFAULT_SETTINGS: SettingRow[] = [
   { key: 'enable_appointment_emails', value: true, category: 'email', description: 'Enable appointment emails' },
   { key: 'enable_reminder_emails', value: true, category: 'email', description: 'Enable reminder emails' },
   { key: 'enable_emergency_emails', value: true, category: 'email', description: 'Enable emergency emails' },
-  // Appearance
   { key: 'theme', value: 'light', category: 'appearance', description: 'UI theme' },
   { key: 'accent_color', value: '#2563eb', category: 'appearance', description: 'Accent color' },
   { key: 'sidebar_style', value: 'default', category: 'appearance', description: 'Sidebar style' },
@@ -108,6 +96,145 @@ export default function SettingsPage() {
   const [lastConfigChange, setLastConfigChange] = useState<string | null>(null)
   const [lastLogin, setLastLogin] = useState<string | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
+
+  async function fetchSettings() {
+    setLoading(true)
+    const { data } = await supabase.from('system_settings').select('*')
+
+    const map: Record<string, SettingRow> = {}
+    DEFAULT_SETTINGS.forEach((def) => {
+      const existing = data?.find((s) => s.key === def.key)
+      map[def.key] = existing || { ...def }
+    })
+
+    setSettings(map)
+    setLoading(false)
+  }
+
+  async function fetchEmailStatus() {
+    try {
+      const res = await fetch('/api/admin/email-status', {
+        headers: await getAuthHeaders(),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setSettings((prev) => ({
+          ...prev,
+          resend_api_status: {
+            ...prev.resend_api_status,
+            value: data.configured ? 'Connected' : 'Not Configured',
+          },
+        }))
+      }
+    } catch (error) {
+      console.error('Failed to fetch email status:', error)
+    }
+  }
+
+  async function fetchAuditInfo() {
+    const { data } = await supabase
+      .from('audit_logs')
+      .select('action, created_at')
+      .or('action.ilike.%Backup%,action.ilike.%Settings%,action.ilike.%Login%')
+      .order('created_at', { ascending: false })
+      .limit(10)
+
+    if (data) {
+      const backup = data.find((l) => l.action.toLowerCase().includes('backup'))
+      const config = data.find((l) => l.action.toLowerCase().includes('settings'))
+      const login = data.find((l) => l.action.toLowerCase().includes('login'))
+      setLastBackup(backup ? new Date(backup.created_at).toLocaleString() : null)
+      setLastConfigChange(config ? new Date(config.created_at).toLocaleString() : null)
+      setLastLogin(login ? new Date(login.created_at).toLocaleString() : null)
+    }
+  }
+
+  function setupRealtime() {
+    if (realtimeChannel.current) {
+      supabase.removeChannel(realtimeChannel.current)
+    }
+
+    realtimeChannel.current = supabase
+      .channel('settings-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'system_settings' },
+        () => {
+          fetchSettings()
+        }
+      )
+      .subscribe()
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    const user = await getCurrentUser()
+
+    const entries = Object.values(settings).map((s) => ({
+      key: s.key,
+      value: s.value,
+      category: s.category,
+      description: s.description,
+      is_sensitive: s.is_sensitive || false,
+      updated_by: user?.id,
+    }))
+
+    const { error } = await supabase.from('system_settings').upsert(entries, { onConflict: 'key' })
+
+    if (error) {
+      console.error('Error saving settings:', error)
+    } else {
+      await logAuditAction('Settings Updated', 'system_settings', null, 'System configuration updated')
+    }
+
+    setSaving(false)
+  }
+
+  function handleExportConfig() {
+    const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `system-settings-${new Date().toISOString().split('T')[0]}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    logAuditAction('Settings Exported', 'system_settings', null, 'Configuration exported')
+  }
+
+  function handleImportConfig(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const imported = JSON.parse(event.target?.result as string)
+        const newSettings = { ...settings }
+        Object.entries(imported).forEach(([key, row]) => {
+          if (newSettings[key]) {
+            newSettings[key] = { ...newSettings[key], ...(row as SettingRow) }
+          }
+        })
+        setSettings(newSettings)
+        logAuditAction('Settings Imported', 'system_settings', null, 'Configuration imported')
+      } catch (err) {
+        console.error('Invalid settings file:', err)
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
+  function updateSetting(key: string, value: SettingValue) {
+    setSettings((prev) => ({
+      ...prev,
+      [key]: { ...prev[key], value },
+    }))
+  }
+
+  function getSettingsByCategory(cat: string) {
+    return Object.values(settings).filter((s) => s.category === cat)
+  }
 
   useEffect(() => {
     let authUnsubscribe: (() => void) | null = null
@@ -140,145 +267,6 @@ export default function SettingsPage() {
       }
     }
   }, [])
-
-  const fetchSettings = async () => {
-    setLoading(true)
-    const { data } = await supabase.from('system_settings').select('*')
-
-    const map: Record<string, SettingRow> = {}
-    DEFAULT_SETTINGS.forEach((def) => {
-      const existing = data?.find((s) => s.key === def.key)
-      map[def.key] = existing || { ...def }
-    })
-
-    setSettings(map)
-    setLoading(false)
-  }
-
-  const fetchEmailStatus = async () => {
-    try {
-      const res = await fetch('/api/admin/email-status', {
-        headers: await getAuthHeaders(),
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setSettings((prev) => ({
-          ...prev,
-          resend_api_status: {
-            ...prev.resend_api_status,
-            value: data.configured ? 'Connected' : 'Not Configured',
-          },
-        }))
-      }
-    } catch (error) {
-      console.error('Failed to fetch email status:', error)
-    }
-  }
-
-  const fetchAuditInfo = async () => {
-    const { data } = await supabase
-      .from('audit_logs')
-      .select('action, created_at')
-      .or('action.ilike.%Backup%,action.ilike.%Settings%,action.ilike.%Login%')
-      .order('created_at', { ascending: false })
-      .limit(10)
-
-    if (data) {
-      const backup = data.find((l) => l.action.toLowerCase().includes('backup'))
-      const config = data.find((l) => l.action.toLowerCase().includes('settings'))
-      const login = data.find((l) => l.action.toLowerCase().includes('login'))
-      setLastBackup(backup ? new Date(backup.created_at).toLocaleString() : null)
-      setLastConfigChange(config ? new Date(config.created_at).toLocaleString() : null)
-      setLastLogin(login ? new Date(login.created_at).toLocaleString() : null)
-    }
-  }
-
-  const setupRealtime = () => {
-    if (realtimeChannel.current) {
-      supabase.removeChannel(realtimeChannel.current)
-    }
-
-    realtimeChannel.current = supabase
-      .channel('settings-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'system_settings' },
-        () => {
-          fetchSettings()
-        }
-      )
-      .subscribe()
-  }
-
-  const handleSave = async () => {
-    setSaving(true)
-    const user = await getCurrentUser()
-
-    const entries = Object.values(settings).map((s) => ({
-      key: s.key,
-      value: s.value,
-      category: s.category,
-      description: s.description,
-      is_sensitive: s.is_sensitive || false,
-      updated_by: user?.id,
-    }))
-
-    const { error } = await supabase.from('system_settings').upsert(entries, { onConflict: 'key' })
-
-    if (error) {
-      console.error('Error saving settings:', error)
-    } else {
-      await logAuditAction('Settings Updated', 'system_settings', null, 'System configuration updated')
-    }
-
-    setSaving(false)
-  }
-
-  const handleExportConfig = () => {
-    const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `system-settings-${new Date().toISOString().split('T')[0]}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-    logAuditAction('Settings Exported', 'system_settings', null, 'Configuration exported')
-  }
-
-  const handleImportConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      try {
-        const imported = JSON.parse(event.target?.result as string)
-        const newSettings = { ...settings }
-        Object.entries(imported).forEach(([key, row]: [string, any]) => {
-          if (newSettings[key]) {
-            newSettings[key] = { ...newSettings[key], ...row }
-          }
-        })
-        setSettings(newSettings)
-        logAuditAction('Settings Imported', 'system_settings', null, 'Configuration imported')
-      } catch (err) {
-        console.error('Invalid settings file:', err)
-      }
-    }
-    reader.readAsText(file)
-    e.target.value = ''
-  }
-
-  const updateSetting = (key: string, value: SettingValue) => {
-    setSettings((prev) => ({
-      ...prev,
-      [key]: { ...prev[key], value },
-    }))
-  }
-
-  const getSettingsByCategory = (cat: string) => {
-    return Object.values(settings).filter((s) => s.category === cat)
-  }
 
   if (authChecking) {
     return (
@@ -322,7 +310,6 @@ export default function SettingsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Sidebar */}
             <div className="lg:col-span-1">
               <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
                 <nav className="space-y-1">
@@ -356,7 +343,6 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Content */}
             <div className="lg:col-span-3">
               {activeCategory === 'backup' ? (
                 <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">

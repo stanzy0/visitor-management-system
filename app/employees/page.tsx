@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
 import { Search, Plus, Edit, Trash2, X, Loader2 } from 'lucide-react'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { getEmployees, createEmployee, updateEmployee, deleteEmployee } from '@/lib/client/employees'
 
 interface Employee {
   id: string
@@ -13,6 +14,7 @@ interface Employee {
   phone: string
   department: string
   position: string
+  office_location: string
   created_at: string
 }
 
@@ -22,6 +24,7 @@ interface EmployeeFormData {
   phone: string
   department: string
   position: string
+  office_location: string
 }
 
 const initialFormData: EmployeeFormData = {
@@ -30,6 +33,7 @@ const initialFormData: EmployeeFormData = {
   phone: '',
   department: '',
   position: '',
+  office_location: '',
 }
 
 const inputClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -47,38 +51,18 @@ export default function EmployeesPage() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (!PERMISSIONS[user.role]?.includes('employees')) {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setAuthChecking(false)
-      fetchEmployees()
-      setupRealtime()
-    }
-    checkAuth()
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-    }
-  }, [])
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 3000)
+  }
 
   const fetchEmployees = async () => {
     setLoading(true)
-    const { data, error } = await supabase.from('employees').select('*').order('created_at', { ascending: false })
-
-    if (error) {
-      showNotification('error', error.message)
-    } else {
-      setEmployees(data || [])
+    try {
+      const data = await getEmployees()
+      setEmployees(data)
+    } catch (err) {
+      showNotification('error', err instanceof Error ? err.message : 'Failed to fetch employees')
     }
     setLoading(false)
   }
@@ -106,37 +90,51 @@ export default function EmployeesPage() {
       .subscribe()
   }
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 3000)
-  }
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('employees')) {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setAuthChecking(false)
+      fetchEmployees()
+      setupRealtime()
+    }
+    checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitting(true)
 
     if (editingEmployee) {
-      const { error } = await supabase
-        .from('employees')
-        .update(formData)
-        .eq('id', editingEmployee.id)
-
-      if (error) {
-        showNotification('error', error.message)
-      } else {
+      try {
+        await updateEmployee(editingEmployee.id, formData)
         logAuditAction('Employee Updated', 'employee', editingEmployee.id, `${formData.full_name} updated - ${formData.position} in ${formData.department}`)
         showNotification('success', 'Employee updated successfully')
         fetchEmployees()
+      } catch (err) {
+        showNotification('error', err instanceof Error ? err.message : 'Failed to update employee')
       }
     } else {
-      const { error, data: insertData } = await supabase.from('employees').insert([formData]).select()
-
-      if (error) {
-        showNotification('error', error.message)
-      } else {
-        logAuditAction('Employee Created', 'employee', insertData?.[0]?.id || null, `${formData.full_name} added - ${formData.position} in ${formData.department}`)
+      try {
+        const newEmployee = await createEmployee(formData)
+        logAuditAction('Employee Created', 'employee', newEmployee.id, `${formData.full_name} added - ${formData.position} in ${formData.department}`)
         showNotification('success', 'Employee added successfully')
         fetchEmployees()
+      } catch (err) {
+        showNotification('error', err instanceof Error ? err.message : 'Failed to create employee')
       }
     }
 
@@ -154,6 +152,7 @@ export default function EmployeesPage() {
       phone: employee.phone,
       department: employee.department,
       position: employee.position,
+      office_location: employee.office_location,
     })
     setModalOpen(true)
   }
@@ -163,14 +162,13 @@ export default function EmployeesPage() {
 
     const employeeToDelete = employees.find((emp) => emp.id === id)
 
-    const { error } = await supabase.from('employees').delete().eq('id', id)
-
-    if (error) {
-      showNotification('error', error.message)
-    } else {
+    try {
+      await deleteEmployee(id)
       logAuditAction('Employee Deleted', 'employee', id, `${employeeToDelete?.full_name || id} deleted - was ${employeeToDelete?.position} in ${employeeToDelete?.department}`)
       showNotification('success', 'Employee deleted successfully')
       fetchEmployees()
+    } catch (err) {
+      showNotification('error', err instanceof Error ? err.message : 'Failed to delete employee')
     }
   }
 

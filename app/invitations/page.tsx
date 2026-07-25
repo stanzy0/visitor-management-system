@@ -23,45 +23,10 @@ export default function InvitationsPage() {
   const [employeeId, setEmployeeId] = useState<string | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (!PERMISSIONS[user.role]?.includes('host')) {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setUserRole(user.role)
-      setAuthChecking(false)
-
-      if (user.role === 'Host Employee') {
-        const { data: employee } = await supabase
-          .from('employees')
-          .select('id')
-          .eq('email', user.email)
-          .single()
-
-        if (employee) {
-          setEmployeeId(employee.id)
-          fetchInvitations(employee.id)
-        }
-      } else {
-        fetchAllInvitations()
-      }
-
-      setupRealtime()
-    }
-    checkAuth()
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-    }
-  }, [])
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 3000)
+  }
 
   const fetchInvitations = async (hostId: string) => {
     setLoading(true)
@@ -102,10 +67,45 @@ export default function InvitationsPage() {
       .subscribe()
   }
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 3000)
-  }
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('host')) {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setUserRole(user.role)
+      setAuthChecking(false)
+
+      if (user.role === 'Host Employee') {
+        const { data: employee } = await supabase
+          .from('employees')
+          .select('id')
+          .eq('email', user.email)
+          .single()
+
+        if (employee) {
+          setEmployeeId(employee.id)
+          fetchInvitations(employee.id)
+        }
+      } else {
+        fetchAllInvitations()
+      }
+
+      setupRealtime()
+    }
+    checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
+  }, [])
 
   const handleApprove = async (token: string) => {
     setActionLoading(token)
@@ -262,7 +262,7 @@ export default function InvitationsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-gray-600">
-                        {(inv as any).host?.full_name || '—'}
+                        {(inv.host?.full_name || '—')}
                       </td>
                       <td className="px-4 py-3 text-gray-600">{inv.purpose}</td>
                       <td className="px-4 py-3 text-gray-600 whitespace-nowrap">

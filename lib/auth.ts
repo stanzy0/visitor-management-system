@@ -8,6 +8,7 @@ export interface UserWithRole {
   full_name: string | null
   role: UserRole
   created_at: string | null
+  must_change_password?: boolean
 }
 
 export const PERMISSIONS: Record<UserRole, string[]> = {
@@ -102,6 +103,7 @@ export async function getCurrentUser(): Promise<UserWithRole | null> {
     full_name: userRole.full_name,
     role: userRole.role as UserRole,
     created_at: userRole.created_at,
+    must_change_password: userRole.must_change_password ?? false,
   }
 }
 

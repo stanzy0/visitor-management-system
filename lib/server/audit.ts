@@ -11,6 +11,11 @@ export async function logAuditAction(
       data: { user },
     } = await supabase.auth.getUser()
 
+    if (!user) {
+      console.log('No authenticated user, skipping audit log')
+      return
+    }
+
     const userEmail = user?.email || 'anonymous'
 
     const { error } = await supabase.from('audit_logs').insert({

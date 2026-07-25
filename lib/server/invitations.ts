@@ -56,7 +56,7 @@ export async function getInvitationByToken(token: string): Promise<VisitorInvita
     .single()
 
   if (error || !data) return null
-  return data as any
+  return data as VisitorInvitation | null
 }
 
 export async function getInvitationsByHost(hostEmployeeId: string): Promise<VisitorInvitation[]> {
@@ -91,7 +91,7 @@ export async function getAllInvitations(): Promise<VisitorInvitation[]> {
     throw new Error(error.message)
   }
 
-  return (data || []) as any[]
+  return (data || []) as VisitorInvitation[]
 }
 
 export async function updateInvitationStatus(token: string, status: VisitorInvitation['status']): Promise<void> {
@@ -99,7 +99,7 @@ export async function updateInvitationStatus(token: string, status: VisitorInvit
     throw new Error('Service role key not configured')
   }
 
-  const updates: any = { status, updated_at: new Date().toISOString() }
+  const updates: { status: VisitorInvitation['status']; updated_at: string; registration_completed_at?: string } = { status, updated_at: new Date().toISOString() }
 
   if (status === 'Completed') {
     updates.registration_completed_at = new Date().toISOString()
@@ -287,8 +287,8 @@ export async function getInvitationStats(startDate?: Date, endDate?: Date) {
     .from('visitor_invitations')
     .select('status, expected_date, created_at')
 
-  if (startDate) query = query.gte('created_at', startDate.toISOString()) as any
-  if (endDate) query = query.lt('created_at', endDate.toISOString()) as any
+  if (startDate) query = query.gte('created_at', startDate.toISOString())
+  if (endDate) query = query.lt('created_at', endDate.toISOString())
 
   const { data } = await query
 
@@ -309,7 +309,7 @@ export async function getInvitationStats(startDate?: Date, endDate?: Date) {
   const dateCounts: Record<string, number> = {}
   const statusCounts: Record<string, number> = {}
 
-  for (const row of data as any[]) {
+  for (const row of data) {
     stats.totalSent++
     statusCounts[row.status] = (statusCounts[row.status] || 0) + 1
     const date = new Date(row.expected_date).toISOString().split('T')[0]
@@ -350,7 +350,7 @@ export async function getPendingInvitations(): Promise<VisitorInvitation[]> {
     throw new Error(error.message)
   }
 
-  return (data || []) as any[]
+  return (data || []) as VisitorInvitation[]
 }
 
 export async function getTodayInvitations(): Promise<VisitorInvitation[]> {
@@ -369,5 +369,5 @@ export async function getTodayInvitations(): Promise<VisitorInvitation[]> {
     throw new Error(error.message)
   }
 
-  return (data || []) as any[]
+  return (data || []) as VisitorInvitation[]
 }

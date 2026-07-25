@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import VisitorStatusCard from '@/components/VisitorStatusCard'
 
@@ -20,9 +21,9 @@ export default async function VisitorStatusPage({ params }: PageProps) {
         <div className="max-w-md w-full rounded-xl border border-gray-200 bg-white shadow-sm p-8 text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Invalid Invitation</h1>
           <p className="text-gray-600 mb-6">{error.error || 'This invitation link is invalid or has expired.'}</p>
-          <a href="/" className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+          <Link href="/" className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
             Go to Home
-          </a>
+          </Link>
         </div>
       </div>
     )

@@ -112,7 +112,7 @@ async function attemptSend(logId: string): Promise<void> {
     to: log.recipient_email,
     recipientName: log.recipient_name || undefined,
     subject: log.subject,
-    template: log.template as any,
+    template: log.template as EmailTemplate,
     data: {},
     relatedType: log.related_type || undefined,
     relatedId: log.related_id || undefined,
@@ -129,7 +129,7 @@ async function attemptSend(logId: string): Promise<void> {
       .eq('id', logId)
   } else {
     const nextRetry = log.retry_count + 1
-    const update: any = { retry_count: nextRetry }
+    const update: { retry_count: number; status?: string } = { retry_count: nextRetry }
     
     if (nextRetry >= MAX_RETRIES) {
       update.status = 'failed'
@@ -178,7 +178,7 @@ async function logEmail(payload: Partial<EmailPayload> & { status: string; error
     recipient_name: payload.recipientName,
     subject: payload.subject || '',
     template: payload.template || 'welcome_user',
-    status: payload.status as any,
+    status: payload.status as EmailLogRow['status'],
     error_message: payload.error_message,
     related_type: payload.relatedType,
     related_id: payload.relatedId,
@@ -198,7 +198,7 @@ async function logEmail(payload: Partial<EmailPayload> & { status: string; error
   await supabase.from('email_logs').insert(log)
 }
 
-function renderTemplate(template: EmailTemplate, data: Record<string, any>): string {
+function renderTemplate(template: EmailTemplate, data: Record<string, string | number | boolean | undefined>): string {
   const orgName = data.orgName || 'Visitor Management System'
   const orgEmail = data.orgEmail || 'support@visitor-management.local'
   const orgPhone = data.orgPhone || ''
@@ -237,7 +237,7 @@ function renderTemplate(template: EmailTemplate, data: Record<string, any>): str
     </div>
   `
 
-  const content = getTemplateContent(template, data, orgName)
+  const content = getTemplateContent(template, data, String(orgName))
 
   return `
     <!DOCTYPE html>
@@ -260,7 +260,7 @@ function renderTemplate(template: EmailTemplate, data: Record<string, any>): str
   `
 }
 
-function getTemplateContent(template: EmailTemplate, data: Record<string, any>, orgName: string): string {
+function getTemplateContent(template: EmailTemplate, data: Record<string, string | number | boolean | undefined>, orgName: string): string {
   const visitorName = data.visitorName || 'Visitor'
   const hostName = data.hostName || 'Host'
   const purpose = data.purpose || 'Visit'

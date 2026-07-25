@@ -20,7 +20,16 @@ export default function AuditLogsPage() {
   const [loading, setLoading] = useState(true)
   const [authChecking, setAuthChecking] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [dateFilter, setDateFilter] = useState('')
+  const [dateFilter, setDateFilter] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const date = params.get('date')
+      if (date === 'today') {
+        return new Date().toISOString().split('T')[0]
+      }
+    }
+    return ''
+  })
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   useEffect(() => {

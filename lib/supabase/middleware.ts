@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
+  const supabaseResponse = NextResponse.next({
     request,
   })
 
@@ -24,7 +24,17 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  await supabase.auth.getSession()
+  const { data } = await supabase.auth.getSession()
+  const session = data.session
+  const mustChangePassword = Boolean(session?.user?.user_metadata?.must_change_password)
+  const pathname = request.nextUrl.pathname
+  const isChangePasswordPage = pathname === '/change-password'
+  const isLoginPage = pathname === '/login'
+  const isApiRoute = pathname.startsWith('/api/')
+
+  if (mustChangePassword && !isChangePasswordPage && !isLoginPage && !isApiRoute) {
+    return NextResponse.redirect(new URL('/change-password', request.url))
+  }
 
   return supabaseResponse
 }

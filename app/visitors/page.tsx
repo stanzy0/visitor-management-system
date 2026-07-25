@@ -51,6 +51,13 @@ interface VisitorFormData {
   doc_notes: string
 }
 
+function getVisitStartDate(filter: 'today' | 'week' | 'month'): string {
+  const now = Date.now()
+  if (filter === 'today') return new Date(now).toISOString().split('T')[0]
+  if (filter === 'week') return new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  return new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+}
+
 const initialFormData: VisitorFormData = {
   full_name: '',
   email: '',
@@ -194,6 +201,22 @@ export default function VisitorsPage() {
   const streamRef = useRef<MediaStream | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const [dateFilter] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const date = params.get('date')
+      if (date === 'today' || date === 'week' || date === 'month') {
+        return date
+      }
+    }
+    return ''
+  })
+  const [missingDocumentsFilter] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return new URLSearchParams(window.location.search).get('missing_documents') === 'true'
+    }
+    return false
+  })
 
    useEffect(() => {
     const checkAuth = async () => {
@@ -221,17 +244,17 @@ export default function VisitorsPage() {
     }
   }, [])
 
-  useEffect(() => {
-    if (cameraActive) {
-      setVideoReady(false)
-      startCamera()
-    } else {
-      stopCamera()
-    }
-    return () => stopCamera()
-  }, [cameraActive, currentCameraIndex])
+   useEffect(() => {
+     if (cameraActive) {
+       setTimeout(() => setVideoReady(false), 0)
+       startCamera()
+     } else {
+       stopCamera()
+     }
+     return () => stopCamera()
+   }, [cameraActive, currentCameraIndex])
 
-  const setupRealtime = () => {
+  function setupRealtime() {
     if (realtimeChannel.current) {
       supabase.removeChannel(realtimeChannel.current)
     }
@@ -254,7 +277,7 @@ export default function VisitorsPage() {
       .subscribe()
   }
 
-  const getCameraDevices = async () => {
+  async function getCameraDevices() {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices()
       const videoDevices = devices.filter(d => d.kind === 'videoinput')
@@ -265,7 +288,7 @@ export default function VisitorsPage() {
     }
   }
 
-  const startCamera = async () => {
+  async function startCamera() {
     setCameraPermissionError(null)
     try {
       const devices = await getCameraDevices()
@@ -293,7 +316,7 @@ export default function VisitorsPage() {
     }
   }
 
-  const stopCamera = () => {
+  function stopCamera() {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop())
       streamRef.current = null
@@ -303,14 +326,14 @@ export default function VisitorsPage() {
     }
   }
 
-  const switchCamera = () => {
+  function switchCamera() {
     if (cameras.length > 1) {
       stopCamera()
       setCurrentCameraIndex((prev) => (prev + 1) % cameras.length)
     }
   }
 
-  const capturePhoto = () => {
+  function capturePhoto() {
     if (!videoRef.current || !canvasRef.current) return
 
     const video = videoRef.current
@@ -336,25 +359,54 @@ export default function VisitorsPage() {
     }, 'image/jpeg', 0.9)
   }
 
-  const retakePhoto = () => {
+  function retakePhoto() {
     setPhotoFile(null)
     setPhotoPreview(null)
     setCameraActive(true)
   }
 
-  const fetchVisitors = async () => {
-    const { data, error } = await supabase
+  async function fetchVisitors() {
+    let query = supabase
       .from('visitors')
       .select('*')
       .order('created_at', { ascending: false })
+
+    if (dateFilter === 'today' || dateFilter === 'week' || dateFilter === 'month') {
+      const startDate = getVisitStartDate(dateFilter)
+      const { data: visitData } = await supabase
+        .from('visits')
+        .select('visitor_id')
+        .gte('created_at', startDate)
+      const visitorIds = [...new Set((visitData || []).map((v) => v.visitor_id).filter(Boolean))]
+      if (visitorIds.length > 0) {
+        query = query.in('id', visitorIds)
+      } else {
+        setVisitors([])
+        if (missingDocumentsFilter) {
+          setVisitors([])
+        }
+        return
+      }
+    }
+
+    const { data, error } = await query
     if (error) {
       showNotification('error', error.message)
     } else {
       setVisitors(data || [])
     }
+
+    if (missingDocumentsFilter) {
+      const { data: allDocs } = await supabase
+        .from('visitor_documents')
+        .select('visitor_id')
+      const docVisitors = new Set((allDocs || []).map(d => d.visitor_id).filter(Boolean))
+      const missing = (data || []).filter(v => !docVisitors.has(v.id))
+      setVisitors(missing)
+    }
   }
 
-  const fetchEmployees = async () => {
+  async function fetchEmployees() {
     const { data, error } = await supabase
       .from('employees')
       .select('id, full_name')
@@ -364,12 +416,12 @@ export default function VisitorsPage() {
     }
   }
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
+  function showNotification(type: 'success' | 'error', message: string) {
     setNotification({ type, message })
     setTimeout(() => setNotification(null), 3000)
   }
 
-  const handleDelete = async (id: string, name: string) => {
+  async function handleDelete(id: string, name: string) {
     if (!confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) return
 
     setDeletingId(id)
@@ -385,7 +437,7 @@ export default function VisitorsPage() {
     setDeletingId(null)
   }
 
-  const validatePhotoFile = (file: File): string | null => {
+  function validatePhotoFile(file: File): string | null {
     if (!file) return null
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
     if (!allowedTypes.includes(file.type)) {
@@ -398,7 +450,7 @@ export default function VisitorsPage() {
     return null
   }
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -414,7 +466,7 @@ export default function VisitorsPage() {
     setPhotoPreview(previewUrl)
   }
 
-  const handlePhotoUpload = async (): Promise<string | null> => {
+  async function handlePhotoUpload(): Promise<string | null> {
     if (!photoFile) return null
 
     setUploading(true)
@@ -444,7 +496,7 @@ export default function VisitorsPage() {
     }
   }
 
-  const uploadDocumentImage = async (file: File, prefix: string): Promise<string | null> => {
+  async function uploadDocumentImage(file: File, prefix: string): Promise<string | null> {
     setDocUploading(true)
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-').replace(/-+/g, '-')
     const fileName = `${prefix}-${Date.now()}-${sanitizedName}`
@@ -462,7 +514,7 @@ export default function VisitorsPage() {
     }
   }
 
-  const checkWatchlist = async (): Promise<boolean> => {
+  async function checkWatchlist(): Promise<boolean> {
     const { data } = await supabase
       .from('visitor_watchlist')
       .select('*')
@@ -503,7 +555,7 @@ export default function VisitorsPage() {
     return false
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitting(true)
 
@@ -527,7 +579,7 @@ export default function VisitorsPage() {
     await createVisitor(formData, photoUrl, photoSourceType)
   }
 
-  const createVisitor = async (data: VisitorFormData, photoUrl: string | null, photoSourceType: 'upload' | 'camera') => {
+  async function createVisitor(data: VisitorFormData, photoUrl: string | null, photoSourceType: 'upload' | 'camera') {
     setSubmitting(true)
 
     const { data: visitorData, error: visitorError } = await supabase
@@ -629,7 +681,7 @@ export default function VisitorsPage() {
     setSubmitting(false)
   }
 
-  const handleWatchlistOverride = async () => {
+  async function handleWatchlistOverride() {
     if (!pendingRegistration) return
 
     const user = await getCurrentUser()

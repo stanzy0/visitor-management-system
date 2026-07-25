@@ -94,49 +94,6 @@ export default function ReportsPage() {
   const [exporting, setExporting] = useState(false)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (!PERMISSIONS[user.role]?.includes('reports')) {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setAuthChecking(false)
-      logAuditAction('Analytics Viewed', 'report', null, 'User viewed analytics dashboard')
-      fetchAllData()
-      setupRealtime()
-    }
-    checkAuth()
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!authChecking) {
-      fetchAllData()
-    }
-  }, [dateFilter, customDateFrom, customDateTo, authChecking])
-
-  const setupRealtime = () => {
-    if (realtimeChannel.current) {
-      supabase.removeChannel(realtimeChannel.current)
-    }
-
-    realtimeChannel.current = supabase
-      .channel('reports-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => fetchAllData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors' }, () => fetchAllData())
-      .subscribe()
-  }
-
   const getDateRange = () => {
     const now = new Date()
     let start: Date, end: Date = now
@@ -178,54 +135,6 @@ export default function ReportsPage() {
     return { start, end }
   }
 
-  const fetchAllData = async () => {
-    setLoading(true)
-    const { start, end } = getDateRange()
-
-    try {
-      await Promise.all([
-        fetchStats(start, end),
-        fetchVisitorsPerDay(start, end),
-        fetchVisitsByStatus(start, end),
-        fetchDepartmentsData(start, end),
-        fetchHostEmployeesData(start, end),
-        fetchCompaniesData(start, end),
-        fetchHourlyData(),
-        fetchRecentVisits(),
-      ])
-    } catch (error) {
-      console.error('Error fetching reports data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchStats = async (start: Date, end: Date) => {
-    const [visitorsRes, visitsRes, pendingRes, approvedRes, rejectedRes, checkedOutRes] = await Promise.all([
-      supabase.from('visitors').select('id', { count: 'exact' }),
-      supabase.from('visits').select('id,status,check_in_time,check_out_time', { count: 'exact' }).gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
-      supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
-      supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'approved').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
-      supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'rejected').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
-      supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'checked_out').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
-    ])
-
-    const checkedInVisits = (visitsRes.data || []).filter((v: any) => v.status === 'checked_in') as any as Array<{ check_in_time: string | null; check_out_time: string | null }>
-    const avgDuration = calculateAvgDuration(checkedInVisits)
-
-    setStats({
-      totalVisitors: visitorsRes.count ?? 0,
-      totalVisits: visitsRes.count ?? 0,
-      approvedVisits: approvedRes.count ?? 0,
-      pendingVisits: pendingRes.count ?? 0,
-      rejectedVisits: rejectedRes.count ?? 0,
-      checkedInVisits: checkedInVisits.length,
-      checkedOutVisits: checkedOutRes.count ?? 0,
-      avgVisitDuration: avgDuration,
-      activeVisitors: checkedInVisits.length,
-    })
-  }
-
   const calculateAvgDuration = (visits: Array<{ check_in_time: string | null; check_out_time: string | null }>) => {
     const completed = visits.filter(v => v.check_in_time && v.check_out_time)
     if (completed.length === 0) return '0h 0m'
@@ -241,6 +150,32 @@ export default function ReportsPage() {
     const minutes = Math.floor((avgMs % (1000 * 60 * 60)) / (1000 * 60))
 
     return `${hours}h ${minutes}m`
+  }
+
+  const fetchStats = async (start: Date, end: Date) => {
+    const [visitorsRes, visitsRes, pendingRes, approvedRes, rejectedRes, checkedOutRes] = await Promise.all([
+      supabase.from('visitors').select('id', { count: 'exact' }),
+      supabase.from('visits').select('id,status,check_in_time,check_out_time', { count: 'exact' }).gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'approved').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'rejected').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'checked_out').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+    ])
+
+    const checkedInVisits = (visitsRes.data || []).filter((v) => v.status === 'checked_in') as Visit[]
+    const avgDuration = calculateAvgDuration(checkedInVisits)
+
+    setStats({
+      totalVisitors: visitorsRes.count ?? 0,
+      totalVisits: visitsRes.count ?? 0,
+      approvedVisits: approvedRes.count ?? 0,
+      pendingVisits: pendingRes.count ?? 0,
+      rejectedVisits: rejectedRes.count ?? 0,
+      checkedInVisits: checkedInVisits.length,
+      checkedOutVisits: checkedOutRes.count ?? 0,
+      avgVisitDuration: avgDuration,
+      activeVisitors: checkedInVisits.length,
+    })
   }
 
   const fetchVisitorsPerDay = async (start: Date, end: Date) => {
@@ -318,21 +253,21 @@ export default function ReportsPage() {
     setHostEmployeesData(Object.entries(hostCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10))
   }
 
-   const fetchCompaniesData = async (start: Date, end: Date) => {
-     const { data } = await supabase
-       .from('visits')
-       .select('visitor:visitors(visitor_organization)')
-       .gte('created_at', start.toISOString())
-       .lt('created_at', end.toISOString()) as { data: Array<{ visitor?: { visitor_organization?: string } }> | null }
+  const fetchCompaniesData = async (start: Date, end: Date) => {
+    const { data } = await supabase
+      .from('visits')
+      .select('visitor:visitors(visitor_organization)')
+      .gte('created_at', start.toISOString())
+      .lt('created_at', end.toISOString()) as { data: Array<{ visitor?: { visitor_organization?: string } }> | null }
 
-     const orgCounts: Record<string, number> = {}
-     data?.forEach(v => {
-       const org = v.visitor?.visitor_organization || 'Unknown'
-       orgCounts[org] = (orgCounts[org] || 0) + 1
-     })
+    const orgCounts: Record<string, number> = {}
+    data?.forEach(v => {
+      const org = v.visitor?.visitor_organization || 'Unknown'
+      orgCounts[org] = (orgCounts[org] || 0) + 1
+    })
 
-     setCompaniesData(Object.entries(orgCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10))
-   }
+    setCompaniesData(Object.entries(orgCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10))
+  }
 
   const fetchHourlyData = async () => {
     const { data } = await supabase
@@ -353,50 +288,116 @@ export default function ReportsPage() {
     setHourlyData(Object.entries(hourlyCounts).map(([hour, count]) => ({ hour, count })))
   }
 
-   const fetchRecentVisits = async () => {
-     const { data } = await supabase
-       .from('visits')
-       .select('*, visitor:visitors(full_name, visitor_organization), employee:employees(full_name)')
-       .order('created_at', { ascending: false })
-       .limit(10)
+  const fetchRecentVisits = async () => {
+    const { data } = await supabase
+      .from('visits')
+      .select('*, visitor:visitors(full_name, visitor_organization), employee:employees(full_name)')
+      .order('created_at', { ascending: false })
+      .limit(10)
 
-     setRecentVisits(data || [])
-   }
+    setRecentVisits(data || [])
+  }
 
-   const exportData = async (format: 'pdf' | 'excel' | 'csv') => {
-     setExporting(true)
-     logAuditAction('Report Exported', 'report', null, `Report exported in ${format.toUpperCase()} format`)
+  const fetchAllData = async () => {
+    setLoading(true)
+    const { start, end } = getDateRange()
 
-     try {
-        if (format === 'csv') {
-          const headers = ['Visitor', 'Visitor Organization', 'Host', 'Purpose', 'Status', 'Check-In', 'Check-Out']
-         const csvContent = [
-           headers.join(','),
-           ...recentVisits.map(v => [
-             v.visitor?.full_name || '',
-             v.visitor?.visitor_organization || '',
-             v.employee?.full_name || '',
-             v.purpose || '',
-             v.status,
-             v.check_in_time ? new Date(v.check_in_time).toLocaleString() : '',
-             v.check_out_time ? new Date(v.check_out_time).toLocaleString() : '',
-           ].join(','))
-         ].join('\n')
+    try {
+      await Promise.all([
+        fetchStats(start, end),
+        fetchVisitorsPerDay(start, end),
+        fetchVisitsByStatus(start, end),
+        fetchDepartmentsData(start, end),
+        fetchHostEmployeesData(start, end),
+        fetchCompaniesData(start, end),
+        fetchHourlyData(),
+        fetchRecentVisits(),
+      ])
+    } catch (error) {
+      console.error('Error fetching reports data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
-         const blob = new Blob([csvContent], { type: 'text/csv' })
-         const url = URL.createObjectURL(blob)
-         const a = document.createElement('a')
-         a.href = url
-         a.download = `visits-report-${dateFilter}.csv`
-         a.click()
-         URL.revokeObjectURL(url)
-       } else if (format === 'excel') {
-         const worksheet = XLSX.utils.json_to_sheet(
-           recentVisits.map(v => ({
-             'Visitor': v.visitor?.full_name || '',
-             'Visitor Organization': v.visitor?.visitor_organization || '',
-             'Host': v.employee?.full_name || '',
-             'Purpose': v.purpose || '',
+  const setupRealtime = () => {
+    if (realtimeChannel.current) {
+      supabase.removeChannel(realtimeChannel.current)
+    }
+
+    realtimeChannel.current = supabase
+      .channel('reports-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => fetchAllData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors' }, () => fetchAllData())
+      .subscribe()
+  }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('reports')) {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setAuthChecking(false)
+      logAuditAction('Analytics Viewed', 'report', null, 'User viewed analytics dashboard')
+      fetchAllData()
+      setupRealtime()
+    }
+    checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!authChecking) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchAllData()
+    }
+  }, [dateFilter, customDateFrom, customDateTo, authChecking])
+
+  const exportData = async (format: 'pdf' | 'excel' | 'csv') => {
+    setExporting(true)
+    logAuditAction('Report Exported', 'report', null, `Report exported in ${format.toUpperCase()} format`)
+
+    try {
+      if (format === 'csv') {
+        const headers = ['Visitor', 'Visitor Organization', 'Host', 'Purpose', 'Status', 'Check-In', 'Check-Out']
+        const csvContent = [
+          headers.join(','),
+          ...recentVisits.map(v => [
+            v.visitor?.full_name || '',
+            v.visitor?.visitor_organization || '',
+            v.employee?.full_name || '',
+            v.purpose || '',
+            v.status,
+            v.check_in_time ? new Date(v.check_in_time).toLocaleString() : '',
+            v.check_out_time ? new Date(v.check_out_time).toLocaleString() : '',
+          ].join(','))
+        ].join('\n')
+
+        const blob = new Blob([csvContent], { type: 'text/csv' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `visits-report-${dateFilter}.csv`
+        a.click()
+        URL.revokeObjectURL(url)
+      } else if (format === 'excel') {
+        const worksheet = XLSX.utils.json_to_sheet(
+          recentVisits.map(v => ({
+            'Visitor': v.visitor?.full_name || '',
+            'Visitor Organization': v.visitor?.visitor_organization || '',
+            'Host': v.employee?.full_name || '',
+            'Purpose': v.purpose || '',
             'Status': v.status,
             'Check-In': v.check_in_time ? new Date(v.check_in_time).toLocaleString() : '',
             'Check-Out': v.check_out_time ? new Date(v.check_out_time).toLocaleString() : '',

@@ -78,7 +78,7 @@ export async function getBadgeByVisitId(visitId: string): Promise<VisitorBadge |
     .single()
 
   if (error || !data) return null
-  return data as any
+  return data as VisitorBadge | null
 }
 
 export async function getBadgeByQrToken(qrToken: string): Promise<VisitorBadge | null> {
@@ -93,7 +93,7 @@ export async function getBadgeByQrToken(qrToken: string): Promise<VisitorBadge |
     .single()
 
   if (error || !data) return null
-  return data as any
+  return data as VisitorBadge | null
 }
 
 export async function getBadgeByBadgeNumber(badgeNumber: string): Promise<VisitorBadge | null> {
@@ -108,7 +108,7 @@ export async function getBadgeByBadgeNumber(badgeNumber: string): Promise<Visito
     .single()
 
   if (error || !data) return null
-  return data as any
+  return data as VisitorBadge | null
 }
 
 export async function updateBadgeStatus(badgeId: string, status: VisitorBadge['badge_status']): Promise<void> {
@@ -146,7 +146,7 @@ export async function printBadge(badgeId: string, userId?: string): Promise<void
     .update({
       printed_at: new Date().toISOString(),
       printed_by: userId || null,
-      reprint_count: (badge as any).reprint_count + 1,
+      reprint_count: (badge as VisitorBadge).reprint_count + 1,
     })
     .eq('id', badgeId)
 
@@ -175,7 +175,7 @@ export async function reprintBadge(badgeId: string, userId?: string): Promise<vo
     .update({
       printed_at: new Date().toISOString(),
       printed_by: userId || null,
-      reprint_count: (badge as any).reprint_count + 1,
+      reprint_count: (badge as VisitorBadge).reprint_count + 1,
     })
     .eq('id', badgeId)
 
@@ -217,8 +217,8 @@ export async function getBadgesStats(startDate?: Date, endDate?: Date) {
     .from('visitor_badges')
     .select('badge_status, created_at, printed_at, reprint_count')
 
-  if (startDate) query = query.gte('created_at', startDate.toISOString()) as any
-  if (endDate) query = query.lt('created_at', endDate.toISOString()) as any
+  if (startDate) query = query.gte('created_at', startDate.toISOString())
+  if (endDate) query = query.lt('created_at', endDate.toISOString())
 
   const { data } = await query
 
@@ -237,7 +237,7 @@ export async function getBadgesStats(startDate?: Date, endDate?: Date) {
 
   const deptCounts: Record<string, number> = {}
 
-  for (const row of data as any[]) {
+  for (const row of data) {
     stats.totalIssued++
     if (row.printed_at) stats.totalPrinted++
     if (row.badge_status === 'Active') stats.activeBadges++
@@ -260,14 +260,14 @@ export async function getBadgesByDepartment(startDate?: Date, endDate?: Date) {
     .select('visit:visits(employee:employees(department))')
     .neq('badge_status', 'Cancelled')
 
-  if (startDate) query = query.gte('created_at', startDate.toISOString()) as any
-  if (endDate) query = query.lt('created_at', endDate.toISOString()) as any
+  if (startDate) query = query.gte('created_at', startDate.toISOString())
+  if (endDate) query = query.lt('created_at', endDate.toISOString())
 
   const { data } = await query
 
   const counts: Record<string, number> = {}
-  ;(data || []).forEach((row: any) => {
-    const dept = row.visit?.employee?.department || 'Unknown'
+  ;(data || []).forEach((row) => {
+    const dept = (row as { visit?: { employee?: { department?: string } } }).visit?.employee?.department || 'Unknown'
     counts[dept] = (counts[dept] || 0) + 1
   })
 

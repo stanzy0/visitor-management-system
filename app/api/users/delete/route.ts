@@ -37,7 +37,8 @@ export async function DELETE(request: NextRequest) {
       .single()
 
     if (fetchError) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      await logAuditAction('User Already Deleted', 'user', userId, `User ${userId} was already removed from user_roles`)
+      return NextResponse.json({ success: true, message: 'User already removed' })
     }
 
     const { error: deleteError } = await supabase

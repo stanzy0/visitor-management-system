@@ -39,26 +39,6 @@ export default function EmailLogsPage() {
   const [previewLog, setPreviewLog] = useState<EmailLog | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user || user.role !== 'Admin') {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setAuthChecking(false)
-      fetchLogs()
-      setupRealtime()
-    }
-    checkAuth()
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-    }
-  }, [])
-
   const fetchLogs = async () => {
     setLoading(true)
     let query = supabase
@@ -101,6 +81,26 @@ export default function EmailLogsPage() {
       )
       .subscribe()
   }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user || user.role !== 'Admin') {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setAuthChecking(false)
+      fetchLogs()
+      setupRealtime()
+    }
+    checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
+  }, [])
 
   const handleRetry = async (log: EmailLog) => {
     const { error } = await supabase

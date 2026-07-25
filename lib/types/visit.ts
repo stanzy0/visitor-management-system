@@ -1,3 +1,5 @@
+import type { VisitorBadge } from '@/lib/badge/badge-types'
+
 export interface Visit {
   id: string
   visitor_id: string
@@ -16,7 +18,7 @@ export interface Visit {
     full_name: string
     department?: string
   } | null
-  badge?: any | null
+  badge?: VisitorBadge | null
 }
 
 export interface VisitFormData {

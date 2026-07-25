@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
-import { Loader2, Search, Download, FileSpreadsheet, Printer, Car, Shield, Plus, Minus, X } from 'lucide-react'
+import { Loader2, Search, Download, FileSpreadsheet, Printer, Car, Plus, Minus, X } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
@@ -68,33 +68,10 @@ export default function VehiclesPage() {
   const [blacklistReason, setBlacklistReason] = useState('')
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (!PERMISSIONS[user.role]?.includes('vehicles')) {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setAuthChecking(false)
-      fetchVehicles()
-      fetchVisitors()
-      setupRealtime()
-    }
-    checkAuth()
-
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000)
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-      clearInterval(timer)
-    }
-  }, [])
+  function showNotification(type: 'success' | 'error', message: string) {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 3000)
+  }
 
   const fetchVehicles = useCallback(async () => {
     setLoading(true)
@@ -109,7 +86,7 @@ export default function VehiclesPage() {
     if (error) {
       showNotification('error', error.message)
     } else {
-      const vehiclesWithVisitorInfo = (data || []).map((v: any) => ({
+      const vehiclesWithVisitorInfo = (data || []).map((v) => ({
         ...v,
         visitor: v.visitor || null
       }))
@@ -123,7 +100,7 @@ export default function VehiclesPage() {
     setVisitors(data || [])
   }, [])
 
-  const checkVehicleBlacklist = async (regNumber: string) => {
+  async function checkVehicleBlacklist(regNumber: string) {
     const { data } = await supabase
       .from('vehicle_blacklist')
       .select('reason')
@@ -154,12 +131,7 @@ export default function VehiclesPage() {
       .subscribe()
   }, [fetchVehicles])
 
-  const showNotification = useCallback((type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 3000)
-  }, [])
-
-  const handleCheckIn = async (vehicleId: string) => {
+  async function handleCheckIn(vehicleId: string) {
     const { error } = await supabase
       .from('vehicles')
       .update({ parking_slot: 'Gate Entry' })
@@ -173,7 +145,7 @@ export default function VehiclesPage() {
     }
   }
 
-  const handleCheckOut = async (vehicleId: string) => {
+  async function handleCheckOut(vehicleId: string) {
     const { error } = await supabase
       .from('vehicles')
       .update({ parking_slot: null })
@@ -187,7 +159,7 @@ export default function VehiclesPage() {
     }
   }
 
-  const handleBlacklist = async (vehicleId: string) => {
+  async function handleBlacklist(vehicleId: string) {
     if (!confirm('Are you sure you want to blacklist this vehicle?')) return
 
     const { error } = await supabase
@@ -203,7 +175,7 @@ export default function VehiclesPage() {
     }
   }
 
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
+  async function handleRegisterSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSubmitting(true)
 
@@ -249,13 +221,13 @@ export default function VehiclesPage() {
     setSubmitting(false)
   }
 
-  const getTimeOnSite = (createdAt: string) => {
+  function getTimeOnSite(createdAt: string) {
     const diff = currentTime.getTime() - new Date(createdAt).getTime()
     const hours = Math.floor(diff / (1000 * 60 * 60))
     return hours
   }
 
-  const getRowHighlight = (vehicle: Vehicle) => {
+  function getRowHighlight(vehicle: Vehicle) {
     if (vehicle.is_blacklisted) return 'bg-red-200'
     if (getTimeOnSite(vehicle.created_at) > 4) return 'bg-amber-100'
     return ''
@@ -269,11 +241,7 @@ export default function VehiclesPage() {
     v.gate_pass_number.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
-  const vehiclesOnSite = vehicles.filter(v => v.parking_slot).length
-  const today = new Date().toISOString().split('T')[0]
-  const checkedInToday = vehicles.filter(v => v.parking_slot && v.created_at?.startsWith(today)).length
-
-  const exportPDF = () => {
+  function exportPDF() {
     const doc = new jsPDF()
     doc.setFontSize(18)
     doc.text('Vehicle Report', 14, 22)
@@ -298,7 +266,7 @@ export default function VehiclesPage() {
     logAuditAction('Vehicle Report Exported PDF', 'report', null, `Exported ${filteredVehicles.length} vehicles`).catch(() => {})
   }
 
-  const exportExcel = () => {
+  function exportExcel() {
     const worksheet = XLSX.utils.json_to_sheet(
       filteredVehicles.map(v => ({
         'Registration': v.registration_number,
@@ -320,10 +288,42 @@ export default function VehiclesPage() {
     logAuditAction('Vehicle Report Exported Excel', 'report', null, `Exported ${filteredVehicles.length} vehicles`).catch(() => {})
   }
 
-  const handlePrintGatePass = (vehicle: Vehicle) => {
+  function handlePrintGatePass(vehicle: Vehicle) {
     setSelectedVehicle(vehicle)
     setShowGatePass(true)
   }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('vehicles')) {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setAuthChecking(false)
+      fetchVehicles()
+      fetchVisitors()
+      setupRealtime()
+    }
+    checkAuth()
+
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000)
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+      clearInterval(timer)
+    }
+  }, [])
+
+  const vehiclesOnSite = vehicles.filter(v => v.parking_slot).length
+  const today = new Date().toISOString().split('T')[0]
+  const checkedInToday = vehicles.filter(v => v.parking_slot && v.created_at?.startsWith(today)).length
 
   if (authChecking) {
     return (

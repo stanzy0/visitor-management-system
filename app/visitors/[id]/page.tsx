@@ -1,13 +1,13 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
 import { generateVisitQRCode } from '@/lib/qrcode'
 import { Loader2, QrCode, Printer, Edit, ArrowLeft, X, Upload, Trash2, FileText, CheckCircle, XCircle, Eye } from 'lucide-react'
-import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
-import { useVisitorDocuments } from '@/hooks/useDocuments'
-import { VisitorDocument, VerificationStatus, VERIFICATION_STATUSES, formatFileSize } from '@/lib/types/document'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { VisitorDocument, formatFileSize } from '@/lib/types/document'
 import DocumentPreview from '@/components/documents/DocumentPreview'
 
 interface Visitor {
@@ -39,7 +39,7 @@ interface AuditLog {
   created_at: string
 }
 
-const STATUS_COLORS: Record<VerificationStatus, string> = {
+const STATUS_COLORS: Record<string, string> = {
   Pending: 'bg-amber-50 text-amber-700 border-amber-200',
   Verified: 'bg-green-50 text-green-700 border-green-200',
   Rejected: 'bg-red-50 text-red-700 border-red-200',
@@ -63,40 +63,8 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
   const [documents, setDocuments] = useState<VisitorDocument[]>([])
   const [previewDoc, setPreviewDoc] = useState<VisitorDocument | null>(null)
   const [docLoading, setDocLoading] = useState(true)
-  const [userRole, setUserRole] = useState<string>('')
 
-  useEffect(() => {
-    const unwrapParams = async () => {
-      const resolvedParams = await params
-      setVisitorId(resolvedParams.id)
-    }
-    unwrapParams()
-  }, [params])
-
-   useEffect(() => {
-    if (!visitorId) return
-
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      setAuthChecking(false)
-      await fetchVisitor()
-      await fetchVisits()
-      await fetchDocuments()
-    }
-    checkAuth()
-  }, [visitorId])
-
-  useEffect(() => {
-    if (!authChecking && visitorId && visits.length >= 0) {
-      fetchAuditLogs()
-    }
-  }, [visits, visitorId])
-
-  const fetchDocuments = async () => {
+  async function fetchDocuments() {
     if (!visitorId) return
     setDocLoading(true)
     const { data } = await supabase
@@ -114,7 +82,7 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
     setDocLoading(false)
   }
 
-  const fetchVisitor = async () => {
+  async function fetchVisitor() {
     if (!visitorId) return
     const { data, error } = await supabase
       .from('visitors')
@@ -129,7 +97,7 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
     }
   }
 
-  const fetchVisits = async () => {
+  async function fetchVisits() {
     if (!visitorId) return
     const { data, error } = await supabase
       .from('visits')
@@ -147,118 +115,36 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
     }
   }
 
-  const handleGenerateQRCode = async (visitId: string) => {
-    setGeneratingQR(visitId)
-    try {
-      const qrCode = await generateVisitQRCode(visitId)
-      const { error } = await supabase
-        .from('visits')
-        .update({ qr_code: qrCode })
-        .eq('id', visitId)
+  useEffect(() => {
+    const unwrapParams = async () => {
+      const resolvedParams = await params
+      setVisitorId(resolvedParams.id)
+    }
+    unwrapParams()
+  }, [params])
 
-      if (error) {
-        console.error('Error saving QR code:', error)
-      } else {
-        await fetchVisits()
-        logAuditAction('QR Code Generated', 'visit', visitId, `QR code generated for visitor ${visitor?.full_name}`)
+  useEffect(() => {
+    if (!visitorId) return
+
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
       }
-    } catch (err) {
-      console.error('Error generating QR code:', err)
-    } finally {
-      setGeneratingQR(null)
+      setAuthChecking(false)
+      await fetchVisitor()
+      await fetchVisits()
+      await fetchDocuments()
     }
-  }
+    checkAuth()
+  }, [visitorId])
 
-  const validatePhotoFile = (file: File): string | null => {
-    if (!file) return null
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
-    if (!allowedTypes.includes(file.type)) return 'Only JPG, JPEG, and PNG files are allowed'
-    const maxSize = 5 * 1024 * 1024
-    if (file.size > maxSize) return 'File size must be less than 5MB'
-    return null
-  }
-
-  const handleEditPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const error = validatePhotoFile(file)
-    if (error) { setEditPhotoError(error); return }
-    setEditPhotoError(null)
-    setEditPhotoFile(file)
-    setEditPhotoPreview(URL.createObjectURL(file))
-  }
-
-  const handleEditPhotoUpload = async (): Promise<string | null> => {
-    if (!editPhotoFile) return null
-    const sanitizedFileName = editPhotoFile.name.replace(/[^a-zA-Z0-9.-]/g, '-').replace(/-+/g, '-')
-    const fileName = `${Date.now()}-${sanitizedFileName}`
-    try {
-      const { error } = await supabase.storage.from('visitor-photos').upload(fileName, editPhotoFile)
-      if (error) throw error
-      const { data: publicUrlData } = supabase.storage.from('visitor-photos').getPublicUrl(fileName)
-      setEditPhotoPreview(null)
-      setEditPhotoFile(null)
-      return publicUrlData.publicUrl
-    } catch (err) {
-      const errorObj = err as { message?: string }
-      setEditPhotoError(errorObj.message || 'Failed to upload photo')
-      return null
-    }
-  }
-
-   const openEditModal = () => {
-     if (visitor) {
-       setEditFormData({ full_name: visitor.full_name, email: visitor.email, phone: visitor.phone, visitor_organization: visitor.visitor_organization })
-       setEditModalOpen(true)
-     }
-   }
-
-  const openQrModal = async () => {
-    setQrModalOpen(true)
-  }
-
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!visitorId) return
-    setEditSubmitting(true)
-    let photoUrl = visitor?.photo_url
-    if (editPhotoFile) {
-      const uploadedUrl = await handleEditPhotoUpload()
-      if (!uploadedUrl && editPhotoFile) { setEditSubmitting(false); return }
-      photoUrl = uploadedUrl
-    }
-    const { error } = await supabase
-      .from('visitors')
-      .update({ full_name: editFormData.full_name, email: editFormData.email, phone: editFormData.phone, visitor_organization: editFormData.visitor_organization, photo_url: photoUrl })
-      .eq('id', visitorId)
-    if (error) {
-      console.error('Error updating visitor:', error)
-    } else {
-      logAuditAction('Visitor Updated', 'visitor', visitorId, `Visitor ${editFormData.full_name} updated`)
-      setEditModalOpen(false)
-      fetchVisitor()
-    }
-    setEditSubmitting(false)
-  }
-
-  const handleDelete = async () => {
-    if (!visitorId) return
-    setDeleting(true)
-    const { error } = await supabase.from('visitors').delete().eq('id', visitorId)
-    if (error) {
-      console.error('Error deleting visitor:', error)
-    } else {
-      logAuditAction('Visitor Deleted', 'visitor', visitorId, `Visitor ${visitor?.full_name} deleted`)
-      window.location.href = '/visitors'
-    }
-    setDeleting(false)
-  }
-
-  const fetchAuditLogs = async () => {
+  async function fetchAuditLogs() {
     if (!visitorId) return
     const visitIds = visits.map((v) => v.id)
 
-    let query = supabase
+    const query = supabase
       .from('audit_logs')
       .select('*')
       .eq('entity_id', visitorId)
@@ -304,6 +190,120 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
     }
   }
 
+  useEffect(() => {
+    if (!authChecking && visitorId && visits.length >= 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchAuditLogs()
+    }
+  }, [visits, visitorId])
+
+  async function handleGenerateQRCode(visitId: string) {
+    setGeneratingQR(visitId)
+    try {
+      const qrCode = await generateVisitQRCode(visitId)
+      const { error } = await supabase
+        .from('visits')
+        .update({ qr_code: qrCode })
+        .eq('id', visitId)
+
+      if (error) {
+        console.error('Error saving QR code:', error)
+      } else {
+        await fetchVisits()
+        logAuditAction('QR Code Generated', 'visit', visitId, `QR code generated for visitor ${visitor?.full_name}`)
+      }
+    } catch (err) {
+      console.error('Error generating QR code:', err)
+    } finally {
+      setGeneratingQR(null)
+    }
+  }
+
+  function validatePhotoFile(file: File): string | null {
+    if (!file) return null
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
+    if (!allowedTypes.includes(file.type)) return 'Only JPG, JPEG, and PNG files are allowed'
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) return 'File size must be less than 5MB'
+    return null
+  }
+
+  function handleEditPhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const error = validatePhotoFile(file)
+    if (error) { setEditPhotoError(error); return }
+    setEditPhotoError(null)
+    setEditPhotoFile(file)
+    setEditPhotoPreview(URL.createObjectURL(file))
+  }
+
+  async function handleEditPhotoUpload(): Promise<string | null> {
+    if (!editPhotoFile) return null
+    const sanitizedFileName = editPhotoFile.name.replace(/[^a-zA-Z0-9.-]/g, '-').replace(/-+/g, '-')
+    const fileName = `${Date.now()}-${sanitizedFileName}`
+    try {
+      const { error } = await supabase.storage.from('visitor-photos').upload(fileName, editPhotoFile)
+      if (error) throw error
+      const { data: publicUrlData } = supabase.storage.from('visitor-photos').getPublicUrl(fileName)
+      setEditPhotoPreview(null)
+      setEditPhotoFile(null)
+      return publicUrlData.publicUrl
+    } catch (err) {
+      const errorObj = err as { message?: string }
+      setEditPhotoError(errorObj.message || 'Failed to upload photo')
+      return null
+    }
+  }
+
+  function openEditModal() {
+    if (visitor) {
+      setEditFormData({ full_name: visitor.full_name, email: visitor.email, phone: visitor.phone, visitor_organization: visitor.visitor_organization })
+      setEditModalOpen(true)
+    }
+  }
+
+  function openQrModal() {
+    setQrModalOpen(true)
+  }
+
+  async function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!visitorId) return
+    setEditSubmitting(true)
+    let photoUrl = visitor?.photo_url
+    if (editPhotoFile) {
+      const uploadedUrl = await handleEditPhotoUpload()
+      if (!uploadedUrl && editPhotoFile) { setEditSubmitting(false); return }
+      photoUrl = uploadedUrl
+    }
+    const { error } = await supabase
+      .from('visitors')
+      .update({ full_name: editFormData.full_name, email: editFormData.email, phone: editFormData.phone, visitor_organization: editFormData.visitor_organization, photo_url: photoUrl })
+      .eq('id', visitorId)
+    if (error) {
+      console.error('Error updating visitor:', error)
+    } else {
+      logAuditAction('Visitor Updated', 'visitor', visitorId, `Visitor ${editFormData.full_name} updated`)
+      setEditModalOpen(false)
+      fetchVisitor()
+    }
+    setEditSubmitting(false)
+  }
+
+  async function handleDelete() {
+    if (!visitorId) return
+    setDeleting(true)
+    const { error } = await supabase.from('visitors').delete().eq('id', visitorId)
+    if (error) {
+      console.error('Error deleting visitor:', error)
+    } else {
+      logAuditAction('Visitor Deleted', 'visitor', visitorId, `Visitor ${visitor?.full_name} deleted`)
+      window.location.href = '/visitors'
+    }
+    setDeleting(false)
+  }
+
   if (authChecking || !visitorId) {
     return (
       <div className="flex h-screen bg-gray-50 items-center justify-center">
@@ -317,9 +317,9 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto p-4 lg:p-6">
           <div className="mb-6">
-            <a href="/visitors" className="text-sm text-blue-600 hover:underline">
+            <Link href="/visitors" className="text-sm text-blue-600 hover:underline">
               ← Back to Visitors
-            </a>
+            </Link>
           </div>
           <p className="text-gray-500">Visitor not found</p>
         </div>
@@ -331,10 +331,10 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
-          <a href="/visitors" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
+          <Link href="/visitors" className="text-sm text-blue-600 hover:underline flex items-center gap-1">
             <ArrowLeft className="h-4 w-4" />
             Back to Visitors
-          </a>
+          </Link>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -484,12 +484,12 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
                   <table className="w-full text-left text-sm">
                     <thead>
                       <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 font-semibold text-gray-700">Type</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Number</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">File</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Created</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700 w-20">Actions</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700">Type</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700">Number</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700">File</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700">Created</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700 w-20">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -498,7 +498,7 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
                           <td className="px-4 py-3 text-gray-600">{doc.document_type}</td>
                           <td className="px-4 py-3 text-gray-600 font-mono">{doc.document_number}</td>
                           <td className="px-4 py-3">
-                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[doc.verification_status as VerificationStatus] || STATUS_COLORS.Pending}`}>
+                            <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[doc.verification_status] || STATUS_COLORS.Pending}`}>
                               {doc.verification_status === 'Verified' && <CheckCircle className="h-3 w-3" />}
                               {doc.verification_status === 'Rejected' && <XCircle className="h-3 w-3" />}
                               {doc.verification_status}

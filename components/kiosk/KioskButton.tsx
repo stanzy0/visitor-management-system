@@ -1,6 +1,6 @@
-import { ButtonHTMLAttributes } from 'react'
+import { AnchorHTMLAttributes, ButtonHTMLAttributes } from 'react'
 
-interface KioskButtonProps extends ButtonHTMLAttributes<HTMLButtonElement | HTMLAnchorElement> {
+interface KioskButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon: React.ReactNode
   label: string
   href?: string
@@ -20,7 +20,7 @@ export function KioskButton({ icon, label, href, color = 'blue', ...props }: Kio
 
   if (href) {
     return (
-      <a href={href} className={className} {...(props as any)}>
+      <a href={href} className={className} {...(props as AnchorHTMLAttributes<HTMLAnchorElement>)}>
         <div className="h-12 w-12 mb-3">{icon}</div>
         <span className="text-lg font-semibold">{label}</span>
       </a>
@@ -28,7 +28,7 @@ export function KioskButton({ icon, label, href, color = 'blue', ...props }: Kio
   }
 
   return (
-    <button className={className} {...(props as any)}>
+    <button className={className} {...props}>
       <div className="h-12 w-12 mb-3">{icon}</div>
       <span className="text-lg font-semibold">{label}</span>
     </button>

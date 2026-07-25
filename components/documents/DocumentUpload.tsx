@@ -3,12 +3,13 @@
 import { useCallback, useState } from 'react'
 import { Upload, Camera, X, FileText, Image as ImageIcon, Loader2 } from 'lucide-react'
 import { validateDocumentFile, isImageMimeType } from '@/lib/types/document'
+import type { VisitorDocument } from '@/lib/types/document'
 import { createDocument } from '@/lib/client/documents'
 import { logAuditAction } from '@/lib/client/audit'
 
 interface DocumentUploadProps {
   visitorId: string
-  onUploadComplete?: (document: any) => void
+  onUploadComplete?: (document: VisitorDocument) => void
   disabled?: boolean
 }
 
@@ -34,6 +35,22 @@ export default function DocumentUpload({ visitorId, onUploadComplete, disabled }
     }
   }, [])
 
+  const handleFile = (file: File) => {
+    const validation = validateDocumentFile(file)
+    if (!validation.valid) {
+      setError(validation.error || 'Invalid file')
+      return
+    }
+
+    setError(null)
+    setSelectedFile(file)
+
+    if (isImageMimeType(file.type)) {
+      const url = URL.createObjectURL(file)
+      setPreview(url)
+    }
+  }
+
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -55,22 +72,6 @@ export default function DocumentUpload({ visitorId, onUploadComplete, disabled }
       }
     }
   }, [])
-
-  const handleFile = (file: File) => {
-    const validation = validateDocumentFile(file)
-    if (!validation.valid) {
-      setError(validation.error || 'Invalid file')
-      return
-    }
-
-    setError(null)
-    setSelectedFile(file)
-
-    if (isImageMimeType(file.type)) {
-      const url = URL.createObjectURL(file)
-      setPreview(url)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

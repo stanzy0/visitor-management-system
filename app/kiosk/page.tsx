@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, UserRole } from '@/lib/auth'
@@ -18,10 +19,17 @@ const STATUS_STYLES: Record<string,{bg:string;text:string;border:string}> = { pe
 const BADGE_STYLES: Record<string,{bg:string;text:string;border:string}> = { Active:{bg:'bg-emerald-50',text:'text-emerald-700',border:'border-emerald-200'}, Expired:{bg:'bg-red-50',text:'text-red-700',border:'border-red-200'}, 'Checked Out':{bg:'bg-gray-50',text:'text-gray-700',border:'border-gray-200'}, Cancelled:{bg:'bg-orange-50',text:'text-orange-700',border:'border-orange-200'} }
 const TOUCH = 'min-h-[52px] px-5 py-3 rounded-xl text-base font-semibold transition-all duration-200 touch-manipulation select-none active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100'
 
-function StatCard({icon:Icon,label,value,color}:{icon:any;label:string;value:number;color:string}) {
+function StatCard({icon:Icon,label,value,color,onClick}:{icon:any;label:string;value:number;color:string;onClick?:()=>void}) {
   const map: Record<string,string> = { blue:'from-blue-500 to-blue-600 shadow-blue-500/20', green:'from-green-500 to-green-600 shadow-green-500/20', purple:'from-purple-500 to-purple-600 shadow-purple-500/20', amber:'from-amber-500 to-amber-600 shadow-amber-500/20', gray:'from-gray-500 to-gray-600 shadow-gray-500/20', emerald:'from-emerald-500 to-emerald-600 shadow-emerald-500/20', orange:'from-orange-500 to-orange-600 shadow-orange-500/20', red:'from-red-500 to-red-600 shadow-red-500/20', indigo:'from-indigo-500 to-indigo-600 shadow-indigo-500/20' }
   const grad = map[color]||map.blue
-  return (<div className='rounded-2xl border border-gray-200 bg-white shadow-sm p-4 flex items-center gap-4'><div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${grad} flex items-center justify-center text-white shadow-md`}><Icon className='h-6 w-6' /></div><div><p className='text-3xl font-bold text-gray-900 leading-none'>{value}</p><p className='text-xs text-gray-500 mt-1'>{label}</p></div></div>)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!onClick) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onClick()
+    }
+  }
+  return (<div onClick={onClick} onKeyDown={onClick?handleKeyDown:undefined} role={onClick?'button':undefined} tabIndex={onClick?0:undefined} className={`rounded-2xl border border-gray-200 bg-white shadow-sm p-4 flex items-center gap-4 transition-all ${onClick?'cursor-pointer hover:border-blue-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1':''}`}><div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${grad} flex items-center justify-center text-white shadow-md`}><Icon className='h-6 w-6' /></div><div><p className='text-3xl font-bold text-gray-900 leading-none'>{value}</p><p className='text-xs text-gray-500 mt-1'>{label}</p></div></div>)
 }
 
 function DetailItem({icon:Icon,label,value}:{icon:any;label:string;value:string}) {
@@ -63,82 +71,25 @@ export default function KioskPage() {
     setTimeout(()=>setNotification(null),3500)
   },[])
 
-  const fetchStats = useCallback(async()=>{
-    const today = new Date().toISOString().split('T')[0]
-    const [vToday,approved,onSite,checkedOut,activeBadges,cancelledBadges,expiredBadges] = await Promise.all([
-      supabase.from('visits').select('id',{count:'exact',head:true}).gte('created_at',today),
-      supabase.from('visits').select('id',{count:'exact',head:true}).eq('status','approved'),
-      supabase.from('visits').select('id',{count:'exact',head:true}).eq('status','checked_in'),
-      supabase.from('visits').select('id',{count:'exact',head:true}).eq('status','checked_out').gte('created_at',today),
-      supabase.from('visitor_badges').select('id',{count:'exact',head:true}).eq('badge_status','Active'),
-      supabase.from('visitor_badges').select('id',{count:'exact',head:true}).eq('badge_status','Cancelled'),
-      supabase.from('visitor_badges').select('id',{count:'exact',head:true}).eq('badge_status','Expired'),
-    ])
-    setStats({visitorsToday:vToday.count??0,visitorsWaiting:approved.count??0,approvedVisitors:approved.count??0,currentlyOnSite:onSite.count??0,checkedOutToday:checkedOut.count??0,activeBadges:activeBadges.count??0,cancelledBadges:cancelledBadges.count??0,expiredBadges:expiredBadges.count??0})
-  },[])
-
-  const fetchVisits = useCallback(async()=>{
+  const fetchVisits = async()=>{
     setLoading(true)
-    const today = new Date().toISOString().split('T')[0]
-    const {data,error} = await supabase.from('visits').select(`*,visitor:visitors(full_name,visitor_organization,photo_url,phone,email),employee:employees(full_name,department,office_location)`).gte('created_at',today).order('created_at',{ascending:false})
-    if(error){showNotification('error',error.message);setLoading(false);return}
-    if(data){
-      const visitIds = data.map(v=>v.id)
-      const {data:badges} = await supabase.from('visitor_badges').select('id,visit_id,badge_number,badge_status,qr_token,issued_at,expires_at,printed_at,printed_by,reprint_count,created_at,updated_at').in('visit_id',visitIds)
-      const badgesByVisitId = new Map(badges?.map(b=>[b.visit_id,b])||[])
-      setVisits(data.map(v=>({...v,badge:badgesByVisitId.get(v.id)||null})))
-    }
+    const {data,error} = await supabase.from('visits').select('*, visitor:visitors(full_name, visitor_organization, photo_url, phone, email), employee:employees(full_name, department, office_location)').order('created_at',{ascending:false})
+    if(error){showNotification('error',error.message)}
+    else{setVisits(data||[]);fetchStats()}
     setLoading(false)
-  },[showNotification])
+  }
 
-  const fetchUpcomingAppointments = useCallback(async()=>{
+  const fetchStats = ()=>{
     const today = new Date().toISOString().split('T')[0]
-    const {data,error} = await supabase.from('appointments').select('*,visitor:visitors(full_name,visitor_organization,photo_url,phone),employee:employees(full_name,department)').gte('appointment_date',today).in('status',['Scheduled','Approved']).order('appointment_date',{ascending:true}).order('expected_arrival',{ascending:true})
-    if(!error) setUpcomingAppointments(data||[])
-  },[])
-
-  const setupRealtime = useCallback(()=>{
-    if(realtimeChannel.current) supabase.removeChannel(realtimeChannel.current)
-    realtimeChannel.current = supabase.channel('kiosk-realtime').on('postgres_changes',{event:'*',schema:'public',table:'visits'},()=>{fetchVisits();fetchStats()}).on('postgres_changes',{event:'*',schema:'public',table:'visitor_badges'},()=>{fetchVisits();fetchStats()}).subscribe()
-  },[fetchVisits,fetchStats])
-
-  useEffect(()=>{
-    const checkAuth = async()=>{
-      const user = await getCurrentUser()
-      if(!user){window.location.href='/login';return}
-      if(user.role!=='Admin' && user.role!=='Receptionist'){window.location.href='/unauthorized';return}
-      setUserRole(user.role)
-      setAuthChecking(false)
-      fetchStats()
-      fetchVisits()
-      fetchUpcomingAppointments()
-      setupRealtime()
-      resetInactivityTimer()
-    }
-    checkAuth()
-    return ()=>{if(realtimeChannel.current)supabase.removeChannel(realtimeChannel.current);if(inactivityTimer.current)clearTimeout(inactivityTimer.current)}
-  },[fetchStats,fetchVisits,fetchUpcomingAppointments,setupRealtime,resetInactivityTimer])
-
-  useEffect(()=>{
-    const handleActivity = ()=>resetInactivityTimer()
-    window.addEventListener('mousedown',handleActivity)
-    window.addEventListener('touchstart',handleActivity)
-    window.addEventListener('keydown',handleActivity)
-    return ()=>{window.removeEventListener('mousedown',handleActivity);window.removeEventListener('touchstart',handleActivity);window.removeEventListener('keydown',handleActivity)}
-  },[resetInactivityTimer])
-
-  useEffect(()=>{
-    const handleKeyDown = (e:KeyboardEvent)=>{
-      const isMod = e.ctrlKey||e.metaKey
-      if(isMod && e.key.toLowerCase()==='f'){e.preventDefault();searchInputRef.current?.focus();return}
-      if(isMod && e.key.toLowerCase()==='i'){e.preventDefault();const approved=visits.find(v=>v.status==='approved');if(approved)handleCheckIn(approved.id);return}
-      if(isMod && e.key.toLowerCase()==='o'){e.preventDefault();const checkedIn=visits.find(v=>v.status==='checked_in');if(checkedIn)handleCheckOut(checkedIn.id);return}
-      if(isMod && e.key.toLowerCase()==='p'){e.preventDefault();if(selectedVisit?.badge?.id)handlePrintBadge(selectedVisit);else if(selectedVisit)handleGenerateAndPrint(selectedVisit);return}
-      if(e.key==='Escape'){if(selectedVisit)setSelectedVisit(null);else if(showShortcuts)setShowShortcuts(false)}
-    }
-    window.addEventListener('keydown',handleKeyDown)
-    return ()=>window.removeEventListener('keydown',handleKeyDown)
-  },[visits,selectedVisit,showShortcuts])
+    const todayVisits = visits.filter(v=>v.created_at?.startsWith(today))
+    const waiting = visits.filter(v=>v.status==='approved')
+    const onSite = visits.filter(v=>v.status==='checked_in')
+    const checkedOutToday = visits.filter(v=>v.status==='checked_out'&&v.check_out_time?.startsWith(today))
+    const activeBadges = visits.filter(v=>v.badge?.badge_status==='Active').length
+    const cancelledBadges = visits.filter(v=>v.badge?.badge_status==='Cancelled').length
+    const expiredBadges = visits.filter(v=>v.badge?.badge_status==='Expired').length
+    setStats({visitorsToday:todayVisits.length,visitorsWaiting:waiting.length,approvedVisitors:waiting.length,currentlyOnSite:onSite.length,checkedOutToday:checkedOutToday.length,activeBadges,cancelledBadges,expiredBadges})
+  }
 
   const handlePinSubmit = ()=>{
     if(pinInput==='1234'){setKioskLocked(false);setPinInput('');setPinError(false);resetInactivityTimer()}
@@ -256,23 +207,23 @@ export default function KioskPage() {
 
       <main className="p-4 lg:p-6 space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard icon={Users} label="Visitors Today" value={stats.visitorsToday} color="blue" />
-          <StatCard icon={ClipboardCheck} label="Visitors Waiting" value={stats.visitorsWaiting} color="amber" />
-          <StatCard icon={BadgeCheck} label="Approved" value={stats.approvedVisitors} color="indigo" />
-          <StatCard icon={UserCheck} label="Currently Inside" value={stats.currentlyOnSite} color="green" />
-          <StatCard icon={LogOut} label="Checked Out Today" value={stats.checkedOutToday} color="gray" />
-          <StatCard icon={Activity} label="Active Badges" value={stats.activeBadges} color="emerald" />
-          <StatCard icon={XCircle} label="Cancelled Badges" value={stats.cancelledBadges} color="orange" />
-          <StatCard icon={Hourglass} label="Expired Badges" value={stats.expiredBadges} color="red" />
+          <StatCard icon={Users} label="Visitors Today" value={stats.visitorsToday} color="blue" onClick={() => { window.location.href = '/visitors?date=today' }} />
+          <StatCard icon={ClipboardCheck} label="Visitors Waiting" value={stats.visitorsWaiting} color="amber" onClick={() => { window.location.href = '/visits?status=approved' }} />
+          <StatCard icon={BadgeCheck} label="Approved" value={stats.approvedVisitors} color="indigo" onClick={() => { window.location.href = '/visits?status=approved' }} />
+          <StatCard icon={UserCheck} label="Currently Inside" value={stats.currentlyOnSite} color="green" onClick={() => { window.location.href = '/visits?status=checked_in' }} />
+          <StatCard icon={LogOut} label="Checked Out Today" value={stats.checkedOutToday} color="gray" onClick={() => { window.location.href = '/visits?status=checked_out' }} />
+          <StatCard icon={Activity} label="Active Badges" value={stats.activeBadges} color="emerald" onClick={() => { window.location.href = '/badges?status=Active' }} />
+          <StatCard icon={XCircle} label="Cancelled Badges" value={stats.cancelledBadges} color="orange" onClick={() => { window.location.href = '/badges?status=Cancelled' }} />
+          <StatCard icon={Hourglass} label="Expired Badges" value={stats.expiredBadges} color="red" onClick={() => { window.location.href = '/badges?status=Expired' }} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a href="/visitors" className={`${TOUCH} bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center gap-3 shadow-lg shadow-blue-600/20`}>
+          <Link href="/visitors" className={`${TOUCH} bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center gap-3 shadow-lg shadow-blue-600/20`}>
             <Users className="h-6 w-6" /><span className="text-lg">Register Visitor</span>
-          </a>
-          <a href="/scanner" className={`${TOUCH} bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center gap-3 shadow-lg shadow-emerald-600/20`}>
+          </Link>
+          <Link href="/scanner" className={`${TOUCH} bg-emerald-600 text-white hover:bg-emerald-700 flex items-center justify-center gap-3 shadow-lg shadow-emerald-600/20`}>
             <Scan className="h-6 w-6" /><span className="text-lg">QR Scanner</span>
-          </a>
+          </Link>
           <button onClick={()=>setKioskLocked(true)} className={`${TOUCH} bg-gray-200 text-gray-800 hover:bg-gray-300 flex items-center justify-center gap-3`}>
             <LogOut className="h-6 w-6" /><span className="text-lg">Lock Kiosk</span>
           </button>

@@ -42,6 +42,46 @@ export default function OfficeLocationsPage() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
+  async function fetchOfficeLocations() {
+    setLoading(true)
+    const { data, error } = await supabase.from('office_locations').select('*').order('created_at', { ascending: false })
+
+    if (error) {
+      showNotification('error', error.message)
+    } else {
+      setOfficeLocations(data || [])
+    }
+    setLoading(false)
+  }
+
+  function showNotification(type: 'success' | 'error', message: string) {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 3000)
+  }
+
+  function setupRealtime() {
+    if (realtimeChannel.current) {
+      supabase.removeChannel(realtimeChannel.current)
+    }
+
+    realtimeChannel.current = supabase
+      .channel('office-locations-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'office_locations' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setOfficeLocations(prev => [payload.new as OfficeLocation, ...prev])
+          } else if (payload.eventType === 'UPDATE') {
+            setOfficeLocations(prev => prev.map(l => l.id === (payload.new as OfficeLocation).id ? payload.new as OfficeLocation : l))
+          } else if (payload.eventType === 'DELETE') {
+            setOfficeLocations(prev => prev.filter(l => l.id !== (payload.old as OfficeLocation).id))
+          }
+        }
+      )
+      .subscribe()
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -65,46 +105,6 @@ export default function OfficeLocationsPage() {
       }
     }
   }, [])
-
-  const fetchOfficeLocations = async () => {
-    setLoading(true)
-    const { data, error } = await supabase.from('office_locations').select('*').order('created_at', { ascending: false })
-
-    if (error) {
-      showNotification('error', error.message)
-    } else {
-      setOfficeLocations(data || [])
-    }
-    setLoading(false)
-  }
-
-  const setupRealtime = () => {
-    if (realtimeChannel.current) {
-      supabase.removeChannel(realtimeChannel.current)
-    }
-
-    realtimeChannel.current = supabase
-      .channel('office-locations-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'office_locations' },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setOfficeLocations(prev => [payload.new as OfficeLocation, ...prev])
-          } else if (payload.eventType === 'UPDATE') {
-            setOfficeLocations(prev => prev.map(l => l.id === (payload.new as OfficeLocation).id ? payload.new as OfficeLocation : l))
-          } else if (payload.eventType === 'DELETE') {
-            setOfficeLocations(prev => prev.filter(l => l.id !== (payload.old as OfficeLocation).id))
-          }
-        }
-      )
-      .subscribe()
-  }
-
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 3000)
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

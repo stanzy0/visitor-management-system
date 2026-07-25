@@ -87,7 +87,7 @@ function getStartEnd(range: DateRange, customFrom?: string, customTo?: string): 
   }
 }
 
-export function useDashboardData(filters: DashboardFilters) {
+export function useDashboardData(filters: DashboardFilters, enabled = true) {
   const [stats, setStats] = useState<DashboardStats>({
     visitorsToday: 0,
     visitorsThisWeek: 0,
@@ -345,8 +345,9 @@ export function useDashboardData(filters: DashboardFilters) {
   })
 
   useEffect(() => {
+    if (!enabled) return
     fetchAllRef.current()
-  }, [filters])
+  }, [filters, enabled])
 
   useEffect(() => {
     const channel = supabase

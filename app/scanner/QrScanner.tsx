@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
 import { Loader2, Camera, StopCircle, RefreshCw, QrCode } from 'lucide-react'
@@ -51,6 +51,171 @@ export default function QrScanner() {
   const [error, setError] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const scannerRef = useRef<Html5Qrcode | null>(null)
+
+  const stopScanner = useCallback(async () => {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop()
+        await scannerRef.current.clear()
+      } catch (err) {
+        console.error('Stop error:', err)
+      }
+      scannerRef.current = null
+    }
+    setScanning(false)
+  }, [])
+
+  const handleScan = useCallback(async (decodedText: string) => {
+    try {
+      const payload = JSON.parse(decodedText)
+
+      if (payload.gate_pass || payload.reg) {
+        const regNumber = payload.reg
+        if (!regNumber) {
+          setError('Invalid Vehicle QR Code')
+          return
+        }
+
+        const { data, error } = await supabase
+          .from('vehicles')
+          .select('*, visitor:visitors(full_name, visitor_organization, photo_url)')
+          .eq('registration_number', regNumber)
+          .single()
+
+        if (error || !data) {
+          setError('Vehicle not found')
+          return
+        }
+
+        const vehicleData = data as VehicleData
+        setVehicleResult(vehicleData)
+        await stopScanner()
+
+        logAuditAction('Vehicle QR Scanned', 'vehicle', vehicleData.id, `QR scanned for vehicle ${vehicleData.registration_number}`)
+        setScanned(true)
+        return
+      }
+
+      if (payload.type === 'invitation' || payload.token) {
+        const token = payload.token
+        if (!token) {
+          setError('Invalid Invitation QR Code')
+          return
+        }
+
+        const { data: invitation, error: invError } = await supabase
+          .from('visitor_invitations')
+          .select('*, host:employees(*, user:user_roles(*))')
+          .eq('invitation_token', token)
+          .single()
+
+        if (invError || !invitation) {
+          setError('Invitation not found')
+          return
+        }
+
+        if (invitation.status === 'Expired' || invitation.status === 'Cancelled') {
+          setError(`Invitation is ${invitation.status.toLowerCase()}`)
+          return
+        }
+
+        const { data: existingVisit } = await supabase
+          .from('visits')
+          .select('id, status, check_in_time, check_out_time')
+          .eq('visitor_id', invitation.visitor_email)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        setScanResult({
+          id: invitation.id,
+          visitor_id: invitation.visitor_email,
+          purpose: invitation.purpose,
+          status: existingVisit?.status || 'pending',
+          check_in_time: existingVisit?.check_in_time || null,
+          check_out_time: existingVisit?.check_out_time || null,
+          created_at: invitation.created_at,
+          visitor: {
+            full_name: invitation.visitor_name,
+            visitor_organization: invitation.visitor_organization || '—',
+            photo_url: null,
+          },
+          employee: {
+            full_name: invitation.host?.full_name || '—',
+            department: invitation.host?.department || '—',
+          },
+        } as VisitData)
+
+        await stopScanner()
+        logAuditAction('Invitation QR Scanned', 'invitation', invitation.id, `QR scanned for invitation ${token}`)
+        setScanned(true)
+      } else if (payload.type === 'visitor-pass' || payload.visitId) {
+        const visitId = payload.visitId || payload.visit_id
+        if (!visitId) {
+          setError('Invalid Visitor QR Code')
+          return
+        }
+
+        const { data, error } = await supabase
+          .from('visits')
+          .select('*, visitor:visitors(full_name, visitor_organization, photo_url), employee:employees(full_name, department), badge:visitor_badges(*)')
+          .eq('id', visitId)
+          .single()
+
+        if (error || !data) {
+          setError('Visit not found')
+          return
+        }
+
+        const visitData = data as VisitData
+        setScanResult(visitData)
+        await stopScanner()
+
+        logAuditAction('QR Code Scanned', 'visit', visitData.id, `QR scanned for visitor ${visitData.visitor?.full_name}`)
+
+        if (visitData.status === 'approved') {
+          const { error: updateError } = await supabase
+            .from('visits')
+            .update({ status: 'checked_in', check_in_time: new Date().toISOString() })
+            .eq('id', visitData.id)
+
+          if (!updateError) {
+            logAuditAction('Visitor Checked In', 'visit', visitData.id, `${visitData.visitor?.full_name} checked in`)
+            setScanResult({ ...visitData, status: 'checked_in', check_in_time: new Date().toISOString() })
+            setNotification({ type: 'success', message: 'Visitor Checked In Successfully' })
+          }
+        }
+
+        setScanned(true)
+      } else {
+        setError('Invalid QR Code')
+      }
+    } catch {
+      setError('Invalid QR Code')
+    }
+  }, [stopScanner])
+
+  const startScanner = useCallback(() => {
+    if (scanning) return
+    setError(null)
+    setScanned(false)
+    setScanResult(null)
+    setVehicleResult(null)
+    setScanning(true)
+  }, [scanning])
+
+  const switchCamera = useCallback(async () => {
+    if (cameras.length < 2 || !scannerRef.current) return
+
+    try {
+      const nextCamera = (currentCamera + 1) % cameras.length
+      await stopScanner()
+      setCurrentCamera(nextCamera)
+      setScanning(true)
+    } catch (err) {
+      console.error('Switch camera error:', err)
+    }
+  }, [cameras.length, currentCamera, stopScanner])
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -110,7 +275,7 @@ export default function QrScanner() {
 
     const timer = setTimeout(initScanner, 100)
     return () => clearTimeout(timer)
-  }, [scanning])
+  }, [scanning, handleScan])
 
   useEffect(() => {
     return () => {
@@ -120,174 +285,6 @@ export default function QrScanner() {
       }
     }
   }, [])
-
-  const startScanner = () => {
-    if (scanning) return
-    setError(null)
-    setScanned(false)
-    setScanResult(null)
-    setVehicleResult(null)
-    setScanning(true)
-  }
-
-  const stopScanner = async () => {
-    if (scannerRef.current) {
-      try {
-        await scannerRef.current.stop()
-        await scannerRef.current.clear()
-      } catch (err) {
-        console.error('Stop error:', err)
-      }
-      scannerRef.current = null
-    }
-    setScanning(false)
-  }
-
-  const switchCamera = async () => {
-    if (cameras.length < 2 || !scannerRef.current) return
-
-    try {
-      const nextCamera = (currentCamera + 1) % cameras.length
-      await stopScanner()
-      setCurrentCamera(nextCamera)
-      setScanning(true)
-    } catch (err) {
-      console.error('Switch camera error:', err)
-    }
-  }
-
-  const handleScan = async (decodedText: string) => {
-    try {
-      const payload = JSON.parse(decodedText)
-      
-      // Handle vehicle pass QR
-      if (payload.gate_pass || payload.reg) {
-        const regNumber = payload.reg
-        if (!regNumber) {
-          setError('Invalid Vehicle QR Code')
-          return
-        }
-
-        const { data, error } = await supabase
-          .from('vehicles')
-          .select('*, visitor:visitors(full_name, visitor_organization, photo_url)')
-          .eq('registration_number', regNumber)
-          .single()
-
-        if (error || !data) {
-          setError('Vehicle not found')
-          return
-        }
-
-        const vehicleData = data as VehicleData
-        setVehicleResult(vehicleData)
-        await stopScanner()
-
-        logAuditAction('Vehicle QR Scanned', 'vehicle', vehicleData.id, `QR scanned for vehicle ${vehicleData.registration_number}`)
-        setScanned(true)
-        return
-      }
-
-      // Handle invitation QR
-      if (payload.type === 'invitation' || payload.token) {
-        const token = payload.token
-        if (!token) {
-          setError('Invalid Invitation QR Code')
-          return
-        }
-
-        const { data: invitation, error: invError } = await supabase
-          .from('visitor_invitations')
-          .select('*, host:employees(*, user:user_roles(*))')
-          .eq('invitation_token', token)
-          .single()
-
-        if (invError || !invitation) {
-          setError('Invitation not found')
-          return
-        }
-
-        if (invitation.status === 'Expired' || invitation.status === 'Cancelled') {
-          setError(`Invitation is ${invitation.status.toLowerCase()}`)
-          return
-        }
-
-        const { data: existingVisit } = await supabase
-          .from('visits')
-          .select('id, status, check_in_time, check_out_time')
-          .eq('visitor_id', invitation.visitor_email)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-
-        setScanResult({
-          id: invitation.id,
-          visitor_id: invitation.visitor_email,
-          purpose: invitation.purpose,
-          status: existingVisit?.status || 'pending',
-          check_in_time: existingVisit?.check_in_time || null,
-          check_out_time: existingVisit?.check_out_time || null,
-          created_at: invitation.created_at,
-          visitor: {
-            full_name: invitation.visitor_name,
-            visitor_organization: invitation.visitor_organization || '—',
-            photo_url: null,
-          },
-          employee: {
-            full_name: (invitation as any).host?.full_name || '—',
-            department: (invitation as any).host?.department || '—',
-          },
-          badge: null,
-        } as any)
-
-        await stopScanner()
-        logAuditAction('Invitation QR Scanned', 'invitation', invitation.id, `QR scanned for invitation ${token}`)
-        setScanned(true)
-      } else if (payload.type === 'visitor-pass' || payload.visitId) {
-        const visitId = payload.visitId || payload.visit_id
-        if (!visitId) {
-          setError('Invalid Visitor QR Code')
-          return
-        }
-
-        const { data, error } = await supabase
-          .from('visits')
-          .select('*, visitor:visitors(full_name, visitor_organization, photo_url), employee:employees(full_name, department), badge:visitor_badges(*)')
-          .eq('id', visitId)
-          .single()
-
-        if (error || !data) {
-          setError('Visit not found')
-          return
-        }
-
-        const visitData = data as VisitData
-        setScanResult(visitData)
-        await stopScanner()
-
-        logAuditAction('QR Code Scanned', 'visit', visitData.id, `QR scanned for visitor ${visitData.visitor?.full_name}`)
-
-        if (visitData.status === 'approved') {
-          const { error: updateError } = await supabase
-            .from('visits')
-            .update({ status: 'checked_in', check_in_time: new Date().toISOString() })
-            .eq('id', visitData.id)
-
-          if (!updateError) {
-            logAuditAction('Visitor Checked In', 'visit', visitData.id, `${visitData.visitor?.full_name} checked in`)
-            setScanResult({ ...visitData, status: 'checked_in', check_in_time: new Date().toISOString() })
-            setNotification({ type: 'success', message: 'Visitor Checked In Successfully' })
-          }
-        }
-
-        setScanned(true)
-      } else {
-        setError('Invalid QR Code')
-      }
-    } catch {
-      setError('Invalid QR Code')
-    }
-  }
 
   if (authChecking) {
     return (
@@ -391,16 +388,16 @@ export default function QrScanner() {
               <div><span className="text-gray-500">Department:</span><span className="ml-2 text-gray-900">{scanResult.employee?.department || '—'}</span></div>
               <div><span className="text-gray-500">Purpose:</span><span className="ml-2 text-gray-900">{scanResult.purpose || '—'}</span></div>
               <div><span className="text-gray-500">Status:</span><span className="ml-2 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">{scanResult.status.replace('_', ' ')}</span></div>
-              {(scanResult as any).badge && (
+              {(scanResult.badge) && (
                 <>
                   <div><span className="text-gray-500">Badge Status:</span><span className={`ml-2 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                    (scanResult as any).badge.badge_status === 'Active' ? 'bg-green-50 text-green-700' :
-                    (scanResult as any).badge.badge_status === 'Expired' ? 'bg-red-50 text-red-700' :
+                    scanResult.badge.badge_status === 'Active' ? 'bg-green-50 text-green-700' :
+                    scanResult.badge.badge_status === 'Expired' ? 'bg-red-50 text-red-700' :
                     'bg-gray-50 text-gray-700'
-                  }`}>{(scanResult as any).badge.badge_status}</span></div>
-                  <div><span className="text-gray-500">Badge #:</span><span className="ml-2 font-mono text-gray-900">{(scanResult as any).badge.badge_number}</span></div>
-                  <div><span className="text-gray-500">Issued:</span><span className="ml-2 text-gray-900">{(scanResult as any).badge.issued_at ? new Date((scanResult as any).badge.issued_at).toLocaleString() : '—'}</span></div>
-                  <div><span className="text-gray-500">Expires:</span><span className="ml-2 text-gray-900">{(scanResult as any).badge.expires_at ? new Date((scanResult as any).badge.expires_at).toLocaleString() : '—'}</span></div>
+                  }`}>{scanResult.badge.badge_status}</span></div>
+                  <div><span className="text-gray-500">Badge #:</span><span className="ml-2 font-mono text-gray-900">{scanResult.badge.badge_number}</span></div>
+                  <div><span className="text-gray-500">Issued:</span><span className="ml-2 text-gray-900">{scanResult.badge.issued_at ? new Date(scanResult.badge.issued_at).toLocaleString() : '—'}</span></div>
+                  <div><span className="text-gray-500">Expires:</span><span className="ml-2 text-gray-900">{scanResult.badge.expires_at ? new Date(scanResult.badge.expires_at).toLocaleString() : '—'}</span></div>
                 </>
               )}
               <div><span className="text-gray-500">Check-in Time:</span><span className="ml-2 text-gray-900">{scanResult.check_in_time ? new Date(scanResult.check_in_time).toLocaleString() : '—'}</span></div>

@@ -62,6 +62,18 @@ export async function POST(request: NextRequest) {
 
     const userId = authUser.user.id
 
+    try {
+      await logAuditAction('Authentication Account Created', 'user', userId, `Created auth account for ${email}`)
+    } catch (err) {
+      console.error('Failed to log auth account creation audit:', err)
+    }
+
+    try {
+      await logAuditAction('Temporary Password Generated', 'user', userId, `Temporary password generated for ${email}`)
+    } catch (err) {
+      console.error('Failed to log temp password audit:', err)
+    }
+
     const { data: userRole, error: dbError } = await supabaseAdmin
       .from('user_roles')
       .insert({
@@ -69,16 +81,27 @@ export async function POST(request: NextRequest) {
         email,
         full_name,
         role,
+        must_change_password: true,
       })
       .select()
       .single()
 
     if (dbError) {
       await supabaseAdmin.auth.admin.deleteUser(userId)
+      console.error('Failed to create user role assignment:', dbError.message)
+      try {
+        await logAuditAction('User Creation Failed', 'user', userId, `Role assignment failed for ${email}: ${dbError.message}`)
+      } catch (err) {
+        console.error('Failed to log failed user creation audit:', err)
+      }
       return NextResponse.json({ error: dbError.message }, { status: 500 })
     }
 
-    await logAuditAction('User Created', 'user', userId, `Created user ${email} with ${role} role`)
+    try {
+      await logAuditAction('User Created', 'user', userId, `Created user ${email} with ${role} role`)
+    } catch (err) {
+      console.error('Failed to log user creation audit:', err)
+    }
 
     return NextResponse.json({
       success: true,
