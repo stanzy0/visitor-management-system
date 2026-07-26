@@ -12,6 +12,14 @@ interface Employee {
   id: string
   full_name: string
   department: string | null
+  office_location: string | null
+}
+
+interface OfficeLocation {
+  id: string
+  name: string
+  building: string | null
+  department: string | null
 }
 
 const VISITOR_TYPES: VisitorType[] = ['Visitor', 'Contractor', 'Vendor', 'Guest Lecturer', 'VIP', 'Family Visitor', 'Other']
@@ -230,6 +238,8 @@ export default function PublicRegistrationWizard() {
   const [visitorType, setVisitorType] = useState<VisitorType>('Visitor')
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loadingEmployees, setLoadingEmployees] = useState(true)
+  const [officeLocations, setOfficeLocations] = useState<OfficeLocation[]>([])
+  const [loadingLocations, setLoadingLocations] = useState(true)
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -266,11 +276,22 @@ export default function PublicRegistrationWizard() {
   useEffect(() => {
     supabase
       .from('employees')
-      .select('id, full_name, department')
+      .select('id, full_name, department, office_location')
       .order('full_name')
       .then(({ data }) => {
         setEmployees(data || [])
         setLoadingEmployees(false)
+      })
+  }, [])
+
+  useEffect(() => {
+    supabase
+      .from('office_locations')
+      .select('id, name, building, department')
+      .order('name')
+      .then(({ data }) => {
+        setOfficeLocations(data || [])
+        setLoadingLocations(false)
       })
   }, [])
 
@@ -283,6 +304,10 @@ export default function PublicRegistrationWizard() {
   const next = () => {
     if (step === 2 && !formData.photo_url) {
       setError('Visitor photograph is required.')
+      return
+    }
+    if (step === 4 && !formData.office_location) {
+      setError('Office location is required.')
       return
     }
     setStep((s) => Math.min(s + 1, totalSteps))
@@ -650,7 +675,14 @@ export default function PublicRegistrationWizard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Host Employee *</label>
-                  <select value={formData.employee_id} onChange={(e) => updateField('employee_id', e.target.value)} required className="w-full rounded-lg border border-gray-300 px-3 py-2" disabled={loadingEmployees}>
+                  <select value={formData.employee_id} onChange={(e) => {
+                    const empId = e.target.value
+                    updateField('employee_id', empId)
+                    const emp = employees.find((el) => el.id === empId)
+                    if (emp) {
+                      updateField('office_location', emp.office_location || '')
+                    }
+                  }} required className="w-full rounded-lg border border-gray-300 px-3 py-2" disabled={loadingEmployees}>
                     <option value="">
                       {loadingEmployees ? 'Loading employees...' : 'Select Host Employee'}
                     </option>
@@ -662,8 +694,48 @@ export default function PublicRegistrationWizard() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Office Location</label>
-                  <input type="text" value={formData.office_location} readOnly className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Office Location *</label>
+                  {loadingLocations ? (
+                    <div className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-500">
+                      Loading locations...
+                    </div>
+                  ) : officeLocations.length === 0 ? (
+                    <div className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-500">
+                      No office locations available
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={formData.office_location}
+                        onChange={(e) => updateField('office_location', e.target.value)}
+                        placeholder="Search location..."
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                      />
+                      {formData.office_location && (
+                        <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-auto">
+                          {officeLocations
+                            .filter((loc) =>
+                              loc.name.toLowerCase().includes(formData.office_location.toLowerCase())
+                            )
+                            .map((loc) => (
+                              <li
+                                key={loc.id}
+                                className="px-3 py-2 cursor-pointer hover:bg-blue-50 text-sm"
+                                onClick={() => {
+                                  updateField('office_location', loc.name)
+                                }}
+                              >
+                                <span className="font-medium">{loc.name}</span>
+                                {loc.building && (
+                                  <span className="text-gray-500 ml-2">— {loc.building}</span>
+                                )}
+                              </li>
+                            ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Purpose *</label>
@@ -781,7 +853,7 @@ export default function PublicRegistrationWizard() {
             {step < totalSteps ? (
               <button
                 onClick={next}
-                disabled={(step === 1 && !visitorType) || (step === 2 && !formData.photo_url)}
+                disabled={(step === 1 && !visitorType) || (step === 2 && !formData.photo_url) || (step === 4 && !formData.office_location)}
                 className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 min-h-[52px]"
               >
                 Next
