@@ -229,6 +229,7 @@ export default function PublicRegistrationWizard() {
   const [error, setError] = useState<string | null>(null)
   const [visitorType, setVisitorType] = useState<VisitorType>('Visitor')
   const [employees, setEmployees] = useState<Employee[]>([])
+  const [loadingEmployees, setLoadingEmployees] = useState(true)
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -267,7 +268,10 @@ export default function PublicRegistrationWizard() {
       .from('employees')
       .select('id, full_name, department')
       .order('full_name')
-      .then(({ data }) => setEmployees(data || []))
+      .then(({ data }) => {
+        setEmployees(data || [])
+        setLoadingEmployees(false)
+      })
   }, [])
 
   const totalSteps = 7
@@ -646,11 +650,13 @@ export default function PublicRegistrationWizard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Host Employee *</label>
-                  <select value={formData.employee_id} onChange={(e) => updateField('employee_id', e.target.value)} required className="w-full rounded-lg border border-gray-300 px-3 py-2">
-                    <option value="">Select host</option>
+                  <select value={formData.employee_id} onChange={(e) => updateField('employee_id', e.target.value)} required className="w-full rounded-lg border border-gray-300 px-3 py-2" disabled={loadingEmployees}>
+                    <option value="">
+                      {loadingEmployees ? 'Loading employees...' : 'Select Host Employee'}
+                    </option>
                     {employees.map((emp) => (
                       <option key={emp.id} value={emp.id}>
-                        {emp.full_name} - {emp.department}
+                        {emp.full_name} — {emp.department}
                       </option>
                     ))}
                   </select>
