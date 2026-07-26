@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth'
 import { logAuditAction } from '@/lib/client/audit'
 import { VisitorDocument, DOCUMENT_TYPES, ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '@/lib/types/document'
+import { createAdminNotification, createReceptionistNotification, createHostNotification, createSystemNotification } from '@/lib/notifications'
 
 export async function GET(request: NextRequest) {
   try {
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest) {
     const issuing_country = formData.get('issuing_country') as string | null
     const expiry_date = formData.get('expiry_date') as string | null
     const notes = formData.get('notes') as string | null
+    const visit_id = formData.get('visit_id') as string | null
     const file = formData.get('file') as File | null
 
     if (!visitor_id || !document_type || !document_number) {
@@ -133,6 +135,7 @@ export async function POST(request: NextRequest) {
         document_number,
         issuing_country: issuing_country || null,
         expiry_date: expiry_date || null,
+        visit_id: visit_id || null,
         file_name,
         file_url,
         mime_type,
@@ -157,6 +160,29 @@ export async function POST(request: NextRequest) {
       data.id,
       `Document ${document_type} (${document_number}) uploaded for visitor ${visitor_id}`
     )
+
+    createReceptionistNotification(
+      'Document Uploaded',
+      `New ${document_type} uploaded by visitor for review.`,
+      'info',
+      'visitor_document',
+      data.id
+    ).catch(() => {})
+
+    if (visit_id) {
+      supabase.from('visits').select('employee_id').eq('id', visit_id).single().then(({ data: visit }) => {
+        if (visit?.employee_id) {
+          createHostNotification(
+            visit.employee_id,
+            'Visitor Documents Uploaded',
+            `A visitor has uploaded a ${document_type} for your upcoming visit.`,
+            'visitor',
+            'visitor_document',
+            data.id
+          ).catch(() => {})
+        }
+      })
+    }
 
     return NextResponse.json(data as VisitorDocument, { status: 201 })
   } catch {

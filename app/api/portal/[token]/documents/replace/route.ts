@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { replacePortalDocument } from '@/lib/server/portal'
+import { markReplacementUploaded } from '@/lib/server/document-verification'
+import { createReceptionistNotification, createSystemNotification } from '@/lib/notifications'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
@@ -22,6 +24,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const updated = await replacePortalDocument(documentId, file, visit.visitor.id, visit.id)
+
+    await markReplacementUploaded(documentId)
+
+    createReceptionistNotification(
+      'Replacement Uploaded',
+      `A replacement document has been uploaded by a visitor and is ready for review.`,
+      'info',
+      'visitor_document',
+      documentId
+    ).catch(() => {})
+
+    createSystemNotification(
+      'Replacement Uploaded',
+      `Your replacement document has been uploaded and is pending review.`,
+      'info',
+      'visitor_document',
+      documentId
+    ).catch(() => {})
+
     return NextResponse.json({ success: true, data: updated })
   } catch (err) {
     console.error('Portal replace document error:', err)

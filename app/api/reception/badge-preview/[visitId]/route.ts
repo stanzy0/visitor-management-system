@@ -6,6 +6,7 @@ import { logAuditAction } from '@/lib/client/audit'
 import QRCode from 'qrcode'
 import { sendEmail } from '@/lib/server/email'
 import { createHostEmployeeNotification, createSystemNotification } from '@/lib/notifications'
+import { getDocumentVerifications } from '@/lib/server/document-verification'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ visitId: string }> }) {
   const authResult = await requireAdmin()
@@ -63,6 +64,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const employee = Array.isArray(visit.employee) ? visit.employee[0] : visit.employee
 
     if (action === 'approve') {
+      const verifications = await getDocumentVerifications({ status: 'all', search: '', document_type: '', date_from: '', date_to: '' }, 100, 0)
+      const pendingDocs = verifications.data.filter(v => v.visit_id === visitId && ['Pending', 'Rejected', 'Replacement Requested'].includes(v.status))
+
+      if (pendingDocs.length > 0) {
+        return NextResponse.json({
+          error: 'Cannot approve badge. Some documents are pending verification or have been rejected. Please review all documents before approving.',
+          pendingDocuments: pendingDocs
+        }, { status: 400 })
+      }
+
       const qrToken = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, '0')).join('')
 
       const badgeData: Record<string, unknown> = {

@@ -3,6 +3,8 @@ import { supabase } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth'
 import { logAuditAction } from '@/lib/client/audit'
 import { VisitorDocument, ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '@/lib/types/document'
+import { approveDocument, rejectDocument, requestReplacement, markReplacementUploaded, getDocumentVerifications } from '@/lib/server/document-verification'
+import { createAdminNotification, createReceptionistNotification, createHostNotification, createSystemNotification } from '@/lib/notifications'
 
 export async function GET(
   request: NextRequest,
@@ -161,15 +163,138 @@ export async function POST(
     const file = formData.get('file') as File | null
     const mimeType = formData.get('mime_type') as string | null
     const notes = formData.get('notes') as string | null
+    const reason = formData.get('reason') as string | null
 
     const { data: existing } = await supabase
       .from('visitor_documents')
-      .select('visitor_id, file_url')
+      .select('visitor_id, file_url, visit_id, document_type')
       .eq('id', id)
       .single()
 
     if (!existing) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+    }
+
+    if (action === 'approve') {
+      const verification = await approveDocument(id, user.id, notes || undefined)
+      if (!verification) {
+        return NextResponse.json({ error: 'Failed to approve document' }, { status: 500 })
+      }
+
+      await logAuditAction('Document Approved', 'visitor_document', id, `Document ${existing.document_type} approved for visitor ${existing.visitor_id}`)
+
+      supabase.from('visitor_documents').select('visitor_id, visit_id').eq('id', id).single().then(({ data: doc }) => {
+        if (doc?.visit_id) {
+          supabase.from('visits').select('employee_id').eq('id', doc.visit_id).single().then(({ data: visit }) => {
+            if (visit?.employee_id) {
+              createHostNotification(
+                visit.employee_id,
+                'Visitor Documents Approved',
+                `Documents for your visitor have been approved.`,
+                'visitor',
+                'visitor_document',
+                id
+              ).catch(() => {})
+            }
+          })
+        }
+        if (doc?.visitor_id) {
+          supabase.from('visitors').select('email').eq('id', doc.visitor_id).single().then(({ data: visitor }) => {
+            if (visitor?.email) {
+              createSystemNotification(
+                'Document Approved',
+                `Your ${existing.document_type} has been approved.`,
+                'success',
+                'visitor_document',
+                id
+              ).catch(() => {})
+            }
+          })
+        }
+      })
+
+      return NextResponse.json({ success: true, data: verification })
+    }
+
+    if (action === 'reject') {
+      if (!reason) {
+        return NextResponse.json({ error: 'Rejection reason is required' }, { status: 400 })
+      }
+
+      const verification = await rejectDocument(id, user.id, reason)
+      if (!verification) {
+        return NextResponse.json({ error: 'Failed to reject document' }, { status: 500 })
+      }
+
+      await logAuditAction('Document Rejected', 'visitor_document', id, `Document ${existing.document_type} rejected for visitor ${existing.visitor_id}`)
+
+      supabase.from('visitor_documents').select('visitor_id').eq('id', id).single().then(({ data: doc }) => {
+        if (doc?.visitor_id) {
+          supabase.from('visitors').select('email').eq('id', doc.visitor_id).single().then(({ data: visitor }) => {
+            if (visitor?.email) {
+              createSystemNotification(
+                'Document Rejected',
+                `Your ${existing.document_type} has been rejected. Reason: ${reason}`,
+                'error',
+                'visitor_document',
+                id
+              ).catch(() => {})
+            }
+          })
+        }
+      })
+
+      return NextResponse.json({ success: true, data: verification })
+    }
+
+    if (action === 'replacement') {
+      if (!reason) {
+        return NextResponse.json({ error: 'Replacement reason is required' }, { status: 400 })
+      }
+
+      const verification = await requestReplacement(id, reason)
+      if (!verification) {
+        return NextResponse.json({ error: 'Failed to request replacement' }, { status: 500 })
+      }
+
+      await logAuditAction('Replacement Requested', 'visitor_document', id, `Replacement requested for document ${existing.document_type}`)
+
+      supabase.from('visitor_documents').select('visitor_id').eq('id', id).single().then(({ data: doc }) => {
+        if (doc?.visitor_id) {
+          supabase.from('visitors').select('email').eq('id', doc.visitor_id).single().then(({ data: visitor }) => {
+            if (visitor?.email) {
+              createSystemNotification(
+                'Replacement Requested',
+                `Please upload a replacement for your ${existing.document_type}. Reason: ${reason}`,
+                'warning',
+                'visitor_document',
+                id
+              ).catch(() => {})
+            }
+          })
+        }
+      })
+
+      return NextResponse.json({ success: true, data: verification })
+    }
+
+    if (action === 'mark_replacement_uploaded') {
+      const verification = await markReplacementUploaded(id)
+      if (!verification) {
+        return NextResponse.json({ error: 'Failed to mark replacement uploaded' }, { status: 500 })
+      }
+
+      await logAuditAction('Replacement Uploaded', 'visitor_document', id, `Replacement uploaded for document ${existing.document_type}`)
+
+      createReceptionistNotification(
+        'Replacement Uploaded',
+        `A replacement document has been uploaded and is ready for review.`,
+        'info',
+        'visitor_document',
+        id
+      ).catch(() => {})
+
+      return NextResponse.json({ success: true, data: verification })
     }
 
     if (action === 'replace' && file && file.size > 0) {
@@ -219,6 +344,7 @@ export async function POST(
           mime_type: file.type,
           file_size: file.size,
           uploaded_by: user.id,
+          replacement_uploaded: true,
         })
         .eq('id', id)
         .select(`

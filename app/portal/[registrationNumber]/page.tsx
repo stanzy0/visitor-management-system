@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { Loader2, Download, Printer, CheckCircle2, XCircle, Clock, Phone, Mail, RefreshCw } from 'lucide-react'
+import { Loader2, Download, Printer, CheckCircle2, XCircle, Clock, Phone, Mail, RefreshCw, AlertTriangle } from 'lucide-react'
 import type { PortalVisit, PortalLifecycleEvent, PortalDocument, PortalSecurityAlert } from '@/lib/types/portal'
 import { PORTAL_STATUS_STYLES, LIFECYCLE_STEPS } from '@/lib/types/portal'
 import { logPortalAudit } from '@/lib/server/portal'
@@ -262,23 +262,37 @@ export default function PortalDashboardPage() {
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Your Documents</h2>
           <div className="space-y-3">
-            {documents.map((doc) => (
-              <div key={doc.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{doc.document_type}</p>
-                  <p className="text-xs text-gray-500">{doc.file_name || 'No file name'}</p>
-                </div>
-                {visit.status === 'pending' && (
-                  <div className="flex gap-2">
-                    <label className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 cursor-pointer min-h-[44px]">
-                      Replace
-                      <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && handleReplaceDocument(doc.id, e.target.files[0])} />
-                    </label>
-                    <button onClick={() => handleRemoveDocument(doc.id)} className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 min-h-[44px]">Remove</button>
+            {documents.map((doc) => {
+              const isReplacementRequired = doc.verification_status === 'Rejected' || doc.verification_status === 'Replacement Requested'
+              return (
+                <div key={doc.id} className={`flex items-center justify-between p-4 rounded-lg ${isReplacementRequired ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'}`}>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-medium text-gray-900">{doc.document_type}</p>
+                      {isReplacementRequired && (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-700">
+                          <AlertTriangle className="h-3 w-3" />
+                          Replacement Required
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500">{doc.file_name || 'No file name'}</p>
+                    {doc.verification_notes && (
+                      <p className="text-xs text-orange-600 mt-1">{doc.verification_notes}</p>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
+                  {visit.status === 'pending' && (
+                    <div className="flex gap-2">
+                      <label className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 cursor-pointer min-h-[44px]">
+                        Replace
+                        <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && handleReplaceDocument(doc.id, e.target.files[0])} />
+                      </label>
+                      <button onClick={() => handleRemoveDocument(doc.id)} className="inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 min-h-[44px]">Remove</button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
             {documents.length === 0 && <p className="text-sm text-gray-500">No documents uploaded</p>}
           </div>
         </div>

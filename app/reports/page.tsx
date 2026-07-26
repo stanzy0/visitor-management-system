@@ -56,6 +56,10 @@ interface Stats {
   pendingVerification: number
   visitorsWaitingBadge: number
   visitorsOverstayed: number
+  documentsReviewed: number
+  documentsPending: number
+  documentsRejected: number
+  avgReviewTime: string
 }
 
 const FILTERS = [
@@ -89,6 +93,10 @@ export default function ReportsPage() {
     pendingVerification: 0,
     visitorsWaitingBadge: 0,
     visitorsOverstayed: 0,
+    documentsReviewed: 0,
+    documentsPending: 0,
+    documentsRejected: 0,
+    avgReviewTime: '0h 0m',
   })
   const [visitorsPerDay, setVisitorsPerDay] = useState<Array<{ date: string; count: number }>>([])
   const [visitsByStatus, setVisitsByStatus] = useState<Array<{ name: string; value: number }>>([])
@@ -161,7 +169,7 @@ export default function ReportsPage() {
   }
 
   const fetchStats = async (start: Date, end: Date) => {
-    const [visitorsRes, visitsRes, pendingRes, approvedRes, rejectedRes, checkedOutRes, pendingVerificationRes, visitorsWaitingBadgeRes, visitorsOverstayedRes] = await Promise.all([
+    const [visitorsRes, visitsRes, pendingRes, approvedRes, rejectedRes, checkedOutRes, pendingVerificationRes, visitorsWaitingBadgeRes, visitorsOverstayedRes, documentsReviewedRes, documentsPendingRes, documentsRejectedRes] = await Promise.all([
       supabase.from('visitors').select('id', { count: 'exact' }),
       supabase.from('visits').select('id,status,check_in_time,check_out_time', { count: 'exact' }).gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
@@ -171,10 +179,26 @@ export default function ReportsPage() {
       supabase.from('visitor_documents').select('id', { count: 'exact', head: true }).eq('verification_status', 'Pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('visits').select('id', { count: 'exact', head: true }).in('status', ['approved', 'documents_verified']).is('badge_id', null).gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'overstayed').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('document_verifications').select('id,created_at,approved_at', { count: 'exact', head: true }).eq('status', 'Approved').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('document_verifications').select('id', { count: 'exact', head: true }).eq('status', 'Pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('document_verifications').select('id', { count: 'exact', head: true }).eq('status', 'Rejected').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
     ])
 
     const checkedInVisits = (visitsRes.data || []).filter((v) => v.status === 'checked_in') as Visit[]
     const avgDuration = calculateAvgDuration(checkedInVisits)
+
+    let avgReviewTime = '0h 0m'
+    if (documentsReviewedRes.data) {
+      const reviewTimes = documentsReviewedRes.data
+        .filter((d: any) => d.approved_at)
+        .map((d: any) => new Date(d.approved_at).getTime() - new Date(d.created_at).getTime())
+      if (reviewTimes.length > 0) {
+        const avgMs = reviewTimes.reduce((sum: number, t: number) => sum + t, 0) / reviewTimes.length
+        const hours = Math.floor(avgMs / (1000 * 60 * 60))
+        const minutes = Math.floor((avgMs % (1000 * 60 * 60)) / (1000 * 60))
+        avgReviewTime = `${hours}h ${minutes}m`
+      }
+    }
 
     setStats({
       totalVisitors: visitorsRes.count ?? 0,
@@ -189,6 +213,10 @@ export default function ReportsPage() {
       pendingVerification: pendingVerificationRes.count ?? 0,
       visitorsWaitingBadge: visitorsWaitingBadgeRes.count ?? 0,
       visitorsOverstayed: visitorsOverstayedRes.count ?? 0,
+      documentsReviewed: documentsReviewedRes.count ?? 0,
+      documentsPending: documentsPendingRes.count ?? 0,
+      documentsRejected: documentsRejectedRes.count ?? 0,
+      avgReviewTime,
     })
   }
 
@@ -627,6 +655,10 @@ export default function ReportsPage() {
           <KpiCard title="Waiting Verification" value={loading ? '—' : stats.pendingVerification.toString()} trend="neutral" />
           <KpiCard title="Waiting Badge" value={loading ? '—' : stats.visitorsWaitingBadge.toString()} trend="neutral" />
           <KpiCard title="Overstayed" value={loading ? '—' : stats.visitorsOverstayed.toString()} trend="down" />
+          <KpiCard title="Documents Reviewed" value={loading ? '—' : stats.documentsReviewed.toString()} trend="up" />
+          <KpiCard title="Documents Pending" value={loading ? '—' : stats.documentsPending.toString()} trend="neutral" />
+          <KpiCard title="Documents Rejected" value={loading ? '—' : stats.documentsRejected.toString()} trend="down" />
+          <KpiCard title="Avg Review Time" value={loading ? '—' : stats.avgReviewTime} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
