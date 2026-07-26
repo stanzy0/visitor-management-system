@@ -526,7 +526,7 @@ export default function DashboardPage() {
                           <td className="px-4 py-3 text-gray-600">{reg.purpose || '—'}</td>
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-2">
-                              <button onClick={async () => { await fetch('/api/public/registrations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ visit_id: reg.id, action: 'approve' }) }); window.location.reload() }} className="inline-flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 min-h-[36px]">Approve</button>
+                              <button onClick={() => router.push(`/reception/badge-preview/${reg.id}`)} className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 min-h-[36px]">Preview Badge</button>
                               <button onClick={async () => { const reason = prompt('Rejection reason:'); if (reason === null) return; await fetch('/api/public/registrations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ visit_id: reg.id, action: 'reject', reason }) }); window.location.reload() }} className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 min-h-[36px]">Reject</button>
                             </div>
                           </td>
