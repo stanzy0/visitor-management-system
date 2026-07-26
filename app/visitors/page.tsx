@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
 import { Search, Plus, Loader2, Upload, X, Camera, RefreshCw, Trash2, ShieldAlert } from 'lucide-react'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
+import NotificationBell from '@/components/notifications/NotificationBell'
 
 interface Visitor {
   id: string
@@ -746,6 +747,7 @@ export default function VisitorsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-2xl font-bold text-gray-900">Visitors</h1>
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input

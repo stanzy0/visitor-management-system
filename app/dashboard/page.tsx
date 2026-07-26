@@ -487,15 +487,41 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            {/* Activity Feed + Security */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2">
-                <ActivityFeed activities={activity} />
-              </div>
-              <div>
-                <SecurityPanel alerts={securityAlerts} />
-              </div>
-            </div>
+             {/* Activity Feed + Notifications */}
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+               <div className="lg:col-span-2">
+                 <ActivityFeed activities={activity} />
+               </div>
+               <div className="space-y-6">
+                 <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                   <div className="p-4 lg:p-6 border-b border-gray-200 flex items-center justify-between">
+                     <div>
+                       <h2 className="text-lg font-semibold text-gray-900">Recent Notifications</h2>
+                       <p className="text-sm text-gray-500">Latest 10 notifications</p>
+                     </div>
+                     <a href="/notifications" className="text-sm text-blue-600 hover:text-blue-700 font-medium">View All</a>
+                   </div>
+                   <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+                     {recentNotifications.length === 0 ? (
+                       <div className="p-6 text-center text-gray-500 text-sm">No notifications</div>
+                     ) : (
+                       recentNotifications.slice(0, 10).map((n: any) => (
+                         <div key={n.id} className={`p-4 ${n.is_read ? 'bg-white' : 'bg-blue-50'}`}>
+                           <div className="flex items-start justify-between">
+                             <div className="flex-1 min-w-0">
+                               <p className={`text-sm font-medium truncate ${n.is_read ? 'text-gray-700' : 'text-gray-900'}`}>{n.title}</p>
+                               <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
+                             </div>
+                             <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                           </div>
+                         </div>
+                       ))
+                     )}
+                   </div>
+                 </div>
+                 <SecurityPanel alerts={securityAlerts} />
+               </div>
+             </div>
 
             {/* Pending Online Registrations */}
             {pendingOnlineRegistrations.length > 0 && (

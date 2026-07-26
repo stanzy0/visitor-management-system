@@ -402,6 +402,77 @@ export default function ReportsPage() {
     }
   }, [dateFilter, customDateFrom, customDateTo, authChecking])
 
+  const [notificationStats, setNotificationStats] = useState({ total: 0, unread: 0, read: 0, byType: {} as Record<string, number>, byPriority: {} as Record<string, number>, avgResponseTime: null as number | null })
+  const [notificationByTypeData, setNotificationByTypeData] = useState<Array<{ name: string; value: number }>>([])
+  const [notificationByPriorityData, setNotificationByPriorityData] = useState<Array<{ name: string; value: number }>>([])
+
+  useEffect(() => {
+    fetchNotificationStats()
+  }, [dateFilter, customDateFrom, customDateTo])
+
+  const fetchNotificationStats = async () => {
+    try {
+      const params = new URLSearchParams()
+      if (dateFilter === 'custom' && customDateFrom) params.set('dateFrom', customDateFrom)
+      if (dateFilter === 'custom' && customDateTo) params.set('dateTo', customDateTo)
+      const res = await fetch(`/api/notifications?${params.toString()}`)
+      const json = await res.json()
+      if (res.ok && json.stats) {
+        setNotificationStats(json.stats)
+        const typeData = Object.entries(json.stats.byType || {}).map(([name, value]) => ({ name, value: value as number }))
+        setNotificationByTypeData(typeData)
+        const priorityData = Object.entries(json.stats.byPriority || {}).map(([name, value]) => ({ name, value: value as number }))
+        setNotificationByPriorityData(priorityData)
+      }
+    } catch (error) {
+      console.error('Failed to fetch notification stats:', error)
+    }
+  }
+
+  const exportNotificationData = async (format: 'pdf' | 'excel' | 'csv') => {
+    setExporting(true)
+    try {
+      if (format === 'csv') {
+        const headers = ['Type', 'Priority', 'Count']
+        const rows = [
+          headers.join(','),
+          ...notificationByTypeData.map(d => [d.name, '—', d.value].join(',')),
+          ...notificationByPriorityData.map(d => ['—', d.name, d.value].join(',')),
+        ]
+        const blob = new Blob([rows.join('\n')], { type: 'text/csv' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `notification-report-${dateFilter}.csv`
+        a.click()
+        URL.revokeObjectURL(url)
+      } else if (format === 'pdf') {
+        const doc = new jsPDF()
+        doc.setFontSize(18)
+        doc.text('Notification Report', 14, 22)
+        doc.setFontSize(11)
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 32)
+        doc.text(`Period: ${dateFilter}`, 14, 40)
+        autoTable(doc, {
+          startY: 50,
+          head: [['Metric', 'Value']],
+          body: [
+            ['Total Notifications', notificationStats.total.toString()],
+            ['Unread', notificationStats.unread.toString()],
+            ['Read', notificationStats.read.toString()],
+          ],
+        })
+        doc.save(`notification-report-${dateFilter}.pdf`)
+      }
+    } catch (err) {
+      console.error('Export error:', err)
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6']
+
   const exportData = async (format: 'pdf' | 'excel' | 'csv') => {
     setExporting(true)
     logAuditAction('Report Exported', 'report', null, `Report exported in ${format.toUpperCase()} format`)
@@ -660,6 +731,60 @@ export default function ReportsPage() {
               </ResponsiveContainer>
             )}
           </ChartCard>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Notification Report</h3>
+              <p className="text-sm text-gray-500">Notification metrics and analytics</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => exportNotificationData('csv')} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <Download className="h-4 w-4" /> CSV
+              </button>
+              <button onClick={() => exportNotificationData('pdf')} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <FileText className="h-4 w-4" /> PDF
+              </button>
+            </div>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+              <KpiCard title="Total Notifications" value={loading ? '—' : notificationStats.total.toString()} />
+              <KpiCard title="Unread" value={loading ? '—' : notificationStats.unread.toString()} trend={notificationStats.unread > 0 ? 'down' : 'up'} />
+              <KpiCard title="Read" value={loading ? '—' : notificationStats.read.toString()} trend="up" />
+              <KpiCard title="Avg Response" value={loading ? '—' : notificationStats.avgResponseTime ? `${notificationStats.avgResponseTime.toFixed(1)}h` : '—'} />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ChartCard title="By Type">
+                {loading ? <SkeletonChart /> : (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie data={notificationByTypeData} dataKey="value" nameKey="name" label>
+                        {notificationByTypeData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </ChartCard>
+              <ChartCard title="By Priority">
+                {loading ? <SkeletonChart /> : (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={notificationByPriorityData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="value" fill="#3b82f6" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </ChartCard>
+            </div>
+          </div>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">

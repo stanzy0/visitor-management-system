@@ -23,7 +23,9 @@ export async function createNotification(
   userId?: string | null,
   recipientRole?: string | null,
   relatedType?: string,
-  relatedId?: string
+  relatedId?: string,
+  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
+  action_url?: string | null
 ) {
   try {
     const { data, error } = await supabase.from('notifications').insert({
@@ -34,6 +36,8 @@ export async function createNotification(
       recipient_role: recipientRole || null,
       related_type: relatedType || null,
       related_id: relatedId || null,
+      priority,
+      action_url: action_url || null,
     }).select().single()
 
     if (error) {
@@ -54,9 +58,11 @@ export async function createAdminNotification(
   message: string,
   type: NotificationType = 'info',
   relatedType?: string,
-  relatedId?: string
+  relatedId?: string,
+  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
+  action_url?: string | null
 ) {
-  return createNotification(title, message, type, null, 'Admin', relatedType, relatedId)
+  return createNotification(title, message, type, null, 'Admin', relatedType, relatedId, priority, action_url)
 }
 
 export async function createReceptionistNotification(
@@ -64,9 +70,11 @@ export async function createReceptionistNotification(
   message: string,
   type: NotificationType = 'info',
   relatedType?: string,
-  relatedId?: string
+  relatedId?: string,
+  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
+  action_url?: string | null
 ) {
-  return createNotification(title, message, type, null, 'Receptionist', relatedType, relatedId)
+  return createNotification(title, message, type, null, 'Receptionist', relatedType, relatedId, priority, action_url)
 }
 
 export async function createSecurityNotification(
@@ -74,9 +82,11 @@ export async function createSecurityNotification(
   message: string,
   type: NotificationType = 'info',
   relatedType?: string,
-  relatedId?: string
+  relatedId?: string,
+  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
+  action_url?: string | null
 ) {
-  return createNotification(title, message, type, null, 'Security', relatedType, relatedId)
+  return createNotification(title, message, type, null, 'Security', relatedType, relatedId, priority, action_url)
 }
 
 export async function createHostNotification(
@@ -85,9 +95,11 @@ export async function createHostNotification(
   message: string,
   type: NotificationType = 'info',
   relatedType?: string,
-  relatedId?: string
+  relatedId?: string,
+  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
+  action_url?: string | null
 ) {
-  return createNotification(title, message, type, userId, null, relatedType, relatedId)
+  return createNotification(title, message, type, userId, null, relatedType, relatedId, priority, action_url)
 }
 
 export async function createHostEmployeeNotification(
@@ -96,7 +108,9 @@ export async function createHostEmployeeNotification(
   message: string,
   type: NotificationType = 'info',
   relatedType?: string,
-  relatedId?: string
+  relatedId?: string,
+  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
+  action_url?: string | null
 ) {
   try {
     const { data: employee } = await supabase
@@ -106,7 +120,7 @@ export async function createHostEmployeeNotification(
       .single()
 
     if (employee?.user_id) {
-      return createNotification(title, message, type, employee.user_id, null, relatedType, relatedId)
+      return createNotification(title, message, type, employee.user_id, null, relatedType, relatedId, priority, action_url)
     }
 
     return null
@@ -120,9 +134,11 @@ export async function createSystemNotification(
   message: string,
   type: NotificationType = 'info',
   relatedType?: string,
-  relatedId?: string
+  relatedId?: string,
+  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
+  action_url?: string | null
 ) {
-  return createNotification(title, message, type, null, null, relatedType, relatedId)
+  return createNotification(title, message, type, null, null, relatedType, relatedId, priority, action_url)
 }
 
 export async function getNotifications(userId: string | null, limit: number = 50) {

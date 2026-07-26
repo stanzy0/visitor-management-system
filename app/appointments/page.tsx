@@ -10,6 +10,7 @@ import { generateAppointmentQR, appointmentCheckInUrl } from '@/lib/qr/appointme
 import { buildAppointmentConfirmationEmail } from '@/lib/email/appointment-email'
 import { generateICS, downloadICS } from '@/lib/calendar/ics'
 import type { Appointment, AppointmentStats } from '@/lib/types/appointment'
+import NotificationBell from '@/components/notifications/NotificationBell'
 
 type Status = Appointment['status']
 
@@ -341,12 +342,15 @@ export default function AppointmentsPage() {
             <h1 className="text-2xl font-bold text-gray-900">Appointments</h1>
             <p className="text-sm text-gray-500">Schedule and manage visitor appointments</p>
           </div>
-          {canCreate && (
-            <button onClick={() => setModalOpen(true)} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 min-h-[52px]">
-              <Plus className="h-4 w-4" />
-              New Appointment
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+            {canCreate && (
+              <button onClick={() => setModalOpen(true)} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 min-h-[52px]">
+                <Plus className="h-4 w-4" />
+                New Appointment
+              </button>
+            )}
+          </div>
         </div>
 
         {notification && (

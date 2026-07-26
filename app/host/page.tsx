@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import { generateVisitQRCode } from '@/lib/qrcode'
 import InvitationForm from '@/components/InvitationForm'
+import NotificationBell from '@/components/notifications/NotificationBell'
 
 interface Employee {
   id: string
@@ -514,24 +515,27 @@ export default function HostPortalPage() {
               {employee ? `Welcome, ${employee.full_name}` : 'Manage your visitors and appointments'}
             </p>
           </div>
-          {canEdit && (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowInviteVisitor(true)}
-                className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 transition-colors"
-              >
-                <Mail className="h-4 w-4" />
-                Invite Visitor
-              </button>
-              <button
-                onClick={() => setShowPreRegister(true)}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                Pre-Register Visitor
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+            {canEdit && (
+              <>
+                <button
+                  onClick={() => setShowInviteVisitor(true)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 transition-colors"
+                >
+                  <Mail className="h-4 w-4" />
+                  Invite Visitor
+                </button>
+                <button
+                  onClick={() => setShowPreRegister(true)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  Pre-Register Visitor
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {notification && (

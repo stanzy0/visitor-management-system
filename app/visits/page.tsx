@@ -10,6 +10,8 @@ import VisitorBadge from '@/components/VisitorBadge'
 import { createBadge } from '@/lib/client/badges'
 import { printBadgeWindow } from '@/lib/badge/badge-print'
 import type { VisitorBadge as VisitorBadgeType } from '@/lib/badge/badge-types'
+import { createHostNotification, createSecurityNotification, createSystemNotification } from '@/lib/notifications'
+import NotificationBell from '@/components/notifications/NotificationBell'
 
 type Badge = VisitorBadgeType
 
@@ -224,12 +226,40 @@ export default function VisitsPage() {
         await supabase.from('visits').update({ qr_code: qrCodeDataUrl }).eq('id', visitId)
         logAuditAction('QR Code Generated', 'visit', visitId, `QR code generated for visitor ${visitorName}`)
         await handleGenerateBadge(visitId)
+        const visit = visits.find(v => v.id === visitId)
+        if (visit?.employee?.full_name) {
+          const { data: employee } = await supabase.from('employees').select('user_id').eq('full_name', visit.employee.full_name).single()
+          if (employee?.user_id) {
+            await createHostNotification(employee.user_id, 'Visitor Approved', `${visitorName}'s visit has been approved.`, 'visitor', 'visit', visitId, 'Normal', `/visits?id=${visitId}`)
+          }
+        }
       } else if (newStatus === 'rejected') {
         logAuditAction('Visit Rejected', 'visit', visitId, `${visitorName}'s visit to ${hostName} rejected`)
+        const visit = visits.find(v => v.id === visitId)
+        if (visit?.employee?.full_name) {
+          const { data: employee } = await supabase.from('employees').select('user_id').eq('full_name', visit.employee.full_name).single()
+          if (employee?.user_id) {
+            await createHostNotification(employee.user_id, 'Visitor Rejected', `${visitorName}'s visit has been rejected.`, 'visitor', 'visit', visitId, 'High', `/visits?id=${visitId}`)
+          }
+        }
       } else if (newStatus === 'checked_in') {
         logAuditAction('Visitor Checked In', 'visit', visitId, `${visitorName} checked in at ${currentTime}`)
+        const visit = visits.find(v => v.id === visitId)
+        if (visit?.employee?.full_name) {
+          const { data: employee } = await supabase.from('employees').select('user_id').eq('full_name', visit.employee.full_name).single()
+          if (employee?.user_id) {
+            await createHostNotification(employee.user_id, 'Visitor Arrived', `${visitorName} has checked in at ${currentTime}.`, 'visitor', 'visit', visitId, 'Normal', `/visits?id=${visitId}`)
+          }
+        }
       } else if (newStatus === 'checked_out') {
         logAuditAction('Visitor Checked Out', 'visit', visitId, `${visitorName} checked out at ${currentTime}`)
+        const visit = visits.find(v => v.id === visitId)
+        if (visit?.employee?.full_name) {
+          const { data: employee } = await supabase.from('employees').select('user_id').eq('full_name', visit.employee.full_name).single()
+          if (employee?.user_id) {
+            await createHostNotification(employee.user_id, 'Visitor Checked Out', `${visitorName} has checked out at ${currentTime}.`, 'visitor', 'visit', visitId, 'Normal', `/visits?id=${visitId}`)
+          }
+        }
       }
 
       fetchVisits()
@@ -325,6 +355,7 @@ export default function VisitsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-2xl font-bold text-gray-900">Visits</h1>
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input

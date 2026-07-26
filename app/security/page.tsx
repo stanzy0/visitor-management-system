@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 import { Loader2, Users, UserCheck, XCircle, ShieldAlert, Car, LogOut, Clock, AlertTriangle, ShieldCheck, PackageSearch } from 'lucide-react'
 import type { SecurityDashboardStats } from '@/lib/types/security'
+import NotificationBell from '@/components/notifications/NotificationBell'
 
 export default function SecurityDashboardPage() {
   const [stats, setStats] = useState<SecurityDashboardStats>({
@@ -111,11 +112,14 @@ export default function SecurityDashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Security Dashboard</h1>
-          <p className="text-sm text-gray-500">Live gate and security operations overview</p>
-        </div>
+        <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Security Dashboard</h1>
+              <p className="text-sm text-gray-500">Live gate and security operations overview</p>
+            </div>
+            <NotificationBell />
+          </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {cards.map((card) => (

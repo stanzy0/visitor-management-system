@@ -1,0 +1,101 @@
+'use client'
+
+import { Search } from 'lucide-react'
+import type { NotificationFilters } from '@/lib/types/notification'
+
+interface NotificationFiltersProps {
+  filters: NotificationFilters
+  onFilterChange: (filters: NotificationFilters) => void
+}
+
+export default function NotificationFilters({ filters, onFilterChange }: NotificationFiltersProps) {
+  const updateFilter = (key: keyof NotificationFilters, value: string) => {
+    onFilterChange({ ...filters, [key]: value })
+  }
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4 space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            value={filters.search}
+            onChange={(e) => updateFilter('search', e.target.value)}
+            placeholder="Search notifications..."
+            className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+          <select
+            value={filters.type}
+            onChange={(e) => updateFilter('type', e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="all">All Types</option>
+            <option value="Visitor">Visitor</option>
+            <option value="Appointment">Appointment</option>
+            <option value="Badge">Badge</option>
+            <option value="Security">Security</option>
+            <option value="System">System</option>
+            <option value="Asset">Asset</option>
+            <option value="Approval">Approval</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+          <select
+            value={filters.priority}
+            onChange={(e) => updateFilter('priority', e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="all">All Priorities</option>
+            <option value="Low">Low</option>
+            <option value="Normal">Normal</option>
+            <option value="High">High</option>
+            <option value="Critical">Critical</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select
+            value={filters.read}
+            onChange={(e) => updateFilter('read', e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="all">All</option>
+            <option value="unread">Unread</option>
+            <option value="read">Read</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Date From</label>
+          <input
+            type="date"
+            value={filters.dateFrom}
+            onChange={(e) => updateFilter('dateFrom', e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Date To</label>
+          <input
+            type="date"
+            value={filters.dateTo}
+            onChange={(e) => updateFilter('dateTo', e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
