@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 
-export type UserRole = 'Admin' | 'Receptionist' | 'Security' | 'Host Employee'
+export type UserRole = 'Admin' | 'Commandant' | 'Director' | 'Receptionist' | 'Security' | 'Host Employee'
 
 export interface UserWithRole {
   id: string
@@ -34,6 +34,37 @@ export const PERMISSIONS: Record<UserRole, string[]> = {
     'email',
     'badges',
     'invitations',
+    'operations',
+  ],
+  Commandant: [
+    'dashboard',
+    'analytics',
+    'reports',
+    'audit-logs',
+    'visitors',
+    'visits',
+    'appointments',
+    'badges',
+    'documents',
+    'security',
+    'host',
+    'settings',
+    'operations',
+  ],
+  Director: [
+    'dashboard',
+    'analytics',
+    'reports',
+    'audit-logs',
+    'visitors',
+    'visits',
+    'appointments',
+    'badges',
+    'documents',
+    'security',
+    'host',
+    'settings',
+    'operations',
   ],
   Receptionist: [
     'dashboard',
@@ -60,6 +91,7 @@ export const PERMISSIONS: Record<UserRole, string[]> = {
     'host',
     'badges',
     'invitations',
+    'operations',
   ],
   'Host Employee': [
     'dashboard',

@@ -36,6 +36,7 @@ import {
   CheckCircle,
   CheckCircle2,
   Shield,
+  Activity,
 } from 'lucide-react'
 import NotificationBell from '@/components/NotificationBell'
 import StatCard from '@/components/dashboard/StatCard'
@@ -105,6 +106,7 @@ const NAV_SECTIONS = [
     { label: 'Audit Logs', icon: ShieldCheck, href: '/audit-logs', permission: 'audit-logs' },
     { label: 'Reports', icon: FileText, href: '/reports', permission: 'reports' },
     { label: 'Analytics', icon: BarChart3, href: '/analytics', permission: 'analytics' },
+    { label: 'Operations Center', icon: Activity, href: '/operations', permission: 'operations' },
     { label: 'Email Logs', icon: FileText, href: '/email-logs', permission: 'email' },
   ]},
    { title: 'ASSETS & PROPERTY', items: [
