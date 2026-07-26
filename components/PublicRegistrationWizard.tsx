@@ -240,6 +240,7 @@ export default function PublicRegistrationWizard() {
   const [loadingEmployees, setLoadingEmployees] = useState(true)
   const [officeLocations, setOfficeLocations] = useState<OfficeLocation[]>([])
   const [loadingLocations, setLoadingLocations] = useState(true)
+  const [officeLocationLocked, setOfficeLocationLocked] = useState(false)
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -679,8 +680,12 @@ export default function PublicRegistrationWizard() {
                     const empId = e.target.value
                     updateField('employee_id', empId)
                     const emp = employees.find((el) => el.id === empId)
-                    if (emp) {
-                      updateField('office_location', emp.office_location || '')
+                    if (emp && emp.office_location) {
+                      updateField('office_location', emp.office_location)
+                      setOfficeLocationLocked(true)
+                    } else {
+                      updateField('office_location', '')
+                      setOfficeLocationLocked(false)
                     }
                   }} required className="w-full rounded-lg border border-gray-300 px-3 py-2" disabled={loadingEmployees}>
                     <option value="">
@@ -702,6 +707,25 @@ export default function PublicRegistrationWizard() {
                   ) : officeLocations.length === 0 ? (
                     <div className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-500">
                       No office locations available
+                    </div>
+                  ) : officeLocationLocked ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={formData.office_location}
+                        readOnly
+                        className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOfficeLocationLocked(false)
+                          updateField('office_location', '')
+                        }}
+                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 min-h-[44px]"
+                      >
+                        Change
+                      </button>
                     </div>
                   ) : (
                     <div className="relative">
