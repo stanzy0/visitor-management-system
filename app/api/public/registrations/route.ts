@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth-helpers'
+import { requireRole } from '@/lib/auth-helpers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/server/email'
 import { createHostEmployeeNotification, createSystemNotification } from '@/lib/notifications'
-import { logAuditAction } from '@/lib/client/audit'
+import { logAuditAction } from '@/lib/server/audit'
 import QRCode from 'qrcode'
 
 export async function POST(request: NextRequest) {
-  const authResult = await requireAdmin()
+  const authResult = await requireRole(['Admin', 'Receptionist'])
   if (!authResult.authorized) {
     return NextResponse.json({ error: authResult.error }, { status: authResult.status })
   }
@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const authResult = await requireAdmin()
+  const authResult = await requireRole(['Admin', 'Receptionist', 'Host Employee', 'Security'])
   if (!authResult.authorized) {
     return NextResponse.json({ error: authResult.error }, { status: authResult.status })
   }

@@ -17,10 +17,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     const checkRememberedDevice = async () => {
-      const {
-        data: { session },
-      } = await createClient().auth.getSession()
-      if (session) {
+      const user = await createClient().auth.getUser()
+      if (user.data.user) {
         window.location.href = '/dashboard'
       }
     }

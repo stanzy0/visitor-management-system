@@ -3,7 +3,11 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/server/email'
 import type { EmailTemplate } from '@/lib/email/types'
 import { createAdminNotification, createHostEmployeeNotification } from '@/lib/notifications'
-import { logAuditAction } from '@/lib/client/audit'
+import { logAuditAction } from '@/lib/server/audit'
+import QRCode from 'qrcode'
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const PHONE_RE = /^\+?[\d\s()-]{7,20}$/
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,6 +48,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    const trimmedEmail = String(email).trim()
+    const trimmedPhone = String(phone).trim()
+    if (!EMAIL_RE.test(trimmedEmail)) {
+      return NextResponse.json({ error: 'Invalid email format' }, { status: 400 })
+    }
+    if (!PHONE_RE.test(trimmedPhone)) {
+      return NextResponse.json({ error: 'Invalid phone format' }, { status: 400 })
+    }
+
+    const today = new Date().toISOString().split('T')[0]
+    if (visit_date < today) {
+      return NextResponse.json({ error: 'Visit date cannot be in the past' }, { status: 400 })
+    }
+
+    if (expected_duration && Number(expected_duration) <= 0) {
+      return NextResponse.json({ error: 'Expected duration must be greater than 0' }, { status: 400 })
+    }
+
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
     }
@@ -64,8 +86,8 @@ export async function POST(request: NextRequest) {
       .from('visitors')
       .insert({
         full_name,
-        email,
-        phone,
+        email: trimmedEmail,
+        phone: trimmedPhone,
         visitor_organization: visitor_organization || null,
         visitor_address: visitor_address || null,
         nationality: nationality || null,
@@ -115,10 +137,10 @@ export async function POST(request: NextRequest) {
     }
 
     await sendEmail({
-      to: email,
+      to: trimmedEmail,
       recipientName: full_name,
       subject: `Registration Submitted - ${regNumber}`,
-      template: 'registration_submitted' as EmailTemplate,
+      template: 'registration_submitted',
       data: {
         visitorName: full_name,
         registrationNumber: regNumber,

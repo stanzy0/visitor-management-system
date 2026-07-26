@@ -322,6 +322,7 @@ export default function DashboardPage() {
         doc.save(`dashboard-export-${new Date().toISOString().split('T')[0]}.pdf`)
       }
     } catch (err) {
+      console.error('Export error:', err)
     } finally {
       setExporting(false)
     }
@@ -393,7 +394,6 @@ export default function DashboardPage() {
         { title: 'Denied Today', value: securityStats.visitorsDenied, icon: XCircle, color: 'red' as const, href: '/security/gate' },
         { title: 'Watchlist Matches', value: securityStats.watchlistMatches, icon: ShieldAlert, color: 'red' as const, href: '/security/watchlist' },
         { title: 'Vehicles Inside', value: securityStats.vehiclesInside, icon: Car, color: 'purple' as const, href: '/security/gate-activity' },
-        { title: 'Waiting Verification', value: stats.visitorsWaitingVerification, icon: Clock, color: 'amber' as const, href: '/visits?status=approved' },
         { title: 'Waiting Badge', value: stats.visitorsWaitingBadge, icon: IdCard, color: 'orange' as const, href: '/badges' },
         { title: 'Overstayed', value: stats.visitorsOverstayed, icon: AlertTriangle, color: 'red' as const, href: '/visits?status=overstayed' },
         { title: 'Completed Appointments', value: stats.completedAppointments, icon: CheckCircle, color: 'green' as const, href: '/appointments' },
