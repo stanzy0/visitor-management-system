@@ -708,56 +708,70 @@ export default function PublicRegistrationWizard() {
                     <div className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-500">
                       No office locations available
                     </div>
-                  ) : officeLocationLocked ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={formData.office_location}
-                        readOnly
-                        className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setOfficeLocationLocked(false)
-                          updateField('office_location', '')
-                        }}
-                        className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 min-h-[44px]"
-                      >
-                        Change
-                      </button>
+                  ) : officeLocationLocked && formData.office_location ? (
+                    <div>
+                      <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
+                        <div>
+                          <p className="text-sm font-medium text-blue-900">Host Office</p>
+                          <p className="text-sm text-blue-700">{formData.office_location}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOfficeLocationLocked(false)
+                            updateField('office_location', '')
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100 min-h-[44px]"
+                        >
+                          Change
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Auto-filled from the selected host employee.</p>
+                    </div>
+                  ) : !officeLocationLocked && formData.office_location ? (
+                    <div>
+                      <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                        <div>
+                          <p className="text-sm font-medium text-amber-900">Host Office</p>
+                          <p className="text-sm text-amber-700">{formData.office_location}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-amber-600 mt-1">You are overriding the host's assigned office location.</p>
                     </div>
                   ) : (
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={formData.office_location}
-                        onChange={(e) => updateField('office_location', e.target.value)}
-                        placeholder="Search location..."
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                      />
-                      {formData.office_location && (
-                        <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-auto">
-                          {officeLocations
-                            .filter((loc) =>
-                              loc.name.toLowerCase().includes(formData.office_location.toLowerCase())
-                            )
-                            .map((loc) => (
-                              <li
-                                key={loc.id}
-                                className="px-3 py-2 cursor-pointer hover:bg-blue-50 text-sm"
-                                onClick={() => {
-                                  updateField('office_location', loc.name)
-                                }}
-                              >
-                                <span className="font-medium">{loc.name}</span>
-                                {loc.building && (
-                                  <span className="text-gray-500 ml-2">— {loc.building}</span>
-                                )}
-                              </li>
-                            ))}
-                        </ul>
-                      )}
+                    <div>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={formData.office_location}
+                          onChange={(e) => updateField('office_location', e.target.value)}
+                          placeholder="Search location..."
+                          className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                        />
+                        {formData.office_location && (
+                          <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-auto">
+                            {officeLocations
+                              .filter((loc) =>
+                                loc.name.toLowerCase().includes(formData.office_location.toLowerCase())
+                              )
+                              .map((loc) => (
+                                <li
+                                  key={loc.id}
+                                  className="px-3 py-2 cursor-pointer hover:bg-blue-50 text-sm"
+                                  onClick={() => {
+                                    updateField('office_location', loc.name)
+                                  }}
+                                >
+                                  <span className="font-medium">{loc.name}</span>
+                                  {loc.building && (
+                                    <span className="text-gray-500 ml-2">— {loc.building}</span>
+                                  )}
+                                </li>
+                              ))}
+                          </ul>
+                        )}
+                      </div>
+                      <p className="text-xs text-amber-600 mt-1">⚠️ This employee has no assigned office location. Please select one.</p>
                     </div>
                   )}
                 </div>
