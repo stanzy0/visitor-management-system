@@ -26,4 +26,27 @@ export interface VisitorFormData {
   vehicle_type: string
   emergency_contact: string
   photo_url?: string | null
+  host_employee_id?: string
+  purpose?: string
+  expected_duration?: number
+  has_vehicle?: boolean
+  registration_number?: string
+  vehicle_make?: string
+  vehicle_model?: string
+  vehicle_color?: string
+  driver_name?: string
+  driver_phone?: string
+  parking_slot?: string
+  notes?: string
+  id_number?: string
+  id_verification?: boolean
+  doc_type?: string
+  doc_number?: string
+  issuing_country?: string
+  expiry_date?: string
+  doc_front_image?: File | null
+  doc_back_image?: File | null
+  doc_front_url?: string
+  doc_back_url?: string
+  doc_notes?: string
 }

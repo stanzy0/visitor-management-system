@@ -19,6 +19,14 @@ export interface Visit {
     department?: string
   } | null
   badge?: VisitorBadge | null
+  appointment_id?: string | null
+  appointment?: {
+    id: string
+    appointment_date: string
+    appointment_time: string
+    expected_arrival: string | null
+    status?: string
+  } | null
 }
 
 export interface VisitFormData {

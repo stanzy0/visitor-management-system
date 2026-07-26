@@ -24,6 +24,11 @@ import {
   MessageSquare,
   X,
   Mail,
+  LayoutDashboard,
+  User,
+  FileText,
+  BarChart3,
+  PackageSearch,
 } from 'lucide-react'
 import { generateVisitQRCode } from '@/lib/qrcode'
 import InvitationForm from '@/components/InvitationForm'
@@ -93,6 +98,7 @@ export default function HostPortalPage() {
   const [employee, setEmployee] = useState<Employee | null>(null)
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [visits, setVisits] = useState<Visit[]>([])
+  const [propertyItems, setPropertyItems] = useState<any[]>([])
   const [waitingVisitors, setWaitingVisitors] = useState<Visit[]>([])
   const [stats, setStats] = useState<Stats>({
     visitorsToday: 0,
@@ -167,6 +173,16 @@ export default function HostPortalPage() {
       setAppointments(apptRes.data || [])
       setVisits(visitRes.data || [])
 
+      const visitorIds = Array.from(new Set((visitRes.data || []).map((v: any) => v.visitor_id).filter(Boolean)))
+      let propertyRes: { data: any[] | null } = { data: null }
+      if (visitorIds.length > 0) {
+        propertyRes = await supabase
+          .from('property_items')
+          .select('*')
+          .in('visitor_id', visitorIds)
+      }
+      setPropertyItems(propertyRes.data || [])
+
       const waiting = (waitingRes.data || []).filter(v => !v.check_out_time)
       setWaitingVisitors(waiting)
 
@@ -213,6 +229,7 @@ export default function HostPortalPage() {
       .channel('host-portal-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => fetchData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => fetchData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'property_items' }, () => fetchData())
       .subscribe()
   }
 
@@ -481,6 +498,15 @@ export default function HostPortalPage() {
           </a>
         </div>
 
+        <div className="flex flex-wrap items-center gap-2">
+          <NavPill href="/host" label="Dashboard" icon={LayoutDashboard} />
+          <NavPill href="/host/visitors" label="My Visitors" icon={Users} />
+          <NavPill href="/host/appointments" label="Appointments" icon={Calendar} />
+          <NavPill href="/host/invitations" label="Invitations" icon={Mail} />
+          <NavPill href="/host/reports" label="Reports" icon={BarChart3} />
+          <NavPill href="/host/profile" label="Profile" icon={User} />
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Host Portal</h1>
@@ -673,8 +699,53 @@ export default function HostPortalPage() {
                                 Reject
                               </button>
                             </>
-                          )}
-                        </div>
+          )}
+        </div>
+
+        {/* Visitor Property */}
+        {propertyItems.length > 0 && (
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Visitor Property</h3>
+              <p className="text-sm text-gray-500">Items brought by your visitors</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="px-4 py-3 font-semibold text-gray-700">Property #</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Item</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Category</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Serial Number</th>
+                    <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {propertyItems.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3 font-mono text-gray-600">{item.property_number}</td>
+                      <td className="px-4 py-3 font-medium text-gray-900">{item.name}</td>
+                      <td className="px-4 py-3 text-gray-600">{item.category}</td>
+                      <td className="px-4 py-3 text-gray-600">{item.serial_number || '—'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                          item.status === 'Inside' ? 'bg-green-50 text-green-700' :
+                          item.status === 'Confiscated' ? 'bg-red-50 text-red-700' :
+                          item.status === 'Released' ? 'bg-blue-50 text-blue-700' :
+                          item.status === 'Lost' ? 'bg-orange-50 text-orange-700' :
+                          item.status === 'Damaged' ? 'bg-yellow-50 text-yellow-700' :
+                          'bg-gray-50 text-gray-700'
+                        }`}>
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
                       </td>
                     </tr>
                   ))}
@@ -914,6 +985,18 @@ export default function HostPortalPage() {
         </div>
       )}
     </div>
+  )
+}
+
+function NavPill({ href, label, icon: Icon }: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }) {
+  return (
+    <a
+      href={href}
+      className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </a>
   )
 }
 

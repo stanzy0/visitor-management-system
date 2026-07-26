@@ -506,6 +506,51 @@ function getTemplateContent(template: EmailTemplate, data: Record<string, string
         <p>Please present your badge at reception upon arrival.</p>
       `
 
+    case 'registration_submitted':
+      return `
+        <h2 style="margin-top: 0;">Registration Submitted</h2>
+        <p>Dear ${visitorName},</p>
+        <p>Your visitor registration has been submitted successfully and is pending approval.</p>
+        <div class="info-box">
+          <p><strong>Registration Number:</strong> ${data.registrationNumber || 'N/A'}</p>
+          <p><strong>Visit Date:</strong> ${date}</p>
+          <p><strong>Arrival Time:</strong> ${data.arrivalTime || 'TBD'}</p>
+          <p><strong>Host:</strong> ${hostName}</p>
+          <p><strong>Office:</strong> ${location}</p>
+        </div>
+        <p>You will receive another email once your registration is approved. Please keep your registration number for future reference.</p>
+      `
+
+    case 'registration_approved':
+      return `
+        <h2 style="margin-top: 0;">Registration Approved</h2>
+        <p>Dear ${visitorName},</p>
+        <p>Great news! Your visitor registration has been approved.</p>
+        <div class="info-box">
+          <p><strong>Registration Number:</strong> ${data.registrationNumber || 'N/A'}</p>
+          <p><strong>Visit Date:</strong> ${date}</p>
+          <p><strong>Arrival Time:</strong> ${data.arrivalTime || 'TBD'}</p>
+          <p><strong>Host:</strong> ${hostName}</p>
+          <p><strong>Office:</strong> ${location}</p>
+          <p><strong>Badge Number:</strong> ${badgeNumber}</p>
+        </div>
+        <p>Please arrive at the scheduled time and present your QR code at the gate for verification.</p>
+      `
+
+    case 'registration_rejected':
+      return `
+        <h2 style="margin-top: 0;">Registration Update</h2>
+        <p>Dear ${visitorName},</p>
+        <p>We regret to inform you that your registration could not be approved at this time.</p>
+        <div class="warning-box">
+          <p><strong>Registration Number:</strong> ${data.registrationNumber || 'N/A'}</p>
+          <p><strong>Visit Date:</strong> ${date}</p>
+          <p><strong>Host:</strong> ${hostName}</p>
+          <p><strong>Reason:</strong> ${data.reason || 'Not specified'}</p>
+        </div>
+        <p>Please contact us to reschedule or for further assistance.</p>
+      `
+
     default:
       return `<h2 style="margin-top: 0;">${(template as string).replace(/_/g, ' ').toUpperCase()}</h2><p>${data.message || 'Notification from ' + orgName}</p>`
   }

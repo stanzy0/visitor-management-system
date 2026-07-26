@@ -24,9 +24,8 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const { data } = await supabase.auth.getSession()
-  const session = data.session
-  const mustChangePassword = Boolean(session?.user?.user_metadata?.must_change_password)
+  const { data: { user } } = await supabase.auth.getUser()
+  const mustChangePassword = Boolean(user?.user_metadata?.must_change_password)
   const pathname = request.nextUrl.pathname
   const isChangePasswordPage = pathname === '/change-password'
   const isLoginPage = pathname === '/login'

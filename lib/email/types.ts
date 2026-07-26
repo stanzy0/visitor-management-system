@@ -16,6 +16,9 @@ export type EmailTemplate =
   | 'welcome_user'
   | 'invitation_created'
   | 'invitation_approved'
+  | 'registration_submitted'
+  | 'registration_approved'
+  | 'registration_rejected'
 
 export interface EmailPayload {
   to: string

@@ -30,40 +30,61 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
     }
 
-    const { data: user, error: fetchError } = await supabase
-      .from('user_roles')
-      .select('email')
-      .eq('user_id', userId)
-      .single()
-
-    if (fetchError) {
-      await logAuditAction('User Already Deleted', 'user', userId, `User ${userId} was already removed from user_roles`)
-      return NextResponse.json({ success: true, message: 'User already removed' })
+    const admin = supabaseAdmin
+    if (!admin) {
+      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
     }
 
-    const { error: deleteError } = await supabase
+    const { data: beforeDelete } = await admin
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', userId)
+
+    console.log('[DELETE USER] Rows before delete:', beforeDelete)
+
+    if (!beforeDelete || beforeDelete.length === 0) {
+      await logAuditAction('User Already Deleted', 'user', userId, `No user_roles row found for ${userId}`)
+      return NextResponse.json({ success: false, message: 'No matching user_roles row found.', rowsDeleted: 0 }, { status: 404 })
+    }
+
+    const { data: deletedRows, error: deleteError } = await admin
       .from('user_roles')
       .delete()
       .eq('user_id', userId)
+      .select()
 
-    if (deleteError) {
-      return NextResponse.json({ error: deleteError.message }, { status: 500 })
+    console.log('[DELETE USER] Deleted rows:', deletedRows)
+
+    if (deleteError || !deletedRows || deletedRows.length === 0) {
+      console.error('[DELETE USER] Delete failed:', deleteError?.message)
+      await logAuditAction('User Delete Failed', 'user', userId, `user_roles delete failed: ${deleteError?.message || 'no rows deleted'}`)
+      return NextResponse.json({ success: false, reason: deleteError?.message || 'No rows deleted', rowsDeleted: 0 }, { status: 500 })
     }
 
-    if (supabaseAdmin) {
-      const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+    const { data: afterDelete } = await admin
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', userId)
+
+    console.log('[DELETE USER] Rows after delete:', afterDelete)
+
+    let authDeleted = false
+    if (admin) {
+      const { error: authError } = await admin.auth.admin.deleteUser(userId)
 
       if (authError) {
-        await supabase.from('user_roles').insert({ user_id: userId, email: user.email })
-        return NextResponse.json({ error: authError.message }, { status: 500 })
+        console.log('[DELETE USER] Auth deletion error:', authError.message)
+        authDeleted = false
+      } else {
+        authDeleted = true
       }
     }
 
-    await logAuditAction('User Deleted', 'user', userId, `Deleted user ${user.email}`)
+    await logAuditAction('User Deleted', 'user', userId, `Deleted user ${beforeDelete[0]?.email}`)
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, rowsDeleted: deletedRows.length, authDeleted, deletedUserId: userId })
   } catch (err) {
-    console.error('Delete user error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('[DELETE USER] Unexpected error:', err)
+    return NextResponse.json({ success: false, reason: 'Internal server error', rowsDeleted: 0 }, { status: 500 })
   }
 }

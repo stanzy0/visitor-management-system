@@ -32,11 +32,9 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      if (!session) {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
         const hash = window.location.hash.substring(1)
         const params = new URLSearchParams(hash)
         const accessToken = params.get('access_token')
@@ -45,7 +43,7 @@ export default function ResetPasswordPage() {
         }
       }
     }
-    checkSession()
+    checkUser()
   }, [])
 
   const handleReset = async (e: React.FormEvent) => {

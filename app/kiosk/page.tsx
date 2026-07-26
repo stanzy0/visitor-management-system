@@ -10,8 +10,8 @@ import { printBadgeWindow } from '@/lib/badge/badge-print'
 import { createBadge, reprintBadge, cancelBadge } from '@/lib/client/badges'
 import type { VisitorBadge } from '@/lib/badge/badge-types'
 
-interface Visit { id: string; visitor_id: string; employee_id: string; purpose: string; status: 'pending'|'approved'|'rejected'|'checked_in'|'checked_out'; check_in_time: string | null; check_out_time: string | null; created_at: string; visitor: { full_name: string; visitor_organization: string | null; photo_url: string | null; phone: string | null; email: string | null } | null; employee: { full_name: string; department: string; office_location: string } | null; badge?: VisitorBadge | null }
-interface Appointment { id: string; visitor_id: string; employee_id: string; appointment_date: string; expected_arrival: string | null; purpose: string; status: string; visitor: { full_name: string; visitor_organization: string | null; photo_url: string | null; phone: string | null } | null; employee: { full_name: string; department: string } | null }
+interface Visit { id: string; visitor_id: string; employee_id: string; purpose: string; status: 'pending'|'approved'|'rejected'|'checked_in'|'checked_out'|'documents_verified'|'badge_issued'|'security_cleared'|'overstayed'|'cancelled'; check_in_time: string | null; check_out_time: string | null; created_at: string; visitor: { full_name: string; visitor_organization: string | null; photo_url: string | null; phone: string | null; email: string | null } | null; employee: { full_name: string; department: string; office_location: string } | null; badge?: VisitorBadge | null; appointment_id?: string | null; appointment?: { id: string; appointment_time: string; appointment_date: string; expected_arrival: string | null; status?: string } | null }
+interface Appointment { id: string; visitor_id: string; employee_id: string; appointment_date: string; appointment_time: string; expected_arrival: string | null; purpose: string; status: string; visitor: { full_name: string; visitor_organization: string | null; photo_url: string | null; phone: string | null } | null; employee: { full_name: string; department: string; office_location: string } | null }
 interface KioskStats { visitorsToday: number; visitorsWaiting: number; approvedVisitors: number; currentlyOnSite: number; checkedOutToday: number; activeBadges: number; cancelledBadges: number; expiredBadges: number }
 type VisitStatus = Visit['status']
 
@@ -73,7 +73,7 @@ export default function KioskPage() {
 
   const fetchVisits = async()=>{
     setLoading(true)
-    const {data,error} = await supabase.from('visits').select('*, visitor:visitors(full_name, visitor_organization, photo_url, phone, email), employee:employees(full_name, department, office_location)').order('created_at',{ascending:false})
+    const {data,error} = await supabase.from('visits').select('*, visitor:visitors(full_name, visitor_organization, photo_url, phone, email), employee:employees(full_name, department, office_location), appointment:appointments(appointment_date, appointment_time, expected_arrival, status)').order('created_at',{ascending:false})
     if(error){showNotification('error',error.message)}
     else{setVisits(data||[]);fetchStats()}
     setLoading(false)
@@ -98,20 +98,63 @@ export default function KioskPage() {
 
   const handleCheckIn = async(visitId:string)=>{
     setActionLoading(visitId)
-    const {error} = await supabase.from('visits').update({status:'checked_in',check_in_time:new Date().toISOString()}).eq('id',visitId)
-    if(error){showNotification('error',error.message)}
-    else{
-      const visitorName = visits.find(v=>v.id===visitId)?.visitor?.full_name||'Visitor'
-      const hostName = visits.find(v=>v.id===visitId)?.employee?.full_name||'Host'
+    const visit = visits.find(v=>v.id===visitId)
+    if(!visit){
+      setActionLoading(null)
+      return
+    }
+
+    try {
+      if(visit.visitor_id){
+        const { getMissingDocuments } = await import('@/lib/server/lifecycle')
+        const missing = await getMissingDocuments(visit.visitor_id)
+        if(missing.missing_count > 0){
+          showNotification('error',`Missing documents: ${missing.missing_types.join(', ')}`)
+          setActionLoading(null)
+          return
+        }
+      }
+
+      const { transitionVisitStatus, checkWatchlistOnCheckIn, notifyHostOnCheckIn } = await import('@/lib/server/lifecycle')
+      await transitionVisitStatus(visitId, 'checked_in', null, { method: 'kiosk' })
+      if(visit.visitor_id){
+        await checkWatchlistOnCheckIn(visit.visitor_id, visitId)
+      }
+
+      const visitorName = visit.visitor?.full_name || 'Visitor'
+      const hostName = visit.employee?.full_name || 'Host'
+
+      const { error } = await supabase.from('visits').update({status:'checked_in',check_in_time:new Date().toISOString()}).eq('id',visitId)
+      if(error){showNotification('error',error.message); setActionLoading(null); return}
+
       await logAuditAction('Visitor Checked In','visit',visitId,`${visitorName} checked in at ${new Date().toLocaleTimeString()} with ${hostName}`)
       setVisits(prev=>prev.map(v=>v.id===visitId?{...v,status:'checked_in',check_in_time:new Date().toISOString()}:v))
       await fetchStats()
-      const visit = visits.find(v=>v.id===visitId)
-      if(visit){
-        if(visit.badge?.id){await printBadgeWindow(visit.badge.id);await logAuditAction('Badge Printed','badge',visit.badge.id,`Badge ${visit.badge.badge_number} printed on check-in for ${visitorName}`)}
-        else{try{const badge=await createBadge(visitId,24);await printBadgeWindow(badge.id);await logAuditAction('Badge Generated','badge',badge.id,`Badge ${badge.badge_number} generated and printed on check-in for ${visitorName}`);setVisits(prev=>prev.map(v=>v.id===visitId?{...v,badge}:v))}catch(err){console.error('Auto badge generation failed:',err)}}
+
+      if(visit.badge?.id){await printBadgeWindow(visit.badge.id);await logAuditAction('Badge Printed','badge',visit.badge.id,`Badge ${visit.badge.badge_number} printed on check-in for ${visitorName}`)}
+      else{try{const badge=await createBadge(visitId,24);await printBadgeWindow(badge.id);await logAuditAction('Badge Generated','badge',badge.id,`Badge ${badge.badge_number} generated and printed on check-in for ${visitorName}`);setVisits(prev=>prev.map(v=>v.id===visitId?{...v,badge}:v))}catch(err){console.error('Auto badge generation failed:',err)}}
+
+      const badgeNumber = visit.badge?.badge_number || (await createBadge(visitId, 24)).badge_number
+      await notifyHostOnCheckIn(visitId, visitorName, badgeNumber)
+
+      if (visit.appointment?.id && visit.appointment.status === 'Scheduled') {
+        const appointmentTime = new Date(`${visit.appointment.appointment_date}T${visit.appointment.appointment_time || '00:00'}`)
+        const checkInTime = new Date()
+        const diffMinutes = (checkInTime.getTime() - appointmentTime.getTime()) / (1000 * 60)
+        if (Math.abs(diffMinutes) <= 30) {
+          try {
+            await supabase.from('appointments').update({ status: 'Arrived' }).eq('id', visit.appointment.id)
+            await logAuditAction('Appointment Arrived', 'appointment', visit.appointment.id, `Appointment ${visit.appointment.id} marked as Arrived for visit ${visitId}`)
+          } catch (err) {
+            console.error('Failed to update appointment status:', err)
+          }
+        }
       }
+
       showNotification('success',`${visitorName} checked in successfully`)
+    } catch (err) {
+      console.error('Check-in lifecycle error:', err)
+      showNotification('error', 'Check-in failed. Please try again.')
     }
     setActionLoading(null)
   }
@@ -126,7 +169,20 @@ export default function KioskPage() {
       await logAuditAction('Visitor Checked Out','visit',visitId,`${visitorName} checked out at ${new Date().toLocaleTimeString()}`)
       setVisits(prev=>prev.map(v=>v.id===visitId?{...v,status:'checked_out',check_out_time:new Date().toISOString()}:v))
       await fetchStats()
-      if(visit?.badge?.id){try{await cancelBadge(visit.badge.id);await logAuditAction('Badge Cancelled','badge',visit.badge.id,`Badge ${visit.badge.badge_number} cancelled on check-out for ${visitorName}`);setVisits(prev=>prev.map(v=>v.id===visitId?{...v,badge:{...v.badge!,badge_status:'Cancelled'}}:v))}catch(err){console.error('Badge cancellation failed:',err)}}
+      if(visit?.badge?.id){try{await cancelBadge(visit.badge.id);await logAuditAction('Badge Cancelled','badge',visit.badge.id,`Badge ${visit.badge.badge_number} cancelled on check-out for ${visitorName}`);setVisits(prev=>prev.map(v=>v.id===visitId?{...v,badge:v.badge?{...v.badge,badge_status:'Cancelled'}:null}:v))}catch(err){console.error('Badge cancellation failed:',err)}}
+
+      const { transitionVisitStatus } = await import('@/lib/server/lifecycle')
+      await transitionVisitStatus(visitId, 'checked_out', null, { method: 'kiosk' })
+
+      if(visit?.appointment_id){
+        try {
+          await supabase.from('appointments').update({ status: 'Completed' }).eq('id', visit.appointment_id)
+          await logAuditAction('Appointment Closed', 'appointment', visit.appointment_id, `Appointment closed for visit ${visitId}`)
+        } catch (err) {
+          console.error('Failed to close appointment:', err)
+        }
+      }
+
       showNotification('success',`${visitorName} checked out successfully`)
     }
     setActionLoading(null)
@@ -327,7 +383,7 @@ export default function KioskPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900">{appt.visitor?.full_name||'—'}</p>
                     <p className="text-sm text-gray-600">{appt.employee?.full_name||'—'}</p>
-                    <p className="text-xs text-gray-500">{appt.appointment_date} {appt.expected_arrival}</p>
+                    <p className="text-xs text-gray-500">{appt.appointment_date} {appt.appointment_time || appt.expected_arrival || ''} · {appt.employee?.office_location || ''}</p>
                   </div>
                   <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700">{appt.status}</span>
                 </div>

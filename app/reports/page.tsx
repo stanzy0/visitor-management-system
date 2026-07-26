@@ -53,6 +53,9 @@ interface Stats {
   checkedOutVisits: number
   avgVisitDuration: string
   activeVisitors: number
+  pendingVerification: number
+  visitorsWaitingBadge: number
+  visitorsOverstayed: number
 }
 
 const FILTERS = [
@@ -83,6 +86,9 @@ export default function ReportsPage() {
     checkedOutVisits: 0,
     avgVisitDuration: '0h 0m',
     activeVisitors: 0,
+    pendingVerification: 0,
+    visitorsWaitingBadge: 0,
+    visitorsOverstayed: 0,
   })
   const [visitorsPerDay, setVisitorsPerDay] = useState<Array<{ date: string; count: number }>>([])
   const [visitsByStatus, setVisitsByStatus] = useState<Array<{ name: string; value: number }>>([])
@@ -91,6 +97,8 @@ export default function ReportsPage() {
   const [companiesData, setCompaniesData] = useState<Array<{ name: string; count: number }>>([])
   const [hourlyData, setHourlyData] = useState<Array<{ hour: string; count: number }>>([])
   const [recentVisits, setRecentVisits] = useState<Visit[]>([])
+  const [appointmentStats, setAppointmentStats] = useState({ total: 0, completed: 0, noShows: 0, completionRate: 0 })
+  const [appointmentsByDepartment, setAppointmentsByDepartment] = useState<Array<{ name: string; count: number }>>([])
   const [exporting, setExporting] = useState(false)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
@@ -153,13 +161,16 @@ export default function ReportsPage() {
   }
 
   const fetchStats = async (start: Date, end: Date) => {
-    const [visitorsRes, visitsRes, pendingRes, approvedRes, rejectedRes, checkedOutRes] = await Promise.all([
+    const [visitorsRes, visitsRes, pendingRes, approvedRes, rejectedRes, checkedOutRes, pendingVerificationRes, visitorsWaitingBadgeRes, visitorsOverstayedRes] = await Promise.all([
       supabase.from('visitors').select('id', { count: 'exact' }),
       supabase.from('visits').select('id,status,check_in_time,check_out_time', { count: 'exact' }).gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'approved').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'rejected').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'checked_out').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('visitor_documents').select('id', { count: 'exact', head: true }).eq('verification_status', 'Pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('visits').select('id', { count: 'exact', head: true }).in('status', ['approved', 'documents_verified']).is('badge_id', null).gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'overstayed').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
     ])
 
     const checkedInVisits = (visitsRes.data || []).filter((v) => v.status === 'checked_in') as Visit[]
@@ -175,6 +186,9 @@ export default function ReportsPage() {
       checkedOutVisits: checkedOutRes.count ?? 0,
       avgVisitDuration: avgDuration,
       activeVisitors: checkedInVisits.length,
+      pendingVerification: pendingVerificationRes.count ?? 0,
+      visitorsWaitingBadge: visitorsWaitingBadgeRes.count ?? 0,
+      visitorsOverstayed: visitorsOverstayedRes.count ?? 0,
     })
   }
 
@@ -288,6 +302,28 @@ export default function ReportsPage() {
     setHourlyData(Object.entries(hourlyCounts).map(([hour, count]) => ({ hour, count })))
   }
 
+  const fetchAppointmentStats = async (start: Date, end: Date) => {
+    const { data } = await supabase
+      .from('appointments')
+      .select('status, employee:employees(department)')
+      .gte('created_at', start.toISOString())
+      .lt('created_at', end.toISOString()) as { data: Array<{ status: string; employee?: { department?: string } }> | null }
+
+    const total = data?.length || 0
+    const completed = data?.filter(a => a.status === 'Completed').length || 0
+    const noShows = data?.filter(a => a.status === 'No Show').length || 0
+    const completionRate = total > 0 ? (completed / total) * 100 : 0
+
+    setAppointmentStats({ total, completed, noShows, completionRate })
+
+    const deptCounts: Record<string, number> = {}
+    data?.forEach(a => {
+      const dept = a.employee?.department || 'Unknown'
+      deptCounts[dept] = (deptCounts[dept] || 0) + 1
+    })
+    setAppointmentsByDepartment(Object.entries(deptCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10))
+  }
+
   const fetchRecentVisits = async () => {
     const { data } = await supabase
       .from('visits')
@@ -312,6 +348,7 @@ export default function ReportsPage() {
         fetchCompaniesData(start, end),
         fetchHourlyData(),
         fetchRecentVisits(),
+        fetchAppointmentStats(start, end),
       ])
     } catch (error) {
       console.error('Error fetching reports data:', error)
@@ -329,6 +366,7 @@ export default function ReportsPage() {
       .channel('reports-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => fetchAllData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors' }, () => fetchAllData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => fetchAllData())
       .subscribe()
   }
 
@@ -501,7 +539,7 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <KpiCard title="Total Visitors" value={loading ? '—' : stats.totalVisitors.toString()} />
           <KpiCard title="Total Visits" value={loading ? '—' : stats.totalVisits.toString()} />
           <KpiCard title="Approved" value={loading ? '—' : stats.approvedVisits.toString()} trend="up" />
@@ -511,6 +549,13 @@ export default function ReportsPage() {
           <KpiCard title="Checked Out" value={loading ? '—' : stats.checkedOutVisits.toString()} trend="down" />
           <KpiCard title="Avg Duration" value={loading ? '—' : stats.avgVisitDuration} />
           <KpiCard title="Active Inside" value={loading ? '—' : stats.activeVisitors.toString()} trend="up" />
+          <KpiCard title="Appointments" value={loading ? '—' : appointmentStats.total.toString()} />
+          <KpiCard title="Appt Completed" value={loading ? '—' : appointmentStats.completed.toString()} trend="up" />
+          <KpiCard title="No Shows" value={loading ? '—' : appointmentStats.noShows.toString()} trend="down" />
+          <KpiCard title="Completion Rate" value={loading ? '—' : `${appointmentStats.completionRate.toFixed(1)}%`} />
+          <KpiCard title="Waiting Verification" value={loading ? '—' : stats.pendingVerification.toString()} trend="neutral" />
+          <KpiCard title="Waiting Badge" value={loading ? '—' : stats.visitorsWaitingBadge.toString()} trend="neutral" />
+          <KpiCard title="Overstayed" value={loading ? '—' : stats.visitorsOverstayed.toString()} trend="down" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -598,6 +643,19 @@ export default function ReportsPage() {
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="count" fill="#f59e0b" />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </ChartCard>
+          <ChartCard title="Appointments by Department">
+            {loading ? <SkeletonChart /> : (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={appointmentsByDepartment}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#8b5cf6" />
                 </BarChart>
               </ResponsiveContainer>
             )}
