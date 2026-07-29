@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth-client'
 import { Loader2, User, Phone, Building2, Mail, Save } from 'lucide-react'
 
 interface EmployeeProfile {

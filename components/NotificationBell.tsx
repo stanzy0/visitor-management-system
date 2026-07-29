@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Bell } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth-client'
 import { Notification } from '@/lib/notifications'
 import NotificationDropdown from './NotificationDropdown'
 

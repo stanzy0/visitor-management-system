@@ -19,6 +19,7 @@ interface Step7Props {
   expiry_date?: string
   host_employee_id?: string
   purpose?: string
+  custom_purpose?: string
   expected_duration?: number
 }
 
@@ -41,8 +42,10 @@ export default function Step7Review({
   expiry_date = '',
   host_employee_id = '',
   purpose = '',
+  custom_purpose = '',
   expected_duration = 0,
 }: Step7Props) {
+  const displayPurpose = purpose === 'Other' && custom_purpose ? custom_purpose : purpose
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium text-gray-900">Review & Confirmation</h3>
@@ -56,7 +59,7 @@ export default function Step7Review({
         <p><strong>Gender:</strong> {gender || '—'}</p>
         <p><strong>Document:</strong> {doc_type} {doc_number ? `• ${doc_number}` : ''} {expiry_date ? `• Exp: ${expiry_date}` : ''}</p>
         <p><strong>Host:</strong> {host_employee_id || '—'}</p>
-        <p><strong>Purpose:</strong> {purpose || '—'}</p>
+        <p><strong>Purpose:</strong> {displayPurpose || '—'}</p>
         <p><strong>Duration:</strong> {expected_duration ? `${expected_duration} mins` : '—'}</p>
         <p><strong>Vehicle:</strong> {has_vehicle ? `${vehicle_make} ${vehicle_model} • ${registration_number}` : 'No'}</p>
         <p><strong>Emergency Contact:</strong> {emergency_contact || '—'}</p>

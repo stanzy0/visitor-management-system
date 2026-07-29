@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { Loader2, Plus, X } from 'lucide-react'
 import type { PropertyFormData } from '@/lib/types/property'
 import { PROPERTY_CATEGORIES, PROPERTY_CONDITIONS } from '@/lib/types/property'

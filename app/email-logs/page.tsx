@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser, UserRole, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, UserRole, PERMISSIONS } from '@/lib/auth-client'
 import {
   Search,
   RefreshCw,

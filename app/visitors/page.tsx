@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
 import { Search, Plus, Loader2, Upload, X, Camera, RefreshCw, Trash2, ShieldAlert } from 'lucide-react'
-import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth-client'
 import NotificationBell from '@/components/notifications/NotificationBell'
 
 interface Visitor {
@@ -20,6 +20,9 @@ interface Visitor {
 interface Employee {
   id: string
   full_name: string
+  department: string
+  office_location: string
+  position: string
 }
 
 interface VisitorFormData {
@@ -410,11 +413,14 @@ export default function VisitorsPage() {
   async function fetchEmployees() {
     const { data, error } = await supabase
       .from('employees')
-      .select('id, full_name')
+      .select('id, full_name, department, office_location, position')
       .order('full_name')
-    if (!error) {
-      setEmployees(data || [])
+    if (error) {
+      console.error('Failed to load employees:', error)
+      setEmployees([])
+      return
     }
+    setEmployees(data ?? [])
   }
 
   function showNotification(type: 'success' | 'error', message: string) {
@@ -1019,22 +1025,48 @@ export default function VisitorsPage() {
                     {photoError && <p className="mt-1 text-sm text-red-600">{photoError}</p>}
                   </div>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Host Employee</label>
-                    <select
-                      value={formData.host_employee_id}
-                      onChange={(e) => setFormData({ ...formData, host_employee_id: e.target.value })}
-                      required
-                      className={selectClasses}
-                    >
-                      <option value="">Select employee</option>
-                      {employees.map((emp) => (
-                        <option key={emp.id} value={emp.id}>
-                          {emp.full_name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                   <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Host Employee</label>
+                      <select
+                        value={formData.host_employee_id}
+                        onChange={(e) => setFormData({ ...formData, host_employee_id: e.target.value })}
+                        required
+                        className={selectClasses}
+                      >
+                        <option value="">Select employee</option>
+                        {employees.map((emp) => (
+                          <option key={emp.id} value={emp.id}>
+                            {emp.full_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {formData.host_employee_id && (() => {
+                      const host = employees.find(e => e.id === formData.host_employee_id)
+                      if (!host) return null
+                      return (
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Host Department</label>
+                            <input
+                              type="text"
+                              value={host.department || ''}
+                              readOnly
+                              className={selectClasses + ' bg-gray-50'}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Host Office Location</label>
+                            <input
+                              type="text"
+                              value={host.office_location || ''}
+                              readOnly
+                              className={selectClasses + ' bg-gray-50'}
+                            />
+                          </div>
+                        </>
+                      )
+                    })()}
                    <div>
                      <label className="block text-sm font-medium text-gray-700 mb-1">Purpose</label>
                      <select

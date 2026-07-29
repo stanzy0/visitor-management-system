@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
 import { Search, Loader2, CheckCircle, XCircle, RefreshCw, Mail, Eye } from 'lucide-react'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { VisitorInvitation, getInvitationsByHost, getAllInvitations, approveInvitation, rejectInvitation, cancelInvitation } from '@/lib/client/invitations'
 import InvitationStatusCard from '@/components/InvitationStatusCard'
 

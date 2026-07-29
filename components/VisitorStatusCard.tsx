@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Loader2, CheckCircle, XCircle, Clock, Download, Printer, Mail } from 'lucide-react'
+import { getAuthHeaders } from '@/lib/client/api'
 
 interface Invitation {
   id: string
@@ -93,7 +94,7 @@ export default function VisitorStatusCard({ invitation }: VisitorStatusCardProps
       
       await fetch('/api/audit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
         body: JSON.stringify({
           action: 'Visitor Downloaded Badge',
           entityType: 'badge',
@@ -108,22 +109,26 @@ export default function VisitorStatusCard({ invitation }: VisitorStatusCardProps
     }
   }
 
-  const handlePrintBadge = () => {
-    window.print()
-    
-    if (badge) {
-      fetch('/api/audit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'Visitor Printed Badge',
-          entityType: 'badge',
-          entityId: badge.id,
-          details: `Visitor ${invitation.visitor_name} printed badge ${badge.badge_number}`,
-        }),
-      })
-    }
-  }
+   const handlePrintBadge = async () => {
+     window.print()
+     
+     if (badge) {
+       try {
+         await fetch('/api/audit', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
+           body: JSON.stringify({
+             action: 'Visitor Printed Badge',
+             entityType: 'badge',
+             entityId: badge.id,
+             details: `Visitor ${invitation.visitor_name} printed badge ${badge.badge_number}`,
+           }),
+         })
+       } catch {
+         // Audit log failure is non-critical
+       }
+     }
+   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {

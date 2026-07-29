@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth-client'
 import { Loader2, Plus, X, Calendar, Clock, UserCheck, Search, Trash2, Eye } from 'lucide-react'
 import { generateAppointmentQR, appointmentCheckInUrl } from '@/lib/qr/appointment-qr'
 
@@ -69,8 +69,8 @@ export default function HostAppointmentsPage() {
       let query = supabase
         .from('appointments')
         .select('*, visitor:visitors(*)')
-        .order('appointment_date', { ascending: true })
-        .order('appointment_time', { ascending: true })
+.order('appointment_date', { ascending: true })
+         .order('expected_arrival', { ascending: true })
 
       if (userRole === 'Host Employee' && employeeId) {
         query = query.eq('employee_id', employeeId)

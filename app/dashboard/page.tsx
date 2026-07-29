@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser, UserRole, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, UserRole, PERMISSIONS } from '@/lib/auth-client'
+import { getAuthHeaders } from '@/lib/client/api'
 import {
   LayoutDashboard,
   Users,
@@ -37,6 +38,11 @@ import {
   CheckCircle2,
   Shield,
   Activity,
+  GitBranch,
+  FileDown,
+  Database,
+  HardDrive,
+  QrCode,
 } from 'lucide-react'
 import NotificationBell from '@/components/NotificationBell'
 import StatCard from '@/components/dashboard/StatCard'
@@ -76,7 +82,8 @@ const FILTERS = [
 const NAV_SECTIONS = [
   { title: 'MAIN', items: [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', permission: 'dashboard' },
-    { label: 'Reception Kiosk', icon: Monitor, href: '/kiosk', permission: 'dashboard' },
+    { label: 'Reception Kiosk', icon: Monitor, href: '/reception/kiosk', permission: 'dashboard' },
+    { label: 'Self Check-In Kiosk', icon: QrCode, href: '/kiosk', permission: 'dashboard' },
     { label: 'Visitors', icon: Users, href: '/visitors', permission: 'visitors' },
     { label: 'Appointments', icon: Calendar, href: '/appointments', permission: 'appointments' },
     { label: 'Visits', icon: Clock, href: '/visits', permission: 'visits' },
@@ -94,12 +101,21 @@ const NAV_SECTIONS = [
     { label: 'Emergency Occupancy', icon: AlertTriangle, href: '/emergency', permission: 'emergency' },
     { label: 'Host Portal', icon: Users, href: '/host', permission: 'host' },
   ]},
-  { title: 'ADMINISTRATION', items: [
+{ title: 'ADMINISTRATION', items: [
     { label: 'Admin Portal', icon: Shield, href: '/admin', permission: 'dashboard' },
     { label: 'Employees', icon: UserCheck, href: '/employees', permission: 'employees' },
     { label: 'Office Locations', icon: Building2, href: '/office-locations', permission: 'settings' },
     { label: 'Vehicle Management', icon: Car, href: '/vehicles', permission: 'vehicles' },
     { label: 'Users', icon: Users, href: '/users', permission: 'users' },
+    { label: 'System Monitoring', icon: Monitor, href: '/system', permission: 'dashboard' },
+  ]},
+  { title: 'DEPLOYMENT & RECOVERY', items: [
+    { label: 'Deployment Center', icon: GitBranch, href: '/deployment', permission: 'dashboard' },
+    { label: 'Backups', icon: Database, href: '/deployment/backups', permission: 'dashboard' },
+    { label: 'Restore Center', icon: FileDown, href: '/deployment/restore', permission: 'dashboard' },
+    { label: 'Maintenance Mode', icon: Settings, href: '/deployment/maintenance', permission: 'dashboard' },
+    { label: 'Version Management', icon: GitBranch, href: '/deployment/version', permission: 'dashboard' },
+    { label: 'System Info', icon: HardDrive, href: '/deployment/system-info', permission: 'dashboard' },
   ]},
   { title: 'MONITORING', items: [
     { label: 'Notifications', icon: Bell, href: '/notifications', permission: 'dashboard' },
@@ -164,7 +180,9 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchSecurityStats = async () => {
       try {
-        const res = await fetch('/api/security/stats')
+        const res = await fetch('/api/security/stats', {
+          headers: await getAuthHeaders(),
+        })
         const json = await res.json()
         if (json.success) {
           setSecurityStats(json.data)
@@ -179,7 +197,9 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchPendingOnlineRegistrations = async () => {
       try {
-        const res = await fetch('/api/public/registrations')
+        const res = await fetch('/api/public/registrations', {
+          headers: await getAuthHeaders(),
+        })
         const json = await res.json()
         if (json.success) {
           setPendingOnlineRegistrations(json.data)
@@ -194,7 +214,9 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchPropertyStats = async () => {
       try {
-        const res = await fetch('/api/assets/stats')
+        const res = await fetch('/api/assets/stats', {
+          headers: await getAuthHeaders(),
+        })
         const json = await res.json()
         if (json.success) {
           setPropertyStats(json.data)
@@ -555,7 +577,7 @@ export default function DashboardPage() {
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button onClick={() => router.push(`/reception/badge-preview/${reg.id}`)} className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 min-h-[36px]">Preview Badge</button>
-                              <button onClick={async () => { const reason = prompt('Rejection reason:'); if (reason === null) return; await fetch('/api/public/registrations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ visit_id: reg.id, action: 'reject', reason }) }); window.location.reload() }} className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 min-h-[36px]">Reject</button>
+                               <button onClick={async () => { const reason = prompt('Rejection reason:'); if (reason === null) return; const headers = await getAuthHeaders(); await fetch('/api/public/registrations', { method: 'POST', headers, body: JSON.stringify({ visit_id: reg.id, action: 'reject', reason }) }); window.location.reload() }} className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 min-h-[36px]">Reject</button>
                             </div>
                           </td>
                         </tr>

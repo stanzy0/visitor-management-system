@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth-client'
 import { logAuditAction } from '@/lib/client/audit'
 import { getAuthHeaders } from '@/lib/client/api'
 import {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth-client'
 import { Loader2, Save, RefreshCw, Shield, UserCheck, Clock, Calendar } from 'lucide-react'
 
 interface SettingRow {

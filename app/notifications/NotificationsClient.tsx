@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { RefreshCcw } from 'lucide-react'
+import { getAuthHeaders } from '@/lib/client/api'
 import type { Notification, NotificationFilters } from '@/lib/types/notification'
 import NotificationCard from '@/components/notifications/NotificationCard'
 import NotificationFiltersComponent from '@/components/notifications/NotificationFilters'
@@ -57,19 +58,19 @@ export default function NotificationsClient() {
   const handleMarkAllAsRead = async () => {
     await fetch('/api/notifications', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify({ action: 'mark_all_read' }),
     })
     fetchNotifications()
   }
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/notifications?id=${id}`, { method: 'DELETE' })
+    await fetch(`/api/notifications?id=${id}`, { method: 'DELETE', headers: await getAuthHeaders() })
     fetchNotifications()
   }
 
   const handleClearRead = async () => {
-    await fetch('/api/notifications?clear_read=true', { method: 'DELETE' })
+    await fetch('/api/notifications?clear_read=true', { method: 'DELETE', headers: await getAuthHeaders() })
     fetchNotifications()
   }
 

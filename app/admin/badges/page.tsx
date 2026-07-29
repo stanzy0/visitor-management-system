@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth-client'
 import { Loader2, Save, Printer, Download, Mail, Eye, RefreshCw, Shield } from 'lucide-react'
 import { getBadges, getBadgeById, reprintBadge, cancelBadge } from '@/lib/client/badges'
 import { printBadgeWindow } from '@/lib/badge/badge-print'

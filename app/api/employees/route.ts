@@ -49,11 +49,51 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
     }
 
-    const body = (await request.json()) as EmployeeFormData
+    const body = (await request.json()) as EmployeeFormData & {
+      department_id?: string | null
+      position_id?: string | null
+      office_location_id?: string | null
+    }
+
+    const insertData: any = {
+      full_name: body.full_name,
+      email: body.email,
+      phone: body.phone || null,
+      department: body.department || null,
+      position: body.position || null,
+      office_location: body.office_location || null,
+    }
+
+    if (body.department_id) {
+      const { data: dept } = await supabaseAdmin
+        .from('departments')
+        .select('name')
+        .eq('id', body.department_id)
+        .single()
+      if (dept) insertData.department = dept.name
+    }
+
+    if (body.position_id) {
+      const { data: pos } = await supabaseAdmin
+        .from('positions')
+        .select('title')
+        .eq('id', body.position_id)
+        .single()
+      if (pos) insertData.position = pos.title
+    }
+
+    if (body.office_location_id) {
+      const { data: loc } = await supabaseAdmin
+        .from('office_locations')
+        .select('display_name, name')
+        .eq('id', body.office_location_id)
+        .single()
+      if (loc) insertData.office_location = loc.display_name || loc.name
+    }
 
     const { data, error } = await supabaseAdmin
       .from('employees')
-      .insert(body)
+      .insert(insertData)
       .select()
       .single()
 

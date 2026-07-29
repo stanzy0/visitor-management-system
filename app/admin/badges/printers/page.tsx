@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth-client'
 import { Loader2, Plus, Edit, Trash2, X, Save, Printer as PrinterIcon } from 'lucide-react'
 import type { Printer } from '@/lib/badge/badge-types'
 

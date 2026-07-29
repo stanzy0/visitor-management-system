@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser } from '@/lib/auth'
+import { getCurrentUser } from '@/lib/auth-client'
 import { Loader2, Users, Shield, Clock, UserCheck, Calendar, RefreshCw, AlertTriangle, Database, Activity, Mail, HardDrive } from 'lucide-react'
 
 interface AdminDashboardData {

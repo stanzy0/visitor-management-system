@@ -228,7 +228,12 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
         supabase.from('visitor_documents').select('id', { count: 'exact', head: true }).eq('verification_status', 'Verified'),
         supabase.from('visitor_documents').select('id', { count: 'exact', head: true }).eq('verification_status', 'Rejected'),
         supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'approved').gte('created_at', todayStr),
-        supabase.from('visits').select('id', { count: 'exact', head: true }).in('status', ['approved', 'documents_verified']).is('badge_id', null),
+        (async () => {
+          const { data: visits } = await supabase.from('visits').select('id').in('status', ['approved', 'documents_verified'])
+          const visitIds = (visits || []).map((v: { id: string }) => v.id)
+          const { count } = await supabase.from('visitor_badges').select('id', { count: 'exact', head: true }).in('visit_id', visitIds)
+          return { count: ((visits || []).length) - (count || 0) }
+        })(),
         supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'badge_issued'),
         supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'overstayed'),
         supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('appointment_date', todayStr),

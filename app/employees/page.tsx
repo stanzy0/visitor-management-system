@@ -4,36 +4,21 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
 import { Search, Plus, Edit, Trash2, X, Loader2 } from 'lucide-react'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
-import { getEmployees, createEmployee, updateEmployee, deleteEmployee } from '@/lib/client/employees'
+import type { Employee, EmployeeFormData, Department, Position, OfficeLocation } from '@/lib/types/employee'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
+import { getEmployees, createEmployee, updateEmployee, deleteEmployee, getLookups } from '@/lib/client/employees'
+import SearchableCombobox from '@/components/ui/SearchableCombobox'
 
-interface Employee {
-  id: string
-  full_name: string
-  email: string
-  phone: string
-  department: string
-  position: string
-  office_location: string
-  created_at: string
-}
-
-interface EmployeeFormData {
-  full_name: string
-  email: string
-  phone: string
-  department: string
-  position: string
-  office_location: string
-}
-
-const initialFormData: EmployeeFormData = {
+const initialFormData: EmployeeFormData & { department_id?: string | null; position_id?: string | null; office_location_id?: string | null } = {
   full_name: '',
   email: '',
   phone: '',
   department: '',
   position: '',
   office_location: '',
+  department_id: null,
+  position_id: null,
+  office_location_id: null,
 }
 
 const inputClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -46,9 +31,13 @@ export default function EmployeesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null)
-  const [formData, setFormData] = useState<EmployeeFormData>(initialFormData)
+  const [formData, setFormData] = useState<EmployeeFormData & { department_id?: string | null; position_id?: string | null; office_location_id?: string | null }>(initialFormData)
   const [submitting, setSubmitting] = useState(false)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [positions, setPositions] = useState<Position[]>([])
+  const [officeLocations, setOfficeLocations] = useState<OfficeLocation[]>([])
+  const [loadingLookups, setLoadingLookups] = useState(true)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
   const showNotification = (type: 'success' | 'error', message: string) => {
@@ -65,6 +54,19 @@ export default function EmployeesPage() {
       showNotification('error', err instanceof Error ? err.message : 'Failed to fetch employees')
     }
     setLoading(false)
+  }
+
+  const fetchLookups = async () => {
+    setLoadingLookups(true)
+    try {
+      const data = await getLookups()
+      setDepartments(data.departments)
+      setPositions(data.positions)
+      setOfficeLocations(data.office_locations)
+    } catch (err) {
+      showNotification('error', err instanceof Error ? err.message : 'Failed to fetch lookup data')
+    }
+    setLoadingLookups(false)
   }
 
   const setupRealtime = () => {
@@ -103,6 +105,7 @@ export default function EmployeesPage() {
       }
       setAuthChecking(false)
       fetchEmployees()
+      fetchLookups()
       setupRealtime()
     }
     checkAuth()
@@ -118,9 +121,13 @@ export default function EmployeesPage() {
     e.preventDefault()
     setSubmitting(true)
 
+    const payload = {
+      ...formData,
+    }
+
     if (editingEmployee) {
       try {
-        await updateEmployee(editingEmployee.id, formData)
+        await updateEmployee(editingEmployee.id, payload)
         logAuditAction('Employee Updated', 'employee', editingEmployee.id, `${formData.full_name} updated - ${formData.position} in ${formData.department}`)
         showNotification('success', 'Employee updated successfully')
         fetchEmployees()
@@ -129,7 +136,7 @@ export default function EmployeesPage() {
       }
     } else {
       try {
-        const newEmployee = await createEmployee(formData)
+        const newEmployee = await createEmployee(payload)
         logAuditAction('Employee Created', 'employee', newEmployee.id, `${formData.full_name} added - ${formData.position} in ${formData.department}`)
         showNotification('success', 'Employee added successfully')
         fetchEmployees()
@@ -184,6 +191,39 @@ export default function EmployeesPage() {
     setFormData(initialFormData)
     setModalOpen(true)
   }
+
+  const handleDepartmentChange = (deptId: string) => {
+    const dept = departments.find(d => d.id === deptId)
+    setFormData((prev) => ({
+      ...prev,
+      department_id: deptId,
+      department: dept?.name || '',
+      office_location_id: null,
+      office_location: '',
+    }))
+  }
+
+  const handlePositionChange = (posId: string) => {
+    const pos = positions.find(p => p.id === posId)
+    setFormData((prev) => ({
+      ...prev,
+      position_id: posId,
+      position: pos?.title || '',
+    }))
+  }
+
+  const handleOfficeLocationChange = (locId: string) => {
+    const loc = officeLocations.find(l => l.id === locId)
+    setFormData((prev) => ({
+      ...prev,
+      office_location_id: locId,
+      office_location: loc?.display_name || loc?.name || '',
+    }))
+  }
+
+  const filteredOfficeLocations = formData.department_id
+    ? officeLocations.filter(l => l.department === formData.department)
+    : officeLocations
 
   if (authChecking) {
     return (
@@ -348,29 +388,43 @@ export default function EmployeesPage() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
-                      Department
-                    </label>
-                    <input
-                      id="department"
-                      type="text"
-                      value={formData.department}
-                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                      placeholder="Enter department"
-                      className={inputClasses}
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
+                    <SearchableCombobox
+                      options={departments.map((d) => ({ value: d.id, label: d.name }))}
+                      value={formData.department_id || ''}
+                      onChange={handleDepartmentChange}
+                      placeholder="Select department..."
+                      searchPlaceholder="Search departments..."
+                      noResultsText="No departments found"
+                      loading={loadingLookups}
+                      required
                     />
                   </div>
                   <div>
-                    <label htmlFor="position" className="block text-sm font-medium text-gray-700 mb-1">
-                      Position
-                    </label>
-                    <input
-                      id="position"
-                      type="text"
-                      value={formData.position}
-                      onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                      placeholder="Enter position"
-                      className={inputClasses}
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Office Location *</label>
+                    <SearchableCombobox
+                      options={filteredOfficeLocations.map((l) => ({ value: l.id, label: l.display_name || l.name }))}
+                      value={formData.office_location_id || ''}
+                      onChange={handleOfficeLocationChange}
+                      placeholder={formData.department_id ? 'Select office location...' : 'Select a department first...'}
+                      searchPlaceholder="Search office locations..."
+                      noResultsText={formData.department_id ? 'No office locations found for this department' : 'Select a department first'}
+                      disabled={!formData.department_id}
+                      loading={loadingLookups}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Position *</label>
+                    <SearchableCombobox
+                      options={positions.map((p) => ({ value: p.id, label: p.title }))}
+                      value={formData.position_id || ''}
+                      onChange={handlePositionChange}
+                      placeholder="Select position..."
+                      searchPlaceholder="Search positions..."
+                      noResultsText="No positions found"
+                      loading={loadingLookups}
+                      required
                     />
                   </div>
                 </div>

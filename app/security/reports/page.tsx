@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { Loader2, Download, FileText } from 'lucide-react'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'

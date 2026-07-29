@@ -13,10 +13,13 @@ export interface Visit {
     full_name: string
     visitor_organization: string
     photo_url?: string | null
+    phone?: string | null
+    email?: string | null
   } | null
   employee?: {
     full_name: string
     department?: string
+    office_location?: string | null
   } | null
   badge?: VisitorBadge | null
   appointment_id?: string | null

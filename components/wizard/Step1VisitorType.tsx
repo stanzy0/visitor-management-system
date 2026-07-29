@@ -5,9 +5,11 @@ import type { VisitorType } from '@/components/wizard/VisitorRegistrationWizard'
 interface Step1Props {
   visitorType: VisitorType
   onSelect: (type: VisitorType) => void
+  error?: string | null
+  touched?: boolean
 }
 
-export default function Step1VisitorType({ visitorType, onSelect }: Step1Props) {
+export default function Step1VisitorType({ visitorType, onSelect, error, touched }: Step1Props) {
   const types: VisitorType[] = ['Visitor', 'Contractor', 'Vendor', 'Guest Lecturer', 'VIP', 'Delivery Personnel']
 
   return (
@@ -21,12 +23,13 @@ export default function Step1VisitorType({ visitorType, onSelect }: Step1Props) 
             onClick={() => onSelect(type)}
             className={`rounded-xl border-2 px-4 py-4 text-sm font-semibold transition-all ${
               visitorType === type ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-gray-300'
-            }`}
+            } ${touched && error ? 'border-red-500' : ''}`}
           >
             {type}
           </button>
         ))}
       </div>
+      {touched && error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   )
 }

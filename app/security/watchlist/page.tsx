@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { Loader2, Plus, Search, Trash2, Edit, X, ShieldAlert, AlertTriangle } from 'lucide-react'
 import type { WatchlistEntry, WatchlistSeverity } from '@/lib/types/security'
 

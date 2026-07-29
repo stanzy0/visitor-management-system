@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
 import { Loader2, Camera, StopCircle, RefreshCw, QrCode } from 'lucide-react'
 import { Html5Qrcode } from 'html5-qrcode'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 
 interface VisitData {
   id: string

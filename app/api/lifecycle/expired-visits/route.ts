@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth-helpers'
+import { requireRole } from '@/lib/auth-helpers'
 import { processExpiredVisits } from '@/lib/server/lifecycle'
 
 export async function POST(request: NextRequest) {
-  const authResult = await requireAdmin()
+  const authResult = await requireRole(['Admin', 'Commandant', 'Director', 'Security', 'Operations'])
   if (!authResult.authorized) {
     return NextResponse.json({ error: authResult.error }, { status: authResult.status })
   }
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const authResult = await requireAdmin()
+  const authResult = await requireRole(['Admin', 'Commandant', 'Director', 'Security', 'Operations'])
   if (!authResult.authorized) {
     return NextResponse.json({ error: authResult.error }, { status: authResult.status })
   }

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth-helpers'
+import { requireRole } from '@/lib/auth-helpers'
 import { getSecurityDashboardStats } from '@/lib/server/security'
 
 export async function GET(request: NextRequest) {
-  const authResult = await requireAdmin()
+  const authResult = await requireRole(['Admin', 'Commandant', 'Director', 'Security', 'Operations', 'Receptionist', 'Host Employee'])
   if (!authResult.authorized) {
     return NextResponse.json({ error: authResult.error }, { status: authResult.status })
   }

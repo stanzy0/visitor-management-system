@@ -1,112 +1,12 @@
-import { supabase } from './supabase'
+import { createClient } from './supabase/server'
+import { UserRole, UserWithRole, PERMISSIONS } from './auth-types'
 
-export type UserRole = 'Admin' | 'Commandant' | 'Director' | 'Receptionist' | 'Security' | 'Host Employee'
-
-export interface UserWithRole {
-  id: string
-  email: string
-  full_name: string | null
-  role: UserRole
-  created_at: string | null
-  must_change_password?: boolean
-}
-
-export const PERMISSIONS: Record<UserRole, string[]> = {
-  Admin: [
-    'dashboard',
-    'visitors',
-    'visits',
-    'employees',
-    'reports',
-    'audit-logs',
-    'scanner',
-    'settings',
-    'users',
-    'delete-records',
-    'appointments',
-    'export-reports',
-    'emergency',
-    'vehicles',
-    'watchlist',
-    'documents',
-    'analytics',
-    'host',
-    'email',
-    'badges',
-    'invitations',
-    'operations',
-  ],
-  Commandant: [
-    'dashboard',
-    'analytics',
-    'reports',
-    'audit-logs',
-    'visitors',
-    'visits',
-    'appointments',
-    'badges',
-    'documents',
-    'security',
-    'host',
-    'settings',
-    'operations',
-  ],
-  Director: [
-    'dashboard',
-    'analytics',
-    'reports',
-    'audit-logs',
-    'visitors',
-    'visits',
-    'appointments',
-    'badges',
-    'documents',
-    'security',
-    'host',
-    'settings',
-    'operations',
-  ],
-  Receptionist: [
-    'dashboard',
-    'visitors',
-    'visits',
-    'scanner',
-    'check-in',
-    'check-out',
-    'appointments',
-    'vehicles',
-    'watchlist',
-    'documents',
-    'badges',
-    'invitations',
-  ],
-  Security: [
-    'dashboard',
-    'scanner',
-    'emergency',
-    'vehicles',
-    'watchlist',
-    'documents',
-    'analytics',
-    'host',
-    'badges',
-    'invitations',
-    'operations',
-  ],
-  'Host Employee': [
-    'dashboard',
-    'view-visitors',
-    'view-visits',
-    'host',
-    'badges',
-    'view-today-visits',
-    'view-visit-history',
-    'appointments',
-    'invitations',
-  ],
-}
+export { PERMISSIONS }
+export type { UserRole, UserWithRole }
 
 export async function getCurrentUser(): Promise<UserWithRole | null> {
+  const supabase = await createClient()
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -157,6 +57,8 @@ export async function requireRole(allowedRoles: UserRole[]): Promise<boolean> {
 }
 
 export async function ensureUserInDatabase(userId: string, email: string, fullName: string | null = null): Promise<void> {
+  const supabase = await createClient()
+
   const { data: existing } = await supabase
     .from('user_roles')
     .select('id')
@@ -179,6 +81,7 @@ export async function ensureUserInDatabase(userId: string, email: string, fullNa
 
 async function logAuditAction(action: string, entityType: string, entityId: string | null, details: string) {
   try {
+    const supabase = await createClient()
     const {
       data: { user },
     } = await supabase.auth.getUser()

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth-client'
+import { getAuthHeaders } from '@/lib/client/api'
 import { logAuditAction } from '@/lib/client/audit'
 import {
   Search,
@@ -80,7 +81,9 @@ export default function DocumentsPage() {
       if (filters.date_from) params.set('date_from', filters.date_from)
       if (filters.date_to) params.set('date_to', filters.date_to)
 
-      const res = await fetch(`/api/documents?${params.toString()}`)
+      const res = await fetch(`/api/documents?${params.toString()}`, {
+        headers: await getAuthHeaders(),
+      })
       const json = await res.json()
       if (res.ok) {
         setVerifications(json.data || [])
@@ -94,7 +97,9 @@ export default function DocumentsPage() {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch('/api/documents/stats')
+      const res = await fetch('/api/documents/stats', {
+        headers: await getAuthHeaders(),
+      })
       const json = await res.json()
       if (res.ok) {
         setStats(json.data)
@@ -106,9 +111,10 @@ export default function DocumentsPage() {
 
   const handleApprove = async (id: string) => {
     try {
+      const headers = await getAuthHeaders()
       const res = await fetch(`/api/documents/${id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ action: 'approve' }),
       })
       const json = await res.json()
@@ -127,9 +133,10 @@ export default function DocumentsPage() {
 
   const handleReject = async (id: string, reason: string) => {
     try {
+      const headers = await getAuthHeaders()
       const res = await fetch(`/api/documents/${id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ action: 'reject', reason }),
       })
       const json = await res.json()
@@ -148,9 +155,10 @@ export default function DocumentsPage() {
 
   const handleRequestReplacement = async (id: string, reason: string) => {
     try {
+      const headers = await getAuthHeaders()
       const res = await fetch(`/api/documents/${id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ action: 'replacement', reason }),
       })
       const json = await res.json()
@@ -169,10 +177,11 @@ export default function DocumentsPage() {
 
   const handleDownload = async (id: string) => {
     try {
+      const headers = await getAuthHeaders()
       const res = await fetch(`/api/documents/${id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'download' }),
+        headers,
+        body: JSON.stringify({ action: 'approve' }),
       })
       const json = await res.json()
       if (res.ok && json.url) {

@@ -25,10 +25,15 @@ export interface VisitorFormData {
   vehicle_plate: string
   vehicle_type: string
   emergency_contact: string
+  emergency_relationship?: string
+  emergency_phone?: string
   photo_url?: string | null
   host_employee_id?: string
   purpose?: string
+  custom_purpose?: string
   expected_duration?: number
+  visit_date?: string
+  arrival_time?: string
   has_vehicle?: boolean
   registration_number?: string
   vehicle_make?: string

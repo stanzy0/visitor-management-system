@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, Check, Trash2, CheckCheck, ExternalLink } from 'lucide-react'
+import { getAuthHeaders } from '@/lib/client/api'
 import type { Notification } from '@/lib/types/notification'
 
 interface NotificationPanelProps {
@@ -21,7 +22,9 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
   const fetchNotifications = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/notifications')
+      const res = await fetch('/api/notifications', {
+        headers: await getAuthHeaders(),
+      })
       const json = await res.json()
       if (res.ok) {
         setNotifications(json.data || [])
@@ -36,7 +39,7 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
   const handleMarkAsRead = async (id: string) => {
     await fetch(`/api/notifications/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify({ action: 'mark_read' }),
     })
     fetchNotifications()
@@ -46,7 +49,7 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
   const handleMarkAllAsRead = async () => {
     await fetch('/api/notifications', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
       body: JSON.stringify({ action: 'mark_all_read' }),
     })
     fetchNotifications()
@@ -54,13 +57,13 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
   }
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/notifications?id=${id}`, { method: 'DELETE' })
+    await fetch(`/api/notifications?id=${id}`, { method: 'DELETE', headers: await getAuthHeaders() })
     fetchNotifications()
     onUpdate()
   }
 
   const handleClearRead = async () => {
-    await fetch('/api/notifications?clear_read=true', { method: 'DELETE' })
+    await fetch('/api/notifications?clear_read=true', { method: 'DELETE', headers: await getAuthHeaders() })
     fetchNotifications()
     onUpdate()
   }

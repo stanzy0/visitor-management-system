@@ -1,17 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth-helpers'
+import { requireRole } from '@/lib/auth-helpers'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { createGateActivity, createSecurityDecision } from '@/lib/server/security'
+import { logAuditAction } from '@/lib/server/audit'
 import { getCurrentUser } from '@/lib/auth'
 
-export async function POST(request: NextRequest) {
-  const authResult = await requireAdmin()
+export async function GET(request: NextRequest) {
+  const authResult = await requireRole(['Security', 'Admin', 'Receptionist'])
   if (!authResult.authorized) {
     return NextResponse.json({ error: authResult.error }, { status: authResult.status })
   }
 
   try {
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const visitId = searchParams.get('visit_id')
+
+    if (visitId) {
+      const { data: visit, error: visitError } = await supabaseAdmin
+        .from('visits')
+        .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*), appointment:appointments(*)')
+        .eq('id', visitId)
+        .single()
+
+      if (visitError || !visit) {
+        return NextResponse.json({ error: 'Visit not found' }, { status: 404 })
+      }
+
+      const { data: properties } = await supabaseAdmin
+        .from('property_items')
+        .select('*')
+        .eq('visit_id', visitId)
+
+      const { data: alerts } = await supabaseAdmin
+        .from('security_alerts')
+        .select('*')
+        .or(`related_id.eq.${visitId},related_id.eq.${visit.visitor_id}`)
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          visit,
+          properties: properties || [],
+          alerts: alerts || [],
+        },
+      })
+    }
+
+    const { data: visits, error } = await supabaseAdmin
+      .from('visits')
+      .select('id, visitor:visitors(full_name), employee:employees(full_name), badge:visitor_badges(badge_number), check_in_time')
+      .eq('status', 'checked_in')
+      .order('check_in_time', { ascending: true })
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, data: visits || [] })
+  } catch (err) {
+    console.error('Exit control fetch error:', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  const authResult = await requireRole(['Security', 'Admin'])
+  if (!authResult.authorized) {
+    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+  }
+
+  try {
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+    }
+
     const body = await request.json()
-    const { visitor_id, visit_id, badge_id, verification_method, decision, denial_reason } = body
+    const {
+      visitor_id,
+      visit_id,
+      badge_id,
+      verification_method,
+      decision,
+      denial_reason,
+      badge_return_status,
+      property_updates,
+      overstay_minutes,
+      overstay_reason,
+      host_release_required,
+      host_approved,
+      metadata,
+    } = body
 
     if (!visitor_id) {
       return NextResponse.json({ error: 'Visitor ID is required' }, { status: 400 })
@@ -31,6 +113,14 @@ export async function POST(request: NextRequest) {
       verification_method: verification_method || 'badge',
       decision: decision || 'approved',
       denial_reason: denial_reason || null,
+      metadata: {
+        badge_return_status,
+        overstay_minutes,
+        property_updates,
+        host_release_required,
+        host_approved,
+        ...metadata,
+      },
     })
 
     if (decision && decision !== 'approved') {
@@ -43,9 +133,37 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    if (decision === 'approved' && visit_id) {
+      if (badge_return_status && badge_id) {
+        const badgeStatus = badge_return_status === 'returned' ? 'Checked Out' : badge_return_status === 'lost' ? 'Lost' : 'Damaged'
+        await supabaseAdmin.from('visitor_badges').update({ badge_status: badgeStatus }).eq('id', badge_id)
+      }
+
+      if (property_updates && Array.isArray(property_updates)) {
+        for (const update of property_updates) {
+          await supabaseAdmin
+            .from('property_items')
+            .update({ status: update.status, released_at: update.status === 'returned' ? new Date().toISOString() : null })
+            .eq('id', update.id)
+        }
+      }
+
+      if (overstay_minutes > 0) {
+        await supabaseAdmin.from('incident_reports').insert({
+          visit_id,
+          visitor_id,
+          incident_type: 'overstay',
+          description: `Visitor overstayed by ${overstay_minutes} minutes. ${overstay_reason || 'No reason provided'}`,
+          reported_by: decidedBy,
+        })
+      }
+    }
+
+    await logAuditAction(decision === 'approved' ? 'Exit Approved' : 'Exit Denied', 'visit', visit_id || visitor_id, `Visitor ${visitor_id} exit ${decision} by security`)
+
     return NextResponse.json({ success: true, data: activity }, { status: 201 })
   } catch (err) {
-    console.error('Exit control error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to process exit' }, { status: 500 })
+    console.error('Exit processing error:', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

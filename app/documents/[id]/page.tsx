@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth-client'
 import { logAuditAction } from '@/lib/client/audit'
 import {
   X,

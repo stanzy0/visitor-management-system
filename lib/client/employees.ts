@@ -1,4 +1,4 @@
-import type { Employee, EmployeeFormData } from '@/lib/types/employee'
+import type { Employee, EmployeeFormData, Department, Position, OfficeLocation } from '@/lib/types/employee'
 import { getAuthHeaders } from '@/lib/client/api'
 
 export async function getEmployees(): Promise<Employee[]> {
@@ -56,4 +56,12 @@ export async function deleteEmployee(id: string): Promise<void> {
     const err = await res.json()
     throw new Error(err.error || 'Failed to delete employee')
   }
+}
+
+export async function getLookups(): Promise<{ departments: Department[]; positions: Position[]; office_locations: (OfficeLocation & { display_name?: string })[] }> {
+  const res = await fetch('/api/employees/lookups', {
+    headers: await getAuthHeaders(),
+  })
+  if (!res.ok) throw new Error('Failed to fetch lookups')
+  return res.json()
 }

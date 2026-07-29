@@ -14,22 +14,55 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
     }
 
-    const { data, error } = await supabaseAdmin
+    let data: any = null
+    let error: any = null
+
+    const { data: regData, error: regError } = await supabaseAdmin
       .from('visits')
       .select(`
         registration_number,
         status,
+        created_at,
+        check_in_time,
+        check_out_time,
+        visitor_id,
+        employee_id,
         visitor:visitors(full_name),
         employee:employees(full_name, department, office_location),
-        badge:visitor_badges(badge_number, qr_token),
-        check_in_time,
-        check_out_time
+        badge:visitor_badges(badge_number, qr_token)
       `)
+      .eq('registration_number', q)
       .eq('source', 'public')
-      .or(`registration_number.ilike.%${q}%,badge.qr_token.ilike.%${q}%`)
       .single()
 
+    data = regData
+    error = regError
+
+    if (!regData) {
+      const { data: qrData, error: qrError } = await supabaseAdmin
+        .from('visits')
+        .select(`
+          registration_number,
+          status,
+          created_at,
+          check_in_time,
+          check_out_time,
+          visitor_id,
+          employee_id,
+          visitor:visitors(full_name),
+          employee:employees(full_name, department, office_location),
+          badge:visitor_badges(badge_number, qr_token)
+        `)
+        .eq('source', 'public')
+        .eq('badge.qr_token', q)
+        .single()
+
+      data = qrData
+      error = qrError
+    }
+
     if (error || !data) {
+      console.error('[public/status] lookup error', { q, error, data })
       return NextResponse.json({ error: 'Registration not found' }, { status: 404 })
     }
 

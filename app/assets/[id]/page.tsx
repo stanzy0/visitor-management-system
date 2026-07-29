@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { Loader2, ArrowLeft, QrCode, FileText, Printer, ShieldAlert, History } from 'lucide-react'
 import type { PropertyItem, PropertyHistoryRecord } from '@/lib/types/property'
 

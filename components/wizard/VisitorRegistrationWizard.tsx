@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser } from '@/lib/auth'
-import { Loader2, CheckCircle2, ChevronRight, ChevronLeft } from 'lucide-react'
+import { getCurrentUser } from '@/lib/auth-client'
+import { Loader2, CheckCircle2, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react'
 import Step1VisitorType from '@/components/wizard/Step1VisitorType'
 import Step2PersonalInfo from '@/components/wizard/Step2PersonalInfo'
 import Step3Identification from '@/components/wizard/Step3Identification'
@@ -12,6 +12,7 @@ import Step5VehicleInfo from '@/components/wizard/Step5VehicleInfo'
 import Step6EmergencyContact from '@/components/wizard/Step6EmergencyContact'
 import Step7Review from '@/components/wizard/Step7Review'
 import type { VisitorFormData } from '@/lib/types/visitor'
+import { validateStep1, validateStep2, validateStep3, validateStep4, validateStep5, validateStep6, hasValidationErrors } from '@/lib/validation/visitor'
 
 export type VisitorType = 'Visitor' | 'Contractor' | 'Vendor' | 'Guest Lecturer' | 'VIP' | 'Delivery Personnel'
 
@@ -32,6 +33,7 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
     emergency_contact: '',
     host_employee_id: '',
     purpose: '',
+    custom_purpose: '',
     has_vehicle: false,
     registration_number: '',
     vehicle_make: '',
@@ -54,6 +56,9 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
     doc_notes: '',
   })
   const [error, setError] = useState<string | null>(null)
+  const [validationErrors, setValidationErrors] = useState<Record<string, string | null>>({})
+  const [touched, setTouched] = useState<Set<string>>(new Set())
+  const firstInvalidRef = useRef<HTMLInputElement | null>(null)
 
   const totalSteps = 7
 
@@ -61,10 +66,120 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const next = () => setStep((s) => Math.min(s + 1, totalSteps))
+  const markTouched = (field: string) => {
+    setTouched((prev) => {
+      const next = new Set(prev)
+      next.add(field)
+      return next
+    })
+  }
+
+  const scrollToFirstInvalid = () => {
+    const firstInvalid = document.querySelector('.border-red-500, .text-red-600')
+    if (firstInvalid instanceof HTMLElement) {
+      firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      firstInvalid.focus()
+    }
+  }
+
+  const validateCurrentStep = async (): Promise<boolean> => {
+    setError(null)
+    let errors: Record<string, string | null> = {}
+
+    if (step === 1) {
+      errors = validateStep1(visitorType)
+    } else if (step === 2) {
+      errors = validateStep2(formData)
+    } else if (step === 3) {
+      errors = validateStep3(formData)
+    } else if (step === 4) {
+      errors = validateStep4({
+        host_employee_id: formData.host_employee_id,
+        purpose: formData.purpose,
+        custom_purpose: formData.custom_purpose,
+        visit_date: formData.visit_date,
+        arrival_time: formData.arrival_time,
+        expected_duration: formData.expected_duration,
+      })
+    } else if (step === 5) {
+      errors = validateStep5({
+        has_vehicle: formData.has_vehicle,
+        registration_number: formData.registration_number,
+        vehicle_type: formData.vehicle_type,
+        vehicle_make: formData.vehicle_make,
+      })
+    } else if (step === 6) {
+      errors = validateStep6({
+        emergency_contact: formData.emergency_contact,
+        emergency_relationship: formData.emergency_relationship || formData.emergency_contact,
+        emergency_phone: formData.emergency_contact,
+      })
+    }
+
+    const hasErrors = hasValidationErrors(errors)
+    if (hasErrors) {
+      setValidationErrors(errors)
+      const fields = Object.keys(errors).filter((key) => errors[key])
+      setTouched((prev) => {
+        const next = new Set(prev)
+        fields.forEach((field) => next.add(field))
+        return next
+      })
+      setTimeout(scrollToFirstInvalid, 0)
+      return false
+    }
+
+    setValidationErrors({})
+    return true
+  }
+
+  const next = async () => {
+    const isValid = await validateCurrentStep()
+    if (!isValid) return
+    setStep((s) => Math.min(s + 1, totalSteps))
+  }
+
   const back = () => setStep((s) => Math.max(s - 1, 1))
 
   const handleSubmit = async () => {
+    const allErrors: Record<string, string | null> = {
+      ...validateStep1(visitorType),
+      ...validateStep2(formData),
+      ...validateStep3(formData),
+      ...validateStep4({
+        host_employee_id: formData.host_employee_id,
+        purpose: formData.purpose,
+        custom_purpose: formData.custom_purpose,
+        visit_date: formData.visit_date,
+        arrival_time: formData.arrival_time,
+        expected_duration: formData.expected_duration,
+      }),
+      ...validateStep5({
+        has_vehicle: formData.has_vehicle,
+        registration_number: formData.registration_number,
+        vehicle_type: formData.vehicle_type,
+        vehicle_make: formData.vehicle_make,
+      }),
+      ...validateStep6({
+        emergency_contact: formData.emergency_contact,
+        emergency_relationship: formData.emergency_contact,
+        emergency_phone: formData.emergency_contact,
+      }),
+    }
+
+    const hasErrors = hasValidationErrors(allErrors)
+    if (hasErrors) {
+      setValidationErrors(allErrors)
+      setTouched((prev) => {
+        const next = new Set(prev)
+        Object.keys(allErrors).forEach((field) => next.add(field))
+        return next
+      })
+      setError('Please complete all required fields before submitting.')
+      setTimeout(scrollToFirstInvalid, 0)
+      return
+    }
+
     setSubmitting(true)
     setError(null)
 
@@ -72,6 +187,7 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
       const user = await getCurrentUser()
       if (!user) {
         setError('You must be logged in to register visitors')
+        setSubmitting(false)
         return
       }
 
@@ -86,7 +202,11 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
         vehicle_plate: formData.registration_number,
         vehicle_type: formData.vehicle_type,
         emergency_contact: formData.emergency_contact,
+        host_employee_id: formData.host_employee_id,
+        purpose: formData.purpose === 'Other' ? formData.custom_purpose : formData.purpose,
+        expected_duration: formData.expected_duration || 0,
         created_by: user.id,
+        visitor_type: visitorType,
       }
 
       const { data, error } = await supabase.from('visitors').insert(payload).select().single()
@@ -104,6 +224,32 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
     }
   }
 
+  const isStepInvalid = () => {
+    if (step === 1) return hasValidationErrors(validateStep1(visitorType))
+    if (step === 2) return hasValidationErrors(validateStep2(formData))
+    if (step === 3) return hasValidationErrors(validateStep3(formData))
+    if (step === 4) return hasValidationErrors(validateStep4({
+      host_employee_id: formData.host_employee_id,
+      purpose: formData.purpose,
+      custom_purpose: formData.custom_purpose,
+      visit_date: formData.visit_date,
+      arrival_time: formData.arrival_time,
+      expected_duration: formData.expected_duration,
+    }))
+    if (step === 5) return hasValidationErrors(validateStep5({
+      has_vehicle: formData.has_vehicle,
+      registration_number: formData.registration_number,
+      vehicle_type: formData.vehicle_type,
+      vehicle_make: formData.vehicle_make,
+    }))
+    if (step === 6) return hasValidationErrors(validateStep6({
+      emergency_contact: formData.emergency_contact,
+      emergency_relationship: formData.emergency_contact,
+      emergency_phone: formData.emergency_contact,
+    }))
+    return false
+  }
+
   return (
     <div className="mx-auto max-w-3xl rounded-xl border border-gray-200 bg-white shadow-sm">
       <div className="border-b border-gray-200 p-6">
@@ -115,12 +261,12 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
       </div>
 
       <div className="p-6 space-y-6">
-        {step === 1 && <Step1VisitorType visitorType={visitorType} onSelect={setVisitorType} />}
-        {step === 2 && <Step2PersonalInfo {...formData} onChange={updateField} />}
-        {step === 3 && <Step3Identification data={formData} onChange={updateField} />}
-        {step === 4 && <Step4VisitInfo {...formData} onChange={updateField} />}
-        {step === 5 && <Step5VehicleInfo {...formData} onChange={updateField} />}
-        {step === 6 && <Step6EmergencyContact emergency_contact={formData.emergency_contact} onChange={updateField} />}
+        {step === 1 && <Step1VisitorType visitorType={visitorType} onSelect={setVisitorType} error={validationErrors.visitor_type} touched={touched.has('visitor_type')} />}
+        {step === 2 && <Step2PersonalInfo {...formData} onChange={updateField} errors={validationErrors} touched={touched} onBlur={markTouched} />}
+        {step === 3 && <Step3Identification data={formData} onChange={updateField} errors={validationErrors} touched={touched} onBlur={markTouched} />}
+        {step === 4 && <Step4VisitInfo {...formData} onChange={updateField} errors={validationErrors} touched={touched} onBlur={markTouched} />}
+        {step === 5 && <Step5VehicleInfo {...formData} onChange={updateField} errors={validationErrors} touched={touched} onBlur={markTouched} />}
+        {step === 6 && <Step6EmergencyContact {...formData} onChange={updateField} errors={validationErrors} touched={touched} onBlur={markTouched} />}
         {step === 7 && (
           <Step7Review
             visitorType={visitorType}
@@ -141,6 +287,7 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
             expiry_date={formData.expiry_date}
             host_employee_id={formData.host_employee_id}
             purpose={formData.purpose}
+            custom_purpose={formData.custom_purpose}
             expected_duration={formData.expected_duration || 0}
           />
         )}
@@ -163,7 +310,8 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
         {step < totalSteps ? (
           <button
             onClick={next}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            disabled={isStepInvalid()}
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             Next
             <ChevronRight className="h-4 w-4" />

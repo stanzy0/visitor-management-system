@@ -28,13 +28,14 @@ export async function sendEmail(payload: EmailPayload): Promise<boolean> {
   const html = renderTemplate(payload.template, payload.data)
 
   try {
-    const response = await fetch(RESEND_API_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+  const headers = new Headers()
+  headers.set('Authorization', `Bearer ${apiKey}`)
+  headers.set('Content-Type', 'application/json')
+
+  const response = await fetch(RESEND_API_URL, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
         from: process.env.RESEND_FROM_EMAIL || 'noreply@visitor-management.local',
         to: payload.to,
         subject: payload.subject,

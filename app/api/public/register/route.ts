@@ -96,6 +96,7 @@ export async function POST(request: NextRequest) {
         emergency_contact: emergency_phone || null,
         vehicle_plate: has_vehicle ? registration_number : null,
         vehicle_type: has_vehicle ? vehicle_type : null,
+        visitor_type: visitor_type || 'Visitor',
       })
       .select()
       .single()

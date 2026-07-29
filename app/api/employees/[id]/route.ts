@@ -51,11 +51,57 @@ export async function PUT(
       return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
     }
 
-    const body = (await request.json()) as Partial<EmployeeFormData>
+    const body = (await request.json()) as Partial<EmployeeFormData> & {
+      department_id?: string | null
+      position_id?: string | null
+      office_location_id?: string | null
+    }
+
+    const updateData: any = {
+      full_name: body.full_name,
+      email: body.email,
+      phone: body.phone,
+      department: body.department || null,
+      position: body.position || null,
+      office_location: body.office_location || null,
+    }
+
+    if (body.department_id) {
+      const { data: dept } = await supabaseAdmin
+        .from('departments')
+        .select('name')
+        .eq('id', body.department_id)
+        .single()
+      if (dept) updateData.department = dept.name
+    } else if (body.department === null) {
+      updateData.department = null
+    }
+
+    if (body.position_id) {
+      const { data: pos } = await supabaseAdmin
+        .from('positions')
+        .select('title')
+        .eq('id', body.position_id)
+        .single()
+      if (pos) updateData.position = pos.title
+    } else if (body.position === null) {
+      updateData.position = null
+    }
+
+    if (body.office_location_id) {
+      const { data: loc } = await supabaseAdmin
+        .from('office_locations')
+        .select('display_name, name')
+        .eq('id', body.office_location_id)
+        .single()
+      if (loc) updateData.office_location = loc.display_name || loc.name
+    } else if (body.office_location === null) {
+      updateData.office_location = null
+    }
 
     const { data, error } = await supabaseAdmin
       .from('employees')
-      .update(body)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single()

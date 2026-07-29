@@ -78,26 +78,13 @@ export async function POST(request: NextRequest) {
           visitorName: visitor?.full_name || 'Visitor',
           registrationNumber: visit.registration_number,
           date: visit.visit_date || new Date().toISOString().split('T')[0],
-          arrivalTime: visit.arrival_time || 'TBD',
           hostName: employee?.full_name || 'Host',
-          location: employee?.office_location || 'Reception',
-          badgeNumber: badge.badge_number,
           qrCodeUrl: qrDataUrl,
+          badgeNumber: badge.badge_number,
         },
         relatedType: 'visit',
         relatedId: visit_id,
       })
-
-      if (employee?.user_id) {
-        await createHostEmployeeNotification(
-          employee.id,
-          'Visitor Registration Approved',
-          `${visitor?.full_name || 'A visitor'}'s registration has been approved for ${visit.visit_date || 'today'}.`,
-          'visitor',
-          'visit',
-          visit_id
-        )
-      }
 
       await createSystemNotification(
         'Registration Approved',
@@ -145,36 +132,192 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid action. Use approve or reject.' }, { status: 400 })
   } catch (err) {
-    console.error('Public registration action error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Internal server error' }, { status: 500 })
+    console.error('[Public Registrations API] Error:', err)
+    return NextResponse.json(
+      {
+        success: false,
+        error: err instanceof Error ? err.message : String(err),
+      },
+      { status: 500 }
+    )
   }
 }
 
 export async function GET(request: NextRequest) {
-  const authResult = await requireRole(['Admin', 'Receptionist', 'Host Employee', 'Security'])
-  if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
-  }
-
   try {
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
     }
 
-    const { data, error } = await supabaseAdmin
+    console.log('STEP 1 - Checking if visits table exists and is accessible')
+
+    const { data: visits, error: visitsError } = await supabaseAdmin
       .from('visits')
-      .select('*, visitor:visitors(full_name, email, phone), employee:employees(full_name, department)')
+      .select('*')
       .eq('source', 'public')
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    console.log('STEP 1 OK - Visits query completed')
+
+    if (visitsError) {
+      console.error('[Public Registrations API] Visits query error:', {
+        message: visitsError.message,
+        details: visitsError.details,
+        hint: visitsError.hint,
+        code: visitsError.code,
+      })
+
+      if (visitsError.message?.includes('relation "public.visits" does not exist') ||
+          visitsError.message?.toLowerCase().includes('relation "visits" does not exist')) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Missing table: visits',
+            source: 'visits query',
+            table: 'visits',
+            column: null,
+          },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: visitsError.message,
+          details: visitsError.details,
+          hint: visitsError.hint,
+          code: visitsError.code,
+          source: 'visits query',
+        },
+        { status: 500 }
+      )
     }
 
-    return NextResponse.json({ success: true, data: data || [] })
+    if (!visits || visits.length === 0) {
+      return NextResponse.json({ success: true, data: [] })
+    }
+
+    console.log('STEP 2 - Checking visitors table')
+
+    const visitorIds = [...new Set(visits.map((v: any) => v.visitor_id).filter(Boolean))]
+    const employeeIds = [...new Set(visits.map((v: any) => v.employee_id).filter(Boolean))]
+
+    const { data: visitors, error: visitorsError } = visitorIds.length
+      ? await supabaseAdmin
+          .from('visitors')
+          .select('id, full_name, email, phone')
+          .in('id', visitorIds)
+      : { data: [], error: null }
+
+    console.log('STEP 2 OK - Visitors query completed')
+
+    if (visitorsError) {
+      console.error('[Public Registrations API] Visitors query error:', {
+        message: visitorsError.message,
+        details: visitorsError.details,
+        hint: visitorsError.hint,
+        code: visitorsError.code,
+      })
+
+      if (visitorsError.message?.includes('relation "public.visitors" does not exist') ||
+          visitorsError.message?.toLowerCase().includes('relation "visitors" does not exist')) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Missing table: visitors',
+            source: 'visitors query',
+            table: 'visitors',
+            column: null,
+          },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: visitorsError.message,
+          details: visitorsError.details,
+          hint: visitorsError.hint,
+          code: visitorsError.code,
+          source: 'visitors query',
+        },
+        { status: 500 }
+      )
+    }
+
+    console.log('STEP 3 - Checking employees table')
+
+    const { data: employees, error: employeesError } = employeeIds.length
+      ? await supabaseAdmin
+          .from('employees')
+          .select('id, full_name, department')
+          .in('id', employeeIds)
+      : { data: [], error: null }
+
+    console.log('STEP 3 OK - Employees query completed')
+
+    if (employeesError) {
+      console.error('[Public Registrations API] Employees query error:', {
+        message: employeesError.message,
+        details: employeesError.details,
+        hint: employeesError.hint,
+        code: employeesError.code,
+      })
+
+      if (employeesError.message?.includes('relation "public.employees" does not exist') ||
+          employeesError.message?.toLowerCase().includes('relation "employees" does not exist')) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Missing table: employees',
+            source: 'employees query',
+            table: 'employees',
+            column: null,
+          },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: employeesError.message,
+          details: employeesError.details,
+          hint: employeesError.hint,
+          code: employeesError.code,
+          source: 'employees query',
+        },
+        { status: 500 }
+      )
+    }
+
+    const visitorsMap = new Map((visitors || []).map((v: any) => [v.id, v]))
+    const employeesMap = new Map((employees || []).map((e: any) => [e.id, e]))
+
+    const enrichedVisits = visits.map((visit: any) => ({
+      ...visit,
+      visitor: visitorsMap.get(visit.visitor_id) || null,
+      employee: employeesMap.get(visit.employee_id) || null,
+    }))
+
+    return NextResponse.json({ success: true, data: enrichedVisits })
   } catch (err) {
-    console.error('Fetch pending public registrations error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('[Public Registrations API] CRITICAL ERROR:', err)
+    console.error('[Public Registrations API] Stack:', err instanceof Error ? err.stack : 'No stack trace')
+
+    const errorMessage = err instanceof Error ? err.message : 'Internal server error'
+    const errorStack = err instanceof Error ? err.stack : undefined
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: errorMessage,
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
+      },
+      { status: 500 }
+    )
   }
 }

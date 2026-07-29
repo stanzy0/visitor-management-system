@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Loader2, Search, Download, FileText, FileSpreadsheet } from 'lucide-react'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { logAuditAction } from '@/lib/client/audit'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -177,7 +177,12 @@ export default function ReportsPage() {
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'rejected').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'checked_out').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('visitor_documents').select('id', { count: 'exact', head: true }).eq('verification_status', 'Pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
-      supabase.from('visits').select('id', { count: 'exact', head: true }).in('status', ['approved', 'documents_verified']).is('badge_id', null).gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      (async () => {
+        const { data: visits } = await supabase.from('visits').select('id').in('status', ['approved', 'documents_verified']).gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
+        const visitIds = (visits || []).map((v: { id: string }) => v.id)
+        const { count } = await supabase.from('visitor_badges').select('id', { count: 'exact', head: true }).in('visit_id', visitIds)
+        return { count: ((visits || []).length) - (count || 0) }
+      })(),
       supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'overstayed').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('document_verifications').select('id,created_at,approved_at', { count: 'exact', head: true }).eq('status', 'Approved').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
       supabase.from('document_verifications').select('id', { count: 'exact', head: true }).eq('status', 'Pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),

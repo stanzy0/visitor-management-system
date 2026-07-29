@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser, UserWithRole, UserRole } from '@/lib/auth'
+import { getCurrentUser, UserWithRole, UserRole } from '@/lib/auth-client'
 import { logAuditAction } from '@/lib/client/audit'
 import { Search, Plus, Edit, Trash2, X, Loader2, Users } from 'lucide-react'
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { Loader2, Search, CheckCircle2, XCircle, Clock, AlertTriangle, UserCheck, QrCode, Badge } from 'lucide-react'
 import { generateAppointmentQR } from '@/lib/qr/appointment-qr'
 import type { Visit } from '@/lib/types/visit'

@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
+import { getAuthHeaders } from '@/lib/client/api'
 import { Loader2, Users, UserCheck, XCircle, ShieldAlert, Car, LogOut, Clock, AlertTriangle, ShieldCheck, PackageSearch } from 'lucide-react'
 import type { SecurityDashboardStats } from '@/lib/types/security'
 import NotificationBell from '@/components/notifications/NotificationBell'
@@ -49,8 +50,8 @@ export default function SecurityDashboardPage() {
     setLoading(true)
     try {
       const [securityRes, propertyRes] = await Promise.all([
-        fetch('/api/security/stats'),
-        fetch('/api/assets/stats'),
+        fetch('/api/security/stats', { headers: await getAuthHeaders() }),
+        fetch('/api/assets/stats', { headers: await getAuthHeaders() }),
       ])
       const securityJson = await securityRes.json()
       const propertyJson = await propertyRes.json()

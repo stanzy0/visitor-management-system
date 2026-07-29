@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
 import { generateVisitQRCode } from '@/lib/qrcode'
 import { Loader2, QrCode, Printer, Edit, ArrowLeft, X, Upload, Trash2, FileText, CheckCircle, XCircle, Eye } from 'lucide-react'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { VisitorDocument, formatFileSize } from '@/lib/types/document'
 import DocumentPreview from '@/components/documents/DocumentPreview'
 

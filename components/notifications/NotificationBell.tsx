@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Bell } from 'lucide-react'
 import NotificationPanel from './NotificationPanel'
+import { getAuthHeaders } from '@/lib/client/api'
 
 export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
@@ -16,7 +17,9 @@ export default function NotificationBell() {
 
   const fetchUnreadCount = async () => {
     try {
-      const res = await fetch('/api/notifications')
+      const res = await fetch('/api/notifications', {
+        headers: await getAuthHeaders(),
+      })
       const json = await res.json()
       if (res.ok) {
         setUnreadCount(json.unreadCount || 0)

@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Loader2, CheckCircle2, ChevronRight, ChevronLeft, Upload, Camera, AlertCircle } from 'lucide-react'
 import PhotoCapture from '@/components/PhotoCapture'
+import SearchableCombobox from '@/components/ui/SearchableCombobox'
+import { validateStep1, validateStep2, validateStep3, validateStep4, validateStep5, validateStep6, hasValidationErrors } from '@/lib/validation/visitor'
 
 type VisitorType = 'Visitor' | 'Contractor' | 'Vendor' | 'Guest Lecturer' | 'VIP' | 'Family Visitor' | 'Other'
 
@@ -12,7 +14,10 @@ interface Employee {
   id: string
   full_name: string
   department: string | null
+  position: string | null
   office_location: string | null
+  phone: string | null
+  email: string | null
 }
 
 interface OfficeLocation {
@@ -33,6 +38,28 @@ const VISITOR_TYPE_INFO: Record<VisitorType, { description: string; helperText: 
   'Family Visitor': { description: 'Family member visiting personnel', helperText: 'Escorted access' },
   'Other': { description: 'Other type of visitor', helperText: 'Special access' },
 }
+
+const PURPOSE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'Official Visit', label: 'Official Visit' },
+  { value: 'Meeting', label: 'Meeting' },
+  { value: 'Lecture / Seminar', label: 'Lecture / Seminar' },
+  { value: 'Training', label: 'Training' },
+  { value: 'Examination', label: 'Examination' },
+  { value: 'Administrative Matter', label: 'Administrative Matter' },
+  { value: 'Document Submission', label: 'Document Submission' },
+  { value: 'Interview', label: 'Interview' },
+  { value: 'Maintenance / Repair', label: 'Maintenance / Repair' },
+  { value: 'Contractor Visit', label: 'Contractor Visit' },
+  { value: 'Delivery', label: 'Delivery' },
+  { value: 'Medical Visit', label: 'Medical Visit' },
+  { value: 'VIP Visit', label: 'VIP Visit' },
+  { value: 'Family Visit', label: 'Family Visit' },
+  { value: 'Vendor / Supplier', label: 'Vendor / Supplier' },
+  { value: 'Inspection', label: 'Inspection' },
+  { value: 'Research', label: 'Research' },
+  { value: 'Event', label: 'Event' },
+  { value: 'Other', label: 'Other' },
+]
 
 const REQUIRED_DOCUMENT_TYPES = ['National ID', 'Passport', 'Driver License']
 
@@ -235,12 +262,33 @@ export default function PublicRegistrationWizard() {
   const [registrationNumber, setRegistrationNumber] = useState<string | null>(null)
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [visitorType, setVisitorType] = useState<VisitorType>('Visitor')
-  const [employees, setEmployees] = useState<Employee[]>([])
-  const [loadingEmployees, setLoadingEmployees] = useState(true)
-  const [officeLocations, setOfficeLocations] = useState<OfficeLocation[]>([])
-  const [loadingLocations, setLoadingLocations] = useState(true)
-  const [officeLocationLocked, setOfficeLocationLocked] = useState(false)
+   const [visitorType, setVisitorType] = useState<VisitorType>('Visitor')
+   const [employees, setEmployees] = useState<Employee[]>([])
+   const [loadingEmployees, setLoadingEmployees] = useState(true)
+   const [availabilityStatus, setAvailabilityStatus] = useState<string | null>(null)
+   const [availabilityMessage, setAvailabilityMessage] = useState<string | null>(null)
+   const [availabilityAlternatives, setAvailabilityAlternatives] = useState<Array<{ time: string; availableAt: string }>>([])
+   const [checkingAvailability, setCheckingAvailability] = useState(false)
+   const [nextAvailableAt, setNextAvailableAt] = useState<string | null>(null)
+   const [customPurpose, setCustomPurpose] = useState('')
+  const [validationErrors, setValidationErrors] = useState<Record<string, string | null>>({})
+  const [touched, setTouched] = useState<Set<string>>(new Set())
+
+  const markTouched = (field: string) => {
+    setTouched((prev) => {
+      const next = new Set(prev)
+      next.add(field)
+      return next
+    })
+  }
+
+  const scrollToFirstInvalid = () => {
+    const firstInvalid = document.querySelector('.border-red-500, .text-red-600')
+    if (firstInvalid instanceof HTMLElement) {
+      firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      firstInvalid.focus()
+    }
+  }
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -266,6 +314,7 @@ export default function PublicRegistrationWizard() {
     has_vehicle: false,
     registration_number: '',
     vehicle_type: '',
+    vehicle_make: '',
     vehicle_color: '',
     emergency_name: '',
     emergency_relationship: '',
@@ -277,24 +326,62 @@ export default function PublicRegistrationWizard() {
   useEffect(() => {
     supabase
       .from('employees')
-      .select('id, full_name, department, office_location')
+      .select('id, full_name, department, position, office_location, phone, email')
       .order('full_name')
-      .then(({ data }) => {
-        setEmployees(data || [])
+      .then(({ data, error }) => {
+        if (error) {
+          console.error('Failed to load employees:', error)
+          setEmployees([])
+        } else {
+          setEmployees(data ?? [])
+        }
         setLoadingEmployees(false)
       })
   }, [])
 
   useEffect(() => {
-    supabase
-      .from('office_locations')
-      .select('id, name, building, department')
-      .order('name')
-      .then(({ data }) => {
-        setOfficeLocations(data || [])
-        setLoadingLocations(false)
-      })
-  }, [])
+    if (formData.employee_id && formData.visit_date && formData.arrival_time) {
+      checkAvailability()
+    }
+  }, [formData.employee_id, formData.visit_date, formData.arrival_time, formData.expected_duration])
+
+  useEffect(() => {
+    if (!formData.employee_id) return
+
+    const channel = supabase
+      .channel('host-availability-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+          filter: `employee_id=eq.${formData.employee_id}`,
+        },
+        (payload) => {
+          if (payload.new && (payload.new as any).appointment_date === formData.visit_date) {
+            checkAvailability()
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'employees',
+          filter: `id=eq.${formData.employee_id}`,
+        },
+        () => {
+          checkAvailability()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [formData.employee_id, formData.visit_date])
 
   const totalSteps = 7
 
@@ -302,15 +389,118 @@ export default function PublicRegistrationWizard() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const next = () => {
-    if (step === 2 && !formData.photo_url) {
-      setError('Visitor photograph is required.')
+  const checkAvailability = async () => {
+    if (!formData.employee_id || !formData.visit_date || !formData.arrival_time) {
+      setAvailabilityStatus(null)
+      setAvailabilityMessage(null)
+      setAvailabilityAlternatives([])
+      setNextAvailableAt(null)
       return
     }
-    if (step === 4 && !formData.office_location) {
-      setError('Office location is required.')
+
+    setCheckingAvailability(true)
+    try {
+      const params = new URLSearchParams({
+        employee_id: formData.employee_id,
+        date: formData.visit_date,
+        time: formData.arrival_time,
+        duration: String(formData.expected_duration || 60),
+      })
+
+      const res = await fetch(`/api/public/host-availability?${params}`)
+      console.log('[host-availability] request', `/api/public/host-availability?${params}`)
+      const data = await res.json()
+      console.log('[host-availability] response', data)
+      setAvailabilityStatus(data.status || null)
+      setAvailabilityMessage(data.message || null)
+      setAvailabilityAlternatives(data.alternatives || [])
+      setNextAvailableAt(data.nextAvailableAt || null)
+    } catch {
+      setAvailabilityStatus('Unavailable')
+      setAvailabilityMessage('Failed to check availability.')
+      setAvailabilityAlternatives([])
+      setNextAvailableAt(null)
+    } finally {
+      setCheckingAvailability(false)
+    }
+  }
+
+  const next = async () => {
+    setError(null)
+    let errors: Record<string, string | null> = {}
+
+    if (step === 1) {
+      errors = validateStep1(visitorType)
+    } else if (step === 2) {
+      errors = validateStep2({
+        full_name: formData.full_name,
+        email: formData.email,
+        phone: formData.phone,
+        visitor_organization: formData.visitor_organization,
+        nationality: formData.nationality,
+        gender: formData.gender,
+      })
+      if (!formData.photo_url) {
+        errors.photo_url = 'Visitor photograph is required.'
+      }
+    } else if (step === 3) {
+      errors = validateStep3({
+        doc_type: formData.doc_type,
+        doc_number: formData.doc_number,
+        issuing_country: formData.issuing_country,
+        expiry_date: formData.expiry_date,
+        doc_front_url: formData.doc_front_url,
+        doc_back_url: formData.doc_back_url,
+      })
+    } else if (step === 4) {
+      errors = validateStep4({
+        host_employee_id: formData.employee_id,
+        purpose: formData.purpose === 'Other' ? customPurpose : formData.purpose,
+        custom_purpose: customPurpose,
+        visit_date: formData.visit_date,
+        arrival_time: formData.arrival_time,
+        expected_duration: formData.expected_duration,
+      })
+
+      const selectedEmployee = employees.find((e) => e.id === formData.employee_id)
+      if (!selectedEmployee?.department) {
+        errors.employee_id = 'The selected employee has no department assigned. Please contact Reception.'
+      }
+      if (!selectedEmployee?.office_location) {
+        errors.office_location = 'The selected employee has no assigned office location. Please contact Reception.'
+      }
+      if (availabilityStatus && availabilityStatus !== 'Available') {
+        errors.availability = availabilityMessage || 'Host is not available for the selected time.'
+      }
+    } else if (step === 5) {
+      errors = validateStep5({
+        has_vehicle: formData.has_vehicle,
+        registration_number: formData.registration_number,
+        vehicle_type: formData.vehicle_type,
+        vehicle_make: formData.vehicle_make,
+      })
+    } else if (step === 6) {
+      errors = validateStep6({
+        emergency_contact: formData.emergency_name,
+        emergency_relationship: formData.emergency_relationship,
+        emergency_phone: formData.emergency_phone,
+      })
+    }
+
+    const hasErrors = Object.values(errors).some((err) => err !== null && err !== undefined)
+    if (hasErrors) {
+      setValidationErrors(errors)
+      setTouched((prev) => {
+        const next = new Set(prev)
+        Object.keys(errors).forEach((field) => next.add(field))
+        return next
+      })
+      setError('Please complete all required fields before continuing.')
+      setTimeout(scrollToFirstInvalid, 0)
       return
     }
+
+    setValidationErrors({})
     setStep((s) => Math.min(s + 1, totalSteps))
   }
   const back = () => setStep((s) => Math.max(s - 1, 1))
@@ -326,6 +516,59 @@ export default function PublicRegistrationWizard() {
   }
 
   const handleSubmit = async () => {
+    const allErrors: Record<string, string | null> = {
+      ...validateStep1(visitorType),
+      ...validateStep2({
+        full_name: formData.full_name,
+        email: formData.email,
+        phone: formData.phone,
+        visitor_organization: formData.visitor_organization,
+        nationality: formData.nationality,
+        gender: formData.gender,
+      }),
+      ...(!formData.photo_url ? { photo_url: 'Visitor photograph is required.' } : {}),
+      ...validateStep3({
+        doc_type: formData.doc_type,
+        doc_number: formData.doc_number,
+        issuing_country: formData.issuing_country,
+        expiry_date: formData.expiry_date,
+        doc_front_url: formData.doc_front_url,
+        doc_back_url: formData.doc_back_url,
+      }),
+      ...validateStep4({
+        host_employee_id: formData.employee_id,
+        purpose: formData.purpose === 'Other' ? customPurpose : formData.purpose,
+        custom_purpose: customPurpose,
+        visit_date: formData.visit_date,
+        arrival_time: formData.arrival_time,
+        expected_duration: formData.expected_duration,
+      }),
+      ...validateStep5({
+        has_vehicle: formData.has_vehicle,
+        registration_number: formData.registration_number,
+        vehicle_type: formData.vehicle_type,
+        vehicle_make: formData.vehicle_make,
+      }),
+      ...validateStep6({
+        emergency_contact: formData.emergency_name,
+        emergency_relationship: formData.emergency_relationship,
+        emergency_phone: formData.emergency_phone,
+      }),
+    }
+
+    const hasErrors = hasValidationErrors(allErrors)
+    if (hasErrors) {
+      setValidationErrors(allErrors)
+      setTouched((prev) => {
+        const next = new Set(prev)
+        Object.keys(allErrors).forEach((field) => next.add(field))
+        return next
+      })
+      setError('Please complete all required fields before submitting.')
+      setTimeout(scrollToFirstInvalid, 0)
+      return
+    }
+
     setSubmitting(true)
     setError(null)
 
@@ -382,7 +625,7 @@ export default function PublicRegistrationWizard() {
         .insert({
           visitor_id: visitor.id,
           employee_id: employee.id,
-          purpose: formData.purpose,
+           purpose: formData.purpose === 'Other' ? customPurpose : formData.purpose,
           status: 'pending',
           source: 'public',
           registration_number: regNumber,
@@ -423,6 +666,50 @@ export default function PublicRegistrationWizard() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const isStepInvalid = () => {
+    if (step === 1) return hasValidationErrors(validateStep1(visitorType))
+    if (step === 2) {
+      const errors = validateStep2({
+        full_name: formData.full_name,
+        email: formData.email,
+        phone: formData.phone,
+        visitor_organization: formData.visitor_organization,
+        nationality: formData.nationality,
+        gender: formData.gender,
+      })
+      if (!formData.photo_url) errors.photo_url = 'Visitor photograph is required.'
+      return hasValidationErrors(errors)
+    }
+    if (step === 3) return hasValidationErrors(validateStep3({
+      doc_type: formData.doc_type,
+      doc_number: formData.doc_number,
+      issuing_country: formData.issuing_country,
+      expiry_date: formData.expiry_date,
+      doc_front_url: formData.doc_front_url,
+      doc_back_url: formData.doc_back_url,
+    }))
+    if (step === 4) return hasValidationErrors(validateStep4({
+      host_employee_id: formData.employee_id,
+      purpose: formData.purpose === 'Other' ? customPurpose : formData.purpose,
+      custom_purpose: customPurpose,
+      visit_date: formData.visit_date,
+      arrival_time: formData.arrival_time,
+      expected_duration: formData.expected_duration,
+    }))
+    if (step === 5) return hasValidationErrors(validateStep5({
+      has_vehicle: formData.has_vehicle,
+      registration_number: formData.registration_number,
+      vehicle_type: formData.vehicle_type,
+      vehicle_make: formData.vehicle_make,
+    }))
+    if (step === 6) return hasValidationErrors(validateStep6({
+      emergency_contact: formData.emergency_name,
+      emergency_relationship: formData.emergency_relationship,
+      emergency_phone: formData.emergency_phone,
+    }))
+    return false
   }
 
   if (submitted && registrationNumber) {
@@ -493,6 +780,7 @@ export default function PublicRegistrationWizard() {
           {step === 1 && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold text-gray-900">Visitor Type</h2>
+              {validationErrors.visitor_type && <p className="text-sm text-red-600">{validationErrors.visitor_type}</p>}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {VISITOR_TYPES.map((type) => (
                   <button
@@ -500,7 +788,7 @@ export default function PublicRegistrationWizard() {
                     onClick={() => setVisitorType(type)}
                     className={`rounded-xl border-2 p-4 text-center transition-all min-h-[52px] ${
                       visitorType === type ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
+                    } ${touched.has('visitorType') && validationErrors.visitor_type ? 'border-red-500' : ''}`}
                   >
                     <p className="text-sm font-semibold text-gray-900">{type}</p>
                     <p className="text-xs text-gray-600 mt-1">{VISITOR_TYPE_INFO[type].description}</p>
@@ -517,41 +805,87 @@ export default function PublicRegistrationWizard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                  <input type="text" value={formData.full_name} onChange={(e) => updateField('full_name', e.target.value)} required className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  <input
+                    type="text"
+                    value={formData.full_name}
+                    onChange={(e) => updateField('full_name', e.target.value)}
+                    onBlur={() => markTouched('full_name')}
+                    className={`${touched.has('full_name') && validationErrors.full_name ? 'border-red-500 text-red-600' : 'border-gray-300'} w-full rounded-lg border px-3 py-2`}
+                  />
+                  {touched.has('full_name') && validationErrors.full_name && <p className="text-sm text-red-600 mt-1">{validationErrors.full_name}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
-                  <input type="tel" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} required className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => updateField('phone', e.target.value)}
+                    onBlur={() => markTouched('phone')}
+                    className={`${touched.has('phone') && validationErrors.phone ? 'border-red-500 text-red-600' : 'border-gray-300'} w-full rounded-lg border px-3 py-2`}
+                  />
+                  {touched.has('phone') && validationErrors.phone && <p className="text-sm text-red-600 mt-1">{validationErrors.phone}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
-                  <input type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} required className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => updateField('email', e.target.value)}
+                    onBlur={() => markTouched('email')}
+                    className={`${touched.has('email') && validationErrors.email ? 'border-red-500 text-red-600' : 'border-gray-300'} w-full rounded-lg border px-3 py-2`}
+                  />
+                  {touched.has('email') && validationErrors.email && <p className="text-sm text-red-600 mt-1">{validationErrors.email}</p>}
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Company / Organization</label>
-                  <input type="text" value={formData.visitor_organization} onChange={(e) => updateField('visitor_organization', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Organization / Company *</label>
+                  <input
+                    type="text"
+                    value={formData.visitor_organization}
+                    onChange={(e) => updateField('visitor_organization', e.target.value)}
+                    onBlur={() => markTouched('visitor_organization')}
+                    className={`${touched.has('visitor_organization') && validationErrors.visitor_organization ? 'border-red-500 text-red-600' : 'border-gray-300'} w-full rounded-lg border px-3 py-2`}
+                  />
+                  {touched.has('visitor_organization') && validationErrors.visitor_organization && <p className="text-sm text-red-600 mt-1">{validationErrors.visitor_organization}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nationality</label>
-                  <select value={formData.nationality} onChange={(e) => updateField('nationality', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nationality *</label>
+                  <select
+                    value={formData.nationality}
+                    onChange={(e) => updateField('nationality', e.target.value)}
+                    onBlur={() => markTouched('nationality')}
+                    className={`${touched.has('nationality') && validationErrors.nationality ? 'border-red-500 text-red-600' : 'border-gray-300'} w-full rounded-lg border px-3 py-2`}
+                  >
                     <option value="">Select nationality</option>
                     {NATIONALITIES.map((n) => (
                       <option key={n} value={n}>{n}</option>
                     ))}
                   </select>
+                  {touched.has('nationality') && validationErrors.nationality && <p className="text-sm text-red-600 mt-1">{validationErrors.nationality}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                  <select value={formData.gender} onChange={(e) => updateField('gender', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
+                  <select
+                    value={formData.gender}
+                    onChange={(e) => updateField('gender', e.target.value)}
+                    onBlur={() => markTouched('gender')}
+                    className={`${touched.has('gender') && validationErrors.gender ? 'border-red-500 text-red-600' : 'border-gray-300'} w-full rounded-lg border px-3 py-2`}
+                  >
                     <option value="">Select</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
                   </select>
+                  {touched.has('gender') && validationErrors.gender && <p className="text-sm text-red-600 mt-1">{validationErrors.gender}</p>}
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Residential Address</label>
-                  <textarea value={formData.visitor_address} onChange={(e) => updateField('visitor_address', e.target.value)} rows={2} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  <textarea
+                    value={formData.visitor_address}
+                    onChange={(e) => updateField('visitor_address', e.target.value)}
+                    onBlur={() => markTouched('visitor_address')}
+                    rows={2}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                  />
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Photograph *</label>
@@ -561,7 +895,7 @@ export default function PublicRegistrationWizard() {
                       updateField('photo_url', dataUrl)
                       setError(null)
                     }}
-                    error={step === 2 && !formData.photo_url ? 'Visitor photograph is required.' : undefined}
+                    error={touched.has('photo_url') && validationErrors.photo_url ? validationErrors.photo_url : undefined}
                     required
                   />
                 </div>
@@ -575,96 +909,67 @@ export default function PublicRegistrationWizard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ID Type *</label>
-                  <select value={formData.doc_type} onChange={(e) => updateField('doc_type', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2">
+                  <select
+                    value={formData.doc_type}
+                    onChange={(e) => updateField('doc_type', e.target.value)}
+                    onBlur={() => markTouched('doc_type')}
+                    className={`${touched.has('doc_type') && validationErrors.doc_type ? 'border-red-500 text-red-600' : 'border-gray-300'} w-full rounded-lg border px-3 py-2`}
+                  >
                     {REQUIRED_DOCUMENT_TYPES.map((t) => (
                       <option key={t} value={t}>{t}</option>
                     ))}
                   </select>
+                  {touched.has('doc_type') && validationErrors.doc_type && <p className="text-sm text-red-600 mt-1">{validationErrors.doc_type}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ID Number *</label>
-                  <input type="text" value={formData.doc_number} onChange={(e) => updateField('doc_number', e.target.value)} required className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  <input
+                    type="text"
+                    value={formData.doc_number}
+                    onChange={(e) => updateField('doc_number', e.target.value)}
+                    onBlur={() => markTouched('doc_number')}
+                    className={`${touched.has('doc_number') && validationErrors.doc_number ? 'border-red-500 text-red-600' : 'border-gray-300'} w-full rounded-lg border px-3 py-2`}
+                  />
+                  {touched.has('doc_number') && validationErrors.doc_number && <p className="text-sm text-red-600 mt-1">{validationErrors.doc_number}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Issuing Country</label>
-                  <select value={formData.issuing_country} onChange={(e) => updateField('issuing_country', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Issuing Country *</label>
+                  <select
+                    value={formData.issuing_country}
+                    onChange={(e) => updateField('issuing_country', e.target.value)}
+                    onBlur={() => markTouched('issuing_country')}
+                    className={`${touched.has('issuing_country') && validationErrors.issuing_country ? 'border-red-500 text-red-600' : 'border-gray-300'} w-full rounded-lg border px-3 py-2`}
+                  >
                     <option value="">Select country</option>
-                    <option value="Afghanistan">Afghanistan</option>
-                    <option value="Albania">Albania</option>
-                    <option value="Algeria">Algeria</option>
-                    <option value="Argentina">Argentina</option>
-                    <option value="Australia">Australia</option>
-                    <option value="Austria">Austria</option>
-                    <option value="Bangladesh">Bangladesh</option>
-                    <option value="Belgium">Belgium</option>
-                    <option value="Brazil">Brazil</option>
-                    <option value="Canada">Canada</option>
-                    <option value="China">China</option>
-                    <option value="Colombia">Colombia</option>
-                    <option value="Cuba">Cuba</option>
-                    <option value="Czech Republic">Czech Republic</option>
-                    <option value="Denmark">Denmark</option>
-                    <option value="Egypt">Egypt</option>
-                    <option value="Finland">Finland</option>
-                    <option value="France">France</option>
-                    <option value="Germany">Germany</option>
-                    <option value="Ghana">Ghana</option>
-                    <option value="Greece">Greece</option>
-                    <option value="India">India</option>
-                    <option value="Indonesia">Indonesia</option>
-                    <option value="Iran">Iran</option>
-                    <option value="Iraq">Iraq</option>
-                    <option value="Ireland">Ireland</option>
-                    <option value="Israel">Israel</option>
-                    <option value="Italy">Italy</option>
-                    <option value="Japan">Japan</option>
-                    <option value="Kenya">Kenya</option>
-                    <option value="Lebanon">Lebanon</option>
-                    <option value="Mexico">Mexico</option>
-                    <option value="Morocco">Morocco</option>
-                    <option value="Netherlands">Netherlands</option>
-                    <option value="New Zealand">New Zealand</option>
-                    <option value="Nigeria">Nigeria</option>
-                    <option value="Norway">Norway</option>
-                    <option value="Pakistan">Pakistan</option>
-                    <option value="Philippines">Philippines</option>
-                    <option value="Poland">Poland</option>
-                    <option value="Portugal">Portugal</option>
-                    <option value="Russia">Russia</option>
-                    <option value="Saudi Arabia">Saudi Arabia</option>
-                    <option value="South Africa">South Africa</option>
-                    <option value="South Korea">South Korea</option>
-                    <option value="Spain">Spain</option>
-                    <option value="Sweden">Sweden</option>
-                    <option value="Switzerland">Switzerland</option>
-                    <option value="Thailand">Thailand</option>
-                    <option value="Turkey">Turkey</option>
-                    <option value="Uganda">Uganda</option>
-                    <option value="Ukraine">Ukraine</option>
-                    <option value="United Arab Emirates">United Arab Emirates</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="United States">United States</option>
-                    <option value="Vietnam">Vietnam</option>
-                    <option value="Zimbabwe">Zimbabwe</option>
+                    {NATIONALITIES.map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
                   </select>
+                  {touched.has('issuing_country') && validationErrors.issuing_country && <p className="text-sm text-red-600 mt-1">{validationErrors.issuing_country}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-                  <input type="date" value={formData.expiry_date} onChange={(e) => updateField('expiry_date', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Expiry Date *</label>
+                  <input
+                    type="date"
+                    value={formData.expiry_date}
+                    onChange={(e) => updateField('expiry_date', e.target.value)}
+                    onBlur={() => markTouched('expiry_date')}
+                    className={`${touched.has('expiry_date') && validationErrors.expiry_date ? 'border-red-500 text-red-600' : 'border-gray-300'} w-full rounded-lg border px-3 py-2`}
+                  />
+                  {touched.has('expiry_date') && validationErrors.expiry_date && <p className="text-sm text-red-600 mt-1">{validationErrors.expiry_date}</p>}
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Front ID</label>
-                  <div className="flex items-center gap-4">
-                    {formData.doc_front_url && <img src={formData.doc_front_url} alt="Front ID" className="h-16 w-24 object-cover rounded border border-gray-200" />}
-                    <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleDocUpload(e.target.files[0], 'front')} className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" />
+                  <p className="text-sm text-gray-500 mb-2">Upload scanned documents.</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className={`rounded-lg border-2 border-dashed p-4 text-center text-sm ${touched.has('doc_front_url') && validationErrors.doc_front_url ? 'border-red-500 text-red-600' : 'border-gray-300 text-gray-500'}`}>
+                      {formData.doc_front_url ? <img src={formData.doc_front_url} alt="Front" className="mx-auto h-32 object-cover rounded" /> : 'Front upload'}
+                    </div>
+                    <div className={`rounded-lg border-2 border-dashed p-4 text-center text-sm ${(formData.doc_type === 'National ID' || formData.doc_type === 'Driver License') && touched.has('doc_back_url') && validationErrors.doc_back_url ? 'border-red-500 text-red-600' : 'border-gray-300 text-gray-500'}`}>
+                      {formData.doc_back_url ? <img src={formData.doc_back_url} alt="Back" className="mx-auto h-32 object-cover rounded" /> : 'Back upload'}
+                    </div>
                   </div>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Back ID (optional)</label>
-                  <div className="flex items-center gap-4">
-                    {formData.doc_back_url && <img src={formData.doc_back_url} alt="Back ID" className="h-16 w-24 object-cover rounded border border-gray-200" />}
-                    <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && handleDocUpload(e.target.files[0], 'back')} className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700" />
-                  </div>
+                  {touched.has('doc_front_url') && validationErrors.doc_front_url && <p className="text-sm text-red-600 mt-1">{validationErrors.doc_front_url}</p>}
+                  {(formData.doc_type === 'National ID' || formData.doc_type === 'Driver License') && touched.has('doc_back_url') && validationErrors.doc_back_url && <p className="text-sm text-red-600 mt-1">{validationErrors.doc_back_url}</p>}
                 </div>
               </div>
             </div>
@@ -674,118 +979,205 @@ export default function PublicRegistrationWizard() {
             <div className="space-y-6">
               <h2 className="text-xl font-semibold text-gray-900">Visit Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Host Employee *</label>
-                  <select value={formData.employee_id} onChange={(e) => {
-                    const empId = e.target.value
-                    updateField('employee_id', empId)
-                    const emp = employees.find((el) => el.id === empId)
-                    if (emp && emp.office_location) {
-                      updateField('office_location', emp.office_location)
-                      setOfficeLocationLocked(true)
-                    } else {
-                      updateField('office_location', '')
-                      setOfficeLocationLocked(false)
-                    }
-                  }} required className="w-full rounded-lg border border-gray-300 px-3 py-2" disabled={loadingEmployees}>
-                    <option value="">
-                      {loadingEmployees ? 'Loading employees...' : 'Select Host Employee'}
-                    </option>
-                    {employees.map((emp) => (
-                      <option key={emp.id} value={emp.id}>
-                        {emp.full_name} — {emp.department}
-                      </option>
-                    ))}
-                  </select>
+                  <SearchableCombobox
+                    options={employees.map((emp) => ({
+                      value: emp.id,
+                      label: emp.full_name,
+                      description: `${emp.department || ''}${emp.position ? ` · ${emp.position}` : ''}`,
+                    }))}
+                    value={formData.employee_id}
+                     onChange={(val) => {
+                       const emp = employees.find((e) => e.id === val)
+                       updateField('employee_id', val)
+                       updateField('office_location', emp?.office_location || '')
+                     }}
+                    placeholder="Search by name, department, or position..."
+                    searchPlaceholder="Search employees..."
+                    noResultsText="No employees found"
+                    loading={loadingEmployees}
+                    required
+                  />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Office Location *</label>
-                  {loadingLocations ? (
-                    <div className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-500">
-                      Loading locations...
-                    </div>
-                  ) : officeLocations.length === 0 ? (
-                    <div className="w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-500">
-                      No office locations available
-                    </div>
-                  ) : officeLocationLocked && formData.office_location ? (
-                    <div>
-                      <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
-                        <div>
-                          <p className="text-sm font-medium text-blue-900">Host Office</p>
-                          <p className="text-sm text-blue-700">{formData.office_location}</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setOfficeLocationLocked(false)
-                            updateField('office_location', '')
-                          }}
-                          className="inline-flex items-center gap-1 rounded-lg border border-blue-300 bg-white px-3 py-2 text-xs font-medium text-blue-700 hover:bg-blue-100 min-h-[44px]"
-                        >
-                          Change
-                        </button>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">Auto-filled from the selected host employee.</p>
-                    </div>
-                  ) : !officeLocationLocked && formData.office_location ? (
-                    <div>
-                      <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
-                        <div>
-                          <p className="text-sm font-medium text-amber-900">Host Office</p>
-                          <p className="text-sm text-amber-700">{formData.office_location}</p>
-                        </div>
-                      </div>
-                      <p className="text-xs text-amber-600 mt-1">You are overriding the host's assigned office location.</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                  <input
+                    type="text"
+                    value={employees.find((e) => e.id === formData.employee_id)?.department || ''}
+                    readOnly
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Office Location</label>
+                  {formData.employee_id && !employees.find((e) => e.id === formData.employee_id)?.office_location ? (
+                    <div className="w-full rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                      <p className="text-sm text-amber-700">⚠️ This employee has no assigned office location.</p>
+                      <p className="text-xs text-amber-600 mt-1">Please contact Reception.</p>
                     </div>
                   ) : (
-                    <div>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={formData.office_location}
-                          onChange={(e) => updateField('office_location', e.target.value)}
-                          placeholder="Search location..."
-                          className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                        />
-                        {formData.office_location && (
-                          <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-auto">
-                            {officeLocations
-                              .filter((loc) =>
-                                loc.name.toLowerCase().includes(formData.office_location.toLowerCase())
-                              )
-                              .map((loc) => (
-                                <li
-                                  key={loc.id}
-                                  className="px-3 py-2 cursor-pointer hover:bg-blue-50 text-sm"
-                                  onClick={() => {
-                                    updateField('office_location', loc.name)
-                                  }}
-                                >
-                                  <span className="font-medium">{loc.name}</span>
-                                  {loc.building && (
-                                    <span className="text-gray-500 ml-2">— {loc.building}</span>
-                                  )}
-                                </li>
-                              ))}
-                          </ul>
-                        )}
-                      </div>
-                      <p className="text-xs text-amber-600 mt-1">⚠️ This employee has no assigned office location. Please select one.</p>
-                    </div>
+                    <input
+                      type="text"
+                      value={employees.find((e) => e.id === formData.employee_id)?.office_location || ''}
+                      readOnly
+                      className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-gray-600"
+                    />
                   )}
                 </div>
+                {formData.employee_id && (() => {
+                  const selectedEmployee = employees.find((e) => e.id === formData.employee_id)
+                  if (!selectedEmployee) return null
+                  return (
+                    <div className="md:col-span-2">
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                        <h3 className="text-sm font-medium text-gray-900 mb-3">Host Information</h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-xs text-gray-500">Name</p>
+                            <p className="text-sm font-medium text-gray-900">{selectedEmployee.full_name}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Department</p>
+                            <p className="text-sm font-medium text-gray-900">{selectedEmployee.department || '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Office</p>
+                            <p className="text-sm font-medium text-gray-900">{selectedEmployee.office_location || '—'}</p>
+                          </div>
+                          {selectedEmployee.position && (
+                            <div>
+                              <p className="text-xs text-gray-500">Position</p>
+                              <p className="text-sm font-medium text-gray-900">{selectedEmployee.position}</p>
+                            </div>
+                          )}
+                          {selectedEmployee.phone && (
+                            <div>
+                              <p className="text-xs text-gray-500">Phone</p>
+                              <p className="text-sm font-medium text-gray-900">{selectedEmployee.phone}</p>
+                            </div>
+                          )}
+                          {selectedEmployee.email && (
+                            <div>
+                              <p className="text-xs text-gray-500">Email</p>
+                              <p className="text-sm font-medium text-gray-900">{selectedEmployee.email}</p>
+                            </div>
+                          )}
+                           <div>
+                             <p className="text-xs text-gray-500">Availability</p>
+                             <p className="text-sm font-medium text-gray-900">Available</p>
+                           </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Next Available Time</p>
+                            <p className="text-sm font-medium text-gray-900">{nextAvailableAt || '—'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })()}
+                {formData.employee_id && formData.visit_date && formData.arrival_time && (
+                  <div className="md:col-span-2">
+                    {checkingAvailability ? (
+                      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                        Checking availability...
+                      </div>
+                    ) : availabilityStatus === 'Available' ? (
+                      <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+                        <p className="text-sm font-medium text-green-800">🟢 Host Available</p>
+                        <p className="text-xs text-green-700 mt-1">{availabilityMessage}</p>
+                      </div>
+                    ) : availabilityStatus === 'Busy' ? (
+                      <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-3">
+                        <p className="text-sm font-medium text-orange-800">🟠 Host Busy</p>
+                        <p className="text-xs text-orange-700 mt-1">{availabilityMessage}</p>
+                        {nextAvailableAt && (
+                          <p className="text-xs text-orange-700 mt-1">Available again at: {nextAvailableAt}</p>
+                        )}
+                        {availabilityAlternatives.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-xs font-medium text-orange-800">Choose another time:</p>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {availabilityAlternatives.map((alt) => (
+                                <button
+                                  key={alt.time}
+                                  type="button"
+                                  onClick={() => updateField('arrival_time', alt.time)}
+                                  className="inline-flex items-center rounded-lg border border-orange-300 bg-white px-3 py-1.5 text-xs font-medium text-orange-700 hover:bg-orange-100"
+                                >
+                                  {alt.time}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : availabilityStatus === 'In Meeting' ? (
+                      <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3">
+                        <p className="text-sm font-medium text-yellow-800">🟡 Host In Meeting</p>
+                        <p className="text-xs text-yellow-700 mt-1">{availabilityMessage}</p>
+                        {availabilityAlternatives.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-xs font-medium text-yellow-800">Choose another time:</p>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {availabilityAlternatives.map((alt) => (
+                                <button
+                                  key={alt.time}
+                                  type="button"
+                                  onClick={() => updateField('arrival_time', alt.time)}
+                                  className="inline-flex items-center rounded-lg border border-yellow-300 bg-white px-3 py-1.5 text-xs font-medium text-yellow-700 hover:bg-yellow-100"
+                                >
+                                  {alt.time}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : availabilityStatus === 'On Leave' || availabilityStatus === 'Training' || availabilityStatus === 'Restricted' || availabilityStatus === 'Unavailable' || availabilityStatus === 'Off Duty' ? (
+                      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+                        <p className="text-sm font-medium text-red-800">
+                          {availabilityStatus === 'On Leave' ? '🔴 Host On Leave' : availabilityStatus === 'Restricted' ? '🔴 Restricted' : '⚪ Host Off Duty'}
+                        </p>
+                        <p className="text-xs text-red-700 mt-1">{availabilityMessage}</p>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Purpose *</label>
-                  <textarea value={formData.purpose} onChange={(e) => updateField('purpose', e.target.value)} required rows={2} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  <SearchableCombobox
+                    options={PURPOSE_OPTIONS}
+                    value={formData.purpose}
+                    onChange={(val) => {
+                      updateField('purpose', val)
+                    }}
+                    placeholder="Select purpose..."
+                    searchPlaceholder="Search purpose..."
+                    noResultsText="No matching purpose"
+                    required
+                  />
+                  {formData.purpose === 'Other' && (
+                    <div className="mt-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Specify Purpose *</label>
+                      <input
+                        type="text"
+                        value={customPurpose}
+                        onChange={(e) => setCustomPurpose(e.target.value)}
+                        placeholder="Please specify the purpose"
+                        required
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                      />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Visit Date *</label>
                   <input type="date" value={formData.visit_date} onChange={(e) => updateField('visit_date', e.target.value)} min={new Date().toISOString().split('T')[0]} required className="w-full rounded-lg border border-gray-300 px-3 py-2" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Arrival Time</label>
-                  <input type="time" value={formData.arrival_time} onChange={(e) => updateField('arrival_time', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Arrival Time *</label>
+                  <input type="time" value={formData.arrival_time} onChange={(e) => updateField('arrival_time', e.target.value)} required className="w-full rounded-lg border border-gray-300 px-3 py-2" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Expected Duration (minutes)</label>
@@ -863,8 +1255,8 @@ export default function PublicRegistrationWizard() {
                 <ReviewRow label="Nationality" value={formData.nationality} />
                 <ReviewRow label="ID Type" value={formData.doc_type} />
                 <ReviewRow label="ID Number" value={formData.doc_number} />
-                <ReviewRow label="Host" value={formData.employee_id} />
-                <ReviewRow label="Purpose" value={formData.purpose} />
+                <ReviewRow label="Host" value={employees.find((e) => e.id === formData.employee_id)?.full_name || formData.employee_id} />
+                 <ReviewRow label="Purpose" value={formData.purpose === 'Other' ? customPurpose : formData.purpose} />
                 <ReviewRow label="Visit Date" value={formData.visit_date} />
                 <ReviewRow label="Arrival Time" value={formData.arrival_time} />
                 <ReviewRow label="Vehicle" value={formData.has_vehicle ? `${formData.registration_number} (${formData.vehicle_type})` : 'No'} />
@@ -891,7 +1283,7 @@ export default function PublicRegistrationWizard() {
             {step < totalSteps ? (
               <button
                 onClick={next}
-                disabled={(step === 1 && !visitorType) || (step === 2 && !formData.photo_url) || (step === 4 && !formData.office_location)}
+                disabled={isStepInvalid()}
                 className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 min-h-[52px]"
               >
                 Next

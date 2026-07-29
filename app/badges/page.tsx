@@ -12,7 +12,7 @@ import {
   RefreshCw,
   QrCode,
 } from 'lucide-react'
-import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { getBadges, getBadgeById, reprintBadge, cancelBadge } from '@/lib/client/badges'
 import { printBadgeWindow } from '@/lib/badge/badge-print'
 import { buildBadgePdfFilename, getBadgeWatermark } from '@/lib/badge/badge-utils'
