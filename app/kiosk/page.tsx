@@ -204,7 +204,21 @@ export default function KioskPage() {
             if (parsed.qr_token) token = parsed.qr_token
             else if (parsed.type === 'public-visitor' && parsed.visitId) token = parsed.visitId
           } catch {
-            // not JSON, use as-is
+            // Not JSON — check if it's a URL and extract the token from the path
+            try {
+              const url = new URL(decodedText)
+              // URL like: http://localhost:3000/portal/visit/<qr_token>
+              const pathParts = url.pathname.split('/').filter(Boolean)
+              // Find the token part (should be the last segment after /visit/ or /portal/)
+              const visitIndex = pathParts.indexOf('visit')
+              if (visitIndex !== -1 && visitIndex + 1 < pathParts.length) {
+                token = decodeURIComponent(pathParts[visitIndex + 1])
+              } else if (pathParts.length > 0) {
+                token = decodeURIComponent(pathParts[pathParts.length - 1])
+              }
+            } catch {
+              // Not a URL either — use as-is
+            }
           }
 
           const res = await fetch(`/api/public/status?q=${encodeURIComponent(token)}`)

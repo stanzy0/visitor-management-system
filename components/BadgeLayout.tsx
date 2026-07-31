@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { QRCodeSVG } from 'qrcode.react'
 import type { VisitorBadge } from '@/lib/badge/badge-types'
 import { BADGE_LAYOUT, BADGE_QR_SETTINGS, BADGE_STATUS } from '@/lib/badge/badge-constants'
+import { buildBadgeQrValue } from '@/lib/badge/badge-utils'
 
 interface BadgeLayoutProps {
   badge: VisitorBadge
@@ -23,12 +24,7 @@ const isDev = process.env.NODE_ENV === 'development'
 export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: BadgeLayoutProps) {
   const [imageError, setImageError] = useState(false)
 
-  const qrValue = JSON.stringify({
-    visitId: badge.visit_id,
-    qrToken: badge.badge_number,
-    type: BADGE_QR_SETTINGS.TYPE,
-    issuedAt: badge.issued_at,
-  })
+  const qrValue = buildBadgeQrValue(badge)
 
   const formatDate = useCallback((dateStr: string) => {
     if (!dateStr) return '—'
