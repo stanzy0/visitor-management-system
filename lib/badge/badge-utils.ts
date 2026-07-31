@@ -51,7 +51,7 @@ export function getBadgeStatusCssClass(status: BadgeStatus): string {
 
 export function buildBadgeQrValue(badge: VisitorBadge): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  return `${appUrl}/portal/visit/${encodeURIComponent(badge.qr_token)}`
+  return `${appUrl}/portal/${encodeURIComponent(badge.qr_token)}`
 }
 
 export function calculateExpiry(hours: number = BADGE_DEFAULT_EXPIRY_HOURS): Date {
