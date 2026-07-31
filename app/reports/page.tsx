@@ -184,9 +184,9 @@ export default function ReportsPage() {
         return { count: ((visits || []).length) - (count || 0) }
       })(),
       supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'overstayed').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
-      supabase.from('document_verifications').select('id,created_at,approved_at', { count: 'exact', head: true }).eq('status', 'Approved').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
-      supabase.from('document_verifications').select('id', { count: 'exact', head: true }).eq('status', 'Pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
-      supabase.from('document_verifications').select('id', { count: 'exact', head: true }).eq('status', 'Rejected').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('visitor_documents').select('id,created_at,verified_at', { count: 'exact', head: true }).eq('verification_status', 'Verified').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('visitor_documents').select('id', { count: 'exact', head: true }).eq('verification_status', 'Pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
+      supabase.from('visitor_documents').select('id', { count: 'exact', head: true }).eq('verification_status', 'Rejected').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()),
     ])
 
     const checkedInVisits = (visitsRes.data || []).filter((v) => v.status === 'checked_in') as Visit[]
@@ -195,8 +195,8 @@ export default function ReportsPage() {
     let avgReviewTime = '0h 0m'
     if (documentsReviewedRes.data) {
       const reviewTimes = documentsReviewedRes.data
-        .filter((d: any) => d.approved_at)
-        .map((d: any) => new Date(d.approved_at).getTime() - new Date(d.created_at).getTime())
+        .filter((d: any) => d.verified_at)
+        .map((d: any) => new Date(d.verified_at).getTime() - new Date(d.created_at).getTime())
       if (reviewTimes.length > 0) {
         const avgMs = reviewTimes.reduce((sum: number, t: number) => sum + t, 0) / reviewTimes.length
         const hours = Math.floor(avgMs / (1000 * 60 * 60))

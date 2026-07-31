@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth-client'
-import { Loader2, Save, RefreshCw, Shield, UserCheck, Clock, Calendar } from 'lucide-react'
+import { Loader2, Save, RefreshCw, Shield, UserCheck, Clock, Calendar, Mail } from 'lucide-react'
 
 interface SettingRow {
   id?: string
@@ -46,7 +46,17 @@ const APPOINTMENT_SETTINGS: SettingRow[] = [
   { key: 'max_advance_booking', value: 30, category: 'appointment', description: 'Maximum advance booking in days' },
 ]
 
-type SettingTab = 'general' | 'security' | 'registration' | 'appointment'
+const EMAIL_NOTIFICATION_SETTINGS: SettingRow[] = [
+  { key: 'email_notifications_enabled', value: true, category: 'email', description: 'Enable email notifications' },
+  { key: 'registration_submitted_emails', value: true, category: 'email', description: 'Send email when visitor registration is submitted' },
+  { key: 'registration_approved_emails', value: true, category: 'email', description: 'Send email when registration is approved' },
+  { key: 'registration_rejected_emails', value: true, category: 'email', description: 'Send email when registration is rejected' },
+  { key: 'host_checkin_notifications', value: true, category: 'email', description: 'Notify host when visitor checks in' },
+  { key: 'host_checkout_notifications', value: true, category: 'email', description: 'Notify host when visitor checks out' },
+  { key: 'badge_ready_emails', value: true, category: 'email', description: 'Send email when badge is ready' },
+]
+
+type SettingTab = 'general' | 'security' | 'registration' | 'appointment' | 'email'
 
 export default function AdminSettingsPage() {
   const [userRole, setUserRole] = useState<string>('')
@@ -73,7 +83,7 @@ export default function AdminSettingsPage() {
       }
 
       const map: Record<string, SettingRow> = {}
-      const allDefaults = [...GENERAL_SETTINGS, ...SECURITY_SETTINGS, ...REGISTRATION_SETTINGS, ...APPOINTMENT_SETTINGS]
+      const allDefaults = [...GENERAL_SETTINGS, ...SECURITY_SETTINGS, ...REGISTRATION_SETTINGS, ...APPOINTMENT_SETTINGS, ...EMAIL_NOTIFICATION_SETTINGS]
       allDefaults.forEach((def) => {
         const existing = result.data?.find((s: SettingRow) => s.key === def.key)
         map[def.key] = existing || { ...def }
@@ -152,6 +162,7 @@ export default function AdminSettingsPage() {
     { id: 'security' as SettingTab, label: 'Security', icon: Shield },
     { id: 'registration' as SettingTab, label: 'Registration', icon: UserCheck },
     { id: 'appointment' as SettingTab, label: 'Appointments', icon: Calendar },
+    { id: 'email' as SettingTab, label: 'Email Notifications', icon: Mail },
   ]
 
   const getSettingsForTab = (tab: SettingTab) => {
@@ -164,6 +175,8 @@ export default function AdminSettingsPage() {
         return REGISTRATION_SETTINGS
       case 'appointment':
         return APPOINTMENT_SETTINGS
+      case 'email':
+        return EMAIL_NOTIFICATION_SETTINGS
     }
   }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logAuditAction } from '@/lib/server/audit'
 import { createHostEmployeeNotification, createSystemNotification } from '@/lib/notifications'
+import { sendEmail } from '@/lib/server/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,6 +67,26 @@ export async function POST(request: NextRequest) {
     }
 
     await createSystemNotification('Visitor Checked In', `${visitor?.full_name || 'Visitor'} checked in via kiosk for ${employee?.full_name || 'host'}`, 'info', 'visit', visit_id)
+
+    if (employee?.email) {
+      await sendEmail({
+        to: employee.email,
+        recipientName: employee.full_name || 'Host',
+        subject: `Visitor Has Arrived - ${visit.registration_number}`,
+        template: 'visitor_arrival',
+        data: {
+          visitorName: visitor?.full_name || 'Visitor',
+          company: visitor?.visitor_organization || 'N/A',
+          purpose: visit.purpose || 'Visit',
+          time: new Date().toLocaleTimeString(),
+          location: employee.office_location || 'Reception',
+          badgeNumber: visit.badge_number || 'N/A',
+          orgName: 'AFCSC Visitor Management',
+        },
+        relatedType: 'visit',
+        relatedId: visit_id,
+      })
+    }
 
     return NextResponse.json({
       success: true,

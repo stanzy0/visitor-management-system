@@ -1,17 +1,16 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import type { DocumentVerification, DocumentVerificationFilters, DocumentVerificationStats } from '@/lib/types/document-verification'
+import { VisitorDocument, VerificationStatus } from '@/lib/types/document'
 
-export async function getPendingDocuments(limit = 50, offset = 0): Promise<DocumentVerification[]> {
+export async function getPendingDocuments(limit = 50, offset = 0): Promise<VisitorDocument[]> {
   if (!supabaseAdmin) return []
 
   const { data, error } = await supabaseAdmin
-    .from('document_verifications')
+    .from('visitor_documents')
     .select(`
       *,
-      visitor:visitors(full_name, email, visitor_organization, photo_url),
-      visit:visits(status, employee:employees(full_name, department))
+      visitor:visitors(full_name, email, visitor_organization, photo_url)
     `)
-    .eq('status', 'Pending')
+    .eq('verification_status', 'Pending')
     .order('created_at', { ascending: true })
     .range(offset, offset + limit - 1)
 
@@ -20,22 +19,27 @@ export async function getPendingDocuments(limit = 50, offset = 0): Promise<Docum
     return []
   }
 
-  return (data || []) as DocumentVerification[]
+  return (data || []) as VisitorDocument[]
 }
 
 export async function getDocumentVerifications(
-  filters: DocumentVerificationFilters,
+  filters: {
+    search?: string
+    document_type?: string
+    verification_status?: VerificationStatus | string
+    date_from?: string
+    date_to?: string
+  },
   limit = 20,
   offset = 0
-): Promise<{ data: DocumentVerification[]; total: number }> {
+): Promise<{ data: VisitorDocument[]; total: number }> {
   if (!supabaseAdmin) return { data: [], total: 0 }
 
   let query = supabaseAdmin
-    .from('document_verifications')
+    .from('visitor_documents')
     .select(`
       *,
-      visitor:visitors(full_name, email, visitor_organization, photo_url),
-      visit:visits(status, employee:employees(full_name, department))
+      visitor:visitors(full_name, email, visitor_organization, photo_url)
     `, { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(offset, offset + limit - 1)
@@ -48,8 +52,9 @@ export async function getDocumentVerifications(
     query = query.eq('document_type', filters.document_type)
   }
 
-  if (filters.status && filters.status !== 'all') {
-    query = query.eq('status', filters.status)
+  const statusFilter = filters.verification_status
+  if (statusFilter && statusFilter !== 'all') {
+    query = query.eq('verification_status', statusFilter)
   }
 
   if (filters.date_from) {
@@ -67,26 +72,34 @@ export async function getDocumentVerifications(
     return { data: [], total: 0 }
   }
 
-  return { data: (data || []) as DocumentVerification[], total: count || 0 }
+  return { data: (data || []) as VisitorDocument[], total: count || 0 }
 }
 
-export async function getDocumentVerificationStats(): Promise<DocumentVerificationStats> {
+export async function getDocumentVerificationStats(): Promise<{
+  pending: number
+  verified: number
+  rejected: number
+  replacement_requested: number
+  reuploaded: number
+  total: number
+  today_reviews: number
+}> {
   if (!supabaseAdmin) {
-    return { pending: 0, approved: 0, rejected: 0, replacement_requested: 0, reuploaded: 0, total: 0, today_reviews: 0 }
+    return { pending: 0, verified: 0, rejected: 0, replacement_requested: 0, reuploaded: 0, total: 0, today_reviews: 0 }
   }
 
   const { data, error } = await supabaseAdmin
-    .from('document_verifications')
-    .select('status, created_at')
+    .from('visitor_documents')
+    .select('verification_status, created_at')
 
   if (error || !data) {
-    return { pending: 0, approved: 0, rejected: 0, replacement_requested: 0, reuploaded: 0, total: 0, today_reviews: 0 }
+    return { pending: 0, verified: 0, rejected: 0, replacement_requested: 0, reuploaded: 0, total: 0, today_reviews: 0 }
   }
 
   const today = new Date().toISOString().split('T')[0]
-  const stats: DocumentVerificationStats = {
+  const stats = {
     pending: 0,
-    approved: 0,
+    verified: 0,
     rejected: 0,
     replacement_requested: 0,
     reuploaded: 0,
@@ -94,12 +107,12 @@ export async function getDocumentVerificationStats(): Promise<DocumentVerificati
     today_reviews: 0,
   }
 
-  data.forEach((item: { status: string; created_at: string }) => {
-    if (item.status === 'Pending') stats.pending++
-    else if (item.status === 'Approved') stats.approved++
-    else if (item.status === 'Rejected') stats.rejected++
-    else if (item.status === 'Replacement Requested') stats.replacement_requested++
-    else if (item.status === 'Reuploaded') stats.reuploaded++
+  data.forEach((item: { verification_status: string; created_at: string }) => {
+    if (item.verification_status === 'Pending') stats.pending++
+    else if (item.verification_status === 'Verified') stats.verified++
+    else if (item.verification_status === 'Rejected') stats.rejected++
+    else if (item.verification_status === 'Replacement Requested') stats.replacement_requested++
+    else if (item.verification_status === 'Reuploaded') stats.reuploaded++
 
     if (item.created_at.startsWith(today)) stats.today_reviews++
   })
@@ -108,131 +121,141 @@ export async function getDocumentVerificationStats(): Promise<DocumentVerificati
 }
 
 export async function approveDocument(
-  verificationId: string,
+  documentId: string,
   approvedBy: string,
   notes?: string
-): Promise<DocumentVerification | null> {
-  if (!supabaseAdmin) return null
+): Promise<VisitorDocument> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
 
+  console.log('Updating visitor_documents...', documentId)
   const { data, error } = await supabaseAdmin
-    .from('document_verifications')
+    .from('visitor_documents')
     .update({
-      status: 'Approved',
-      approved_by: approvedBy,
-      approved_at: new Date().toISOString(),
+      verification_status: 'Verified',
+      verified: true,
+      verified_by: approvedBy,
+      verified_at: new Date().toISOString(),
+      verification_notes: notes || null,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', verificationId)
+    .eq('id', documentId)
     .select(`
       *,
-      visitor:visitors(full_name, email, visitor_organization, photo_url),
-      visit:visits(status, employee:employees(full_name, department))
+      visitor:visitors(full_name, email, visitor_organization, photo_url)
     `)
     .single()
 
-  if (error || !data) {
-    console.error('Failed to approve document:', error)
-    return null
+  console.log('Rows updated:', error ? 0 : 1)
+  if (error) {
+    console.log('Error:', error.message)
+    throw error
   }
+  console.log('Returned row:', data)
 
-  return data as DocumentVerification
+  return data as VisitorDocument
 }
 
 export async function rejectDocument(
-  verificationId: string,
+  documentId: string,
   rejectedBy: string,
   reason: string
-): Promise<DocumentVerification | null> {
-  if (!supabaseAdmin) return null
+): Promise<VisitorDocument> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
 
+  console.log('Updating visitor_documents...', documentId)
   const { data, error } = await supabaseAdmin
-    .from('document_verifications')
+    .from('visitor_documents')
     .update({
-      status: 'Rejected',
-      rejected_reason: reason,
+      verification_status: 'Rejected',
+      verified: false,
+      verification_notes: reason,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', verificationId)
+    .eq('id', documentId)
     .select(`
       *,
-      visitor:visitors(full_name, email, visitor_organization, photo_url),
-      visit:visits(status, employee:employees(full_name, department))
+      visitor:visitors(full_name, email, visitor_organization, photo_url)
     `)
     .single()
 
-  if (error || !data) {
-    console.error('Failed to reject document:', error)
-    return null
+  console.log('Rows updated:', error ? 0 : 1)
+  if (error) {
+    console.log('Error:', error.message)
+    throw error
   }
+  console.log('Returned row:', data)
 
-  return data as DocumentVerification
+  return data as VisitorDocument
 }
 
 export async function requestReplacement(
-  verificationId: string,
+  documentId: string,
   reason: string
-): Promise<DocumentVerification | null> {
-  if (!supabaseAdmin) return null
+): Promise<VisitorDocument> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
 
+  console.log('Updating visitor_documents...', documentId)
   const { data, error } = await supabaseAdmin
-    .from('document_verifications')
+    .from('visitor_documents')
     .update({
-      status: 'Replacement Requested',
+      verification_status: 'Replacement Requested',
       replacement_requested: true,
-      rejected_reason: reason,
+      verification_notes: reason,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', verificationId)
+    .eq('id', documentId)
     .select(`
       *,
-      visitor:visitors(full_name, email, visitor_organization, photo_url),
-      visit:visits(status, employee:employees(full_name, department))
+      visitor:visitors(full_name, email, visitor_organization, photo_url)
     `)
     .single()
 
-  if (error || !data) {
-    console.error('Failed to request replacement:', error)
-    return null
+  console.log('Rows updated:', error ? 0 : 1)
+  if (error) {
+    console.log('Error:', error.message)
+    throw error
   }
+  console.log('Returned row:', data)
 
-  return data as DocumentVerification
+  return data as VisitorDocument
 }
 
-export async function markReplacementUploaded(verificationId: string): Promise<DocumentVerification | null> {
-  if (!supabaseAdmin) return null
+export async function markReplacementUploaded(documentId: string): Promise<VisitorDocument> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
 
+  console.log('Updating visitor_documents...', documentId)
   const { data, error } = await supabaseAdmin
-    .from('document_verifications')
+    .from('visitor_documents')
     .update({
-      status: 'Reuploaded',
+      verification_status: 'Reuploaded',
       replacement_uploaded: true,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', verificationId)
+    .eq('id', documentId)
     .select(`
       *,
-      visitor:visitors(full_name, email, visitor_organization, photo_url),
-      visit:visits(status, employee:employees(full_name, department))
+      visitor:visitors(full_name, email, visitor_organization, photo_url)
     `)
     .single()
 
-  if (error || !data) {
-    console.error('Failed to mark replacement uploaded:', error)
-    return null
+  console.log('Rows updated:', error ? 0 : 1)
+  if (error) {
+    console.log('Error:', error.message)
+    throw error
   }
+  console.log('Returned row:', data)
 
-  return data as DocumentVerification
+  return data as VisitorDocument
 }
 
-export async function getVerificationHistory(visitorId: string): Promise<DocumentVerification[]> {
+export async function getVerificationHistory(visitorId: string): Promise<VisitorDocument[]> {
   if (!supabaseAdmin) return []
 
   const { data, error } = await supabaseAdmin
-    .from('document_verifications')
+    .from('visitor_documents')
     .select(`
       *,
-      visitor:visitors(full_name, email, visitor_organization, photo_url),
-      visit:visits(status, employee:employees(full_name, department))
+      visitor:visitors(full_name, email, visitor_organization, photo_url)
     `)
     .eq('visitor_id', visitorId)
     .order('created_at', { ascending: false })
@@ -242,16 +265,16 @@ export async function getVerificationHistory(visitorId: string): Promise<Documen
     return []
   }
 
-  return (data || []) as DocumentVerification[]
+  return (data || []) as VisitorDocument[]
 }
 
-export async function downloadDocument(verificationId: string): Promise<{ url: string; filename: string } | null> {
+export async function downloadDocument(documentId: string): Promise<{ url: string; filename: string } | null> {
   if (!supabaseAdmin) return null
 
   const { data, error } = await supabaseAdmin
-    .from('document_verifications')
-    .select('document_url, document_type')
-    .eq('id', verificationId)
+    .from('visitor_documents')
+    .select('file_url, front_image_url, document_type')
+    .eq('id', documentId)
     .single()
 
   if (error || !data) {
@@ -259,8 +282,11 @@ export async function downloadDocument(verificationId: string): Promise<{ url: s
     return null
   }
 
+  const fileUrl = data.file_url || data.front_image_url
+  if (!fileUrl) return null
+
   return {
-    url: data.document_url,
-    filename: `${data.document_type.replace(/\s+/g, '_')}_${verificationId}`,
+    url: fileUrl,
+    filename: `${data.document_type.replace(/\s+/g, '_')}_${documentId}`,
   }
 }

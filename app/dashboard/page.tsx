@@ -5,27 +5,25 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, UserRole, PERMISSIONS } from '@/lib/auth-client'
 import { getAuthHeaders } from '@/lib/client/api'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard,
   Users,
   Clock,
   UserCheck,
+  User,
   FileText,
   ShieldCheck,
   Settings,
   LogOut,
-  Menu,
   TrendingUp,
   TrendingDown,
   Minus,
   Loader2,
-  Scan,
   Car,
   Bell,
   AlertTriangle,
   ShieldAlert,
   Crown,
-  Monitor,
   Calendar,
   Building2,
   BarChart3,
@@ -43,13 +41,19 @@ import {
   Database,
   HardDrive,
   QrCode,
+  UserPlus,
+  Scan,
 } from 'lucide-react'
-import NotificationBell from '@/components/NotificationBell'
 import StatCard from '@/components/dashboard/StatCard'
 import ActivityFeed from '@/components/dashboard/ActivityFeed'
 import SecurityPanel from '@/components/dashboard/SecurityPanel'
 import ChartCard from '@/components/dashboard/ChartCard'
-import { useDashboardData, DashboardFilters, SecurityAlert } from '@/hooks/useDashboardData'
+import Sidebar from '@/components/dashboard/Sidebar'
+import DashboardHeader from '@/components/dashboard/DashboardHeader'
+import QuickActions from '@/components/dashboard/QuickActions'
+import RecentVisitors from '@/components/dashboard/RecentVisitors'
+import ActivityTimeline from '@/components/dashboard/ActivityTimeline'
+import { useDashboardData, DashboardFilters, SecurityAlert, ActivityItem } from '@/hooks/useDashboardData'
 import {
   BarChart,
   Bar,
@@ -69,7 +73,7 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 
-const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316']
+const COLORS = ['#1e40af', '#0f766e', '#b91c1c', '#a16207', '#6d28d9', '#be185d', '#0f766e', '#c2410c']
 
 const FILTERS = [
   { label: 'Today', value: 'today' },
@@ -79,59 +83,15 @@ const FILTERS = [
   { label: 'This Month', value: 'thisMonth' },
 ]
 
-const NAV_SECTIONS = [
-  { title: 'MAIN', items: [
-    { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', permission: 'dashboard' },
-    { label: 'Reception Kiosk', icon: Monitor, href: '/reception/kiosk', permission: 'dashboard' },
-    { label: 'Self Check-In Kiosk', icon: QrCode, href: '/kiosk', permission: 'dashboard' },
-    { label: 'Visitors', icon: Users, href: '/visitors', permission: 'visitors' },
-    { label: 'Appointments', icon: Calendar, href: '/appointments', permission: 'appointments' },
-    { label: 'Visits', icon: Clock, href: '/visits', permission: 'visits' },
-    { label: 'Badges', icon: IdCard, href: '/badges', permission: 'badges' },
-    { label: 'QR Scanner', icon: Scan, href: '/scanner', permission: 'scanner' },
-  ]},
-  { title: 'SECURITY', items: [
-    { label: 'Security Dashboard', icon: ShieldAlert, href: '/security', permission: 'scanner' },
-    { label: 'Gate Check-In', icon: Scan, href: '/security/gate', permission: 'scanner' },
-    { label: 'Exit Control', icon: LogOut, href: '/security/exit', permission: 'scanner' },
-    { label: 'Gate Activity', icon: Monitor, href: '/security/gate-activity', permission: 'scanner' },
-    { label: 'Watchlist', icon: ShieldAlert, href: '/watchlist', permission: 'watchlist' },
-    { label: 'Security Reports', icon: FileText, href: '/security/reports', permission: 'scanner' },
-    { label: 'ID Verification', icon: FileText, href: '/documents', permission: 'documents' },
-    { label: 'Emergency Occupancy', icon: AlertTriangle, href: '/emergency', permission: 'emergency' },
-    { label: 'Host Portal', icon: Users, href: '/host', permission: 'host' },
-  ]},
-{ title: 'ADMINISTRATION', items: [
-    { label: 'Admin Portal', icon: Shield, href: '/admin', permission: 'dashboard' },
-    { label: 'Employees', icon: UserCheck, href: '/employees', permission: 'employees' },
-    { label: 'Office Locations', icon: Building2, href: '/office-locations', permission: 'settings' },
-    { label: 'Vehicle Management', icon: Car, href: '/vehicles', permission: 'vehicles' },
-    { label: 'Users', icon: Users, href: '/users', permission: 'users' },
-    { label: 'System Monitoring', icon: Monitor, href: '/system', permission: 'dashboard' },
-  ]},
-  { title: 'DEPLOYMENT & RECOVERY', items: [
-    { label: 'Deployment Center', icon: GitBranch, href: '/deployment', permission: 'dashboard' },
-    { label: 'Backups', icon: Database, href: '/deployment/backups', permission: 'dashboard' },
-    { label: 'Restore Center', icon: FileDown, href: '/deployment/restore', permission: 'dashboard' },
-    { label: 'Maintenance Mode', icon: Settings, href: '/deployment/maintenance', permission: 'dashboard' },
-    { label: 'Version Management', icon: GitBranch, href: '/deployment/version', permission: 'dashboard' },
-    { label: 'System Info', icon: HardDrive, href: '/deployment/system-info', permission: 'dashboard' },
-  ]},
-  { title: 'MONITORING', items: [
-    { label: 'Notifications', icon: Bell, href: '/notifications', permission: 'dashboard' },
-    { label: 'Audit Logs', icon: ShieldCheck, href: '/audit-logs', permission: 'audit-logs' },
-    { label: 'Reports', icon: FileText, href: '/reports', permission: 'reports' },
-    { label: 'Analytics', icon: BarChart3, href: '/analytics', permission: 'analytics' },
-    { label: 'Operations Center', icon: Activity, href: '/operations', permission: 'operations' },
-    { label: 'Email Logs', icon: FileText, href: '/email-logs', permission: 'email' },
-  ]},
-   { title: 'ASSETS & PROPERTY', items: [
-    { label: 'Assets & Property', icon: ShieldCheck, href: '/assets', permission: 'dashboard' },
-  ]},
-  { title: 'CONFIGURATION', items: [
-    { label: 'Badge Designer', icon: Shield, href: '/admin/badges', permission: 'badges' },
-    { label: 'Settings', icon: Settings, href: '/settings', permission: 'settings' },
-  ]},
+const QUICK_ACTIONS = [
+  { label: 'Register Visitor', icon: UserPlus, href: '/visitors/new', color: 'blue' as const },
+  { label: 'Approve Registration', icon: CheckCircle, href: '/dashboard', color: 'green' as const },
+  { label: 'Check In', icon: UserCheck, href: '/visits?status=checked_in', color: 'emerald' as const },
+  { label: 'Check Out', icon: LogOut, href: '/visits?status=checked_out', color: 'slate' as const },
+  { label: 'Scan QR', icon: Scan, href: '/scanner', color: 'purple' as const },
+  { label: 'Print Badge', icon: Printer, href: '/badges', color: 'amber' as const },
+  { label: 'Employees', icon: Users, href: '/employees', color: 'indigo' as const },
+  { label: 'Reports', icon: BarChart3, href: '/reports', color: 'teal' as const },
 ]
 
 export default function DashboardPage() {
@@ -165,6 +125,8 @@ export default function DashboardPage() {
     lostItems: 0,
     damagedItems: 0,
   })
+  const [recentVisitors, setRecentVisitors] = useState<Array<{ id: string; full_name: string; status: string; created_at: string; purpose?: string; host_name?: string }>>([])
+  const [pendingDocuments, setPendingDocuments] = useState<Array<{ id: string; visitor_name: string; organization: string; document_type: string; document_number: string; created_at: string; photo_url: string | null }>>([])
 
   const { stats, activity, securityAlerts, visitorsByDay, visitorsByMonth, visitorsByDepartment, visitorsByHost, visitorsByCompany, visitorsByPurpose, badgeStatusDistribution, employeesByDepartment, loading, error, trendLabel, refetch } = useDashboardData(filters, authReady)
 
@@ -212,6 +174,36 @@ export default function DashboardPage() {
   }, [])
 
   useEffect(() => {
+    const fetchPendingDocuments = async () => {
+      try {
+        const res = await fetch('/api/documents?verification_status=Pending&limit=5', {
+          headers: await getAuthHeaders(),
+        })
+        const json = await res.json()
+        console.log('[Dashboard] Documents response:', json)
+        const documents = json.data || []
+        console.log('[Dashboard] Pending documents:', documents)
+        if (res.ok && documents.length > 0) {
+          setPendingDocuments(documents.map((doc: any) => ({
+            id: doc.id,
+            visitor_name: doc.visitor?.full_name || 'Unknown',
+            organization: doc.visitor?.visitor_organization || '',
+            document_type: doc.document_type,
+            document_number: doc.document_number || '',
+            created_at: doc.created_at,
+            photo_url: doc.visitor?.photo_url || null,
+          })))
+        } else if (res.ok) {
+          setPendingDocuments([])
+        }
+      } catch (err) {
+        console.error('Failed to fetch pending documents:', err)
+      }
+    }
+    fetchPendingDocuments()
+  }, [authReady])
+
+  useEffect(() => {
     const fetchPropertyStats = async () => {
       try {
         const res = await fetch('/api/assets/stats', {
@@ -226,6 +218,32 @@ export default function DashboardPage() {
       }
     }
     fetchPropertyStats()
+  }, [])
+
+  useEffect(() => {
+    const fetchRecentVisitors = async () => {
+      try {
+        const { data } = await supabase
+          .from('visits')
+          .select('id, status, created_at, purpose, visitor:visitors(full_name)')
+          .order('created_at', { ascending: false })
+          .limit(8)
+
+        if (data) {
+          const mapped = data.map((visit: any) => ({
+            id: visit.id,
+            full_name: visit.visitor?.full_name || 'Unknown',
+            status: visit.status,
+            created_at: visit.created_at,
+            purpose: visit.purpose,
+          }))
+          setRecentVisitors(mapped)
+        }
+      } catch (err) {
+        console.error('Failed to fetch recent visitors:', err)
+      }
+    }
+    fetchRecentVisitors()
   }, [])
 
   const handleLogout = async () => {
@@ -258,16 +276,6 @@ export default function DashboardPage() {
     }
     fetchNotifications()
   }, [])
-
-  const getNavItems = (sectionItems: typeof NAV_SECTIONS[0]['items']) =>
-    sectionItems.filter(item => PERMISSIONS[userRole]?.includes(item.permission))
-
-  const isAdmin = userRole === 'Admin'
-  const isSecurity = userRole === 'Security'
-  const isReceptionist = userRole === 'Receptionist'
-  const showAllSections = isAdmin
-  const showSecurityOnly = isSecurity && !isAdmin
-  const showOperational = isReceptionist && !isAdmin
 
   const handleExportDashboard = async (format: 'pdf' | 'excel' | 'csv') => {
     setExporting(true)
@@ -353,7 +361,9 @@ export default function DashboardPage() {
   if (authChecking) {
     return (
       <div className="flex h-screen bg-gray-50 items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+          <Loader2 className="h-8 w-8 text-blue-600" />
+        </motion.div>
       </div>
     )
   }
@@ -395,7 +405,7 @@ export default function DashboardPage() {
         { title: "Today's Visitors", value: stats.visitorsToday, icon: Users, color: 'blue' as const, trend: stats.visitorsTrend, href: '/visitors?date=today' },
         { title: 'Today\'s Appointments', value: appointmentsToday, icon: Calendar, color: 'purple' as const, href: '/appointments' },
         { title: 'This Week', value: stats.visitorsThisWeek, icon: Calendar, color: 'green' as const, href: '/visitors?date=week' },
-        { title: 'This Month', value: stats.visitorsThisMonth, icon: TrendingUp, color: 'purple' as const, href: '/visitors?date=month' },
+        { title: 'This Month', value: stats.visitorsThisMonth, icon: Calendar, color: 'purple' as const, href: '/visitors?date=month' },
         { title: 'Currently Inside', value: stats.visitorsCurrentlyInside, icon: UserCheck, color: 'indigo' as const, href: '/visits?status=checked_in' },
         { title: 'Pending Approvals', value: stats.pendingApprovals, icon: Clock, color: 'amber' as const, href: '/visits?status=pending' },
         { title: 'Checked In', value: stats.checkedIn, icon: UserCheck, color: 'green' as const, href: '/visits?status=checked_in' },
@@ -423,356 +433,374 @@ export default function DashboardPage() {
       ]
   }
 
-  return (
-    <div className="flex h-screen bg-gray-50">
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
+  const isAdmin = userRole === 'Admin'
+  const isSecurity = userRole === 'Security'
+  const isReceptionist = userRole === 'Receptionist'
+  const showAllSections = isAdmin
+  const showSecurityOnly = isSecurity && !isAdmin
+  const showOperational = isReceptionist && !isAdmin
 
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-white border-r border-gray-200 transition-transform duration-200 ease-in-out lg:relative lg:translate-x-0 flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
-      >
-        <div className="flex items-center gap-2 p-4 border-b border-gray-200 flex-shrink-0">
-          <ShieldCheck className="h-8 w-8 text-blue-600" />
-          <span className="text-xl font-bold text-gray-900">VMS Admin</span>
-        </div>
-        <nav className="flex-1 overflow-y-auto p-4">
-          {NAV_SECTIONS.map((section) => {
-            const items = getNavItems(section.items)
-            if (items.length === 0) return null
-            return (
-              <div key={section.title} className="mb-6">
-                <h3 className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">{section.title}</h3>
-                <ul className="space-y-1">
-                  {items.map((item) => (
-                    <li key={item.label}>
-                      <a href={item.href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors">
-                        <item.icon className="h-5 w-5" />
-                        {item.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )
-          })}
-        </nav>
-        <div className="flex-shrink-0 p-4 border-t border-gray-200">
-          <button onClick={handleLogout} className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
-            <LogOut className="h-5 w-5" />
-            Logout
-          </button>
-        </div>
-      </aside>
+  return (
+    <div className="flex h-screen bg-gray-50/50">
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        userRole={userRole}
+        userEmail={userEmail}
+        onLogout={handleLogout}
+        currentPath="/dashboard"
+      />
 
       <div className="flex flex-1 flex-col min-w-0">
-        <header className="sticky top-0 z-30 flex items-center justify-between bg-white border-b border-gray-200 px-4 py-3 lg:px-6">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 rounded-md hover:bg-gray-100">
-              <Menu className="h-5 w-5" />
-            </button>
-            <h1 className="text-lg font-semibold text-gray-900">Executive Dashboard</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            <select
-              value={filters.range}
-              onChange={(e) => setFilters({ ...filters, range: e.target.value as DashboardFilters['range'] })}
-              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {FILTERS.map(f => (
-                <option key={f.value} value={f.value}>{f.label}</option>
-              ))}
-            </select>
-            <NotificationBell />
-            <div className="hidden sm:block text-right">
-              <p className="text-sm font-medium text-gray-900">{userEmail}</p>
-              <p className="text-xs text-gray-500 capitalize">{userRole}</p>
-            </div>
-            <div className="h-9 w-9 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-semibold text-white">{userRole.charAt(0).toUpperCase()}</span>
-            </div>
-          </div>
-        </header>
+        <DashboardHeader
+          userEmail={userEmail}
+          userRole={userRole}
+          filters={filters}
+          onFilterChange={(newFilters) => setFilters(newFilters as DashboardFilters)}
+          onExport={handleExportDashboard}
+          exporting={exporting}
+        />
 
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="mx-auto max-w-7xl space-y-6">
-            {/* Executive Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {renderStatCards().map((stat) => (
-                <StatCard
-                  key={stat.title}
-                  title={stat.title}
-                  value={stat.value.toString()}
-                  icon={stat.icon}
-                  color={stat.color}
-                  trend={stat.trend}
-                  onClick={stat.href ? () => { router.push(stat.href) } : undefined}
-                />
-              ))}
-            </div>
+             <motion.div
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               transition={{ staggerChildren: 0.05, delayChildren: 0.1 }}
+               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+             >
+               {renderStatCards().map((stat, index) => (
+                 <StatCard
+                   key={stat.title}
+                   title={stat.title}
+                   value={stat.value.toString()}
+                   icon={stat.icon}
+                   color={stat.color}
+                   trend={stat.trend}
+                   onClick={stat.href ? () => { router.push(stat.href) } : undefined}
+                   index={index}
+                 />
+               ))}
+             </motion.div>
 
-             {/* Activity Feed + Notifications */}
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-               <div className="lg:col-span-2">
-                 <ActivityFeed activities={activity} />
-               </div>
-               <div className="space-y-6">
-                 <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                   <div className="p-4 lg:p-6 border-b border-gray-200 flex items-center justify-between">
-                     <div>
-                       <h2 className="text-lg font-semibold text-gray-900">Recent Notifications</h2>
-                       <p className="text-sm text-gray-500">Latest 10 notifications</p>
-                     </div>
-                     <a href="/notifications" className="text-sm text-blue-600 hover:text-blue-700 font-medium">View All</a>
-                   </div>
-                   <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
-                     {recentNotifications.length === 0 ? (
-                       <div className="p-6 text-center text-gray-500 text-sm">No notifications</div>
-                     ) : (
-                       recentNotifications.slice(0, 10).map((n: any) => (
-                         <div key={n.id} className={`p-4 ${n.is_read ? 'bg-white' : 'bg-blue-50'}`}>
-                           <div className="flex items-start justify-between">
-                             <div className="flex-1 min-w-0">
-                               <p className={`text-sm font-medium truncate ${n.is_read ? 'text-gray-700' : 'text-gray-900'}`}>{n.title}</p>
-                               <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
-                             </div>
-                             <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                           </div>
-                         </div>
-                       ))
-                     )}
-                   </div>
+             <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden mt-6">
+               <div className="p-4 lg:p-6 border-b border-gray-200 flex items-center justify-between cursor-pointer"
+                    onClick={() => router.push('/documents?verification_status=Pending')}>
+                 <div>
+                   <h2 className="text-lg font-semibold text-gray-900">Pending Documents</h2>
+                   <p className="text-sm text-gray-500">{pendingDocuments.length} documents awaiting verification</p>
                  </div>
-                 <SecurityPanel alerts={securityAlerts} />
+                 <Clock className="h-5 w-5 text-amber-600" />
+               </div>
+               <div className="divide-y divide-gray-100">
+                 {pendingDocuments.length === 0 ? (
+                   <div className="p-8 text-center text-gray-500">
+                     <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                     <p>No pending documents</p>
+                   </div>
+                 ) : (
+                   pendingDocuments.map((doc) => (
+                     <div key={doc.id} className="p-4 hover:bg-gray-50 transition-colors">
+                       <div className="flex items-center gap-4">
+                         {doc.photo_url ? (
+                           <img src={doc.photo_url} alt={doc.visitor_name} className="h-10 w-10 rounded-full object-cover" />
+                         ) : (
+                           <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                             <User className="h-5 w-5 text-gray-400" />
+                           </div>
+                         )}
+                         <div className="flex-1 min-w-0">
+                           <p className="font-medium text-gray-900">{doc.visitor_name}</p>
+                           <p className="text-sm text-gray-500 line-clamp-1">{doc.document_type} • {doc.document_number}</p>
+                           {doc.organization && <p className="text-xs text-gray-400">{doc.organization}</p>}
+                         </div>
+                         <div className="text-right">
+                           <Clock className="h-4 w-4 text-amber-600 inline-block mb-1" />
+                           <p className="text-xs text-gray-500">{new Date(doc.created_at).toLocaleDateString()}</p>
+                         </div>
+                       </div>
+                     </div>
+                   ))
+                 )}
                </div>
              </div>
 
-            {/* Pending Online Registrations */}
-            {pendingOnlineRegistrations.length > 0 && (
-              <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-                <div className="p-4 lg:p-6 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">Pending Online Registrations</h2>
-                  <p className="text-sm text-gray-500">Review and approve visitor self-registrations</p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-200 bg-gray-50">
-                        <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
-                        <th className="px-4 py-3 font-semibold text-gray-700">Registration #</th>
-                        <th className="px-4 py-3 font-semibold text-gray-700">Submitted</th>
-                        <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
-                        <th className="px-4 py-3 font-semibold text-gray-700">Purpose</th>
-                        <th className="px-4 py-3 font-semibold text-gray-700 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {pendingOnlineRegistrations.map((reg) => (
-                        <tr key={reg.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 font-medium text-gray-900">{reg.full_name}</td>
-                          <td className="px-4 py-3 font-mono text-gray-600">{reg.registration_number}</td>
-                          <td className="px-4 py-3 text-gray-600">{new Date(reg.created_at).toLocaleString()}</td>
-                          <td className="px-4 py-3 text-gray-600">{reg.employee?.full_name || '—'}</td>
-                          <td className="px-4 py-3 text-gray-600">{reg.purpose || '—'}</td>
-                          <td className="px-4 py-3 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <button onClick={() => router.push(`/reception/badge-preview/${reg.id}`)} className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 min-h-[36px]">Preview Badge</button>
-                               <button onClick={async () => { const reason = prompt('Rejection reason:'); if (reason === null) return; const headers = await getAuthHeaders(); await fetch('/api/public/registrations', { method: 'POST', headers, body: JSON.stringify({ visit_id: reg.id, action: 'reject', reason }) }); window.location.reload() }} className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 min-h-[36px]">Reject</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                <ActivityFeed activities={activity} />
+                <QuickActions />
               </div>
-            )}
+              <div className="space-y-6">
+                <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+                  <div className="p-4 lg:p-6 border-b border-gray-200 flex items-center justify-between">
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900">Recent Notifications</h2>
+                      <p className="text-sm text-gray-500">Latest 10 notifications</p>
+                    </div>
+                    <a href="/notifications" className="text-sm text-blue-600 hover:text-blue-700 font-medium">View All</a>
+                  </div>
+                  <div className="divide-y divide-gray-100 max-h-96 overflow-y-auto">
+                    {recentNotifications.length === 0 ? (
+                      <div className="p-8 text-center text-gray-500 text-sm">No notifications</div>
+                    ) : (
+                      recentNotifications.slice(0, 10).map((n: any) => (
+                        <div key={n.id} className={`p-4 hover:bg-gray-50 transition-colors ${n.is_read ? 'bg-white' : 'bg-blue-50'}`}>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-medium truncate ${n.is_read ? 'text-gray-700' : 'text-gray-900'}`}>{n.title}</p>
+                              <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
+                            </div>
+                            <span className="text-xs text-gray-400 ml-2 flex-shrink-0">{new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+                <SecurityPanel alerts={securityAlerts} />
+              </div>
+            </div>
+
+            <RecentVisitors visitors={recentVisitors} />
+
+            <ActivityTimeline events={activity.slice(0, 10).map(a => ({
+              id: a.id,
+              time: new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              title: a.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+              description: a.details,
+              type: a.action.includes('checkin') ? 'checkin' : a.action.includes('checkout') ? 'checkout' : a.action.includes('approve') ? 'approval' : a.action.includes('badge') ? 'badge' : a.action.includes('security') || a.action.includes('alert') ? 'security' : 'registration',
+            }))} />
+
+             {/* Pending Online Registrations */}
+             {pendingOnlineRegistrations.length > 0 && (
+               <motion.div
+                 initial={{ opacity: 0, y: 20 }}
+                 animate={{ opacity: 1, y: 0 }}
+                 className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden"
+               >
+                 <div className="p-4 lg:p-6 border-b border-gray-200">
+                   <h2 className="text-lg font-semibold text-gray-900">Pending Online Registrations</h2>
+                   <p className="text-sm text-gray-500">Review and approve visitor self-registrations</p>
+                 </div>
+                 <div className="overflow-x-auto">
+                   <table className="w-full text-left text-sm">
+                     <thead>
+                       <tr className="border-b border-gray-200 bg-gray-50">
+                         <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
+                         <th className="px-4 py-3 font-semibold text-gray-700">Registration #</th>
+                         <th className="px-4 py-3 font-semibold text-gray-700">Submitted</th>
+                         <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
+                         <th className="px-4 py-3 font-semibold text-gray-700">Purpose</th>
+                         <th className="px-4 py-3 font-semibold text-gray-700 text-right">Actions</th>
+                       </tr>
+                     </thead>
+                     <tbody className="divide-y divide-gray-100">
+                       {pendingOnlineRegistrations.map((reg) => (
+                         <tr key={reg.id} className="hover:bg-gray-50 transition-colors">
+                           <td className="px-4 py-3 font-medium text-gray-900">{reg.full_name}</td>
+                           <td className="px-4 py-3 font-mono text-gray-600">{reg.registration_number}</td>
+                           <td className="px-4 py-3 text-gray-600">{new Date(reg.created_at).toLocaleString()}</td>
+                           <td className="px-4 py-3 text-gray-600">{reg.employee?.full_name || '—'}</td>
+                           <td className="px-4 py-3 text-gray-600">{reg.purpose || '—'}</td>
+                           <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button onClick={() => router.push('/reception/badge-preview/' + reg.id)} className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 min-h-[36px]">Preview Badge</button>
+                                 <button onClick={async () => { const reason = prompt('Rejection reason:'); if (reason === null) return; const headers = await getAuthHeaders(); await fetch('/api/public/registrations', { method: 'POST', headers, body: JSON.stringify({ visit_id: reg.id, action: 'reject', reason }) }); window.location.reload() }} className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 min-h-[36px]">Reject</button>
+                              </div>
+                           </td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               </motion.div>
+             )}
 
              {/* Appointment Analytics */}
-            {showAllSections && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900">Appointment Analytics</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-                  <StatCard title="Today's Appointments" value={appointmentsToday.toString()} icon={Calendar} color="blue" onClick={() => router.push('/appointments')} />
-                  <StatCard title="Arrived" value="0" icon={UserCheck} color="amber" onClick={() => router.push('/appointments?status=Arrived')} />
-                  <StatCard title="Checked In" value="0" icon={CheckCircle} color="green" onClick={() => router.push('/appointments?status=Checked In')} />
-                  <StatCard title="Completed" value="0" icon={CheckCircle2} color="green" onClick={() => router.push('/appointments?status=Completed')} />
-                  <StatCard title="Cancelled" value="0" icon={XCircle} color="red" onClick={() => router.push('/appointments?status=Cancelled')} />
-                  <StatCard title="No Shows" value="0" icon={XCircle} color="orange" onClick={() => router.push('/appointments?status=No Show')} />
-                </div>
-              </div>
-            )}
+             {showAllSections && (
+               <div className="space-y-6">
+                 <h2 className="text-xl font-bold text-gray-900">Appointment Analytics</h2>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+                   <StatCard title="Today's Appointments" value={appointmentsToday.toString()} icon={Calendar} color="blue" onClick={() => router.push('/appointments')} />
+                   <StatCard title="Arrived" value="0" icon={UserCheck} color="amber" onClick={() => router.push('/appointments?status=Arrived')} />
+                   <StatCard title="Checked In" value="0" icon={CheckCircle} color="green" onClick={() => router.push('/appointments?status=Checked In')} />
+                   <StatCard title="Completed" value="0" icon={CheckCircle2} color="green" onClick={() => router.push('/appointments?status=Completed')} />
+                   <StatCard title="Cancelled" value="0" icon={XCircle} color="red" onClick={() => router.push('/appointments?status=Cancelled')} />
+                   <StatCard title="No Shows" value="0" icon={XCircle} color="orange" onClick={() => router.push('/appointments?status=No Show')} />
+                 </div>
+               </div>
+             )}
 
              {/* Visitor Analytics */}
-            {showAllSections && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900">Visitor Analytics</h2>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <ChartCard title="Visitors by Day" subtitle="Last 30 days">
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={visitorsByDay}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartCard>
-                  <ChartCard title="Visitors by Month" subtitle="Current year">
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={visitorsByMonth}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartCard>
-                  <ChartCard title="By Department">
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie data={visitorsByDepartment} cx="50%" cy="50%" outerRadius={80} dataKey="count" label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}>
-                          {visitorsByDepartment.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </ChartCard>
-                  <ChartCard title="By Host Employee">
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={visitorsByHost} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" tick={{ fontSize: 12 }} />
-                        <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={100} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartCard>
-                  <ChartCard title="By Company">
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={visitorsByCompany} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" tick={{ fontSize: 12 }} />
-                        <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={100} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#ec4899" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartCard>
-                  <ChartCard title="By Purpose">
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={visitorsByPurpose}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartCard>
-                </div>
-              </div>
-            )}
+             {showAllSections && (
+               <div className="space-y-6">
+                 <h2 className="text-xl font-bold text-gray-900">Visitor Analytics</h2>
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                   <ChartCard title="Visitors by Day" subtitle="Last 30 days">
+                     <ResponsiveContainer width="100%" height={300}>
+                       <BarChart data={visitorsByDay}>
+                         <CartesianGrid strokeDasharray="3 3" />
+                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                         <YAxis tick={{ fontSize: 12 }} />
+                         <Tooltip />
+                         <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                       </BarChart>
+                     </ResponsiveContainer>
+                   </ChartCard>
+                   <ChartCard title="Visitors by Month" subtitle="Current year">
+                     <ResponsiveContainer width="100%" height={300}>
+                       <BarChart data={visitorsByMonth}>
+                         <CartesianGrid strokeDasharray="3 3" />
+                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                         <YAxis tick={{ fontSize: 12 }} />
+                         <Tooltip />
+                         <Bar dataKey="count" fill="#10b981" radius={[4, 4, 0, 0]} />
+                       </BarChart>
+                     </ResponsiveContainer>
+                   </ChartCard>
+                   <ChartCard title="By Department">
+                     <ResponsiveContainer width="100%" height={300}>
+                       <PieChart>
+                         <Pie data={visitorsByDepartment} cx="50%" cy="50%" outerRadius={80} dataKey="count" label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}>
+                           {visitorsByDepartment.map((entry, index) => (
+                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                           ))}
+                         </Pie>
+                         <Tooltip />
+                       </PieChart>
+                     </ResponsiveContainer>
+                   </ChartCard>
+                   <ChartCard title="By Host Employee">
+                     <ResponsiveContainer width="100%" height={300}>
+                       <BarChart data={visitorsByHost} layout="vertical">
+                         <CartesianGrid strokeDasharray="3 3" />
+                         <XAxis type="number" tick={{ fontSize: 12 }} />
+                         <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={100} />
+                         <Tooltip />
+                         <Bar dataKey="count" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+                       </BarChart>
+                     </ResponsiveContainer>
+                   </ChartCard>
+                   <ChartCard title="By Company">
+                     <ResponsiveContainer width="100%" height={300}>
+                       <BarChart data={visitorsByCompany} layout="vertical">
+                         <CartesianGrid strokeDasharray="3 3" />
+                         <XAxis type="number" tick={{ fontSize: 12 }} />
+                         <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={100} />
+                         <Tooltip />
+                         <Bar dataKey="count" fill="#ec4899" radius={[0, 4, 4, 0]} />
+                       </BarChart>
+                     </ResponsiveContainer>
+                   </ChartCard>
+                   <ChartCard title="By Purpose">
+                     <ResponsiveContainer width="100%" height={300}>
+                       <BarChart data={visitorsByPurpose}>
+                         <CartesianGrid strokeDasharray="3 3" />
+                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                         <YAxis tick={{ fontSize: 12 }} />
+                         <Tooltip />
+                         <Bar dataKey="count" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                       </BarChart>
+                     </ResponsiveContainer>
+                   </ChartCard>
+                 </div>
+               </div>
+             )}
 
              {/* Badge Analytics */}
-            {showAllSections && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900">Badge Analytics</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                  <StatCard title="Generated" value={stats.badgesGenerated.toString()} icon={Printer} color="blue" />
-                  <StatCard title="Printed" value={stats.badgesPrinted.toString()} icon={Printer} color="green" />
-                  <StatCard title="Reprints" value={stats.badgesReprinted.toString()} icon={RefreshCw} color="amber" />
-                  <StatCard title="Cancelled" value={stats.cancelledBadges.toString()} icon={XCircle} color="red" />
-                  <StatCard title="Expired" value={stats.expiredBadges.toString()} icon={ShieldAlert} color="orange" />
-                </div>
-                <ChartCard title="Badge Status Distribution">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie data={badgeStatusDistribution} cx="50%" cy="50%" outerRadius={80} dataKey="count" label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}>
-                        {badgeStatusDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </ChartCard>
-              </div>
-            )}
+             {showAllSections && (
+               <div className="space-y-6">
+                 <h2 className="text-xl font-bold text-gray-900">Badge Analytics</h2>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                   <StatCard title="Generated" value={stats.badgesGenerated.toString()} icon={Printer} color="blue" />
+                   <StatCard title="Printed" value={stats.badgesPrinted.toString()} icon={Printer} color="green" />
+                   <StatCard title="Reprints" value={stats.badgesReprinted.toString()} icon={RefreshCw} color="amber" />
+                   <StatCard title="Cancelled" value={stats.cancelledBadges.toString()} icon={XCircle} color="red" />
+                   <StatCard title="Expired" value={stats.expiredBadges.toString()} icon={ShieldAlert} color="orange" />
+                 </div>
+                 <ChartCard title="Badge Status Distribution">
+                   <ResponsiveContainer width="100%" height={300}>
+                     <PieChart>
+                       <Pie data={badgeStatusDistribution} cx="50%" cy="50%" outerRadius={80} dataKey="count" label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}>
+                         {badgeStatusDistribution.map((entry, index) => (
+                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                         ))}
+                       </Pie>
+                       <Tooltip />
+                     </PieChart>
+                   </ResponsiveContainer>
+                 </ChartCard>
+               </div>
+             )}
 
-            {/* Assets & Property Analytics */}
-            {showAllSections && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900">Assets & Property Analytics</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <StatCard title="Items Inside" value={propertyStats.itemsInside.toString()} icon={ShieldCheck} color="green" onClick={() => router.push('/assets')} />
-                  <StatCard title="Confiscated" value={propertyStats.confiscatedItems.toString()} icon={AlertTriangle} color="red" onClick={() => router.push('/assets')} />
-                  <StatCard title="Pending Release" value={propertyStats.pendingRelease.toString()} icon={Clock} color="amber" onClick={() => router.push('/assets')} />
-                  <StatCard title="Released Today" value={propertyStats.releasedToday.toString()} icon={CheckCircle} color="blue" onClick={() => router.push('/assets')} />
-                </div>
-              </div>
-            )}
+             {/* Assets & Property Analytics */}
+             {showAllSections && (
+               <div className="space-y-6">
+                 <h2 className="text-xl font-bold text-gray-900">Assets & Property Analytics</h2>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                   <StatCard title="Items Inside" value={propertyStats.itemsInside.toString()} icon={ShieldCheck} color="green" onClick={() => router.push('/assets')} />
+                   <StatCard title="Confiscated" value={propertyStats.confiscatedItems.toString()} icon={AlertTriangle} color="red" onClick={() => router.push('/assets')} />
+                   <StatCard title="Pending Release" value={propertyStats.pendingRelease.toString()} icon={Clock} color="amber" onClick={() => router.push('/assets')} />
+                   <StatCard title="Released Today" value={propertyStats.releasedToday.toString()} icon={CheckCircle} color="blue" onClick={() => router.push('/assets')} />
+                 </div>
+               </div>
+             )}
 
-            {/* Employee Analytics */}
-            {showAllSections && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900">Employee Analytics</h2>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <ChartCard title="Employees by Department">
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={employeesByDepartment}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                        <YAxis tick={{ fontSize: 12 }} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartCard>
-                  <ChartCard title="Visitors by Host">
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={visitorsByHost} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis type="number" tick={{ fontSize: 12 }} />
-                        <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={100} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartCard>
-                </div>
-              </div>
-            )}
+             {/* Employee Analytics */}
+             {showAllSections && (
+               <div className="space-y-6">
+                 <h2 className="text-xl font-bold text-gray-900">Employee Analytics</h2>
+                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                   <ChartCard title="Employees by Department">
+                     <ResponsiveContainer width="100%" height={300}>
+                       <BarChart data={employeesByDepartment}>
+                         <CartesianGrid strokeDasharray="3 3" />
+                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                         <YAxis tick={{ fontSize: 12 }} />
+                         <Tooltip />
+                         <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                       </BarChart>
+                     </ResponsiveContainer>
+                   </ChartCard>
+                   <ChartCard title="Visitors by Host">
+                     <ResponsiveContainer width="100%" height={300}>
+                       <BarChart data={visitorsByHost} layout="vertical">
+                         <CartesianGrid strokeDasharray="3 3" />
+                         <XAxis type="number" tick={{ fontSize: 12 }} />
+                         <YAxis dataKey="name" type="category" tick={{ fontSize: 11 }} width={100} />
+                         <Tooltip />
+                         <Bar dataKey="count" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
+                       </BarChart>
+                     </ResponsiveContainer>
+                   </ChartCard>
+                 </div>
+               </div>
+             )}
 
-            {/* Export Section */}
-            {showAllSections && (
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Export Dashboard</h3>
-                    <p className="text-sm text-gray-500">Download current dashboard view</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => handleExportDashboard('csv')} disabled={exporting} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors">
-                      CSV
-                    </button>
-                    <button onClick={() => handleExportDashboard('excel')} disabled={exporting} className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors">
-                      <Download className="h-4 w-4" />
-                      Excel
-                    </button>
-                    <button onClick={() => handleExportDashboard('pdf')} disabled={exporting} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">
-                      <Download className="h-4 w-4" />
-                      PDF
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
+             {/* Export Section */}
+             {showAllSections && (
+               <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
+                 <div className="flex items-center justify-between">
+                   <div>
+                     <h3 className="text-lg font-semibold text-gray-900">Export Dashboard</h3>
+                     <p className="text-sm text-gray-500">Download current dashboard view</p>
+                   </div>
+                   <div className="flex items-center gap-2">
+                     <button onClick={() => handleExportDashboard('csv')} disabled={exporting} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors">
+                       CSV
+                     </button>
+                     <button onClick={() => handleExportDashboard('excel')} disabled={exporting} className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors">
+                       <Download className="h-4 w-4" />
+                       Excel
+                     </button>
+                     <button onClick={() => handleExportDashboard('pdf')} disabled={exporting} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">
+                       <Download className="h-4 w-4" />
+                       PDF
+                     </button>
+                   </div>
+                 </div>
+               </div>
+             )}
           </div>
         </main>
       </div>

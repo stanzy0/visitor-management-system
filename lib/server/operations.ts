@@ -194,9 +194,9 @@ export async function getOperationsKpis(): Promise<OperationsKpis> {
   const approvedWaitingCheckIn = Math.max(0, approvedCount - approvedWithBadgeNotPrinted)
 
   const pendingDocVerifications = await supabaseAdmin
-    .from('document_verifications')
-    .select('visit_id', { count: 'exact', head: true })
-    .eq('status', 'Pending')
+    .from('visitor_documents')
+    .select('id', { count: 'exact', head: true })
+    .eq('verification_status', 'Pending')
 
   const visitorsLeavingToday = checkedOutTodayRes.count || 0
 
@@ -420,9 +420,9 @@ export async function getWaitingQueues(): Promise<{
   }))
 
   const documentQueue = await supabaseAdmin
-    .from('document_verifications')
-    .select('id, visit_id, status, created_at, visitor:visitors(full_name, visitor_organization), visit:visits(employee:employees(full_name, department))')
-    .eq('status', 'Pending')
+    .from('visitor_documents')
+    .select('id, visit_id, verification_status, created_at, visitor:visitors(full_name, visitor_organization)')
+    .eq('verification_status', 'Pending')
     .order('created_at', { ascending: true })
     .limit(20)
 
@@ -433,7 +433,7 @@ export async function getWaitingQueues(): Promise<{
     host: typeof d.visit?.employee === 'object' ? d.visit.employee?.full_name : null,
     department: typeof d.visit?.employee === 'object' ? d.visit.employee?.department : null,
     waiting_since: d.created_at,
-    status: d.status,
+    status: d.verification_status,
   }))
 
   const exitQueue = await supabaseAdmin

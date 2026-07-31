@@ -85,8 +85,8 @@ export default function GateCheckInPage() {
         }
 
         const { getDocumentVerifications } = await import('@/lib/server/document-verification')
-        const verifications = await getDocumentVerifications({ status: 'all', search: '', document_type: '', date_from: '', date_to: '' }, 100, 0)
-        const pendingVerifications = verifications.data.filter(v => v.visit_id === selectedVisit.id && ['Pending', 'Rejected', 'Replacement Requested'].includes(v.status))
+        const verifications = await getDocumentVerifications({ verification_status: 'all', search: '', document_type: '', date_from: '', date_to: '' }, 100, 0)
+        const pendingVerifications = verifications.data.filter(v => v.visit_id === selectedVisit.id && ['Pending', 'Rejected', 'Replacement Requested'].includes(v.verification_status))
         if (pendingVerifications.length > 0) {
           console.error(`Cannot approve: pending document verifications (${pendingVerifications.map(v => v.document_type).join(', ')})`)
           setProcessing(false)

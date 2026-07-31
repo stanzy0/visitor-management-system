@@ -14,8 +14,8 @@ export async function GET() {
     }
 
     const { data, error } = await supabaseAdmin
-      .from('document_verifications')
-      .select('status, created_at')
+      .from('visitor_documents')
+      .select('verification_status, created_at')
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
@@ -32,18 +32,19 @@ export async function GET() {
       today_reviews: 0,
     }
 
-    data?.forEach((item: { status: string; created_at: string }) => {
-      if (item.status === 'Pending') stats.pending++
-      else if (item.status === 'Approved') stats.approved++
-      else if (item.status === 'Rejected') stats.rejected++
-      else if (item.status === 'Replacement Requested') stats.replacement_requested++
-      else if (item.status === 'Reuploaded') stats.reuploaded++
+    data?.forEach((item: { verification_status: string; created_at: string }) => {
+      if (item.verification_status === 'Pending') stats.pending++
+      else if (item.verification_status === 'Verified') stats.approved++
+      else if (item.verification_status === 'Rejected') stats.rejected++
+      else if (item.verification_status === 'Replacement Requested') stats.replacement_requested++
+      else if (item.verification_status === 'Reuploaded') stats.reuploaded++
 
       if (item.created_at.startsWith(today)) stats.today_reviews++
     })
 
     return NextResponse.json({ success: true, data: stats })
-  } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  } catch (err) {
+    console.error('Documents stats error:', err)
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Internal server error' }, { status: 500 })
   }
 }

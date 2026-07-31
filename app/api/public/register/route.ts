@@ -125,16 +125,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: visitError?.message || 'Failed to create visit' }, { status: 500 })
     }
 
-    if (doc_number) {
-      await supabaseAdmin.from('visitor_documents').insert({
+    if (doc_number && doc_front_url) {
+      const { error: docError } = await supabaseAdmin.from('visitor_documents').insert({
         visitor_id: visitor.id,
         document_type: doc_type || 'National ID',
         document_number: doc_number,
         issuing_country: issuing_country || null,
         expiry_date: expiry_date || null,
-        file_url: doc_front_url || null,
+        front_image_url: doc_front_url,
+        file_url: doc_front_url,
+        back_image_url: doc_back_url || null,
+        verified: false,
         verification_status: 'Pending',
+        uploaded_by: visitor.id,
       })
+      if (docError) {
+        console.error('Visitor document insert error:', docError)
+      }
     }
 
     await sendEmail({

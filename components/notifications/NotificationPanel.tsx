@@ -57,7 +57,7 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
   }
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/notifications?id=${id}`, { method: 'DELETE', headers: await getAuthHeaders() })
+    await fetch(`/api/notifications/${id}`, { method: 'DELETE', headers: await getAuthHeaders() })
     fetchNotifications()
     onUpdate()
   }

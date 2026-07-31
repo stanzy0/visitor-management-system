@@ -127,7 +127,7 @@ export async function getSystemKpis(): Promise<SystemKpis> {
     supabaseAdmin.from('appointments').select('id', { count: 'exact', head: true }).eq('status', 'Scheduled'),
     supabaseAdmin.from('visitor_badges').select('id', { count: 'exact', head: true }).eq('badge_status', 'Active'),
     supabaseAdmin.from('notifications').select('id', { count: 'exact', head: true }).eq('is_read', false),
-    supabaseAdmin.from('document_verifications').select('id', { count: 'exact', head: true }).eq('status', 'Pending'),
+    supabaseAdmin.from('visitor_documents').select('id', { count: 'exact', head: true }).eq('verification_status', 'Pending'),
     supabaseAdmin.from('visits').select('id', { count: 'exact', head: true }).eq('source', 'public').eq('status', 'pending'),
     supabaseAdmin.from('security_alerts').select('id', { count: 'exact', head: true }).eq('is_resolved', false),
     supabaseAdmin.from('system_jobs').select('id', { count: 'exact', head: true }).eq('status', 'running'),

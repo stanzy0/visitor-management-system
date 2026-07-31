@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { markNotificationAsRead, markAllNotificationsAsRead, deleteNotification, deleteReadNotifications } from '@/lib/server/notifications'
+import { markNotificationAsRead, markAllNotificationsAsRead, deleteNotification } from '@/lib/server/notifications'
 import { getCurrentUser } from '@/lib/auth'
 
-export async function PUT(request: NextRequest) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const user = await getCurrentUser()
     if (!user) {
@@ -10,15 +13,16 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { action, notificationId } = body
+    const { action } = body
+    const { id } = await params
 
     if (action === 'mark_all_read') {
       const success = await markAllNotificationsAsRead(user.id, user.role)
       return NextResponse.json({ success })
     }
 
-    if (action === 'mark_read' && notificationId) {
-      const success = await markNotificationAsRead(notificationId)
+    if (action === 'mark_read') {
+      const success = await markNotificationAsRead(id)
       return NextResponse.json({ success })
     }
 
@@ -29,28 +33,19 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const notificationId = searchParams.get('id')
-    const clearRead = searchParams.get('clear_read')
-
-    if (clearRead === 'true') {
-      const success = await deleteReadNotifications(user.id, user.role)
-      return NextResponse.json({ success })
-    }
-
-    if (notificationId) {
-      const success = await deleteNotification(notificationId)
-      return NextResponse.json({ success })
-    }
-
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    const { id } = await params
+    const success = await deleteNotification(id)
+    return NextResponse.json({ success })
   } catch (err) {
     console.error('Notification delete error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

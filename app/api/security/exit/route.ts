@@ -4,6 +4,16 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { createGateActivity, createSecurityDecision } from '@/lib/server/security'
 import { logAuditAction } from '@/lib/server/audit'
 import { getCurrentUser } from '@/lib/auth'
+import { sendEmail } from '@/lib/server/email'
+
+function calculateDuration(checkInTime: string): string {
+  const checkIn = new Date(checkInTime)
+  const now = new Date()
+  const diffMs = now.getTime() - checkIn.getTime()
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
+  return `${diffHours}h ${diffMinutes}m`
+}
 
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(['Security', 'Admin', 'Receptionist'])
@@ -156,6 +166,44 @@ export async function POST(request: NextRequest) {
           description: `Visitor overstayed by ${overstay_minutes} minutes. ${overstay_reason || 'No reason provided'}`,
           reported_by: decidedBy,
         })
+      }
+
+      if (visit_id) {
+        const { data: visit } = await supabaseAdmin
+          .from('visits')
+          .select('*, visitor:visitors(*), employee:employees(*)')
+          .eq('id', visit_id)
+          .single()
+
+        if (visit) {
+          const currentVisit = Array.isArray(visit.visitor) ? visit.visitor[0] : visit.visitor
+          const employee = Array.isArray(visit.employee) ? visit.employee[0] : visit.employee
+
+          await supabaseAdmin
+            .from('visits')
+            .update({ status: 'checked_out', check_out_time: new Date().toISOString() })
+            .eq('id', visit_id)
+
+          if (employee?.email) {
+            await sendEmail({
+              to: employee.email,
+              recipientName: employee.full_name || 'Host',
+              subject: `Visitor Has Left - ${currentVisit?.registration_number || visit_id}`,
+              template: 'visitor_checked_out',
+              data: {
+                visitorName: currentVisit?.full_name || 'Visitor',
+                checkInTime: visit.check_in_time ? new Date(visit.check_in_time).toLocaleString() : 'N/A',
+                checkOutTime: new Date().toLocaleString(),
+                duration: visit.check_in_time ? calculateDuration(visit.check_in_time) : 'N/A',
+                purpose: visit.purpose || 'Visit',
+                hostName: employee.full_name || 'Host',
+                orgName: 'AFCSC Visitor Management',
+              },
+              relatedType: 'visit',
+              relatedId: visit_id,
+            })
+          }
+        }
       }
     }
 

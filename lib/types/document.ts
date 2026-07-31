@@ -1,6 +1,7 @@
 export interface VisitorDocument {
   id: string
   visitor_id: string
+  visit_id?: string | null
   document_type: DocumentType
   document_number: string
   issuing_country: string | null
@@ -13,14 +14,19 @@ export interface VisitorDocument {
   file_size: number | null
   verification_status: VerificationStatus
   verification_notes: string | null
+  verified: boolean
   verified_by: string | null
   verified_at: string | null
+  replacement_requested: boolean
+  replacement_uploaded: boolean
   uploaded_by: string | null
   created_at: string
   updated_at: string
   visitor?: {
     full_name: string
     email: string
+    visitor_organization?: string | null
+    photo_url?: string | null
   }
 }
 

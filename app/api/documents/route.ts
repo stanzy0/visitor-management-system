@@ -1,9 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth'
 import { logAuditAction } from '@/lib/client/audit'
 import { VisitorDocument, DOCUMENT_TYPES, ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '@/lib/types/document'
 import { createAdminNotification, createReceptionistNotification, createHostNotification, createSystemNotification } from '@/lib/notifications'
+
+function mapToDocumentVerification(doc: any) {
+  return {
+    id: doc.id,
+    visitor_id: doc.visitor_id,
+    visit_id: doc.visit_id || null,
+    document_type: doc.document_type,
+    document_number: doc.document_number || null,
+    document_url: doc.front_image_url || doc.file_url || null,
+    back_image_url: doc.back_image_url || null,
+    status: doc.verification_status,
+    approved_by: doc.verified_by || null,
+    approved_at: doc.verified_at || null,
+    rejected_reason: doc.verification_notes || null,
+    replacement_requested: doc.replacement_requested || false,
+    replacement_uploaded: doc.replacement_uploaded || false,
+    created_at: doc.created_at,
+    updated_at: doc.updated_at,
+    visitor: doc.visitor,
+    visit: doc.visit || null,
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,19 +34,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+    }
+
     const { searchParams } = new URL(request.url)
     const visitorId = searchParams.get('visitor_id')
     const documentType = searchParams.get('document_type')
-    const verificationStatus = searchParams.get('verification_status')
+    const verificationStatus = searchParams.get('verification_status') || searchParams.get('status')
     const search = searchParams.get('search')
+    const department = searchParams.get('department')
+    const employee = searchParams.get('employee')
+    const dateFrom = searchParams.get('date_from')
+    const dateTo = searchParams.get('date_to')
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('visitor_documents')
       .select(`
         *,
-        visitor:visitors(full_name, email)
+        visitor:visitors(full_name, email, visitor_organization, photo_url)
       `)
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1)
@@ -33,8 +63,10 @@ export async function GET(request: NextRequest) {
     if (documentType) query = query.eq('document_type', documentType)
     if (verificationStatus) query = query.eq('verification_status', verificationStatus)
     if (search) {
-      query = query.or(`document_number.ilike.%${search}%,visitors.full_name.ilike.%${search}%`)
+      query = query.or(`document_number.ilike.%${search}%,visitors.full_name.ilike.%${search}%,visitors.visitor_organization.ilike.%${search}%`)
     }
+    if (dateFrom) query = query.gte('created_at', dateFrom)
+    if (dateTo) query = query.lte('created_at', dateTo)
 
     const { data, error, count } = await query
 
@@ -42,13 +74,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    const mappedData = (data || []).map(mapToDocumentVerification)
+
+    // Fetch visit data separately for documents that have a visit_id
+    const visitIds = [...new Set(mappedData.map(d => d.visit_id).filter(Boolean))]
+    if (visitIds.length > 0) {
+      const { data: visits } = await supabaseAdmin
+        .from('visits')
+        .select(`
+          id,
+          status,
+          employee:employees(full_name, department)
+        `)
+        .in('id', visitIds)
+
+      const visitsMap = new Map((visits || []).map((v: any) => [v.id, v]))
+      for (const doc of mappedData) {
+        if (doc.visit_id && visitsMap.has(doc.visit_id)) {
+          doc.visit = visitsMap.get(doc.visit_id)
+        }
+      }
+    }
+
     return NextResponse.json({
-      data: data as VisitorDocument[],
+      success: true,
+      count: mappedData.length,
+      data: mappedData,
       total: count ?? 0,
       limit,
       offset,
     })
-  } catch {
+  } catch (err) {
+    console.error('[Documents API] GET error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -58,6 +115,10 @@ export async function POST(request: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
     }
 
     const formData = await request.formData()
@@ -106,7 +167,7 @@ export async function POST(request: NextRequest) {
 
       const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-').replace(/-+/g, '-')
       const uniqueFileName = `${visitor_id}/${Date.now()}-${sanitizedName}`
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabaseAdmin.storage
         .from('visitor-documents')
         .upload(uniqueFileName, file, {
           contentType: file.type,
@@ -117,7 +178,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: uploadError.message }, { status: 500 })
       }
 
-      const { data: publicUrlData } = supabase.storage
+      const { data: publicUrlData } = supabaseAdmin.storage
         .from('visitor-documents')
         .getPublicUrl(uniqueFileName)
 
@@ -127,7 +188,7 @@ export async function POST(request: NextRequest) {
       file_size = file.size
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('visitor_documents')
       .insert({
         visitor_id,
@@ -136,17 +197,20 @@ export async function POST(request: NextRequest) {
         issuing_country: issuing_country || null,
         expiry_date: expiry_date || null,
         visit_id: visit_id || null,
+        front_image_url: file_url,
+        back_image_url: null,
         file_name,
         file_url,
         mime_type,
         file_size,
         notes: notes || null,
         verification_status: 'Pending',
+        verified: false,
         uploaded_by: user.id,
       })
       .select(`
         *,
-        visitor:visitors(full_name, email)
+        visitor:visitors(full_name, email, visitor_organization, photo_url)
       `)
       .single()
 
@@ -170,7 +234,7 @@ export async function POST(request: NextRequest) {
     ).catch(() => {})
 
     if (visit_id) {
-      supabase.from('visits').select('employee_id').eq('id', visit_id).single().then(({ data: visit }) => {
+      supabaseAdmin.from('visits').select('employee_id').eq('id', visit_id).single().then(({ data: visit }) => {
         if (visit?.employee_id) {
           createHostNotification(
             visit.employee_id,
@@ -184,10 +248,9 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    return NextResponse.json(data as VisitorDocument, { status: 201 })
-  } catch {
+    return NextResponse.json(mapToDocumentVerification(data), { status: 201 })
+  } catch (err) {
+    console.error('[Documents API] POST error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-
-

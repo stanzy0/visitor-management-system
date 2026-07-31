@@ -326,17 +326,17 @@ export async function getDocumentAnalytics(dateRange: string): Promise<DocumentA
 
   const { start, end } = getDateRange(dateRange)
 
-  const pending = await supabaseAdmin.from('document_verifications').select('id', { count: 'exact' }).eq('status', 'Pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
-  const rejected = await supabaseAdmin.from('document_verifications').select('id', { count: 'exact' }).eq('status', 'Rejected').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
-  const replacements = await supabaseAdmin.from('document_verifications').select('id', { count: 'exact' }).eq('status', 'Replacement Requested').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
-  const approved = await supabaseAdmin.from('document_verifications').select('created_at, approved_at').eq('status', 'Approved').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
+  const pending = await supabaseAdmin.from('visitor_documents').select('id', { count: 'exact' }).eq('verification_status', 'Pending').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
+  const rejected = await supabaseAdmin.from('visitor_documents').select('id', { count: 'exact' }).eq('verification_status', 'Rejected').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
+  const replacements = await supabaseAdmin.from('visitor_documents').select('id', { count: 'exact' }).eq('verification_status', 'Replacement Requested').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
+  const approved = await supabaseAdmin.from('visitor_documents').select('created_at, verified_at').eq('verification_status', 'Verified').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
 
   const total = (approved.data?.length || 0) + (rejected.count || 0)
   const successRate = total > 0 ? Math.round(((approved.data?.length || 0) / total) * 100) : 0
 
   let avgTime = '0h 0m'
   if (approved.data && approved.data.length > 0) {
-    const times = approved.data.filter((d: any) => d.approved_at).map((d: any) => new Date(d.approved_at).getTime() - new Date(d.created_at).getTime())
+    const times = approved.data.filter((d: any) => d.verified_at).map((d: any) => new Date(d.verified_at).getTime() - new Date(d.created_at).getTime())
     if (times.length > 0) {
       const avgMs = times.reduce((a: number, b: number) => a + b, 0) / times.length
       const hours = Math.floor(avgMs / (1000 * 60 * 60))

@@ -38,7 +38,13 @@ export async function GET(request: NextRequest) {
     data = regData
     error = regError
 
-    if (!regData) {
+    const { data: badgeData, error: badgeError } = await supabaseAdmin
+      .from('visitor_badges')
+      .select('visit_id')
+      .eq('qr_token', q)
+      .single()
+
+    if (badgeData?.visit_id) {
       const { data: qrData, error: qrError } = await supabaseAdmin
         .from('visits')
         .select(`
@@ -53,8 +59,8 @@ export async function GET(request: NextRequest) {
           employee:employees(full_name, department, office_location),
           badge:visitor_badges(badge_number, qr_token)
         `)
+        .eq('id', badgeData.visit_id)
         .eq('source', 'public')
-        .eq('badge.qr_token', q)
         .single()
 
       data = qrData

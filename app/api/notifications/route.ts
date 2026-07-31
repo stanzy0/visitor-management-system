@@ -67,3 +67,26 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const clearRead = searchParams.get('clear_read')
+
+    if (clearRead === 'true') {
+      const { deleteReadNotifications } = await import('@/lib/server/notifications')
+      const success = await deleteReadNotifications(user.id, user.role)
+      return NextResponse.json({ success })
+    }
+
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+  } catch (err) {
+    console.error('Notification delete error:', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}

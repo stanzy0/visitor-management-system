@@ -219,7 +219,7 @@ export default function OperationsPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lifecycle_events' }, () => fetchOperations())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => fetchOperations())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'property_items' }, () => fetchOperations())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'document_verifications' }, () => fetchOperations())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_documents' }, () => fetchOperations())
       .subscribe()
   }
 

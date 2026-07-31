@@ -19,6 +19,7 @@ export type EmailTemplate =
   | 'registration_submitted'
   | 'registration_approved'
   | 'registration_rejected'
+  | 'badge_ready'
 
 export interface EmailPayload {
   to: string

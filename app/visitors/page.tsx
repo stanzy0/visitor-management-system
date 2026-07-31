@@ -508,9 +508,9 @@ export default function VisitorsPage() {
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-').replace(/-+/g, '-')
     const fileName = `${prefix}-${Date.now()}-${sanitizedName}`
     try {
-      const { error } = await supabase.storage.from('visitor-photos').upload(fileName, file)
+      const { error } = await supabase.storage.from('visitor-documents').upload(fileName, file)
       if (error) throw error
-      const { data: publicUrlData } = supabase.storage.from('visitor-photos').getPublicUrl(fileName)
+      const { data: publicUrlData } = supabase.storage.from('visitor-documents').getPublicUrl(fileName)
       return publicUrlData.publicUrl
     } catch (err: unknown) {
       const errorObj = err as { message?: string }
@@ -648,7 +648,14 @@ export default function VisitorsPage() {
 
       logAuditAction('Visitor Registered', 'visitor', visitorData![0].id, `${data.full_name} registered to meet ${hostEmployee} for ${data.purpose}`)
 
-      if (data.id_verification && data.doc_number) {
+      if (data.id_verification && data.doc_number && docFrontFile) {
+        const docFrontUrl = await uploadDocumentImage(docFrontFile, 'doc-front')
+        if (!docFrontUrl) {
+          showNotification('error', 'Failed to upload front document')
+          setSubmitting(false)
+          return
+        }
+
         const docPayload: any = {
           visitor_id: visitorData![0].id,
           document_type: data.doc_type,
@@ -656,17 +663,14 @@ export default function VisitorsPage() {
           issuing_country: data.issuing_country || null,
           expiry_date: data.expiry_date || null,
           verification_notes: data.doc_notes || null,
+          front_image_url: docFrontUrl,
+          file_url: docFrontUrl,
+          file_name: docFrontFile.name,
+          mime_type: docFrontFile.type,
+          verified: false,
+          verification_status: 'Pending',
         }
 
-        if (docFrontFile) {
-          const frontUrl = await uploadDocumentImage(docFrontFile, 'doc-front')
-          if (frontUrl) {
-            docPayload.front_image_url = frontUrl
-            docPayload.file_url = frontUrl
-            docPayload.file_name = docFrontFile.name
-            docPayload.mime_type = docFrontFile.type
-          }
-        }
         if (docBackFile) {
           const backUrl = await uploadDocumentImage(docBackFile, 'doc-back')
           if (backUrl) docPayload.back_image_url = backUrl

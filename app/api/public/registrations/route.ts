@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/server/email'
 import { createHostEmployeeNotification, createSystemNotification } from '@/lib/notifications'
 import { logAuditAction } from '@/lib/server/audit'
+import { getSystemSetting } from '@/lib/server/settings'
 import QRCode from 'qrcode'
 
 export async function POST(request: NextRequest) {
@@ -78,13 +79,40 @@ export async function POST(request: NextRequest) {
           visitorName: visitor?.full_name || 'Visitor',
           registrationNumber: visit.registration_number,
           date: visit.visit_date || new Date().toISOString().split('T')[0],
+          arrivalTime: visit.arrival_time || 'TBD',
           hostName: employee?.full_name || 'Host',
+          location: employee?.office_location || 'Reception',
           qrCodeUrl: qrDataUrl,
           badgeNumber: badge.badge_number,
+          orgName: 'AFCSC Visitor Management',
         },
         relatedType: 'visit',
         relatedId: visit_id,
       })
+
+      if (employee?.email) {
+        await sendEmail({
+          to: employee.email,
+          recipientName: employee.full_name || 'Host',
+          subject: `Visitor Approval Notification - ${visit.registration_number}`,
+          template: 'registration_approved',
+          data: {
+            visitorName: visitor?.full_name || 'Visitor',
+            registrationNumber: visit.registration_number,
+            date: visit.visit_date || new Date().toISOString().split('T')[0],
+            arrivalTime: visit.arrival_time || 'TBD',
+            hostName: employee?.full_name || 'Host',
+            location: employee?.office_location || 'Reception',
+            purpose: visit.purpose || 'Visit',
+            company: visitor?.visitor_organization || 'N/A',
+            badgeNumber: badge.badge_number,
+            qrCodeUrl: qrDataUrl,
+            orgName: 'AFCSC Visitor Management',
+          },
+          relatedType: 'visit',
+          relatedId: visit_id,
+        })
+      }
 
       await createSystemNotification(
         'Registration Approved',
@@ -112,7 +140,7 @@ export async function POST(request: NextRequest) {
       await sendEmail({
         to: visitor?.email || '',
         recipientName: visitor?.full_name || 'Visitor',
-        subject: `Registration Update - ${visit.registration_number}`,
+        subject: `Registration Declined - ${visit.registration_number}`,
         template: 'registration_rejected',
         data: {
           visitorName: visitor?.full_name || 'Visitor',
@@ -120,6 +148,7 @@ export async function POST(request: NextRequest) {
           date: visit.visit_date || new Date().toISOString().split('T')[0],
           hostName: employee?.full_name || 'Host',
           reason: reason || 'Not specified',
+          orgName: 'AFCSC Visitor Management',
         },
         relatedType: 'visit',
         relatedId: visit_id,

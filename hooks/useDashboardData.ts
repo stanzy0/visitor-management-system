@@ -249,6 +249,8 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
 
         const uniqueVisitorIds = [...new Set((docVisitorIds || []).map((d: { visitor_id: string }) => d.visitor_id).filter(Boolean))]
 
+        console.log('[Dashboard] uniqueVisitorIds', uniqueVisitorIds)
+
         if (uniqueVisitorIds.length === 0) {
           const { count } = await supabase
             .from('visitors')
@@ -256,10 +258,13 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
           return { count }
         }
 
+        const postgrestFilter = `(${uniqueVisitorIds.join(',')})`
+        console.log('[Dashboard] PostgREST filter', postgrestFilter)
+
         const { count } = await supabase
           .from('visitors')
           .select('id', { count: 'exact', head: true })
-          .not('id', 'in', uniqueVisitorIds)
+          .not('id', 'in', postgrestFilter)
 
         return { count }
       })()
@@ -398,8 +403,9 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_logs' }, () => fetchAllRef.current())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => fetchAllRef.current())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lifecycle_events' }, () => fetchAllRef.current())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'security_alerts' }, () => fetchAllRef.current())
-      .subscribe()
+       .on('postgres_changes', { event: '*', schema: 'public', table: 'security_alerts' }, () => fetchAllRef.current())
+       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_documents' }, () => fetchAllRef.current())
+       .subscribe()
 
     const interval = setInterval(async () => {
       try {

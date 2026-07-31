@@ -1,6 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { sendEmail } from '@/lib/server/email'
+import QRCode from 'qrcode'
 
 export async function GET(request: NextRequest) {
   const authResult = await requireAdmin()
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from('visitor_badges')
-      .select('*, visit:visits(*, visitor:visitors(full_name, visitor_organization, photo_url), employee:employees(full_name, department))', { count: 'exact' })
+      .select('*, visit:visits(*, visitor:visitors(full_name, visitor_organization, email, photo_url), employee:employees(full_name, department, email))', { count: 'exact' })
       .order('created_at', { ascending: false })
 
     if (status && status !== 'all') {
@@ -76,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     const { data: visit } = await supabaseAdmin
       .from('visits')
-      .select('status')
+      .select('*, visitor:visitors(*), employee:employees(*)')
       .eq('id', visit_id)
       .single()
 
@@ -118,6 +120,52 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    const visitor = Array.isArray(visit.visitor) ? visit.visitor[0] : visit.visitor
+    const employee = Array.isArray(visit.employee) ? visit.employee[0] : visit.employee
+
+    const qrDataUrl = await QRCode.toDataURL(JSON.stringify({ visitId: visit_id, type: 'badge' }), { width: 300, margin: 2 })
+
+    if (visitor?.email) {
+      await sendEmail({
+        to: visitor.email,
+        recipientName: visitor.full_name || 'Visitor',
+        subject: `Your Visitor Badge is Ready - ${visit.registration_number}`,
+        template: 'badge_ready',
+        data: {
+          visitorName: visitor.full_name || 'Visitor',
+          badgeNumber: badge.badge_number,
+          qrCodeUrl: qrDataUrl,
+          visitDate: visit.visit_date || new Date().toISOString().split('T')[0],
+          hostName: employee?.full_name || 'Host',
+          location: employee?.office_location || 'Reception',
+          purpose: visit.purpose || 'Visit',
+          orgName: 'AFCSC Visitor Management',
+        },
+        relatedType: 'visit',
+        relatedId: visit_id,
+      })
+    }
+
+    if (employee?.email) {
+      await sendEmail({
+        to: employee.email,
+        recipientName: employee.full_name || 'Host',
+        subject: `Visitor Badge Ready - ${visit.registration_number}`,
+        template: 'badge_ready',
+        data: {
+          visitorName: visitor?.full_name || 'Visitor',
+          badgeNumber: badge.badge_number,
+          visitDate: visit.visit_date || new Date().toISOString().split('T')[0],
+          hostName: employee.full_name || 'Host',
+          purpose: visit.purpose || 'Visit',
+          company: visitor?.visitor_organization || 'N/A',
+          orgName: 'AFCSC Visitor Management',
+        },
+        relatedType: 'visit',
+        relatedId: visit_id,
+      })
     }
 
     return NextResponse.json({ data: badge }, { status: 201 })

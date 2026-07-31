@@ -16,6 +16,24 @@ export async function GET(request: NextRequest) {
 
     const term = q.trim()
 
+    // Step 1: Find matching visitors
+    const { data: visitors, error: visitorError } = await supabaseAdmin
+      .from('visitors')
+      .select('id, full_name, phone, email, visitor_organization, photo_url')
+      .or(`full_name.ilike.%${term}%,phone.ilike.%${term}%,email.ilike.%${term}%`)
+      .limit(50)
+
+    if (visitorError) {
+      return NextResponse.json({ error: visitorError.message }, { status: 500 })
+    }
+
+    if (!visitors || visitors.length === 0) {
+      return NextResponse.json({ success: true, data: [] })
+    }
+
+    const visitorIds = visitors.map((v: any) => v.id)
+
+    // Step 2: Find active visits for those visitors
     const { data: visits, error } = await supabaseAdmin
       .from('visits')
       .select(`
@@ -30,8 +48,8 @@ export async function GET(request: NextRequest) {
         employee:employees(full_name, department, office_location),
         badge:visitor_badges(badge_number, badge_status, qr_token, expires_at)
       `)
+      .in('visitor_id', visitorIds)
       .eq('source', 'public')
-      .or(`visitor.full_name.ilike.%${term}%,visitor.phone.ilike.%${term}%,visitor.email.ilike.%${term}%`)
       .in('status', ['pending', 'approved', 'checked_in'])
       .order('created_at', { ascending: false })
       .limit(20)

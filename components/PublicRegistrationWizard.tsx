@@ -262,6 +262,7 @@ export default function PublicRegistrationWizard() {
   const [registrationNumber, setRegistrationNumber] = useState<string | null>(null)
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [docUploadError, setDocUploadError] = useState<string | null>(null)
    const [visitorType, setVisitorType] = useState<VisitorType>('Visitor')
    const [employees, setEmployees] = useState<Employee[]>([])
    const [loadingEmployees, setLoadingEmployees] = useState(true)
@@ -506,13 +507,43 @@ export default function PublicRegistrationWizard() {
   const back = () => setStep((s) => Math.max(s - 1, 1))
 
   const handleDocUpload = async (file: File, side: 'front' | 'back') => {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string
-      if (side === 'front') updateField('doc_front_url', dataUrl)
-      else updateField('doc_back_url', dataUrl)
+    console.log('[handleDocUpload] Starting upload for', side, 'file:', file.name, 'type:', file.type, 'size:', file.size)
+    setDocUploadError(null)
+
+    const storagePath = `public-reg/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+    console.log('[handleDocUpload] Storage path:', storagePath)
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('visitor-documents')
+      .upload(storagePath, file, {
+        contentType: file.type,
+        upsert: false,
+      })
+
+    console.log('[handleDocUpload] Upload result:', uploadError ? 'ERROR' : 'SUCCESS')
+    if (uploadError) {
+      console.error('[handleDocUpload] Upload failed:', uploadError)
+      setDocUploadError(uploadError.message)
+      return
     }
-    reader.readAsDataURL(file)
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage
+      .from('visitor-documents')
+      .getPublicUrl(storagePath)
+
+    console.log('[handleDocUpload] Public URL:', publicUrl)
+
+    if (side === 'front') {
+      updateField('doc_front_url', publicUrl)
+      updateField('front_image_url', publicUrl)
+    } else {
+      updateField('doc_back_url', publicUrl)
+      updateField('back_image_url', publicUrl)
+    }
+
+    console.log('[handleDocUpload] Updated field for', side, ':', side === 'front' ? 'doc_front_url' : 'doc_back_url')
   }
 
   const handleSubmit = async () => {
@@ -642,16 +673,44 @@ export default function PublicRegistrationWizard() {
         return
       }
 
-      if (formData.doc_number) {
-        await supabase.from('visitor_documents').insert({
+      if (docUploadError) {
+        setError(docUploadError)
+        setSubmitting(false)
+        return
+      }
+
+      if (formData.doc_number && formData.doc_front_url) {
+        const insertPayload = {
           visitor_id: visitor.id,
           document_type: formData.doc_type,
           document_number: formData.doc_number,
           issuing_country: formData.issuing_country,
           expiry_date: formData.expiry_date,
+          front_image_url: formData.doc_front_url,
           file_url: formData.doc_front_url,
+          back_image_url: formData.doc_back_url || null,
+          verified: false,
           verification_status: 'Pending',
-        })
+        }
+        
+        console.log('[PublicRegistrationWizard] Insert payload before visitor_documents:', insertPayload)
+        
+        const isStorageUrl = insertPayload.front_image_url.startsWith('http')
+        if (!isStorageUrl) {
+          const msg = `Refusing to insert non-Storage URL into visitor_documents: ${insertPayload.front_image_url}`
+          console.error('[PublicRegistrationWizard]', msg)
+          setError('Document upload failed. Only Storage URLs are accepted.')
+          setSubmitting(false)
+          return
+        }
+        
+        const { error: docError } = await supabase.from('visitor_documents').insert(insertPayload)
+        
+        if (docError) {
+          console.error('[PublicRegistrationWizard] visitor_documents insert error:', docError)
+        } else {
+          console.log('[PublicRegistrationWizard] visitor_documents insert succeeded')
+        }
       }
 
       const QRCode = (await import('qrcode')).default
@@ -668,43 +727,47 @@ export default function PublicRegistrationWizard() {
     }
   }
 
-  const isStepInvalid = () => {
-    if (step === 1) return hasValidationErrors(validateStep1(visitorType))
-    if (step === 2) {
-      const errors = validateStep2({
-        full_name: formData.full_name,
-        email: formData.email,
-        phone: formData.phone,
-        visitor_organization: formData.visitor_organization,
-        nationality: formData.nationality,
-        gender: formData.gender,
-      })
-      if (!formData.photo_url) errors.photo_url = 'Visitor photograph is required.'
-      return hasValidationErrors(errors)
-    }
-    if (step === 3) return hasValidationErrors(validateStep3({
-      doc_type: formData.doc_type,
-      doc_number: formData.doc_number,
-      issuing_country: formData.issuing_country,
-      expiry_date: formData.expiry_date,
-      doc_front_url: formData.doc_front_url,
-      doc_back_url: formData.doc_back_url,
-    }))
-    if (step === 4) return hasValidationErrors(validateStep4({
-      host_employee_id: formData.employee_id,
-      purpose: formData.purpose === 'Other' ? customPurpose : formData.purpose,
-      custom_purpose: customPurpose,
-      visit_date: formData.visit_date,
-      arrival_time: formData.arrival_time,
-      expected_duration: formData.expected_duration,
-    }))
-    if (step === 5) return hasValidationErrors(validateStep5({
-      has_vehicle: formData.has_vehicle,
-      registration_number: formData.registration_number,
-      vehicle_type: formData.vehicle_type,
-      vehicle_make: formData.vehicle_make,
-    }))
-    if (step === 6) return hasValidationErrors(validateStep6({
+const isStepInvalid = () => {
+     if (step === 1) return hasValidationErrors(validateStep1(visitorType))
+     if (step === 2) {
+       const errors = validateStep2({
+         full_name: formData.full_name,
+         email: formData.email,
+         phone: formData.phone,
+         visitor_organization: formData.visitor_organization,
+         nationality: formData.nationality,
+         gender: formData.gender,
+       })
+       if (!formData.photo_url) errors.photo_url = 'Visitor photograph is required.'
+       return hasValidationErrors(errors)
+     }
+     if (step === 3) {
+       const errors = validateStep3({
+         doc_type: formData.doc_type,
+         doc_number: formData.doc_number,
+         issuing_country: formData.issuing_country,
+         expiry_date: formData.expiry_date,
+         doc_front_url: formData.doc_front_url,
+         doc_back_url: formData.doc_back_url,
+       })
+       if (docUploadError) errors.doc_front_url = docUploadError
+       return hasValidationErrors(errors)
+     }
+     if (step === 4) return hasValidationErrors(validateStep4({
+       host_employee_id: formData.employee_id,
+       purpose: formData.purpose === 'Other' ? customPurpose : formData.purpose,
+       custom_purpose: customPurpose,
+       visit_date: formData.visit_date,
+       arrival_time: formData.arrival_time,
+       expected_duration: formData.expected_duration,
+     }))
+     if (step === 5) return hasValidationErrors(validateStep5({
+       has_vehicle: formData.has_vehicle,
+       registration_number: formData.registration_number,
+       vehicle_type: formData.vehicle_type,
+       vehicle_make: formData.vehicle_make,
+     }))
+     if (step === 6) return hasValidationErrors(validateStep6({
       emergency_contact: formData.emergency_name,
       emergency_relationship: formData.emergency_relationship,
       emergency_phone: formData.emergency_phone,
@@ -961,12 +1024,48 @@ export default function PublicRegistrationWizard() {
                 <div className="md:col-span-2">
                   <p className="text-sm text-gray-500 mb-2">Upload scanned documents.</p>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className={`rounded-lg border-2 border-dashed p-4 text-center text-sm ${touched.has('doc_front_url') && validationErrors.doc_front_url ? 'border-red-500 text-red-600' : 'border-gray-300 text-gray-500'}`}>
-                      {formData.doc_front_url ? <img src={formData.doc_front_url} alt="Front" className="mx-auto h-32 object-cover rounded" /> : 'Front upload'}
-                    </div>
-                    <div className={`rounded-lg border-2 border-dashed p-4 text-center text-sm ${(formData.doc_type === 'National ID' || formData.doc_type === 'Driver License') && touched.has('doc_back_url') && validationErrors.doc_back_url ? 'border-red-500 text-red-600' : 'border-gray-300 text-gray-500'}`}>
-                      {formData.doc_back_url ? <img src={formData.doc_back_url} alt="Back" className="mx-auto h-32 object-cover rounded" /> : 'Back upload'}
-                    </div>
+                    <label
+                      htmlFor="doc-front-upload"
+                      className={`rounded-lg border-2 border-dashed p-4 text-center text-sm cursor-pointer transition-colors ${
+                        touched.has('doc_front_url') && validationErrors.doc_front_url ? 'border-red-500 text-red-600' : 'border-gray-300 text-gray-500 hover:border-blue-400'
+                      }`}
+                    >
+                      <input
+                        id="doc-front-upload"
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+                        onChange={(e) => e.target.files?.[0] && handleDocUpload(e.target.files[0], 'front')}
+                        className="hidden"
+                      />
+                      {formData.doc_front_url ? (
+                        <img src={formData.doc_front_url} alt="Front" className="mx-auto h-32 object-cover rounded" />
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="h-8 w-8 mx-auto" />
+                          <p className="text-xs">Click to upload Front</p>
+                        </div>
+                      )}
+                    </label>
+                    <label
+                      htmlFor="doc-back-upload"
+                      className={`rounded-lg border-2 border-dashed p-4 text-center text-sm cursor-pointer transition-colors ${(formData.doc_type === 'National ID' || formData.doc_type === 'Driver License') && touched.has('doc_back_url') && validationErrors.doc_back_url ? 'border-red-500 text-red-600' : 'border-gray-300 text-gray-500 hover:border-blue-400'}`}
+                    >
+                      <input
+                        id="doc-back-upload"
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,application/pdf"
+                        onChange={(e) => e.target.files?.[0] && handleDocUpload(e.target.files[0], 'back')}
+                        className="hidden"
+                      />
+                      {formData.doc_back_url ? (
+                        <img src={formData.doc_back_url} alt="Back" className="mx-auto h-32 object-cover rounded" />
+                      ) : (
+                        <div className="space-y-2">
+                          <Upload className="h-8 w-8 mx-auto" />
+                          <p className="text-xs">Click to upload Back</p>
+                        </div>
+                      )}
+                    </label>
                   </div>
                   {touched.has('doc_front_url') && validationErrors.doc_front_url && <p className="text-sm text-red-600 mt-1">{validationErrors.doc_front_url}</p>}
                   {(formData.doc_type === 'National ID' || formData.doc_type === 'Driver License') && touched.has('doc_back_url') && validationErrors.doc_back_url && <p className="text-sm text-red-600 mt-1">{validationErrors.doc_back_url}</p>}

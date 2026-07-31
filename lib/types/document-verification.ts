@@ -1,11 +1,13 @@
-export type DocumentVerificationStatus = 'Pending' | 'Approved' | 'Rejected' | 'Replacement Requested' | 'Reuploaded'
+export type DocumentVerificationStatus = 'Pending' | 'Verified' | 'Rejected' | 'Replacement Requested' | 'Reuploaded'
 
 export interface DocumentVerification {
   id: string
   visitor_id: string
   visit_id: string | null
   document_type: string
-  document_url: string
+  document_number: string | null
+  document_url: string | null
+  back_image_url: string | null
   status: DocumentVerificationStatus
   approved_by: string | null
   approved_at: string | null
@@ -27,13 +29,14 @@ export interface DocumentVerification {
       full_name: string
       department: string | null
     } | null
-  }
+  } | null
 }
 
 export interface DocumentVerificationFilters {
   search: string
   document_type: string
   status: string
+  verification_status?: string
   date_from: string
   date_to: string
 }

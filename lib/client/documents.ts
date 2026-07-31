@@ -140,6 +140,7 @@ export async function downloadDocument(id: string): Promise<{ url: string; file_
 export async function verifyDocument(id: string, notes?: string): Promise<VisitorDocument> {
   return updateDocument(id, {
     verification_status: 'Verified',
+    verified: true,
     verification_notes: notes || null,
   })
 }
@@ -147,6 +148,7 @@ export async function verifyDocument(id: string, notes?: string): Promise<Visito
 export async function rejectDocument(id: string, notes?: string): Promise<VisitorDocument> {
   return updateDocument(id, {
     verification_status: 'Rejected',
+    verified: false,
     verification_notes: notes || null,
   })
 }

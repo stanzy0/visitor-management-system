@@ -64,8 +64,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const employee = Array.isArray(visit.employee) ? visit.employee[0] : visit.employee
 
     if (action === 'approve') {
-      const verifications = await getDocumentVerifications({ status: 'all', search: '', document_type: '', date_from: '', date_to: '' }, 100, 0)
-      const pendingDocs = verifications.data.filter(v => v.visit_id === visitId && ['Pending', 'Rejected', 'Replacement Requested'].includes(v.status))
+      const verifications = await getDocumentVerifications({ verification_status: 'all', search: '', document_type: '', date_from: '', date_to: '' }, 100, 0)
+      const pendingDocs = verifications.data.filter(v => v.visit_id === visitId && ['Pending', 'Rejected', 'Replacement Requested'].includes(v.verification_status))
 
       if (pendingDocs.length > 0) {
         return NextResponse.json({

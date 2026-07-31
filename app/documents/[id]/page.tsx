@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth-client'
+import { getAuthHeaders } from '@/lib/client/api'
 import { logAuditAction } from '@/lib/client/audit'
 import {
   X,
@@ -11,16 +12,18 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  RotateCcw,
+  RotateCw,
   ZoomIn,
   ZoomOut,
   RefreshCw,
+  Eye,
+  FileText,
 } from 'lucide-react'
 import type { DocumentVerification } from '@/lib/types/document-verification'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   Pending: { label: 'Pending', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  Approved: { label: 'Approved', color: 'bg-green-50 text-green-700 border-green-200' },
+  Verified: { label: 'Verified', color: 'bg-green-50 text-green-700 border-green-200' },
   Rejected: { label: 'Rejected', color: 'bg-red-50 text-red-700 border-red-200' },
   'Replacement Requested': { label: 'Replacement Requested', color: 'bg-orange-50 text-orange-700 border-orange-200' },
   Reuploaded: { label: 'Reuploaded', color: 'bg-blue-50 text-blue-700 border-blue-200' },
@@ -59,7 +62,9 @@ export default function DocumentDetailPage() {
   const fetchDocument = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/documents/${documentId}`)
+      const res = await fetch(`/api/documents/${documentId}`, {
+        headers: await getAuthHeaders(),
+      })
       const json = await res.json()
       if (res.ok) {
         setDoc(json)
@@ -79,7 +84,7 @@ export default function DocumentDetailPage() {
     try {
       const res = await fetch(`/api/documents/${doc.id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ action: 'approve' }),
       })
       const json = await res.json()
@@ -103,7 +108,7 @@ export default function DocumentDetailPage() {
     try {
       const res = await fetch(`/api/documents/${doc.id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ action: 'reject', reason }),
       })
       const json = await res.json()
@@ -127,7 +132,7 @@ export default function DocumentDetailPage() {
     try {
       const res = await fetch(`/api/documents/${doc.id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ action: 'replacement', reason }),
       })
       const json = await res.json()
@@ -150,7 +155,7 @@ export default function DocumentDetailPage() {
     try {
       const res = await fetch(`/api/documents/${doc.id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders(),
         body: JSON.stringify({ action: 'download' }),
       })
       const json = await res.json()
@@ -277,7 +282,7 @@ export default function DocumentDetailPage() {
                 </div>
                 {doc.approved_at && (
                   <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase">Approved At</span>
+                    <span className="text-xs font-medium text-gray-500 uppercase">Verified At</span>
                     <p className="text-sm text-gray-700">{new Date(doc.approved_at).toLocaleString()}</p>
                   </div>
                 )}
@@ -316,10 +321,10 @@ export default function DocumentDetailPage() {
             )}
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Document Preview</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Front Image</h2>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}
@@ -343,6 +348,27 @@ export default function DocumentDetailPage() {
                   >
                     <RefreshCw className="h-4 w-4" />
                   </button>
+                  <button
+                    onClick={() => window.open(doc.document_url || '', '_blank')}
+                    className="p-1 rounded-md hover:bg-gray-100"
+                    title="Open in New Tab"
+                    disabled={!doc.document_url}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      const a = document.createElement('a')
+                      a.href = doc.document_url || ''
+                      a.download = doc.document_type
+                      a.click()
+                    }}
+                    className="p-1 rounded-md hover:bg-gray-100"
+                    title="Download"
+                    disabled={!doc.document_url}
+                  >
+                    <Download className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 overflow-auto">
@@ -355,7 +381,26 @@ export default function DocumentDetailPage() {
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                    <p>No preview available</p>
+                    <FileText className="h-12 w-12 mb-3 text-gray-300" />
+                    <p>Front image not available</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Back Image</h2>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 overflow-auto">
+                {doc.back_image_url ? (
+                  <img
+                    src={doc.back_image_url}
+                    alt={doc.document_type}
+                    className="max-w-full max-h-[500px] object-contain rounded-lg"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                    <FileText className="h-12 w-12 mb-3 text-gray-300" />
+                    <p>Back image not available</p>
                   </div>
                 )}
               </div>
