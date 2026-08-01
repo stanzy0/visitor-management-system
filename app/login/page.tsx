@@ -140,9 +140,9 @@ export default function LoginPage() {
               width={115}
               height={115}
               priority
-              className="mx-auto object-contain mt-8"
+              className="mx-auto object-contain mt-10"
             />
-            <h1 className="text-4xl font-bold text-[#0B3D91] mt-6 mb-3">
+            <h1 className="text-4xl font-bold text-[#0B3D91] mt-2 mb-3">
               Welcome Back
             </h1>
             <p className="text-gray-600 text-lg">
