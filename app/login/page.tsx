@@ -85,12 +85,12 @@ export default function LoginPage() {
         <div
           className="absolute inset-0 z-10"
           style={{
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.60))',
+            background: 'linear-gradient(180deg, rgba(0,0,0,0.20), rgba(0,0,0,0.45) 55%, rgba(0,0,0,0.75))',
           }}
         />
 
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-8">
-          <h1 className="text-5xl md:text-[52px] font-bold text-white drop-shadow-2xl mb-4">
+          <h1 className="text-5xl md:text-[52px] font-bold text-white drop-shadow-2xl mb-4 tracking-tight">
             Visitor Management System
           </h1>
           <p className="text-xl text-white/90 drop-shadow-md mb-8">
@@ -128,27 +128,29 @@ export default function LoginPage() {
       </div>
 
       <div className="w-full lg:w-1/2 h-full bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 flex flex-col items-center justify-center px-16 lg:px-24 overflow-hidden">
-        <div className="w-full max-w-2xl flex flex-col items-center pt-8">
+        <div className="w-full max-w-2xl flex flex-col items-center pt-8" style={{ background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 45%, #E2E8F0 100%)' }}>
           <div className="relative flex justify-center mb-6">
-            <div className="absolute w-56 h-56 rounded-full bg-white/40 blur-3xl pointer-events-none"></div>
+            <div className="absolute w-56 h-56 rounded-full bg-white/20 blur-[70px] pointer-events-none"></div>
             <Image
               src="/images/afcsc-logo.png"
               alt="AFCSC Logo"
-              width={150}
-              height={150}
+              width={140}
+              height={140}
               priority
               className="object-contain relative z-10"
             />
           </div>
 
           <div className="text-center mb-10">
-            <h1 className="text-4xl font-bold text-[#0B3D91] mb-3">
+            <h1 className="text-4xl font-bold text-[#0B3D91] mb-3 tracking-tight leading-tight">
               AFCSC Visitor Management System
             </h1>
             <p className="text-slate-600 text-lg">
               Sign in to continue
             </p>
           </div>
+
+          <div className="h-px w-full bg-slate-300/40 my-8" />
 
           {error && (
             <div className="mb-8 rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-700" role="alert">
@@ -195,8 +197,7 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   tabIndex={-1}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200"
-                >
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200">
                   {showPassword ? (
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M17.94 17.94A10.45 10.45 0 0 1 12 20c-3.35 0-6.37-1.3-8.7-3.56a17.2 17.2 0 0 1-2.59-2.46 1 1 0 0 1 0-1.28 17.2 17.2 0 0 1 2.59-2.46A10.45 10.45 0 0 1 12 4c1.5 0 2.9.4 4.06 1.07" />
@@ -241,7 +242,7 @@ export default function LoginPage() {
                 type="submit"
                 disabled={loading}
                 aria-label="Sign in"
-                className="group flex w-full justify-center items-center gap-2 h-14 rounded-[16px] bg-gradient-to-r from-[#0B3D91] to-[#1F6FEB] px-4 text-base font-medium text-white transition-all duration-200 hover:from-[#0B3D91] hover:to-[#1F6FEB] hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
+                className="group flex w-full justify-center items-center gap-2 h-14 rounded-[16px] bg-gradient-to-r from-[#0B3D91] to-[#1F6FEB] px-4 text-base font-medium text-white shadow-[0_10px_25px_rgba(11,61,145,.18)] transition-all duration-200 hover:from-[#0B3D91] hover:to-[#1F6FEB] hover:translate-y-[-2px] hover:shadow-[0_16px_32px_rgba(11,61,145,.25)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_10px_25px_rgba(11,61,145,.18)]"
               >
                 {loading ? (
                   <svg className="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -279,7 +280,9 @@ export default function LoginPage() {
         </div>
 
         <div className="absolute bottom-4 left-0 right-0 text-center text-xs text-gray-400">
-          <p>Version 1.0 • Visitor Management System • Powered by AFCSC ICT Directorate</p>
+          <p>Visitor Management System v1.0</p>
+          <p>Armed Forces Command and Staff College</p>
+          <p>Powered by AFCSC ICT Directorate</p>
         </div>
       </div>
     </div>
