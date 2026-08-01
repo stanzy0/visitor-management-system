@@ -137,10 +137,10 @@ export default function LoginPage() {
             <Image
               src="/images/afcsc-logo.png"
               alt="AFCSC Logo"
-              width={130}
-              height={130}
+              width={115}
+              height={115}
               priority
-              className="mx-auto object-contain mt-6"
+              className="mx-auto object-contain mt-8"
             />
             <h1 className="text-4xl font-bold text-[#0B3D91] mt-6 mb-3">
               Welcome Back
