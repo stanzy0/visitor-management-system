@@ -36,15 +36,22 @@ export async function getPortalVisitByRegistrationNumber(registrationNumber: str
 export async function getPortalVisitByQRToken(qrToken: string): Promise<PortalVisit | null> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
+  console.log('QR token:', qrToken)
+
   const { data: badge } = await supabaseAdmin
     .from('visitor_badges')
     .select('visit_id')
     .eq('qr_token', qrToken)
     .single()
 
+  console.log('Badge:', badge)
+
   if (!badge) {
+    console.log('Badge query returned null — QR token not found in visitor_badges')
     return null
   }
+
+  console.log('visit_id:', badge.visit_id)
 
   const { data, error } = await supabaseAdmin
     .from('visits')
@@ -67,7 +74,11 @@ export async function getPortalVisitByQRToken(qrToken: string): Promise<PortalVi
     .eq('source', 'public')
     .single()
 
+  console.log('Visit query result:', data)
+  console.log('Visit query error:', error)
+
   if (error || !data) {
+    console.log('Visit query returned null or error:', error?.message || 'no data')
     return null
   }
 
