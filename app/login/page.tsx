@@ -102,7 +102,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="flex w-full items-center justify-center md:w-1/2 md:max-w-[450px] p-6">
+      <div className="flex w-full items-center justify-center md:w-1/2 md:max-w-[450px]">
         <div
           className="w-full animate-in fade-in-up duration-600"
         >
