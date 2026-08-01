@@ -9,6 +9,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
     }
 
+    if (!visit || !visit.visitor?.id) {
+      return NextResponse.json({ success: true, data: [] })
+    }
+
     const documents = await getPortalDocuments(visit.visitor.id)
     return NextResponse.json({ success: true, data: documents })
   } catch (err) {

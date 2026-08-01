@@ -21,17 +21,11 @@ export default function PortalDashboardPage() {
   const fetchPortalData = useCallback(async () => {
     try {
       setRefreshing(true)
-      const [visitRes, lifecycleRes, documentsRes, alertsRes] = await Promise.all([
-        fetch(`/api/portal/${encodeURIComponent(registrationNumber)}`),
-        fetch(`/api/portal/${encodeURIComponent(registrationNumber)}/lifecycle`),
-        fetch(`/api/portal/${encodeURIComponent(registrationNumber)}/documents`),
-        fetch(`/api/portal/${encodeURIComponent(registrationNumber)}/alerts`),
-      ])
 
+      const baseUrl = `/api/portal/${encodeURIComponent(registrationNumber)}`
+
+      const visitRes = await fetch(baseUrl)
       const visitJson = await visitRes.json()
-      const lifecycleJson = await lifecycleRes.json()
-      const documentsJson = await documentsRes.json()
-      const alertsJson = await alertsRes.json()
 
       if (!visitRes.ok) {
         setError(visitJson.error || 'Registration not found')
@@ -41,12 +35,40 @@ export default function PortalDashboardPage() {
       }
 
       setVisit(visitJson.data)
-      setLifecycleEvents(lifecycleJson.data || [])
-      setDocuments(documentsJson.data || [])
-      setAlerts(alertsJson.data || [])
+
+      // Fetch secondary data in parallel - don't block on failures
+      const [lifecycleRes, documentsRes, alertsRes] = await Promise.allSettled([
+        fetch(`${baseUrl}/lifecycle`),
+        fetch(`${baseUrl}/documents`),
+        fetch(`${baseUrl}/alerts`),
+      ])
+
+      if (lifecycleRes.status === 'fulfilled') {
+        const json = await lifecycleRes.value.json()
+        setLifecycleEvents(json.data || [])
+      } else {
+        setLifecycleEvents([])
+      }
+
+      if (documentsRes.status === 'fulfilled') {
+        const json = await documentsRes.value.json()
+        setDocuments(json.data || [])
+      } else {
+        setDocuments([])
+      }
+
+      if (alertsRes.status === 'fulfilled') {
+        const json = await alertsRes.value.json()
+        setAlerts(json.data || [])
+      } else {
+        setAlerts([])
+      }
+
       setError(null)
 
-      await logPortalAudit('Viewed', visitJson.data.id, { registrationNumber })
+      if (visitJson.data?.id) {
+        await logPortalAudit('Viewed', visitJson.data.id, { registrationNumber })
+      }
     } catch {
       setError('Failed to load portal data')
     } finally {

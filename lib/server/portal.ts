@@ -36,25 +36,18 @@ export async function getPortalVisitByRegistrationNumber(registrationNumber: str
 export async function getPortalVisitByQRToken(qrToken: string): Promise<PortalVisit | null> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
-  console.log('QR token:', qrToken)
-
   const { data: badge } = await supabaseAdmin
     .from('visitor_badges')
     .select('visit_id')
     .eq('qr_token', qrToken)
     .single()
 
-  console.log('Badge:', badge)
-
   if (!badge) {
-    console.log('Badge query returned null — QR token not found in visitor_badges')
     return null
   }
 
-  console.log('visit_id:', badge.visit_id)
-
   const { data, error } = await supabaseAdmin
-    .from("visits")
+    .from('visits')
     .select(`
       id,
       registration_number,
@@ -65,18 +58,14 @@ export async function getPortalVisitByQRToken(qrToken: string): Promise<PortalVi
       check_in_time,
       check_out_time,
       created_at,
-
-      visitor:visitors!visits_visitor_id_fkey(*),
-      employee:employees!visits_employee_id_fkey(*),
-      appointment:appointments!visits_appointment_id_fkey(*),
-      badge:visitor_badges!visitor_badges_visit_id_fkey(*)
+      visitor:visitors(*),
+      employee:employees(*),
+      appointment:appointments(*),
+      badge:visitor_badges(*)
     `)
-    .eq("id", badge.visit_id)
-    .eq("source", "public")
+    .eq('id', badge.visit_id)
+    .eq('source', 'public')
     .single()
-
-  console.log('VISIT DATA:', data)
-  console.log('VISIT ERROR:', error)
 
   if (error || !data) {
     return null
