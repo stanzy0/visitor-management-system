@@ -54,9 +54,25 @@ export async function getPortalVisitByQRToken(qrToken: string): Promise<PortalVi
   console.log('visit_id:', badge.visit_id)
 
   const { data, error } = await supabaseAdmin
-    .from('visits')
-    .select('*')
-    .eq('id', badge.visit_id)
+    .from("visits")
+    .select(`
+      id,
+      registration_number,
+      status,
+      visitor_type,
+      source,
+      rejection_reason,
+      check_in_time,
+      check_out_time,
+      created_at,
+
+      visitor:visitors!visits_visitor_id_fkey(*),
+      employee:employees!visits_employee_id_fkey(*),
+      appointment:appointments!visits_appointment_id_fkey(*),
+      badge:visitor_badges!visitor_badges_visit_id_fkey(*)
+    `)
+    .eq("id", badge.visit_id)
+    .eq("source", "public")
     .single()
 
   console.log('VISIT DATA:', data)
