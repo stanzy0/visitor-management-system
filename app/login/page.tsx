@@ -89,17 +89,6 @@ export default function LoginPage() {
           }}
         />
 
-        <div className="absolute top-12 left-0 right-0 z-20 flex flex-col items-center">
-          <Image
-            src="/images/afcsc-logo.png"
-            alt="AFCSC Logo"
-            width={120}
-            height={120}
-            priority
-            className="object-contain mb-6"
-          />
-        </div>
-
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-8">
           <h1 className="text-5xl md:text-[52px] font-bold text-white drop-shadow-2xl mb-4">
             Visitor Management System
@@ -138,123 +127,116 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="w-full lg:w-1/2 h-full bg-[#F8FAFC] flex flex-col px-16 lg:px-24 relative overflow-hidden">
-        <div
-          className="absolute inset-0 z-0 opacity-4 pointer-events-none"
-          style={{
-            backgroundImage: "url('/images/afcsc-login.jpg')",
-            backgroundSize: '300px',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            opacity: '0.04',
-          }}
-        />
-
-        <div className="relative z-10 flex flex-col h-full">
-          <div className="py-8">
+      <div className="w-full lg:w-1/2 h-full bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 flex flex-col items-center justify-center px-16 lg:px-24 overflow-hidden">
+        <div className="w-full max-w-2xl flex flex-col items-center pt-8">
+          <div className="relative flex justify-center mb-6">
+            <div className="absolute w-56 h-56 rounded-full bg-white/40 blur-3xl pointer-events-none"></div>
             <Image
               src="/images/afcsc-logo.png"
               alt="AFCSC Logo"
-              width={70}
-              height={70}
+              width={150}
+              height={150}
               priority
-              className="object-contain mb-6"
+              className="object-contain relative z-10"
             />
-            <h1 className="text-5xl font-bold text-[#0B3D91] mb-2">
-              Welcome Back
+          </div>
+
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-bold text-[#0B3D91] mb-3">
+              AFCSC Visitor Management System
             </h1>
-            <p className="text-gray-600 text-lg">
+            <p className="text-slate-600 text-lg">
               Sign in to continue
             </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
-            {error && (
-              <div className="mb-6 rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-700" role="alert">
-                {error}
-              </div>
-            )}
+          {error && (
+            <div className="mb-8 rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-700" role="alert">
+              {error}
+            </div>
+          )}
 
-            <form onSubmit={handleLogin} className="space-y-8">
-              <div>
-                <label htmlFor="email" className="block text-base font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
+          <form onSubmit={handleLogin} className="w-full space-y-10">
+            <div className="mb-6">
+              <label htmlFor="email" className="block text-base font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                aria-label="Email address"
+                placeholder="Enter your email"
+                className="w-full h-14 rounded-[16px] border border-gray-200 bg-white/60 backdrop-blur-sm px-4 text-black placeholder:text-gray-400 transition-all duration-200 focus:border-[#1F6FEB] focus:outline-none focus:ring-2 focus:ring-[#1F6FEB]/20 text-base"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-base font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
                 <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
-                  autoComplete="email"
-                  aria-label="Email address"
-                  placeholder="Enter your email"
-                  className="w-full h-14 rounded-[16px] border border-gray-200 bg-white/60 backdrop-blur-sm px-4 text-black placeholder:text-gray-400 transition-all duration-200 focus:border-[#1F6FEB] focus:outline-none focus:ring-2 focus:ring-[#1F6FEB]/20 text-base"
+                  autoComplete="current-password"
+                  aria-label="Password"
+                  placeholder="Enter your password"
+                  className="w-full h-14 rounded-[16px] border border-gray-200 bg-white/60 backdrop-blur-sm px-4 pr-12 text-black placeholder:text-gray-400 transition-all duration-200 focus:border-[#1F6FEB] focus:outline-none focus:ring-2 focus:ring-[#1F6FEB]/20 text-base"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                >
+                  {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.45 10.45 0 0 1 12 20c-3.35 0-6.37-1.3-8.7-3.56a17.2 17.2 0 0 1-2.59-2.46 1 1 0 0 1 0-1.28 17.2 17.2 0 0 1 2.59-2.46A10.45 10.45 0 0 1 12 4c1.5 0 2.9.4 4.06 1.07" />
+                      <path d="M1 1l22 22" />
+                      <path d="M9 9a3 3 0 1 0 4.24-.24" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
               </div>
 
-              <div>
-                <label htmlFor="password" className="block text-base font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <div className="relative">
+              <div className="mt-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
                   <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                    aria-label="Password"
-                    placeholder="Enter your password"
-                    className="w-full h-14 rounded-[16px] border border-gray-200 bg-white/60 backdrop-blur-sm px-4 pr-12 text-black placeholder:text-gray-400 transition-all duration-200 focus:border-[#1F6FEB] focus:outline-none focus:ring-2 focus:ring-[#1F6FEB]/20 text-base"
+                    id="rememberDevice"
+                    type="checkbox"
+                    checked={rememberDevice}
+                    onChange={(e) => setRememberDevice(e.target.checked)}
+                    className="h-5 w-5 rounded border-gray-300 text-[#0B3D91] focus:ring-[#0B3D91] transition-colors duration-200"
+                    aria-label="Remember this device"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    tabIndex={-1}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200"
-                  >
-                    {showPassword ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17.94 17.94A10.45 10.45 0 0 1 12 20c-3.35 0-6.37-1.3-8.7-3.56a17.2 17.2 0 0 1-2.59-2.46 1 1 0 0 1 0-1.28 17.2 17.2 0 0 1 2.59-2.46A10.45 10.45 0 0 1 12 4c1.5 0 2.9.4 4.06 1.07" />
-                        <path d="M1 1l22 22" />
-                        <path d="M9 9a3 3 0 1 0 4.24-.24" />
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
-                  </button>
+                  <label htmlFor="rememberDevice" className="text-sm text-gray-700">
+                    Remember Me
+                  </label>
                 </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <input
-                      id="rememberDevice"
-                      type="checkbox"
-                      checked={rememberDevice}
-                      onChange={(e) => setRememberDevice(e.target.checked)}
-                      className="h-5 w-5 rounded border-gray-300 text-[#0B3D91] focus:ring-[#0B3D91] transition-colors duration-200"
-                      aria-label="Remember this device"
-                    />
-                    <label htmlFor="rememberDevice" className="text-sm text-gray-700">
-                      Remember Me
-                    </label>
-                  </div>
-                  <a
-                    href="/forgot-password"
-                    className="text-sm text-[#0B3D91] hover:text-[#1F6FEB] hover:underline transition-colors duration-200"
-                    aria-label="Forgot password"
-                  >
-                    Forgot Password?
-                  </a>
-                </div>
+                <a
+                  href="/forgot-password"
+                  className="text-sm text-[#0B3D91] hover:text-[#1F6FEB] hover:underline transition-colors duration-200"
+                  aria-label="Forgot password"
+                >
+                  Forgot Password?
+                </a>
               </div>
+            </div>
 
+            <div className="mt-8">
               <button
                 type="submit"
                 disabled={loading}
@@ -275,20 +257,24 @@ export default function LoginPage() {
                 )}
                 {loading ? 'Signing In...' : 'Sign In'}
               </button>
-            </form>
+            </div>
+          </form>
+
+          <div className="my-8 flex items-center">
+            <div className="flex-1 border-t border-gray-200"></div>
+            <span className="px-4 text-xs text-gray-400">Or</span>
+            <div className="flex-1 border-t border-gray-200"></div>
           </div>
 
-          <div className="py-8 text-center">
-            <p className="text-sm text-gray-500">
-              Need help?{' '}
-              <a
-                href="mailto:it-support@afcsc.edu.ng"
-                className="text-[#0B3D91] hover:text-[#1F6FEB] hover:underline transition-colors duration-200"
-                aria-label="Contact system administrator"
-              >
-                Contact the System Administrator
-              </a>
-            </p>
+          <div className="text-center text-sm text-gray-500">
+            Need help?{' '}
+            <a
+              href="mailto:it-support@afcsc.edu.ng"
+              className="text-[#0B3D91] hover:text-[#1F6FEB] hover:underline transition-colors duration-200"
+              aria-label="Contact system administrator"
+            >
+              Contact the System Administrator
+            </a>
           </div>
         </div>
 
@@ -299,3 +285,4 @@ export default function LoginPage() {
     </div>
   )
 }
+
