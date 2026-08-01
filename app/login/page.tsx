@@ -90,9 +90,14 @@ export default function LoginPage() {
         />
 
         <div className="absolute top-12 left-0 right-0 z-20 flex flex-col items-center">
-          <div className="h-24 w-24 rounded-full bg-[#0B3D91] flex items-center justify-center shadow-2xl mb-6">
-            <span className="text-white font-bold text-2xl">AFCSC</span>
-          </div>
+          <Image
+            src="/images/afcsc-logo.png"
+            alt="AFCSC Logo"
+            width={120}
+            height={120}
+            priority
+            className="object-contain mb-6"
+          />
         </div>
 
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-8">
@@ -147,9 +152,14 @@ export default function LoginPage() {
 
         <div className="relative z-10 flex flex-col h-full">
           <div className="py-8">
-            <div className="w-16 h-16 rounded-xl bg-[#0B3D91] flex items-center justify-center mb-6 shadow-lg">
-              <span className="text-white font-bold text-xs">AFCSC</span>
-            </div>
+            <Image
+              src="/images/afcsc-logo.png"
+              alt="AFCSC Logo"
+              width={70}
+              height={70}
+              priority
+              className="object-contain mb-6"
+            />
             <h1 className="text-5xl font-bold text-[#0B3D91] mb-2">
               Welcome Back
             </h1>
