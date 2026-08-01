@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client'
 import { ensureUserInDatabase } from '@/lib/auth-client'
 import { logAuditAction } from '@/lib/client/audit'
 
+import { Shield, BadgeCheck, UserCheck, Activity } from 'lucide-react'
+
 const MAX_FAILED_ATTEMPTS = 6
 
 export default function LoginPage() {
@@ -73,13 +75,13 @@ export default function LoginPage() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden font-sans">
-      <div className="relative hidden lg:block w-1/2 h-full">
+      <div className="relative hidden lg:block w-1/2 h-full group">
         <Image
           src="/images/afcsc-login.jpg"
           alt="AFCSC"
           fill
           priority
-          className="object-cover"
+          className="object-cover transition-transform duration-[20s] ease-in-out group-hover:scale-105"
         />
 
         <div
@@ -90,10 +92,10 @@ export default function LoginPage() {
         />
 
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-8">
-          <h1 className="text-5xl md:text-[52px] font-bold text-white drop-shadow-2xl mb-4 tracking-tight">
+          <h1 className="text-5xl md:text-[52px] font-bold text-white mb-4 tracking-tight" style={{ textShadow: '0 3px 12px rgba(0,0,0,.35)' }}>
             Visitor Management System
           </h1>
-          <p className="text-xl text-white/90 drop-shadow-md mb-8">
+          <p className="text-xl text-white/90 mb-8" style={{ textShadow: '0 3px 12px rgba(0,0,0,.35)' }}>
             Armed Forces Command and Staff College
             <br />
             Jaji, Kaduna State
@@ -103,34 +105,55 @@ export default function LoginPage() {
 
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-white/90 text-lg">
-              <div className="w-5 h-5 rounded-full bg-[#D4AF37]" />
+              <Shield className="w-5 h-5 text-[#D4AF37]" />
               <span>Secure Visitor Registration</span>
             </div>
             <div className="flex items-center gap-3 text-white/90 text-lg">
-              <div className="w-5 h-5 rounded-full bg-[#D4AF37]" />
+              <BadgeCheck className="w-5 h-5 text-[#D4AF37]" />
               <span>Badge Management</span>
             </div>
             <div className="flex items-center gap-3 text-white/90 text-lg">
-              <div className="w-5 h-5 rounded-full bg-[#D4AF37]" />
+              <UserCheck className="w-5 h-5 text-[#D4AF37]" />
               <span>Real-Time Check-In</span>
             </div>
             <div className="flex items-center gap-3 text-white/90 text-lg">
-              <div className="w-5 h-5 rounded-full bg-[#D4AF37]" />
+              <Activity className="w-5 h-5 text-[#D4AF37]" />
               <span>Professional Visitor Tracking</span>
             </div>
           </div>
         </div>
 
-        <div className="absolute bottom-8 left-8 z-20 text-white/80 text-sm">
-          <p>© Armed Forces Command and Staff College</p>
-          <p>Visitor Management System</p>
+        <div className="absolute bottom-8 left-8 z-20 text-white/70 text-sm tracking-wide">
+          <p style={{ textShadow: '0 3px 12px rgba(0,0,0,.35)' }}>© Armed Forces Command and Staff College</p>
+          <p style={{ textShadow: '0 3px 12px rgba(0,0,0,.35)' }}>Visitor Management System</p>
         </div>
       </div>
 
-      <div className="w-full lg:w-1/2 h-full bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 flex flex-col items-center justify-center px-16 lg:px-24 overflow-hidden">
-        <div className="w-full max-w-2xl flex flex-col items-center pt-8" style={{ background: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 45%, #E2E8F0 100%)' }}>
-          <div className="relative flex justify-center mb-6">
-            <div className="absolute w-56 h-56 rounded-full bg-white/20 blur-[70px] pointer-events-none"></div>
+      <div className="w-full lg:w-1/2 h-full flex flex-col items-center justify-center px-16 lg:px-24 overflow-hidden">
+        <div
+          className="w-full max-w-2xl flex flex-col items-center pt-8"
+          style={{
+            background: 'rgba(255,255,255,.75)',
+            backdropFilter: 'blur(18px)',
+            borderLeft: '1px solid rgba(255,255,255,.35)',
+            backgroundImage: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 45%, #E2E8F0 100%)',
+          }}
+        >
+          <style jsx global>{`
+            @keyframes fadeInUp {
+              0% { opacity: 0; transform: translateY(20px); }
+              100% { opacity: 1; transform: translateY(0); }
+            }
+            .animate-fade-in-up {
+              animation: fadeInUp 0.6s ease-out forwards;
+            }
+          `}</style>
+
+          <div
+            className="relative flex justify-center mb-6 animate-fade-in-up"
+            style={{ animationDelay: '0ms' }}
+          >
+            <div className="absolute w-56 h-56 rounded-full bg-white/40 blur-[70px] pointer-events-none"></div>
             <Image
               src="/images/afcsc-logo.png"
               alt="AFCSC Logo"
@@ -141,7 +164,10 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="text-center mb-10">
+          <div
+            className="text-center mb-10 animate-fade-in-up"
+            style={{ animationDelay: '100ms' }}
+          >
             <h1 className="text-4xl font-bold text-[#0B3D91] mb-3 tracking-tight leading-tight">
               AFCSC Visitor Management System
             </h1>
@@ -150,7 +176,10 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="h-px w-full bg-slate-300/40 my-8" />
+          <div
+            className="h-px w-full bg-slate-300/40 my-8 animate-fade-in-up"
+            style={{ animationDelay: '200ms' }}
+          />
 
           {error && (
             <div className="mb-8 rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-700" role="alert">
@@ -158,7 +187,11 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="w-full space-y-10">
+          <form
+            onSubmit={handleLogin}
+            className="w-full space-y-10 animate-fade-in-up"
+            style={{ animationDelay: '300ms' }}
+          >
             <div className="mb-6">
               <label htmlFor="email" className="block text-base font-medium text-gray-700 mb-2">
                 Email Address
@@ -172,7 +205,7 @@ export default function LoginPage() {
                 autoComplete="email"
                 aria-label="Email address"
                 placeholder="Enter your email"
-                className="w-full h-14 rounded-[16px] border border-gray-200 bg-white/60 backdrop-blur-sm px-4 text-black placeholder:text-gray-400 transition-all duration-200 focus:border-[#1F6FEB] focus:outline-none focus:ring-2 focus:ring-[#1F6FEB]/20 text-base"
+                className="w-full h-14 rounded-[16px] border border-gray-300 bg-white px-4 text-black placeholder:text-gray-400 transition-all duration-200 hover:border-gray-400 focus:border-[#0B3D91] focus:outline-none focus:ring-4 focus:ring-[#0B3D91]/10 focus:shadow-[0_0_0_4px_rgba(11,61,145,.08)] text-base"
               />
             </div>
 
@@ -190,7 +223,7 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   aria-label="Password"
                   placeholder="Enter your password"
-                  className="w-full h-14 rounded-[16px] border border-gray-200 bg-white/60 backdrop-blur-sm px-4 pr-12 text-black placeholder:text-gray-400 transition-all duration-200 focus:border-[#1F6FEB] focus:outline-none focus:ring-2 focus:ring-[#1F6FEB]/20 text-base"
+                  className="w-full h-14 rounded-[16px] border border-gray-300 bg-white px-4 pr-12 text-black placeholder:text-gray-400 transition-all duration-200 hover:border-gray-400 focus:border-[#0B3D91] focus:outline-none focus:ring-4 focus:ring-[#0B3D91]/10 focus:shadow-[0_0_0_4px_rgba(11,61,145,.08)] text-base"
                 />
                 <button
                   type="button"
@@ -237,12 +270,15 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="mt-8">
+            <div
+              className="mt-8 animate-fade-in-up"
+              style={{ animationDelay: '400ms' }}
+            >
               <button
                 type="submit"
                 disabled={loading}
                 aria-label="Sign in"
-                className="group flex w-full justify-center items-center gap-2 h-14 rounded-[16px] bg-gradient-to-r from-[#0B3D91] to-[#1F6FEB] px-4 text-base font-medium text-white shadow-[0_10px_25px_rgba(11,61,145,.18)] transition-all duration-200 hover:from-[#0B3D91] hover:to-[#1F6FEB] hover:translate-y-[-2px] hover:shadow-[0_16px_32px_rgba(11,61,145,.25)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_10px_25px_rgba(11,61,145,.18)]"
+                className="group flex w-full justify-center items-center gap-2 h-14 rounded-[16px] bg-gradient-to-b from-[#1F6FEB] to-[#0B3D91] px-4 text-base font-medium text-white shadow-[0_10px_25px_rgba(11,61,145,.18)] transition-all duration-200 hover:brightness-105 hover:translate-y-[-2px] hover:shadow-[0_16px_32px_rgba(11,61,145,.25)] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_10px_25px_rgba(11,61,145,.18)]"
               >
                 {loading ? (
                   <svg className="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -261,13 +297,19 @@ export default function LoginPage() {
             </div>
           </form>
 
-          <div className="my-8 flex items-center">
+          <div
+            className="my-8 flex items-center animate-fade-in-up"
+            style={{ animationDelay: '400ms' }}
+          >
             <div className="flex-1 border-t border-gray-200"></div>
             <span className="px-4 text-xs text-gray-400">Or</span>
             <div className="flex-1 border-t border-gray-200"></div>
           </div>
 
-          <div className="text-center text-sm text-gray-500">
+          <div
+            className="text-center text-sm text-gray-500 animate-fade-in-up"
+            style={{ animationDelay: '500ms' }}
+          >
             Need help?{' '}
             <a
               href="mailto:it-support@afcsc.edu.ng"
@@ -279,7 +321,10 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="absolute bottom-4 left-0 right-0 text-center text-xs text-gray-400">
+        <div
+          className="absolute bottom-4 left-0 right-0 text-center text-xs text-slate-500 tracking-wide animate-fade-in-up"
+          style={{ animationDelay: '600ms' }}
+        >
           <p>Visitor Management System v1.0</p>
           <p>Armed Forces Command and Staff College</p>
           <p>Powered by AFCSC ICT Directorate</p>
