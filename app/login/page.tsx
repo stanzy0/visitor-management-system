@@ -101,144 +101,146 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="w-full md:w-1/2 h-full bg-slate-100 flex items-center justify-center px-12 lg:px-20">
-        <div className="w-full max-w-2xl">
-          <div className="rounded-3xl bg-white/80 backdrop-blur-md shadow-2xl p-12 w-full animate-in fade-in-up duration-600">
-            <div className="text-center mb-12">
-              <h1 className="text-4xl font-bold text-[#0B3D91]">
-                Welcome Back
-              </h1>
-              <p className="mt-3 text-gray-600 text-lg">
-                Sign in to continue to the
-                <br />
-                Visitor Management System.
-              </p>
+      <div className="w-full md:w-1/2 h-full bg-gradient-to-br from-slate-50 to-slate-200 flex flex-col justify-center px-16 lg:px-24">
+        <div className="w-full">
+          <div className="absolute top-8 left-8 md:top-12 md:left-12 md:hidden">
+            <div className="h-12 w-12 rounded-xl bg-[#0B3D91] flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-xs">AFCSC</span>
+            </div>
+          </div>
+
+          <div className="mb-12">
+            <h1 className="text-4xl font-bold text-[#0B3D91]">
+              Welcome Back
+            </h1>
+            <p className="mt-3 text-gray-600 text-lg">
+              Sign in to the Visitor Management System
+            </p>
+          </div>
+
+          {error && (
+            <div className="mb-8 rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-700" role="alert">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="w-full space-y-8">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-3">
+                Email Address
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                aria-label="Email address"
+                placeholder="Enter your email"
+                className="w-full h-14 rounded-xl border border-gray-200 bg-white px-4 text-black placeholder:text-gray-400 transition-all duration-200 focus:border-[#1F6FEB] focus:outline-none focus:ring-2 focus:ring-[#1F6FEB]/20 text-base"
+              />
             </div>
 
-            {error && (
-              <div className="mb-8 rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-700" role="alert">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleLogin} className="space-y-10">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-3">
-                  Email Address
-                </label>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-3">
+                Password
+              </label>
+              <div className="relative">
                 <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
-                  autoComplete="email"
-                  aria-label="Email address"
-                  placeholder="Enter your email"
-                  className="block w-full h-14 rounded-xl border border-gray-200 bg-white px-4 text-black placeholder:text-gray-400 transition-all duration-200 focus:border-[#1F6FEB] focus:outline-none focus:ring-2 focus:ring-[#1F6FEB]/20 text-base"
+                  autoComplete="current-password"
+                  aria-label="Password"
+                  placeholder="Enter your password"
+                  className="w-full h-14 rounded-xl border border-gray-200 bg-white px-4 pr-12 text-black placeholder:text-gray-400 transition-all duration-200 focus:border-[#1F6FEB] focus:outline-none focus:ring-2 focus:ring-[#1F6FEB]/20 text-base"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                >
+                  {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17.94 17.94A10.45 10.45 0 0 1 12 20c-3.35 0-6.37-1.3-8.7-3.56a17.2 17.2 0 0 1-2.59-2.46 1 1 0 0 1 0-1.28 17.2 17.2 0 0 1 2.59-2.46A10.45 10.45 0 0 1 12 4c1.5 0 2.9.4 4.06 1.07" />
+                      <path d="M1 1l22 22" />
+                      <path d="M9 9a3 3 0 1 0 4.24-.24" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
               </div>
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-3">
-                  Password
-                </label>
-                <div className="relative">
+              <div className="mt-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
                   <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                    aria-label="Password"
-                    placeholder="Enter your password"
-                    className="block w-full h-14 rounded-xl border border-gray-200 bg-white px-4 pr-12 text-black placeholder:text-gray-400 transition-all duration-200 focus:border-[#1F6FEB] focus:outline-none focus:ring-2 focus:ring-[#1F6FEB]/20 text-base"
+                    id="rememberDevice"
+                    type="checkbox"
+                    checked={rememberDevice}
+                    onChange={(e) => setRememberDevice(e.target.checked)}
+                    className="h-5 w-5 rounded border-gray-300 text-[#0B3D91] focus:ring-[#0B3D91] transition-colors duration-200"
+                    aria-label="Remember this device"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    tabIndex={-1}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200"
-                  >
-                    {showPassword ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17.94 17.94A10.45 10.45 0 0 1 12 20c-3.35 0-6.37-1.3-8.7-3.56a17.2 17.2 0 0 1-2.59-2.46 1 1 0 0 1 0-1.28 17.2 17.2 0 0 1 2.59-2.46A10.45 10.45 0 0 1 12 4c1.5 0 2.9.4 4.06 1.07" />
-                        <path d="M1 1l22 22" />
-                        <path d="M9 9a3 3 0 1 0 4.24-.24" />
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    )}
-                  </button>
+                  <label htmlFor="rememberDevice" className="text-sm text-gray-700">
+                    Remember Me
+                  </label>
                 </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <input
-                      id="rememberDevice"
-                      type="checkbox"
-                      checked={rememberDevice}
-                      onChange={(e) => setRememberDevice(e.target.checked)}
-                      className="h-5 w-5 rounded border-gray-300 text-[#0B3D91] focus:ring-[#0B3D91] transition-colors duration-200"
-                      aria-label="Remember this device"
-                    />
-                    <label htmlFor="rememberDevice" className="text-sm text-gray-700">
-                      Remember Me
-                    </label>
-                  </div>
-                  <a
-                    href="/forgot-password"
-                    className="text-sm text-[#0B3D91] hover:text-[#1F6FEB] hover:underline transition-colors duration-200"
-                    aria-label="Forgot password"
-                  >
-                    Forgot Password?
-                  </a>
-                </div>
+                <a
+                  href="/forgot-password"
+                  className="text-sm text-[#0B3D91] hover:text-[#1F6FEB] hover:underline transition-colors duration-200"
+                  aria-label="Forgot password"
+                >
+                  Forgot Password?
+                </a>
               </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                aria-label="Sign in"
-                className="group flex w-full justify-center items-center gap-2 rounded-xl h-14 bg-gradient-to-r from-[#0B3D91] to-[#1F6FEB] px-4 text-sm font-medium text-white transition-all duration-200 hover:from-[#0B3D91] hover:to-[#1F6FEB] hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
-              >
-                {loading ? (
-                  <svg className="-ml-1 h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                    <polyline points="10 17 15 12 10 7" />
-                    <line x1="15" y1="12" x2="3" y2="12" />
-                  </svg>
-                )}
-                {loading ? 'Signing In...' : 'Sign In'}
-              </button>
-            </form>
-
-            <div className="my-8 flex items-center">
-              <div className="flex-1 border-t border-gray-200"></div>
-              <span className="px-4 text-xs text-gray-400">Or</span>
-              <div className="flex-1 border-t border-gray-200"></div>
             </div>
 
-            <div className="text-center text-sm text-gray-600">
-              <p>Need help?</p>
-              <a
-                href="mailto:it-support@afcsc.edu.ng"
-                className="text-[#0B3D91] hover:text-[#1F6FEB] hover:underline transition-colors duration-200"
-                aria-label="Contact system administrator"
-              >
-                Contact the System Administrator
-              </a>
-            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              aria-label="Sign in"
+              className="group flex w-full justify-center items-center gap-2 h-14 rounded-xl bg-gradient-to-r from-[#0B3D91] to-[#1F6FEB] px-4 text-sm font-medium text-white transition-all duration-200 hover:from-[#0B3D91] hover:to-[#1F6FEB] hover:shadow-lg hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:shadow-none"
+            >
+              {loading ? (
+                <svg className="-ml-1 h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                  <polyline points="10 17 15 12 10 7" />
+                  <line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+              )}
+              {loading ? 'Signing In...' : 'Sign In'}
+            </button>
+          </form>
+
+          <div className="my-8 flex items-center">
+            <div className="flex-1 border-t border-gray-300"></div>
+            <span className="px-4 text-xs text-gray-500">Or</span>
+            <div className="flex-1 border-t border-gray-300"></div>
+          </div>
+
+          <div className="text-center text-sm text-gray-600">
+            <p>Need help?</p>
+            <a
+              href="mailto:it-support@afcsc.edu.ng"
+              className="text-[#0B3D91] hover:text-[#1F6FEB] hover:underline transition-colors duration-200"
+              aria-label="Contact system administrator"
+            >
+              Contact the System Administrator
+            </a>
           </div>
         </div>
       </div>
