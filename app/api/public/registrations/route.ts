@@ -57,7 +57,25 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (badgeError || !badge) {
+        console.error('[Badge Creation Error - Public Registration]', {
+          reason: 'badge_insert_failed',
+          visit_id,
+          registration_number: visit.registration_number,
+          error: badgeError?.message,
+          timestamp: new Date().toISOString(),
+        })
         return NextResponse.json({ error: 'Failed to create badge' }, { status: 500 })
+      }
+
+      if (!badge.qr_token || !badge.badge_number) {
+        console.error('[Badge Creation Error - Public Registration]', {
+          reason: 'missing_qr_token_or_badge_number',
+          visit_id,
+          registration_number: visit.registration_number,
+          badge_id: badge.id,
+          timestamp: new Date().toISOString(),
+        })
+        return NextResponse.json({ error: 'Badge creation failed: missing qr_token' }, { status: 500 })
       }
 
       const { error: updateError } = await supabaseAdmin
@@ -72,6 +90,18 @@ export async function POST(request: NextRequest) {
       const portalUrl = getPortalUrl(badge.qr_token)
       const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
 
+      console.log('[Badge Created - Public Registration]', {
+        badge_number: badge.badge_number,
+        qr_token: badge.qr_token,
+        portal_url: portalUrl,
+        visit_id,
+        registration_number: visit.registration_number,
+        visitor_id: visitor?.id,
+        visitor_name: visitor?.full_name,
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString(),
+      })
+
       await sendEmail({
         to: visitor?.email || '',
         recipientName: visitor?.full_name || 'Visitor',
@@ -85,6 +115,7 @@ export async function POST(request: NextRequest) {
           hostName: employee?.full_name || 'Host',
           location: employee?.office_location || 'Reception',
           qrCodeUrl: qrDataUrl,
+          portalUrl: portalUrl,
           badgeNumber: badge.badge_number,
           orgName: 'AFCSC Visitor Management',
         },

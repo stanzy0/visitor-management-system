@@ -87,6 +87,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Visit is not in a valid status for badge creation' }, { status: 400 })
     }
 
+    const visitor = Array.isArray(visit.visitor) ? visit.visitor[0] : visit.visitor
+    const employee = Array.isArray(visit.employee) ? visit.employee[0] : visit.employee
+
+    if (!visit.registration_number) {
+      console.error('[Badge Creation Error]', {
+        reason: 'Missing registration_number',
+        visit_id,
+        timestamp: new Date().toISOString(),
+      })
+      return NextResponse.json({ error: 'Visit is missing registration_number' }, { status: 400 })
+    }
+
+    if (!visitor?.id) {
+      console.error('[Badge Creation Error]', {
+        reason: 'Missing visitor',
+        visit_id,
+        registration_number: visit.registration_number,
+        timestamp: new Date().toISOString(),
+      })
+      return NextResponse.json({ error: 'Visit is missing visitor record' }, { status: 400 })
+    }
+
     const { data: existingBadge } = await supabaseAdmin
       .from('visitor_badges')
       .select('id')
@@ -123,11 +145,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    const visitor = Array.isArray(visit.visitor) ? visit.visitor[0] : visit.visitor
-    const employee = Array.isArray(visit.employee) ? visit.employee[0] : visit.employee
+    if (!badge.qr_token || !badge.badge_number) {
+      console.error('[Badge Creation Error]', {
+        reason: 'Badge creation returned missing qr_token or badge_number',
+        badge_id: badge.id,
+        visit_id,
+        registration_number: visit.registration_number,
+        timestamp: new Date().toISOString(),
+      })
+      return NextResponse.json({ error: 'Badge creation failed: missing qr_token' }, { status: 500 })
+    }
 
     const portalUrl = getPortalUrl(badge.qr_token)
     const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
+
+    console.log('[Badge Created]', {
+      badge_number: badge.badge_number,
+      qr_token: badge.qr_token,
+      portal_url: portalUrl,
+      visit_id,
+      registration_number: visit.registration_number,
+      visitor_id: visitor?.id,
+      visitor_name: visitor?.full_name,
+      employee_id: employee?.id,
+      host_name: employee?.full_name,
+      environment: process.env.NODE_ENV,
+      timestamp: new Date().toISOString(),
+    })
 
     if (visitor?.email) {
       await sendEmail({
@@ -139,6 +183,7 @@ export async function POST(request: NextRequest) {
           visitorName: visitor.full_name || 'Visitor',
           badgeNumber: badge.badge_number,
           qrCodeUrl: qrDataUrl,
+          portalUrl: portalUrl,
           visitDate: visit.visit_date || new Date().toISOString().split('T')[0],
           hostName: employee?.full_name || 'Host',
           location: employee?.office_location || 'Reception',

@@ -4,7 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getInvitationByToken, updateInvitationStatus, approveInvitation, rejectInvitation, cancelInvitation } from '@/lib/server/invitations'
 import { logAuditAction } from '@/lib/server/audit'
 import { queueEmail } from '@/lib/email'
-import { getBaseUrl } from '@/lib/utils/portal-url'
+import { getPortalUrl } from '@/lib/utils/portal-url'
+import QRCode from 'qrcode'
 
 export async function GET(
   request: NextRequest,
@@ -174,8 +175,8 @@ export async function POST(
           .single()
 
         if (badge) {
-          const baseUrl = getBaseUrl()
-          const qrDataUrl = `${baseUrl}/api/badges/${badge.id}/qr`
+          const portalUrl = getPortalUrl(badge.qr_token)
+          const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
 
           void queueEmail({
             to: invitation.visitor_email,
@@ -188,6 +189,7 @@ export async function POST(
               date: invitation.expected_date,
               time: invitation.expected_time || 'TBD',
               badgeNumber: badge.badge_number,
+              portalUrl,
               qrCodeUrl: qrDataUrl,
             },
             relatedType: 'invitation',

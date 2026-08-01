@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation'
 import { Loader2, Download, Printer, CheckCircle2, XCircle, Clock, Phone, Mail, RefreshCw, AlertTriangle } from 'lucide-react'
 import type { PortalVisit, PortalLifecycleEvent, PortalDocument, PortalSecurityAlert } from '@/lib/types/portal'
 import { PORTAL_STATUS_STYLES, LIFECYCLE_STEPS } from '@/lib/types/portal'
-import { logPortalAudit } from '@/lib/server/portal'
+import { logAuditAction } from '@/lib/client/audit'
+import { getPortalUrl } from '@/lib/utils/portal-url'
 
 export default function PortalDashboardPage() {
   const params = useParams()
@@ -67,7 +68,7 @@ export default function PortalDashboardPage() {
       setError(null)
 
       if (visitJson.data?.id) {
-        await logPortalAudit('Viewed', visitJson.data.id, { registrationNumber })
+        await logAuditAction('Portal Viewed', 'portal', visitJson.data.id, JSON.stringify({ registrationNumber }))
       }
     } catch {
       setError('Failed to load portal data')
@@ -96,14 +97,16 @@ export default function PortalDashboardPage() {
 
   const handleDownloadQR = async () => {
     if (!visit?.badge?.qr_token) return
-    await logPortalAudit('Downloaded QR', visit.id, {})
-    window.open(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(visit.badge.qr_token)}`, '_blank')
+    await logAuditAction('Portal QR Downloaded', 'portal', visit.id, JSON.stringify({ registration_number: visit.registration_number }))
+    const portalUrl = getPortalUrl(visit.badge.qr_token)
+    window.open(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(portalUrl)}`, '_blank')
   }
 
   const handlePrintQR = async () => {
     if (!visit?.badge?.qr_token) return
-    await logPortalAudit('Printed QR', visit.id, {})
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(visit.badge.qr_token)}`
+    await logAuditAction('Portal QR Printed', 'portal', visit.id, JSON.stringify({ registration_number: visit.registration_number }))
+    const portalUrl = getPortalUrl(visit.badge.qr_token)
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(portalUrl)}`
     const printWindow = window.open('', '_blank')
     if (printWindow) {
       printWindow.document.write(`<html><head><title>Print QR - ${visit.registration_number}</title></head><body style="display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;"><img src="${qrUrl}" style="width:300px;height:300px;" /></body></html>`)
@@ -114,7 +117,8 @@ export default function PortalDashboardPage() {
 
   const handleFullScreenQR = () => {
     if (!visit?.badge?.qr_token) return
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(visit.badge.qr_token)}`
+    const portalUrl = getPortalUrl(visit.badge.qr_token)
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=600x600&data=${encodeURIComponent(portalUrl)}`
     const fullScreenWindow = window.open('', '_blank')
     if (fullScreenWindow) {
       fullScreenWindow.document.write(`<html><head><title>QR Code - ${visit.registration_number}</title></head><body style="display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#000;"><img src="${qrUrl}" style="width:100%;max-width:600px;height:auto;" /></body></html>`)
@@ -124,13 +128,13 @@ export default function PortalDashboardPage() {
 
   const handleDownloadBadge = async () => {
     if (!visit?.badge) return
-    await logPortalAudit('Downloaded Badge', visit.id, {})
+    await logAuditAction('Portal Badge Downloaded', 'portal', visit.id, JSON.stringify({ registration_number: visit.registration_number }))
     alert('Badge download will be available once generated')
   }
 
   const handlePrintBadge = async () => {
     if (!visit?.badge) return
-    await logPortalAudit('Printed Badge', visit.id, {})
+    await logAuditAction('Portal Badge Printed', 'portal', visit.id, JSON.stringify({ registration_number: visit.registration_number }))
     alert('Badge printing will be available once generated')
   }
 
@@ -240,7 +244,7 @@ export default function PortalDashboardPage() {
           <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Your QR Code</h2>
             <div className="flex flex-col items-center">
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(visit.badge.qr_token)}`} alt="QR Code" className="h-48 w-48 mb-4" />
+               <img src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(getPortalUrl(visit.badge!.qr_token))}`} alt="QR Code" className="h-48 w-48 mb-4" />
               <p className="text-sm text-gray-500 mb-4">{visit.registration_number}</p>
               <div className="flex flex-wrap gap-3">
                 <button onClick={handleDownloadQR} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 min-h-[52px]">

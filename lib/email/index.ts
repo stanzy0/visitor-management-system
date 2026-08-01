@@ -489,23 +489,24 @@ function getTemplateContent(template: EmailTemplate, data: Record<string, string
         <p style="font-size: 12px; color: #6b7280;">This link will expire on ${data.expiresAt || 'the scheduled visit date'}. Please complete your registration before then.</p>
       `
 
-    case 'invitation_approved':
-      return `
-        <h2 style="margin-top: 0;">Registration Approved</h2>
-        <p>Dear ${visitorName},</p>
-        <p>Your registration has been approved! Here are your visit details:</p>
-        <div class="info-box">
-          <p><strong>Host:</strong> ${hostName}</p>
-          <p><strong>Date:</strong> ${date}</p>
-          <p><strong>Time:</strong> ${time}</p>
-          <p><strong>Purpose:</strong> ${purpose}</p>
-          <p><strong>Badge Number:</strong> ${badgeNumber}</p>
-        </div>
-        <p style="text-align: center; margin: 24px 0;">
-          <a href="${data.qrCodeUrl || '#'}" class="button">Download Badge</a>
-        </p>
-        <p>Please present your badge at reception upon arrival.</p>
-      `
+     case 'invitation_approved':
+       return `
+         <h2 style="margin-top: 0;">Registration Approved</h2>
+         <p>Dear ${visitorName},</p>
+         <p>Your registration has been approved! Here are your visit details:</p>
+         <div class="info-box">
+           <p><strong>Host:</strong> ${hostName}</p>
+           <p><strong>Date:</strong> ${date}</p>
+           <p><strong>Time:</strong> ${time}</p>
+           <p><strong>Purpose:</strong> ${purpose}</p>
+           <p><strong>Badge Number:</strong> ${badgeNumber}</p>
+         </div>
+         ${data.qrCodeUrl ? `<div class="qr-container"><img src="${data.qrCodeUrl}" alt="QR Code" class="qr-image" /></div>` : ''}
+         <p style="text-align: center; margin: 24px 0;">
+           <a href="${data.portalUrl || data.qrCodeUrl || '#'}" class="button">View Your Badge</a>
+         </p>
+         <p>Please present your badge at reception upon arrival.</p>
+       `
 
     case 'registration_submitted':
       return `
@@ -522,21 +523,40 @@ function getTemplateContent(template: EmailTemplate, data: Record<string, string
         <p>You will receive another email once your registration is approved. Please keep your registration number for future reference.</p>
       `
 
-    case 'registration_approved':
+     case 'registration_approved':
+       return `
+         <h2 style="margin-top: 0;">Registration Approved</h2>
+         <p>Dear ${visitorName},</p>
+         <p>Great news! Your visitor registration has been approved.</p>
+         <div class="info-box">
+           <p><strong>Registration Number:</strong> ${data.registrationNumber || 'N/A'}</p>
+           <p><strong>Visit Date:</strong> ${date}</p>
+           <p><strong>Arrival Time:</strong> ${data.arrivalTime || 'TBD'}</p>
+           <p><strong>Host:</strong> ${hostName}</p>
+           <p><strong>Office:</strong> ${location}</p>
+           <p><strong>Badge Number:</strong> ${badgeNumber}</p>
+         </div>
+         ${data.qrCodeUrl ? `<div class="qr-container"><img src="${data.qrCodeUrl}" alt="QR Code" class="qr-image" /></div>` : ''}
+         ${data.portalUrl ? `<p style="text-align: center; margin: 24px 0;"><a href="${data.portalUrl}" class="button">View Your Badge</a></p>` : ''}
+         <p>Please arrive at the scheduled time and present your QR code at the gate for verification.</p>
+        `
+
+    case 'badge_ready':
       return `
-        <h2 style="margin-top: 0;">Registration Approved</h2>
+        <h2 style="margin-top: 0; color: #16a34a;">Visitor Badge Ready</h2>
         <p>Dear ${visitorName},</p>
-        <p>Great news! Your visitor registration has been approved.</p>
+        <p>Your visitor badge has been generated and is ready for use.</p>
         <div class="info-box">
-          <p><strong>Registration Number:</strong> ${data.registrationNumber || 'N/A'}</p>
-          <p><strong>Visit Date:</strong> ${date}</p>
-          <p><strong>Arrival Time:</strong> ${data.arrivalTime || 'TBD'}</p>
+          <p><strong>Badge Number:</strong> ${badgeNumber}</p>
           <p><strong>Host:</strong> ${hostName}</p>
           <p><strong>Office:</strong> ${location}</p>
-          <p><strong>Badge Number:</strong> ${badgeNumber}</p>
+          <p><strong>Visit Date:</strong> ${data.visitDate || date}</p>
+          <p><strong>Purpose:</strong> ${purpose}</p>
         </div>
-        <p>Please arrive at the scheduled time and present your QR code at the gate for verification.</p>
-      `
+        ${data.qrCodeUrl ? `<div class="qr-container"><img src="${data.qrCodeUrl}" alt="QR Code" class="qr-image" /></div>` : ''}
+        ${data.portalUrl ? `<p style="text-align: center; margin: 24px 0;"><a href="${data.portalUrl}" class="button">View Your Badge</a></p>` : ''}
+        <p>Please present your badge at reception upon arrival.</p>
+        `
 
     case 'registration_rejected':
       return `

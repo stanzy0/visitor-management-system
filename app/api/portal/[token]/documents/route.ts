@@ -1,23 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPortalDocuments } from '@/lib/server/portal'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
     const { token } = await params
     const visit = await resolveVisit(token)
-    if (!visit) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
-    }
 
-    if (!visit || !visit.visitor?.id) {
+    if (!visit) {
+      console.error('[Portal Documents Lookup Failed]', { token, reason: 'visit_not_found', timestamp: new Date().toISOString() })
       return NextResponse.json({ success: true, data: [] })
     }
 
+    if (!visit.visitor?.id) {
+      console.error('[Portal Documents Lookup]', { token, reason: 'visitor_missing', visit_id: visit.id, timestamp: new Date().toISOString() })
+      return NextResponse.json({ success: true, data: [] })
+    }
+
+    const { getPortalDocuments } = await import('@/lib/server/portal')
     const documents = await getPortalDocuments(visit.visitor.id)
     return NextResponse.json({ success: true, data: documents })
   } catch (err) {
     console.error('Portal documents error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: true, data: [] })
   }
 }
 

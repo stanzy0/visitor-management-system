@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/auth-helpers'
 import { getVisitForBadgePreview, getBadgeTemplates } from '@/lib/server/badge-preview'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logAuditAction } from '@/lib/client/audit'
+import { getPortalUrl } from '@/lib/utils/portal-url'
 import QRCode from 'qrcode'
 import { sendEmail } from '@/lib/server/email'
 import { createHostEmployeeNotification, createSystemNotification } from '@/lib/notifications'
@@ -107,7 +108,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         return NextResponse.json({ error: 'Failed to update visit status' }, { status: 500 })
       }
 
-      const qrDataUrl = await QRCode.toDataURL(JSON.stringify({ registrationNumber: visit.registration_number, visitId: visit.id, type: 'public-visitor' }), { width: 300, margin: 2 })
+      const portalUrl = getPortalUrl(badge.qr_token)
+      const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
+
+      console.log('[Badge Created - Reception Preview]', {
+        badge_number: badge.badge_number,
+        qr_token: badge.qr_token,
+        portal_url: portalUrl,
+        visit_id: visitId,
+        registration_number: visit.registration_number,
+        visitor_id: visitor?.id,
+        visitor_name: visitor?.full_name,
+        environment: process.env.NODE_ENV,
+        timestamp: new Date().toISOString(),
+      })
 
       await sendEmail({
         to: visitor?.email || '',

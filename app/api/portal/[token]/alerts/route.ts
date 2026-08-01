@@ -1,19 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPortalSecurityAlerts } from '@/lib/server/portal'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
     const { token } = await params
     const visit = await resolveVisit(token)
+
     if (!visit) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
+      console.error('[Portal Alerts Lookup Failed]', { token, reason: 'visit_not_found', timestamp: new Date().toISOString() })
+      return NextResponse.json({ success: true, data: [] })
     }
 
+    if (!visit.id) {
+      console.error('[Portal Alerts Lookup]', { token, reason: 'visit_id_missing', timestamp: new Date().toISOString() })
+      return NextResponse.json({ success: true, data: [] })
+    }
+
+    const { getPortalSecurityAlerts } = await import('@/lib/server/portal')
     const alerts = await getPortalSecurityAlerts(visit.id)
     return NextResponse.json({ success: true, data: alerts })
   } catch (err) {
     console.error('Portal alerts error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: true, data: [] })
   }
 }
 
