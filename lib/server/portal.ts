@@ -130,10 +130,42 @@ export async function replacePortalDocument(documentId: string, file: File, visi
 
   const { error: uploadError } = await supabaseAdmin.storage.from('visitor-photos').upload(fileName, file)
   if (uploadError) {
+    console.error('[Document Upload Error]', {
+      documentId,
+      visitId,
+      fileName,
+      error: uploadError.message,
+      timestamp: new Date().toISOString(),
+    })
     throw new Error(uploadError.message || 'Failed to upload document')
   }
 
   const { data: publicUrlData } = supabaseAdmin.storage.from('visitor-photos').getPublicUrl(fileName)
+
+  if (!publicUrlData?.publicUrl) {
+    await supabaseAdmin.storage.from('visitor-photos').remove([fileName])
+    throw new Error('Failed to generate public URL for uploaded document')
+  }
+
+  let publicUrlAccessible = true
+  try {
+    const verifyRes = await fetch(publicUrlData.publicUrl, { method: 'HEAD', signal: AbortSignal.timeout(5000) })
+    publicUrlAccessible = verifyRes.ok
+  } catch {
+    publicUrlAccessible = false
+  }
+
+  if (!publicUrlAccessible) {
+    console.error('[Document URL Validation Failed]', {
+      documentId,
+      visitId,
+      fileName,
+      publicUrl: publicUrlData.publicUrl,
+      timestamp: new Date().toISOString(),
+    })
+    await supabaseAdmin.storage.from('visitor-photos').remove([fileName])
+    throw new Error('Uploaded document file is not accessible')
+  }
 
   const { data, error } = await supabaseAdmin
     .from('visitor_documents')
@@ -150,6 +182,7 @@ export async function replacePortalDocument(documentId: string, file: File, visi
     .single()
 
   if (error || !data) {
+    await supabaseAdmin.storage.from('visitor-photos').remove([fileName])
     throw new Error(error?.message || 'Failed to update document')
   }
 

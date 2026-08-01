@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPortalVisitByRegistrationNumber, getPortalVisitByQRToken } from '@/lib/server/portal'
+import { collectPortalAnalytics } from '@/lib/analytics/portal-analytics'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
@@ -53,16 +54,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     console.log('[Portal Opened]', {
-      token,
-      visit_id: visit.id,
-      registration_number: visit.registration_number,
-      status: visit.status,
-      has_visitor: !!visit.visitor,
-      has_badge: !!visit.badge,
-      has_employee: !!visit.employee,
-      has_appointment: !!visit.appointment,
-      environment: process.env.NODE_ENV,
-      timestamp: new Date().toISOString(),
+      ...await collectPortalAnalytics(request, token, visit),
     })
 
     return NextResponse.json({ success: true, data: visit })

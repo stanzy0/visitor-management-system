@@ -3,6 +3,7 @@ import { requireAdmin } from '@/lib/auth-helpers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/server/email'
 import { getPortalUrl } from '@/lib/utils/portal-url'
+import { verifyBadgeQR } from '@/lib/qrcode-verification'
 import QRCode from 'qrcode'
 
 export async function GET(request: NextRequest) {
@@ -158,6 +159,28 @@ export async function POST(request: NextRequest) {
 
     const portalUrl = getPortalUrl(badge.qr_token)
     const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
+
+    const qrVerification = await verifyBadgeQR(badge.id, badge.qr_token)
+    if (!qrVerification.valid) {
+      console.error('[Badge Creation Error - QR Verification Failed]', {
+        badge_number: badge.badge_number,
+        qr_token: badge.qr_token,
+        error: qrVerification.error,
+        visit_id,
+        registration_number: visit.registration_number,
+        timestamp: new Date().toISOString(),
+      })
+
+      await supabaseAdmin
+        .from('visitor_badges')
+        .delete()
+        .eq('id', badge.id)
+
+      return NextResponse.json(
+        { error: `QR verification failed: ${qrVerification.error}` },
+        { status: 500 }
+      )
+    }
 
     console.log('[Badge Created]', {
       badge_number: badge.badge_number,

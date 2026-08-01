@@ -1,3 +1,15 @@
+const REQUIRED_ENV_VARS = [
+  'NEXT_PUBLIC_APP_URL',
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY',
+] as const
+
+export function validateEnvVars(): { valid: boolean; missing: string[] } {
+  const missing = REQUIRED_ENV_VARS.filter((key) => !process.env[key])
+  return { valid: missing.length === 0, missing }
+}
+
 export function getPortalUrl(qrToken: string): string {
   if (!qrToken) {
     throw new Error('QR token is required to generate portal URL')
@@ -25,7 +37,7 @@ export function getPortalUrl(qrToken: string): string {
   const encodedToken = encodeURIComponent(qrToken)
   const portalUrl = `${appUrl}/portal/${encodedToken}`
 
-  if (!portalUrl.includes('/portal/') || !portalUrl.includes(qrToken)) {
+  if (!portalUrl.includes('/portal/') || !portalUrl.includes(encodedToken)) {
     const error = `Generated URL does not match expected format: ${portalUrl}`
     console.error('[Portal URL Error]', { error, timestamp: new Date().toISOString() })
     throw new Error(error)
