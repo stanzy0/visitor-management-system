@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { ensureUserInDatabase } from '@/lib/auth-client'
 import { logAuditAction } from '@/lib/client/audit'
@@ -74,22 +75,18 @@ export default function LoginPage() {
     <div className="flex h-screen w-full bg-[#F8FAFC] font-sans">
       <div className="relative hidden md:block md:w-1/2">
         <div className="absolute inset-0 bg-black/35 z-10 rounded-l-3xl" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image
           src="/images/afcsc-login.jpg"
           alt="AFCSC Campus"
-          className="h-full w-full object-cover rounded-l-3xl"
+          fill
+          priority
+          className="object-cover rounded-l-3xl"
+          sizes="50vw"
         />
         <div className="absolute bottom-8 left-8 z-20 max-w-md">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/images/afcsc-logo.png"
-            alt="AFCSC Logo"
-            className="h-16 w-auto mb-4 opacity-90"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-            }}
-          />
+          <div className="h-12 w-12 rounded-xl bg-[#0B3D91] flex items-center justify-center mb-4 shadow-lg">
+            <span className="text-white font-bold text-xs">AFCSC</span>
+          </div>
           <h2 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">
             Visitor Management System
           </h2>
