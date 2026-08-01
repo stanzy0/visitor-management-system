@@ -55,30 +55,14 @@ export async function getPortalVisitByQRToken(qrToken: string): Promise<PortalVi
 
   const { data, error } = await supabaseAdmin
     .from('visits')
-    .select(`
-      id,
-      registration_number,
-      status,
-      visitor_type,
-      source,
-      rejection_reason,
-      check_in_time,
-      check_out_time,
-      created_at,
-      visitor:visitors(*),
-      employee:employees(*),
-      appointment:appointments(*),
-      badge:visitor_badges(*)
-    `)
+    .select('*')
     .eq('id', badge.visit_id)
-    .eq('source', 'public')
     .single()
 
-  console.log('Visit query result:', data)
-  console.log('Visit query error:', error)
+  console.log('VISIT DATA:', data)
+  console.log('VISIT ERROR:', error)
 
   if (error || !data) {
-    console.log('Visit query returned null or error:', error?.message || 'no data')
     return null
   }
 
