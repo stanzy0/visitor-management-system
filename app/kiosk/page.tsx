@@ -207,7 +207,7 @@ export default function KioskPage() {
             // Not JSON — check if it's a URL and extract the token from the path
             try {
               const url = new URL(decodedText)
-              // URL like: http://localhost:3000/portal/visit/<qr_token>
+              // URL like: https://app.vercel.app/portal/<qr_token>
               const pathParts = url.pathname.split('/').filter(Boolean)
               // Find the token part (should be the last segment after /visit/ or /portal/)
               const visitIndex = pathParts.indexOf('visit')

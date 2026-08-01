@@ -5,6 +5,7 @@ import { sendEmail } from '@/lib/server/email'
 import { createHostEmployeeNotification, createSystemNotification } from '@/lib/notifications'
 import { logAuditAction } from '@/lib/server/audit'
 import { getSystemSetting } from '@/lib/server/settings'
+import { getPortalUrl } from '@/lib/utils/portal-url'
 import QRCode from 'qrcode'
 
 export async function POST(request: NextRequest) {
@@ -68,7 +69,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to update visit status' }, { status: 500 })
       }
 
-      const qrDataUrl = await QRCode.toDataURL(JSON.stringify({ registrationNumber: visit.registration_number, visitId: visit.id, type: 'public-visitor' }), { width: 300, margin: 2 })
+      const portalUrl = getPortalUrl(badge.qr_token)
+      const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
 
       await sendEmail({
         to: visitor?.email || '',

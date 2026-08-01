@@ -1,3 +1,4 @@
+import { getPortalUrl, verifyPortalUrl } from '@/lib/utils/portal-url'
 import type { BadgeStatus, BadgePreviewData, VisitorBadge } from './badge-types'
 import { BADGE_QR_SETTINGS, BADGE_DATE_FORMAT, BADGE_LAYOUT, BADGE_PDF, BADGE_DEFAULT_EXPIRY_HOURS } from './badge-constants'
 
@@ -50,8 +51,30 @@ export function getBadgeStatusCssClass(status: BadgeStatus): string {
 }
 
 export function buildBadgeQrValue(badge: VisitorBadge): string {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  return `${appUrl}/portal/${encodeURIComponent(badge.qr_token)}`
+  const portalUrl = getPortalUrl(badge.qr_token)
+
+  if (!verifyPortalUrl(portalUrl, badge.qr_token)) {
+    const error = `QR verification failed: generated URL does not match expected pattern for token ${badge.qr_token}`
+    console.error('[Badge QR Verification Error]', {
+      badge_number: badge.badge_number,
+      qr_token: badge.qr_token,
+      generated_url: portalUrl,
+      error,
+      environment: process.env.NODE_ENV,
+      timestamp: new Date().toISOString(),
+    })
+    throw new Error(error)
+  }
+
+  console.log('[Badge QR Generated]', {
+    badge_number: badge.badge_number,
+    qr_token: badge.qr_token,
+    portal_url: portalUrl,
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+  })
+
+  return portalUrl
 }
 
 export function calculateExpiry(hours: number = BADGE_DEFAULT_EXPIRY_HOURS): Date {

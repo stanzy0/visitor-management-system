@@ -153,7 +153,7 @@ export default function RegisterStatusPage() {
 
               {result.qr_token && (
                 <div className="flex flex-col items-center pt-4 border-t border-gray-200">
-                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(result.qr_token)}`} alt="QR Code" className="h-40 w-40 mb-2" />
+                  <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL}/portal/${encodeURIComponent(result.qr_token)}`)}`} alt="QR Code" className="h-40 w-40 mb-2" />
                   <p className="text-sm text-gray-500">Present this QR code at the gate</p>
                 </div>
               )}

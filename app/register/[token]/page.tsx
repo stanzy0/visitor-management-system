@@ -10,7 +10,7 @@ interface PageProps {
 export default async function RegisterPage({ params }: PageProps) {
   const { token } = await params
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/invitations/${token}`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/invitations/${token}`, {
     cache: 'no-store',
   })
 

@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getInvitationByToken, updateInvitationStatus, approveInvitation, rejectInvitation, cancelInvitation } from '@/lib/server/invitations'
 import { logAuditAction } from '@/lib/server/audit'
 import { queueEmail } from '@/lib/email'
+import { getBaseUrl } from '@/lib/utils/portal-url'
 
 export async function GET(
   request: NextRequest,
@@ -173,7 +174,7 @@ export async function POST(
           .single()
 
         if (badge) {
-          const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+          const baseUrl = getBaseUrl()
           const qrDataUrl = `${baseUrl}/api/badges/${badge.id}/qr`
 
           void queueEmail({

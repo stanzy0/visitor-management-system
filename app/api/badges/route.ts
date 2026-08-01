@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/server/email'
+import { getPortalUrl } from '@/lib/utils/portal-url'
 import QRCode from 'qrcode'
 
 export async function GET(request: NextRequest) {
@@ -125,7 +126,8 @@ export async function POST(request: NextRequest) {
     const visitor = Array.isArray(visit.visitor) ? visit.visitor[0] : visit.visitor
     const employee = Array.isArray(visit.employee) ? visit.employee[0] : visit.employee
 
-    const qrDataUrl = await QRCode.toDataURL(JSON.stringify({ visitId: visit_id, type: 'badge' }), { width: 300, margin: 2 })
+    const portalUrl = getPortalUrl(badge.qr_token)
+    const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
 
     if (visitor?.email) {
       await sendEmail({

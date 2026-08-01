@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Loader2, CheckCircle, XCircle, Clock, Download, Printer, Mail } from 'lucide-react'
 import { getAuthHeaders } from '@/lib/client/api'
+import { getPortalUrl } from '@/lib/utils/portal-url'
 
 interface Invitation {
   id: string
@@ -76,14 +77,11 @@ export default function VisitorStatusCard({ invitation }: VisitorStatusCardProps
       pdf.text(`Host: ${invitation.host.full_name}`, 20, 80)
       pdf.text(`Purpose: ${invitation.purpose}`, 20, 87)
       
-      const qrData = JSON.stringify({
-        visitId: invitation.id,
-        qrToken: badge.qr_token,
-        type: 'visitor-pass',
-      })
-      
       const QRCodeToDataURL = (await import('qrcode')).default
-      const qrDataUrl = await QRCodeToDataURL(qrData, { width: 120, margin: 1 })
+      const qrDataUrl = await QRCodeToDataURL(
+        getPortalUrl(badge.qr_token),
+        { width: 120, margin: 1 }
+      )
       pdf.addImage(qrDataUrl, 'PNG', 140, 60, 50, 50)
       
       pdf.setFontSize(8)
