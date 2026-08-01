@@ -131,7 +131,7 @@ export default function LoginPage() {
 
       <div className="w-full lg:w-1/2 h-full flex flex-col items-center justify-center px-16 lg:px-24 overflow-hidden">
         <div
-          className="w-full max-w-2xl flex flex-col items-center pt-8"
+          className="w-full max-w-2xl flex flex-col items-center pt-12"
           style={{
             background: 'rgba(255,255,255,.75)',
             backdropFilter: 'blur(18px)',
@@ -150,7 +150,7 @@ export default function LoginPage() {
           `}</style>
 
           <div
-            className="relative flex justify-center mb-6 animate-fade-in-up"
+            className="relative flex justify-center mb-10 animate-fade-in-up"
             style={{ animationDelay: '0ms' }}
           >
             <div className="absolute w-56 h-56 rounded-full bg-white/40 blur-[70px] pointer-events-none"></div>
@@ -319,15 +319,6 @@ export default function LoginPage() {
               Contact the System Administrator
             </a>
           </div>
-        </div>
-
-        <div
-          className="absolute bottom-4 left-0 right-0 text-center text-xs text-slate-500 tracking-wide animate-fade-in-up"
-          style={{ animationDelay: '600ms' }}
-        >
-          <p>Visitor Management System v1.0</p>
-          <p>Armed Forces Command and Staff College</p>
-          <p>Powered by AFCSC ICT Directorate</p>
         </div>
       </div>
     </div>
