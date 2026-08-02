@@ -145,6 +145,9 @@ export default function DashboardPage() {
         const res = await fetch('/api/security/stats', {
           headers: await getAuthHeaders(),
         })
+        if (!res.ok) {
+          throw new Error(`Request failed: ${res.status}`)
+        }
         const json = await res.json()
         if (json.success) {
           setSecurityStats(json.data)
@@ -162,6 +165,9 @@ export default function DashboardPage() {
         const res = await fetch('/api/public/registrations', {
           headers: await getAuthHeaders(),
         })
+        if (!res.ok) {
+          throw new Error(`Request failed: ${res.status}`)
+        }
         const json = await res.json()
         if (json.success) {
           setPendingOnlineRegistrations(json.data)
@@ -179,6 +185,9 @@ export default function DashboardPage() {
         const res = await fetch('/api/documents?verification_status=Pending&limit=5', {
           headers: await getAuthHeaders(),
         })
+        if (!res.ok) {
+          throw new Error(`Request failed: ${res.status}`)
+        }
         const json = await res.json()
         console.log('[Dashboard] Documents response:', json)
         const documents = json.data || []
@@ -209,6 +218,9 @@ export default function DashboardPage() {
         const res = await fetch('/api/assets/stats', {
           headers: await getAuthHeaders(),
         })
+        if (!res.ok) {
+          throw new Error(`Request failed: ${res.status}`)
+        }
         const json = await res.json()
         if (json.success) {
           setPropertyStats(json.data)
@@ -605,7 +617,7 @@ export default function DashboardPage() {
                            <td className="px-4 py-3 text-right">
                               <div className="flex items-center justify-end gap-2">
                                 <button onClick={() => router.push('/reception/badge-preview/' + reg.id)} className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 min-h-[36px]">Preview Badge</button>
-                                 <button onClick={async () => { const reason = prompt('Rejection reason:'); if (reason === null) return; const headers = await getAuthHeaders(); await fetch('/api/public/registrations', { method: 'POST', headers, body: JSON.stringify({ visit_id: reg.id, action: 'reject', reason }) }); window.location.reload() }} className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 min-h-[36px]">Reject</button>
+                                 <button onClick={async () => { const reason = prompt('Rejection reason:'); if (reason === null) return; const headers = await getAuthHeaders(); const res = await fetch('/api/public/registrations', { method: 'POST', headers, body: JSON.stringify({ visit_id: reg.id, action: 'reject', reason }) }); if (!res.ok) { const errText = await res.text(); throw new Error(`Request failed: ${res.status} - ${errText.substring(0, 100)}`) } await res.json(); window.location.reload() }} className="inline-flex items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 min-h-[36px]">Reject</button>
                               </div>
                            </td>
                          </tr>
