@@ -151,7 +151,7 @@ export default function DashboardHeader({
 
           <div className="hidden sm:block h-6 w-px bg-gray-200" />
 
-          <motion.div {...hoverScale}>
+          <motion.div>
             <NotificationBell />
           </motion.div>
 
