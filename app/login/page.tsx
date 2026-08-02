@@ -5,7 +5,8 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { ensureUserInDatabase } from '@/lib/auth-client'
 import { logAuditAction } from '@/lib/client/audit'
-import { Shield, BadgeCheck, UserCheck, Activity } from 'lucide-react'
+import { Shield, BadgeCheck, UserCheck, Activity, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
 const MAX_FAILED_ATTEMPTS = 6
 
@@ -133,6 +134,15 @@ export default function LoginPage() {
         }}
       >
         <div className="mx-auto w-full max-w-[460px]">
+          <Link
+            href="/"
+            aria-label="Back to Home"
+            className="flex items-center gap-2 h-11 px-4 rounded-xl bg-white border border-gray-300 text-slate-700 text-sm font-medium transition-all duration-200 hover:bg-slate-100 hover:border-slate-300 mb-4"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Link>
+
           <div className="text-center mb-12">
             <Image
               src="/images/afcsc-logo.png"
