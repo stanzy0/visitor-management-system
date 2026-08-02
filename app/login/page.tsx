@@ -125,7 +125,7 @@ export default function LoginPage() {
       </div>
 
       <div
-        className="w-full md:w-1/2 h-full flex flex-col justify-center bg-gradient-to-br from-slate-50 to-slate-200 px-16 lg:px-24"
+        className="relative w-full md:w-1/2 h-full flex flex-col justify-center bg-gradient-to-br from-slate-50 to-slate-200 px-16 lg:px-24"
         style={{
           background: 'rgba(255,255,255,.75)',
           backdropFilter: 'blur(18px)',
@@ -133,16 +133,16 @@ export default function LoginPage() {
           backgroundImage: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 45%, #E2E8F0 100%)',
         }}
       >
-        <div className="mx-auto w-full max-w-[460px]">
-          <Link
-            href="/"
-            aria-label="Back to Home"
-            className="flex items-center gap-2 h-11 px-4 rounded-xl bg-white border border-gray-300 text-slate-700 text-sm font-medium transition-all duration-200 hover:bg-slate-100 hover:border-slate-300 mb-4"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Link>
+        <Link
+          href="/"
+          aria-label="Back to Home"
+          className="absolute top-6 left-6 z-50 flex items-center gap-2 h-11 px-4 rounded-xl bg-white border border-slate-300 text-slate-700 text-sm font-medium transition-colors duration-200 hover:bg-slate-50 hover:border-slate-400"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Home
+        </Link>
 
+        <div className="mx-auto w-full max-w-[460px]">
           <div className="text-center mb-12">
             <Image
               src="/images/afcsc-logo.png"
