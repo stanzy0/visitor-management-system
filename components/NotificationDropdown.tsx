@@ -29,6 +29,21 @@ export default function NotificationDropdown({ onClose }: NotificationDropdownPr
   const [userRole, setUserRole] = useState<string | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        onCloseRef.current()
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -92,20 +107,12 @@ export default function NotificationDropdown({ onClose }: NotificationDropdownPr
       )
       .subscribe()
 
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        onClose()
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
       if (realtimeChannel.current) {
         supabase.removeChannel(realtimeChannel.current)
       }
     }
-  }, [onClose, userId, userRole])
+  }, [userId, userRole])
 
   const markAsRead = async (id: string) => {
     await supabase.from('notifications').update({ is_read: true }).eq('id', id)
