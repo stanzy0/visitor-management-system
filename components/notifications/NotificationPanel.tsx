@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { X, Check, Trash2, CheckCheck, ExternalLink } from 'lucide-react'
 import { getAuthHeaders } from '@/lib/client/api'
 import type { Notification } from '@/lib/types/notification'
@@ -11,6 +12,7 @@ interface NotificationPanelProps {
 }
 
 export default function NotificationPanel({ onClose, onUpdate }: NotificationPanelProps) {
+  const router = useRouter()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [showAll, setShowAll] = useState(false)
@@ -25,6 +27,9 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
       const res = await fetch('/api/notifications', {
         headers: await getAuthHeaders(),
       })
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`)
+      }
       const json = await res.json()
       if (res.ok) {
         setNotifications(json.data || [])
@@ -217,7 +222,7 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
 
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t">
           <button
-            onClick={() => { setShowAll(true); onClose(); }}
+            onClick={() => { router.push('/notifications') }}
             className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 min-h-[52px]"
           >
             View All Notifications

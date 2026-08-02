@@ -31,6 +31,9 @@ export default function NotificationsClient() {
       if (filters.dateTo) params.set('dateTo', filters.dateTo)
 
       const res = await fetch(`/api/notifications?${params.toString()}`)
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`)
+      }
       const json = await res.json()
       if (res.ok) {
         setNotifications(json.data || [])
