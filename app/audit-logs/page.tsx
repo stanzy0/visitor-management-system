@@ -32,36 +32,6 @@ export default function AuditLogsPage() {
   })
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (!PERMISSIONS[user.role]?.includes('audit-logs')) {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setAuthChecking(false)
-      fetchLogs()
-      setupRealtime()
-    }
-    checkAuth()
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!authChecking) {
-      fetchLogs()
-    }
-  }, [dateFilter])
-
   const fetchLogs = async () => {
     setLoading(true)
     let query = supabase.from('audit_logs').select('*').order('created_at', { ascending: false })
@@ -99,6 +69,36 @@ export default function AuditLogsPage() {
       )
       .subscribe()
   }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('audit-logs')) {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setAuthChecking(false)
+      fetchLogs()
+      setupRealtime()
+    }
+    checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!authChecking) {
+      setTimeout(() => fetchLogs(), 0)
+    }
+  }, [dateFilter])
 
   if (authChecking) {
     return (

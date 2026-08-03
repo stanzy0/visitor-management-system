@@ -51,7 +51,7 @@ export interface PerformanceMetric {
   metric_name: string
   metric_type: string
   value_ms: number
-  metadata: Record<string, any>
+  metadata: Record<string, unknown>
   created_at: string
 }
 
@@ -414,7 +414,7 @@ export async function deleteOrphanedFiles(bucketName: string): Promise<number> {
     .select('id')
     .eq('status', 'checked_out')
 
-  const activeVisitIds = new Set((visits || []).map((v: any) => v.id))
+  const activeVisitIds = new Set((visits || []).map((v: { id: string }) => v.id))
 
   let deleted = 0
   for (const file of files) {

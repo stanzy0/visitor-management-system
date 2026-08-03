@@ -21,9 +21,14 @@ export default function VisitorBadge({
   onDownload,
   onReprint,
 }: VisitorBadgeProps) {
-  const handlePrint = () => {
-    window.print()
-    onPrint?.()
+  const handlePrint = async () => {
+    try {
+      const { printBadgeWindow } = await import('@/lib/badge/badge-print')
+      await printBadgeWindow(badge.id)
+      onPrint?.()
+    } catch {
+      // popup blocked or print failed
+    }
   }
 
   const handleDownload = () => {

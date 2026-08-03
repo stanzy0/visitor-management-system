@@ -97,7 +97,7 @@ export default function HostVisitorsPage() {
 
   useEffect(() => {
     if (employeeId) {
-      fetchVisitors()
+      setTimeout(() => fetchVisitors(), 0)
     }
   }, [employeeId, statusFilter, search])
 

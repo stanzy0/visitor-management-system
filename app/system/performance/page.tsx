@@ -13,7 +13,7 @@ interface PerformanceMetric {
   metric_name: string
   metric_type: string
   value_ms: number
-  metadata: Record<string, any>
+  metadata: Record<string, unknown>
   created_at: string
 }
 
@@ -35,23 +35,6 @@ export default function PerformancePage() {
   const [selectedMetric, setSelectedMetric] = useState<string>('all')
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (user.role !== 'Admin') {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setAuthChecking(false)
-      fetchMetrics()
-    }
-    checkAuth()
-  }, [selectedMetric])
-
   const fetchMetrics = async () => {
     setLoading(true)
     try {
@@ -69,6 +52,23 @@ export default function PerformancePage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (user.role !== 'Admin') {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setAuthChecking(false)
+      fetchMetrics()
+    }
+    checkAuth()
+  }, [selectedMetric])
 
   const chartData = metrics.map(m => ({
     ...m,

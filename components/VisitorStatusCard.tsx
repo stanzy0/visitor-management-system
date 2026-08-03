@@ -70,8 +70,8 @@ export default function VisitorStatusCard({ invitation }: VisitorStatusCardProps
       pdf.setTextColor(60, 60, 60)
       pdf.text(`Badge Number: ${badge.badge_number}`, 20, 35)
       pdf.text(`Status: ${badge.badge_status}`, 20, 42)
-      pdf.text(`Issued: ${new Date(badge.issued_at).toLocaleString()}`, 20, 49)
-      pdf.text(`Expires: ${new Date(badge.expires_at).toLocaleString()}`, 20, 56)
+      pdf.text(`Issued: ${badge.issued_at ? new Date(badge.issued_at).toLocaleString() : '—'}`, 20, 49)
+      pdf.text(`Expires: ${badge.expires_at ? new Date(badge.expires_at).toLocaleString() : '—'}`, 20, 56)
       pdf.text(`Visitor: ${invitation.visitor_name}`, 20, 66)
       pdf.text(`Organization: ${invitation.visitor_organization || '—'}`, 20, 73)
       pdf.text(`Host: ${invitation.host.full_name}`, 20, 80)
@@ -108,25 +108,26 @@ export default function VisitorStatusCard({ invitation }: VisitorStatusCardProps
   }
 
    const handlePrintBadge = async () => {
-     window.print()
-     
-     if (badge) {
-       try {
-         await fetch('/api/audit', {
-           method: 'POST',
-           headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-           body: JSON.stringify({
-             action: 'Visitor Printed Badge',
-             entityType: 'badge',
-             entityId: badge.id,
-             details: `Visitor ${invitation.visitor_name} printed badge ${badge.badge_number}`,
-           }),
-         })
-       } catch {
-         // Audit log failure is non-critical
-       }
-     }
-   }
+      if (!badge) return
+
+      try {
+        const { printBadgeWindow } = await import('@/lib/badge/badge-print')
+        await printBadgeWindow(badge.id)
+
+        await fetch('/api/audit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
+          body: JSON.stringify({
+            action: 'Visitor Printed Badge',
+            entityType: 'badge',
+            entityId: badge.id,
+            details: `Visitor ${invitation.visitor_name} printed badge ${badge.badge_number}`,
+          }),
+        })
+      } catch {
+        // popup blocked or print failed
+      }
+    }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -215,7 +216,7 @@ export default function VisitorStatusCard({ invitation }: VisitorStatusCardProps
           </div>
           <div>
             <p className="text-gray-500">Expires</p>
-            <p className="font-medium text-gray-900">{new Date(invitation.expires_at).toLocaleString()}</p>
+            <p className="font-medium text-gray-900">{invitation.expires_at ? new Date(invitation.expires_at).toLocaleString() : '—'}</p>
           </div>
         </div>
       </div>
@@ -240,11 +241,11 @@ export default function VisitorStatusCard({ invitation }: VisitorStatusCardProps
             </div>
             <div>
               <p className="text-gray-500">Issued At</p>
-              <p className="font-medium text-gray-900">{new Date(badge.issued_at).toLocaleString()}</p>
+              <p className="font-medium text-gray-900">{badge.issued_at ? new Date(badge.issued_at).toLocaleString() : '—'}</p>
             </div>
             <div>
               <p className="text-gray-500">Expires At</p>
-              <p className="font-medium text-gray-900">{new Date(badge.expires_at).toLocaleString()}</p>
+              <p className="font-medium text-gray-900">{badge.expires_at ? new Date(badge.expires_at).toLocaleString() : '—'}</p>
             </div>
           </div>
 

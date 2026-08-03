@@ -23,8 +23,10 @@ export default function NotificationCard({ notification, onMarkAsRead, onDelete 
     }
   }
 
-  const formatTime = (dateStr: string) => {
+  const formatTime = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '—'
     const date = new Date(dateStr)
+    if (isNaN(date.getTime())) return '—'
     const now = new Date()
     const diff = now.getTime() - date.getTime()
     const minutes = Math.floor(diff / 60000)

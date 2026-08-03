@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, FileText, Download, Printer, X, Edit3, CheckCircle2 } from 'lucide-react'
 import type { BadgePreviewVisit, BadgeTemplateOption } from '@/lib/types/badge-preview'
+import type { VisitorBadge } from '@/lib/badge/badge-types'
 import BadgeLayout from '@/components/BadgeLayout'
 import BadgePreviewToolbar from '@/components/badges/BadgePreviewToolbar'
 import BadgeValidationChecklist from '@/components/badges/BadgeValidationChecklist'
@@ -47,8 +48,13 @@ export default function BadgePreviewPanel({
   const visitor = visit.visitor
   const employee = visit.employee
 
-  const handlePrint = () => {
-    window.print()
+  const handlePrint = async () => {
+    try {
+      const { printBadgePreview } = await import('@/lib/badge/badge-print')
+      await printBadgePreview(previewBadge as unknown as VisitorBadge)
+    } catch {
+      // popup blocked or print failed
+    }
   }
 
   const handleDownload = async () => {
@@ -62,7 +68,7 @@ export default function BadgePreviewPanel({
         badge_status: 'Active' as const,
         template: template,
       }
-      await generateBadgePdf(badge as any)
+      await generateBadgePdf(badge as unknown as VisitorBadge)
     } catch (error) {
       console.error('PDF generation failed:', error)
     }
@@ -233,9 +239,9 @@ export default function BadgePreviewPanel({
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Status Panel</h2>
               <div className="flex items-center gap-2">
-                <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${visit.status === 'pending' ? 'bg-amber-50 text-amber-700' : visit.status === 'approved' ? 'bg-green-50 text-green-700' : visit.status === 'rejected' ? 'bg-red-50 text-red-700' : 'bg-gray-50 text-gray-700'}`}>
-                  {visit.status.replace('_', ' ').toUpperCase()}
-                </span>
+                 <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${visit.status === 'pending' ? 'bg-amber-50 text-amber-700' : visit.status === 'approved' ? 'bg-green-50 text-green-700' : visit.status === 'rejected' ? 'bg-red-50 text-red-700' : 'bg-gray-50 text-gray-700'}`}>
+                   {(visit.status || 'unknown').replace('_', ' ').toUpperCase()}
+                 </span>
               </div>
             </div>
 
@@ -284,7 +290,7 @@ export default function BadgePreviewPanel({
               </div>
               <div className="flex justify-center">
                 <div style={{ transform: orientation === 'portrait' ? 'rotate(90deg)' : 'none', transformOrigin: 'center' }}>
-                  <BadgeLayout badge={previewBadge as any} />
+                  <BadgeLayout badge={previewBadge as VisitorBadge} />
                 </div>
               </div>
             </div>

@@ -3,11 +3,25 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --color-primary: #0B3D91;
+  --color-primary-hover: #092E6D;
+  --color-secondary: #1F6FEB;
+  --color-accent: #D4AF37;
+  --color-accent-hover: #B8860B;
+  --color-dashboard-bg: #F8FAFC;
+  --shadow-dashboard-card: 0 10px 30px rgba(0, 0, 0, 0.08);
+  --branding-primary: #0B3D91;
+  --branding-secondary: #1F6FEB;
+  --branding-accent: #D4AF37;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-accent: var(--color-accent);
+  --color-dashboard-bg: var(--color-dashboard-bg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

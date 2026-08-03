@@ -56,10 +56,10 @@ export const hoverScale = {
   transition: { type: 'spring' as const, stiffness: 400, damping: 17 },
 }
 
-export function MotionDiv(props: any) {
+export function MotionDiv(props: React.ComponentProps<typeof motion.div>) {
   return <motion.div {...props} />
 }
 
-export function MotionButton(props: any) {
+export function MotionButton(props: React.ComponentProps<typeof motion.button>) {
   return <motion.button {...props} />
 }

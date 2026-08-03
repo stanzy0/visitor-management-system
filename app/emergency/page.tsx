@@ -64,6 +64,12 @@ export default function EmergencyPage() {
   const [startingEmergency, setStartingEmergency] = useState(false)
   const [endingEmergency, setEndingEmergency] = useState(false)
   const [showEndConfirm, setShowEndConfirm] = useState(false)
+  const [now, setNow] = useState(Date.now())
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30000)
+    return () => clearInterval(timer)
+  }, [])
 
    const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
    const rollCallChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
@@ -405,7 +411,7 @@ export default function EmergencyPage() {
    
   const getTimeOnSite = (checkInTime: string | null) => {
     if (!checkInTime) return '—'
-    const diff = Date.now() - new Date(checkInTime).getTime()
+    const diff = now - new Date(checkInTime).getTime()
     const hours = Math.floor(diff / (1000 * 60 * 60))
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
     return `${hours}h ${minutes}m`

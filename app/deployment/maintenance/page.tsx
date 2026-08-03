@@ -19,6 +19,22 @@ export default function MaintenanceModePage() {
   const [saving, setSaving] = useState(false)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
+  const fetchMaintenance = async () => {
+    setTimeout(() => setLoading(true), 0)
+    try {
+      const res = await fetch('/api/deployment?section=maintenance')
+      const json = await res.json()
+      if (json.success) {
+        setMaintenance(json.data)
+        setMessage(json.data.message || '')
+      }
+    } catch (err) {
+      console.error('Error fetching maintenance mode:', err)
+    } finally {
+      setTimeout(() => setLoading(false), 0)
+    }
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -36,24 +52,8 @@ export default function MaintenanceModePage() {
     checkAuth()
   }, [])
 
-  const fetchMaintenance = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/deployment?section=maintenance')
-      const json = await res.json()
-      if (json.success) {
-        setMaintenance(json.data)
-        setMessage(json.data.message || '')
-      }
-    } catch (err) {
-      console.error('Error fetching maintenance mode:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const toggleMaintenance = async (enabled: boolean) => {
-    setSaving(true)
+    setTimeout(() => setSaving(true), 0)
     try {
       await fetch('/api/deployment', {
         method: 'POST',
@@ -64,7 +64,7 @@ export default function MaintenanceModePage() {
     } catch (err) {
       console.error('Error toggling maintenance mode:', err)
     } finally {
-      setSaving(false)
+      setTimeout(() => setSaving(false), 0)
     }
   }
 

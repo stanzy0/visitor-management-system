@@ -1,6 +1,6 @@
 import { requireRole } from '@/lib/auth-helpers'
 import { getBadge } from '@/lib/badge/badge-service'
-import PrintBadgePage from '@/components/PrintBadgePage'
+import PrintableBadge from '@/components/badges/PrintableBadge'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,5 +30,5 @@ export default async function PrintBadgeRoute({
     )
   }
 
-  return <PrintBadgePage badge={badge} />
+  return <PrintableBadge badge={badge} />
 }

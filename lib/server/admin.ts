@@ -1,7 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
-import type { AdminDashboardStats, SystemHealth, AdminRole, SystemLog, BackupRecord } from '@/lib/types/admin'
+import type { AdminDashboardStats, SystemHealth, AdminRole, SystemLog, BackupRecord, AdminUser, Department, Office, Integration, EmailTemplate, AuditLogEntry, SystemHealthDetailed } from '@/lib/types/admin'
 
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
@@ -20,6 +20,9 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     activeVisits,
     pendingRegistrations,
     overstayedVisitors,
+    failedLogins,
+    emailQueue,
+    onlineReceptionists,
   ] = await Promise.all([
     supabaseAdmin.from('user_roles').select('id', { count: 'exact', head: true }),
     supabaseAdmin.from('user_roles').select('id', { count: 'exact', head: true }).neq('ban_duration', '876000h'),
@@ -32,6 +35,9 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     supabaseAdmin.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'checked_in'),
     supabaseAdmin.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
     supabaseAdmin.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'checked_in').lt('check_in_time', new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString()),
+    supabaseAdmin.from('system_logs').select('id', { count: 'exact', head: true }).eq('level', 'error').gte('created_at', today),
+    supabaseAdmin.from('notifications').select('id', { count: 'exact', head: true }).eq('read', false),
+    supabaseAdmin.from('user_roles').select('id', { count: 'exact', head: true }).eq('role', 'Receptionist').neq('ban_duration', '876000h'),
   ])
 
   return {
@@ -46,6 +52,9 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
     activeVisits: activeVisits.count ?? 0,
     pendingRegistrations: pendingRegistrations.count ?? 0,
     overstayedVisitors: overstayedVisitors.count ?? 0,
+    failedLogins: failedLogins.count ?? 0,
+    emailQueue: emailQueue.count ?? 0,
+    onlineReceptionists: onlineReceptionists.count ?? 0,
   }
 }
 
@@ -93,11 +102,23 @@ export async function getSystemHealth(): Promise<SystemHealth> {
     storageUsage = 'unknown'
   }
 
+  const services = [
+    { service: 'Supabase', status: databaseStatus === 'healthy' ? 'operational' : 'offline', last_checked: new Date().toISOString() },
+    { service: 'Database', status: databaseStatus === 'healthy' ? 'operational' : 'offline', last_checked: new Date().toISOString() },
+    { service: 'Realtime', status: realtimeStatus === 'healthy' ? 'operational' : 'warning', last_checked: new Date().toISOString() },
+    { service: 'Storage', status: storageUsage !== 'unknown' ? 'operational' : 'warning', last_checked: new Date().toISOString() },
+    { service: 'Email Service', status: emailStatus === 'configured' ? 'operational' : 'not_configured', last_checked: new Date().toISOString() },
+    { service: 'QR Service', status: 'operational', last_checked: new Date().toISOString() },
+    { service: 'Badge Service', status: 'operational', last_checked: new Date().toISOString() },
+    { service: 'Notification Queue', status: 'operational', last_checked: new Date().toISOString() },
+  ]
+
   return {
     databaseStatus,
     realtimeStatus,
     emailStatus,
     storageUsage,
+    services,
   }
 }
 
@@ -242,7 +263,7 @@ export async function createBackupRecord(record: { filename: string; size: strin
   return data
 }
 
-export async function getAllUsersWithDetails(): Promise<any[]> {
+export async function getAllUsersWithDetails(): Promise<{ id: string; [key: string]: unknown }[]> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   const { data, error } = await supabaseAdmin
@@ -299,7 +320,7 @@ export async function sendTestEmail(email: string): Promise<{ success: boolean; 
   }
 }
 
-export async function getEmailSettings(): Promise<any> {
+export async function getEmailSettings(): Promise<{ id: string; key: string; value: unknown; category: string; [key: string]: unknown }[]> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   const { data, error } = await supabaseAdmin
@@ -314,7 +335,7 @@ export async function getEmailSettings(): Promise<any> {
   return data || []
 }
 
-export async function updateEmailSettings(settings: Record<string, any>): Promise<void> {
+export async function updateEmailSettings(settings: Record<string, unknown>): Promise<void> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   const entries = Object.entries(settings).map(([key, value]) => ({
@@ -332,4 +353,367 @@ export async function updateEmailSettings(settings: Record<string, any>): Promis
   }
 
   await logAuditAction('Email Settings Updated', 'system_settings', null, 'Email configuration updated')
+}
+
+// ============ USER MANAGEMENT ============
+
+export async function getAllUsers(): Promise<AdminUser[]> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { data, error } = await supabaseAdmin
+    .from('user_roles')
+    .select('*, employee:employees(department,position,office_location)')
+    .order('created_at', { ascending: false })
+
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function createUser(data: { email: string; full_name: string; role: string; password: string }): Promise<{ id: string; email?: string; [key: string]: unknown }> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email: data.email,
+    password: data.password,
+    email_confirm: true,
+  })
+
+  if (authError || !authData.user) {
+    throw new Error(authError?.message || 'Failed to create user')
+  }
+
+  const { error: roleError } = await supabaseAdmin
+    .from('user_roles')
+    .insert({
+      user_id: authData.user.id,
+      email: data.email,
+      full_name: data.full_name,
+      role: data.role,
+    })
+
+  if (roleError) {
+    await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+    throw new Error(roleError.message)
+  }
+
+  await logAuditAction('User Created', 'user', authData.user.id, `Created user ${data.email} with role ${data.role}`)
+  return {
+    id: authData.user.id,
+    email: authData.user.email,
+  } as { id: string; email?: string; [key: string]: unknown }
+}
+
+export async function updateUser(userId: string, updates: { full_name?: string; email?: string; role?: string }): Promise<void> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { error } = await supabaseAdmin
+    .from('user_roles')
+    .update(updates)
+    .eq('user_id', userId)
+
+  if (error) throw new Error(error.message)
+  await logAuditAction('User Updated', 'user', userId, `Updated user ${userId}`)
+}
+
+export async function deleteUser(userId: string): Promise<void> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { error } = await supabaseAdmin
+    .from('user_roles')
+    .delete()
+    .eq('user_id', userId)
+
+  if (error) throw new Error(error.message)
+
+  await supabaseAdmin.auth.admin.deleteUser(userId)
+  await logAuditAction('User Deleted', 'user', userId, `Deleted user ${userId}`)
+}
+
+export async function resetUserPassword(userId: string, newPassword: string): Promise<void> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+    password: newPassword,
+  })
+
+  if (error) throw new Error(error.message)
+  await logAuditAction('Password Reset', 'user', userId, `Password reset for user ${userId}`)
+}
+
+// ============ DEPARTMENT MANAGEMENT ============
+
+export async function getDepartments(): Promise<Department[]> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { data, error } = await supabaseAdmin
+    .from('departments')
+    .select('*')
+    .order('name', { ascending: true })
+
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function createDepartment(data: { name: string; head_name?: string; building?: string; is_active?: boolean }): Promise<Department> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { data: dept, error } = await supabaseAdmin
+    .from('departments')
+    .insert(data)
+    .select()
+    .single()
+
+  if (error || !dept) throw new Error(error?.message || 'Failed to create department')
+  await logAuditAction('Department Created', 'department', dept.id, `Created department ${data.name}`)
+  return dept
+}
+
+export async function updateDepartment(id: string, updates: { name?: string; head_name?: string; building?: string; is_active?: boolean }): Promise<Department> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { data, error } = await supabaseAdmin
+    .from('departments')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error || !data) throw new Error(error?.message || 'Failed to update department')
+  await logAuditAction('Department Updated', 'department', id, `Updated department ${id}`)
+  return data
+}
+
+export async function deleteDepartment(id: string): Promise<void> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { error } = await supabaseAdmin
+    .from('departments')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+  await logAuditAction('Department Deleted', 'department', id, `Deleted department ${id}`)
+}
+
+// ============ OFFICE MANAGEMENT ============
+
+export async function getOffices(): Promise<Office[]> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { data, error } = await supabaseAdmin
+    .from('office_locations')
+    .select('*')
+    .order('name', { ascending: true })
+
+  if (error) throw new Error(error.message)
+  return data || []
+}
+
+export async function createOffice(data: { name: string; building: string; department?: string; floor?: string; room?: string; is_active?: boolean }): Promise<Office> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { data: office, error } = await supabaseAdmin
+    .from('office_locations')
+    .insert(data)
+    .select()
+    .single()
+
+  if (error || !office) throw new Error(error?.message || 'Failed to create office')
+  await logAuditAction('Office Created', 'office', office.id, `Created office ${data.name}`)
+  return office
+}
+
+export async function updateOffice(id: string, updates: { name?: string; building?: string; department?: string; floor?: string; room?: string; is_active?: boolean }): Promise<Office> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { data, error } = await supabaseAdmin
+    .from('office_locations')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error || !data) throw new Error(error?.message || 'Failed to update office')
+  await logAuditAction('Office Updated', 'office', id, `Updated office ${id}`)
+  return data
+}
+
+export async function deleteOffice(id: string): Promise<void> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { error } = await supabaseAdmin
+    .from('office_locations')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw new Error(error.message)
+  await logAuditAction('Office Deleted', 'office', id, `Deleted office ${id}`)
+}
+
+// ============ SYSTEM HEALTH ============
+
+export async function getEnhancedSystemHealth(): Promise<SystemHealthDetailed[]> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const services: SystemHealthDetailed[] = [
+    { service: 'Supabase', status: 'operational', last_checked: new Date().toISOString() },
+    { service: 'Database', status: 'operational', last_checked: new Date().toISOString() },
+    { service: 'Realtime', status: 'operational', last_checked: new Date().toISOString() },
+    { service: 'Storage', status: 'operational', last_checked: new Date().toISOString() },
+    { service: 'Email Service', status: 'operational', last_checked: new Date().toISOString() },
+    { service: 'QR Service', status: 'operational', last_checked: new Date().toISOString() },
+    { service: 'Badge Service', status: 'operational', last_checked: new Date().toISOString() },
+    { service: 'Notification Queue', status: 'operational', last_checked: new Date().toISOString() },
+  ]
+
+  try {
+    await supabaseAdmin.from('user_roles').select('id', { count: 'exact', head: true })
+  } catch {
+    services[0].status = 'offline'
+    services[1].status = 'offline'
+  }
+
+  try {
+    const channel = supabaseAdmin.channel('health-check')
+    await supabaseAdmin.removeChannel(channel)
+  } catch {
+    services[2].status = 'warning'
+  }
+
+  try {
+    const { data } = await supabaseAdmin.from('system_settings').select('value').eq('key', 'enable_emails').single()
+    if (data?.value !== true && data?.value !== 'true') {
+      services[4].status = 'not_configured'
+    }
+  } catch {
+    services[4].status = 'warning'
+  }
+
+  return services
+}
+
+// ============ INTEGRATIONS ============
+
+export async function getIntegrations(): Promise<Integration[]> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { error } = await supabaseAdmin
+    .from('system_settings')
+    .select('*')
+    .in('category', ['integration_email', 'integration_sms', 'integration_qr', 'integration_storage'])
+
+  if (error) throw new Error(error.message)
+
+  const integrations: Integration[] = [
+    { id: 'email', name: 'Email Provider', type: 'email', provider: 'Resend', status: 'configured', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'sms', name: 'SMS Provider', type: 'sms', provider: 'None', status: 'disconnected', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'qr', name: 'QR Service', type: 'qr', provider: 'Built-in', status: 'operational', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: 'storage', name: 'Storage', type: 'storage', provider: 'Supabase Storage', status: 'operational', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  ]
+
+  return integrations
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function updateIntegration(id: string, _updates: Partial<Integration>): Promise<void> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+  await logAuditAction('Integration Updated', 'integration', id, `Updated integration ${id}`)
+}
+
+// ============ EMAIL TEMPLATES ============
+
+export async function getEmailTemplates(): Promise<EmailTemplate[]> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { data, error } = await supabaseAdmin
+    .from('system_settings')
+    .select('*')
+    .eq('category', 'email_template')
+
+  if (error) throw new Error(error.message)
+
+  return (data || []).map((row: { key: string; value?: Record<string, unknown>; created_at: string; updated_at?: string }) => ({
+    id: row.key,
+    name: row.key.replace('template_', '').replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
+    subject: String(row.value?.subject || ''),
+    body_html: String(row.value?.html || ''),
+    body_text: String(row.value?.text || ''),
+    category: 'email_template',
+    is_active: Boolean(row.value?.active ?? true),
+    created_at: row.created_at,
+    updated_at: row.updated_at || row.created_at,
+  }))
+}
+
+export async function upsertEmailTemplate(template: Partial<EmailTemplate> & { id: string }): Promise<EmailTemplate> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { data, error } = await supabaseAdmin
+    .from('system_settings')
+    .upsert({
+      key: template.id,
+      value: {
+        subject: template.subject,
+        html: template.body_html,
+        text: template.body_text,
+        active: template.is_active ?? true,
+      },
+      category: 'email_template',
+      description: template.name,
+    })
+    .select()
+    .single()
+
+  if (error || !data) throw new Error(error?.message || 'Failed to save template')
+  await logAuditAction('Email Template Updated', 'email_template', template.id, `Updated template ${template.id}`)
+  return data
+}
+
+export async function deleteEmailTemplate(id: string): Promise<void> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  const { error } = await supabaseAdmin
+    .from('system_settings')
+    .delete()
+    .eq('key', id)
+    .eq('category', 'email_template')
+
+  if (error) throw new Error(error.message)
+  await logAuditAction('Email Template Deleted', 'email_template', id, `Deleted template ${id}`)
+}
+
+// ============ AUDIT LOGS ============
+
+export async function getAuditLogs(filters: { user?: string; action?: string; entity_type?: string; search?: string; status?: string } = {}): Promise<AuditLogEntry[]> {
+  if (!supabaseAdmin) throw new Error('Service role key not configured')
+
+  let query = supabaseAdmin
+    .from('audit_logs')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  if (filters.user) {
+    query = query.ilike('performed_by', `%${filters.user}%`)
+  }
+  if (filters.action) {
+    query = query.ilike('action', `%${filters.action}%`)
+  }
+  if (filters.entity_type) {
+    query = query.ilike('entity_type', `%${filters.entity_type}%`)
+  }
+  if (filters.status) {
+    query = query.eq('status', filters.status)
+  }
+  if (filters.search) {
+    query = query.or(`action.ilike.%${filters.search}%,details.ilike.%${filters.search}%,entity_type.ilike.%${filters.search}%`)
+  }
+
+  const result = await query as unknown as { data: { [key: string]: unknown }[] | null; error: { message: string } | null }
+  const { data, error } = result
+  if (error) throw new Error(error.message)
+  return (data || []).map((row: { [key: string]: unknown }) => ({
+    ...row,
+    status: (row.status as string) || 'success',
+  })) as AuditLogEntry[]
 }

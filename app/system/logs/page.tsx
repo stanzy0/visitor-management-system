@@ -35,23 +35,6 @@ export default function SystemLogsPage() {
   })
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (user.role !== 'Admin') {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setAuthChecking(false)
-      fetchLogs()
-    }
-    checkAuth()
-  }, [filters])
-
   const fetchLogs = async () => {
     setLoading(true)
     try {
@@ -74,6 +57,23 @@ export default function SystemLogsPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (user.role !== 'Admin') {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setAuthChecking(false)
+      fetchLogs()
+    }
+    checkAuth()
+  }, [filters])
 
   const exportPDF = () => {
     setExporting(true)
@@ -273,7 +273,7 @@ export default function SystemLogsPage() {
                 )}
                 {logs.map((log) => (
                   <tr key={log.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{new Date(log.created_at).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{log.created_at ? new Date(log.created_at).toLocaleString() : '—'}</td>
                     <td className="px-4 py-3 text-gray-900 font-medium">{log.module}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${severityColors[log.severity] || 'bg-gray-100 text-gray-800'}`}>

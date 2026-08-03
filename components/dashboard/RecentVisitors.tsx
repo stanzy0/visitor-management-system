@@ -69,7 +69,7 @@ export default function RecentVisitors({ visitors }: RecentVisitorsProps) {
         <p className="text-sm text-gray-500 mt-1 ml-10">Latest visitor activity</p>
       </div>
       <div className="divide-y divide-gray-50">
-        {visitors.slice(0, 8).map((visitor, index) => {
+        {(visitors || []).slice(0, 8).map((visitor, index) => {
           const config = statusConfig[visitor.status] || statusConfig.pending
           const StatusIcon = config.icon
           return (
@@ -82,16 +82,16 @@ export default function RecentVisitors({ visitors }: RecentVisitorsProps) {
               className="flex items-center gap-4 p-4 transition-colors cursor-default"
             >
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-bold text-gray-600">{visitor.full_name.charAt(0).toUpperCase()}</span>
+                <span className="text-sm font-bold text-gray-600">{(visitor.full_name || '?').charAt(0).toUpperCase()}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">{visitor.full_name}</p>
+                <p className="text-sm font-semibold text-gray-900 truncate">{visitor.full_name || 'Unknown'}</p>
                 <p className="text-xs text-gray-500 truncate">{visitor.purpose || 'No purpose specified'}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium border ${config.border} ${config.bg} ${config.color}`}>
                   <StatusIcon className="h-3 w-3" />
-                  {visitor.status.replace(/_/g, ' ')}
+                  {(visitor.status || '').replace(/_/g, ' ')}
                 </span>
               </div>
             </motion.div>

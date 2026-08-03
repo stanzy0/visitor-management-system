@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth-client'
 import { Users, QrCode, Scan, LogIn, LogOut, Printer, Calendar, Clock, UserCheck, Search, Loader2 } from 'lucide-react'
@@ -72,37 +73,6 @@ export default function KioskPage() {
       }, INACTIVITY_TIMEOUT)
     }
   }, [kioskLocked])
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (user.role !== 'Admin' && user.role !== 'Receptionist') {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setUserRole(user.role)
-      setAuthChecking(false)
-      fetchStats()
-      fetchRecentVisits()
-      fetchUpcomingAppointments()
-      setupRealtime()
-      resetInactivityTimer()
-    }
-    checkAuth()
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-      if (inactivityTimer.current) {
-        clearTimeout(inactivityTimer.current)
-      }
-    }
-  }, [resetInactivityTimer])
 
   const fetchStats = useCallback(async () => {
     const today = new Date().toISOString().split('T')[0]
@@ -181,6 +151,37 @@ export default function KioskPage() {
       })
       .subscribe()
   }, [fetchStats, fetchRecentVisits, fetchUpcomingAppointments])
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (user.role !== 'Admin' && user.role !== 'Receptionist') {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setUserRole(user.role)
+      setAuthChecking(false)
+      fetchStats()
+      fetchRecentVisits()
+      fetchUpcomingAppointments()
+      setupRealtime()
+      resetInactivityTimer()
+    }
+    checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+      if (inactivityTimer.current) {
+        clearTimeout(inactivityTimer.current)
+      }
+    }
+  }, [resetInactivityTimer])
 
   useEffect(() => {
     const handleActivity = () => resetInactivityTimer()
@@ -383,10 +384,10 @@ export default function KioskPage() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <a href="/visitors" className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-6 flex flex-col items-center justify-center transition-colors min-h-[120px]">
+          <Link href="/visitors" className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl p-6 flex flex-col items-center justify-center transition-colors min-h-[120px]">
             <Users className="h-12 w-12 mb-3" />
             <span className="text-lg font-semibold">Register Visitor</span>
-          </a>
+          </Link>
 
           <div className="bg-white rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
@@ -413,10 +414,10 @@ export default function KioskPage() {
             )}
           </div>
 
-          <a href="/scanner" className="bg-green-600 hover:bg-green-700 text-white rounded-2xl p-6 flex flex-col items-center justify-center transition-colors min-h-[120px]">
+          <Link href="/scanner" className="bg-green-600 hover:bg-green-700 text-white rounded-2xl p-6 flex flex-col items-center justify-center transition-colors min-h-[120px]">
             <Scan className="h-12 w-12 mb-3" />
             <span className="text-lg font-semibold">QR Scanner</span>
-          </a>
+          </Link>
 
           <button
             onClick={() => setKioskLocked(true)}

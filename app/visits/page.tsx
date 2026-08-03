@@ -151,10 +151,31 @@ export default function VisitsPage() {
           .in('visit_id', visitIds)
 
         const rawBadges = result.data || []
-        badges = rawBadges.map((b: any) => ({
+        badges = rawBadges.map((b: Record<string, unknown>) => ({
           ...b,
           visit: Array.isArray(b.visit) ? b.visit[0] : b.visit,
-        }))
+        })) as Array<{
+          id: string
+          visit_id: string
+          badge_number: string
+          badge_status: string
+          qr_token: string
+          issued_at: string
+          expires_at: string
+          printed_at: string | null
+          printed_by: string | null
+          reprint_count: number
+          created_at: string
+          updated_at: string
+          visit: {
+            id: string
+            visitor: { full_name: string; visitor_organization: string; photo_url?: string | null } | null
+            employee: { full_name: string; department: string } | null
+            purpose: string
+            check_in_time: string | null
+            check_out_time: string | null
+          } | null
+        }>
       }
 
       const badgesByVisitId = new Map(badges.map(b => [b.visit_id, b]))
@@ -418,7 +439,7 @@ export default function VisitsPage() {
                           ) : (
                             <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
                               <span className="text-xs text-gray-500">
-                                {(visit.visitor?.full_name || '').charAt(0).toUpperCase()}
+                                 {(visit.visitor?.full_name || '?').charAt(0).toUpperCase()}
                               </span>
                             </div>
                           )}
@@ -431,7 +452,7 @@ export default function VisitsPage() {
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-1">
                           <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium w-fit ${statusStyles[visit.status]}`}>
-                            {visit.status.replace('_', ' ')}
+                             {(visit.status || 'unknown').replace('_', ' ')}
                           </span>
                           {visit.badge && (
                             <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium w-fit ${

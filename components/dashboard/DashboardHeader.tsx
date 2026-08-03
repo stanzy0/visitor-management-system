@@ -31,7 +31,7 @@ export default function DashboardHeader({
   const [showExportMenu, setShowExportMenu] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
+    setTimeout(() => setMounted(true), 0)
     const timer = setInterval(() => setLiveTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
@@ -77,7 +77,7 @@ export default function DashboardHeader({
               transition={{ delay: 0.2 }}
               className="text-sm text-gray-500"
             >
-              {greeting}, {userEmail.split('@')[0]} • {currentDate}
+              {greeting}, {(userEmail || '').split('@')[0]} • {currentDate}
             </motion.p>
           </div>
         </div>
@@ -166,7 +166,7 @@ export default function DashboardHeader({
               <p className="text-xs text-gray-500 capitalize">{userRole}</p>
             </div>
             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/30 ring-2 ring-white">
-              <span className="text-sm font-bold text-white">{userRole.charAt(0).toUpperCase()}</span>
+              <span className="text-sm font-bold text-white">{(userRole || 'U').charAt(0).toUpperCase()}</span>
             </div>
           </motion.div>
         </div>

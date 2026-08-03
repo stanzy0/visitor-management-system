@@ -29,8 +29,10 @@ const actionLabels: Record<string, string> = {
   office_location_updated: 'Office Location Updated',
 }
 
-function formatTime(iso: string) {
+function formatTime(iso: string | null | undefined) {
+  if (!iso) return '—'
   const date = new Date(iso)
+  if (isNaN(date.getTime())) return '—'
   const now = new Date()
   const diff = (now.getTime() - date.getTime()) / 1000
   if (diff < 60) return 'Just now'
@@ -45,7 +47,7 @@ interface ActivityFeedProps {
 }
 
 export default function ActivityFeed({ activities, maxItems = 20 }: ActivityFeedProps) {
-  const display = activities.slice(0, maxItems)
+  const display = (activities || []).slice(0, maxItems)
 
   if (display.length === 0) {
     return (
@@ -94,7 +96,7 @@ export default function ActivityFeed({ activities, maxItems = 20 }: ActivityFeed
         <div className="max-h-[500px] overflow-y-auto">
           <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="divide-y divide-gray-50">
             {display.map((item, index) => {
-              const label = actionLabels[item.action] || item.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+              const label = actionLabels[item.action] || (item.action || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
               const config = iconMap[item.action] || { icon: ShieldAlert, color: 'text-gray-600', bg: 'bg-gray-100' }
               const Icon = config.icon
               return (

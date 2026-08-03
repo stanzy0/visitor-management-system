@@ -13,7 +13,7 @@ describe('validateStartup', () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://phkmhrncmkvfgnraiyug.supabase.co'
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key'
     process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-key'
-    ;(process.env as any).NODE_ENV = 'test'
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = 'test'
   })
 
   afterEach(() => {
@@ -62,7 +62,7 @@ describe('validateStartup', () => {
   })
 
   it('should fail in production when NEXT_PUBLIC_APP_URL is localhost', () => {
-    ;(process.env as any).NODE_ENV = 'production'
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = 'production'
     process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
     const result = validateStartup()
     expect(result.passed).toBe(false)
@@ -70,7 +70,7 @@ describe('validateStartup', () => {
   })
 
   it('should fail in production when NEXT_PUBLIC_APP_URL is HTTP', () => {
-    ;(process.env as any).NODE_ENV = 'production'
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = 'production'
     process.env.NEXT_PUBLIC_APP_URL = 'http://visitor-management-system-alpha-neon.vercel.app'
     const result = validateStartup()
     expect(result.passed).toBe(false)
@@ -78,7 +78,7 @@ describe('validateStartup', () => {
   })
 
   it('should pass in production with HTTPS URL', () => {
-    ;(process.env as any).NODE_ENV = 'production'
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = 'production'
     process.env.NEXT_PUBLIC_APP_URL = 'https://visitor-management-system-alpha-neon.vercel.app'
     const result = validateStartup()
     expect(result.passed).toBe(true)

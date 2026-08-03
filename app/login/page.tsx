@@ -18,15 +18,53 @@ export default function LoginPage() {
   const [failedAttempts, setFailedAttempts] = useState(0)
   const [rememberDevice, setRememberDevice] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [branding, setBranding] = useState<{
+    logo_url: string | null
+    login_background_url: string | null
+    primary_color: string
+    secondary_color: string
+    accent_color: string
+    college_name: string
+  } | null>(null)
 
   useEffect(() => {
     const checkRememberedDevice = async () => {
-      const user = await createClient().auth.getUser()
-      if (user.data.user) {
-        window.location.href = '/dashboard'
+      try {
+        const user = await createClient().auth.getUser()
+        if (user.data.user) {
+          window.location.href = '/dashboard'
+        }
+      } catch {
+        // Network/auth unavailable — allow login page to render normally
       }
     }
     checkRememberedDevice()
+  }, [])
+
+  useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        const res = await fetch('/api/branding')
+        if (res.ok) {
+          const { data } = await res.json()
+          const root = document.documentElement
+          root.style.setProperty('--branding-primary', data.primary_color || '#0B3D91')
+          root.style.setProperty('--branding-secondary', data.secondary_color || '#1F6FEB')
+          root.style.setProperty('--branding-accent', data.accent_color || '#D4AF37')
+          setBranding({
+            logo_url: data.logo_url,
+            login_background_url: data.login_background_url,
+            primary_color: data.primary_color || '#0B3D91',
+            secondary_color: data.secondary_color || '#1F6FEB',
+            accent_color: data.accent_color || '#D4AF37',
+            college_name: data.college_name || 'AFCSC Visitor Management',
+          })
+        }
+      } catch {
+        // use defaults
+      }
+    }
+    fetchBranding()
   }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -73,6 +111,13 @@ export default function LoginPage() {
     }
   }
 
+  const primaryColor = branding?.primary_color || '#0B3D91'
+  const secondaryColor = branding?.secondary_color || '#1F6FEB'
+  const accentColor = branding?.accent_color || '#D4AF37'
+  const loginBg = branding?.login_background_url || '/images/afcsc-login.jpg'
+  const logoSrc = branding?.logo_url || '/images/afcsc-logo.png'
+  const collegeName = branding?.college_name || 'AFCSC Visitor Management'
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       <div className="relative hidden md:block w-1/2 h-full group">
@@ -83,8 +128,8 @@ export default function LoginPage() {
           }}
         />
         <Image
-          src="/images/afcsc-login.jpg"
-          alt="AFCSC"
+          src={loginBg}
+          alt={collegeName}
           fill
           priority
           className="object-cover transition-transform duration-[20s] ease-in-out group-hover:scale-105"
@@ -94,9 +139,7 @@ export default function LoginPage() {
             Visitor Management System
           </h2>
           <p className="text-lg text-white/90 drop-shadow-md">
-            Armed Forces Command and Staff College
-            <br />
-            Jaji, Kaduna State
+            {collegeName}
           </p>
           <p className="mt-4 text-sm text-white/80 leading-relaxed drop-shadow-md">
             Secure visitor registration, approval,
@@ -105,19 +148,19 @@ export default function LoginPage() {
 
           <div className="mt-8 space-y-6">
             <div className="flex items-center gap-3 text-white/90 text-lg">
-              <Shield className="w-5 h-5 text-[#D4AF37]" />
+              <Shield className="w-5 h-5" style={{ color: accentColor }} />
               <span>Secure Visitor Registration</span>
             </div>
             <div className="flex items-center gap-3 text-white/90 text-lg">
-              <BadgeCheck className="w-5 h-5 text-[#D4AF37]" />
+              <BadgeCheck className="w-5 h-5" style={{ color: accentColor }} />
               <span>Badge Management</span>
             </div>
             <div className="flex items-center gap-3 text-white/90 text-lg">
-              <UserCheck className="w-5 h-5 text-[#D4AF37]" />
+              <UserCheck className="w-5 h-5" style={{ color: accentColor }} />
               <span>Real-Time Check-In</span>
             </div>
             <div className="flex items-center gap-3 text-white/90 text-lg">
-              <Activity className="w-5 h-5 text-[#D4AF37]" />
+              <Activity className="w-5 h-5" style={{ color: accentColor }} />
               <span>Professional Visitor Tracking</span>
             </div>
           </div>
@@ -125,18 +168,17 @@ export default function LoginPage() {
       </div>
 
       <div
-        className="relative w-full md:w-1/2 h-full flex flex-col justify-center bg-gradient-to-br from-slate-50 to-slate-200 px-16 lg:px-24"
+        className="relative w-full md:w-1/2 h-full flex flex-col justify-center px-16 lg:px-24"
         style={{
           background: 'rgba(255,255,255,.75)',
           backdropFilter: 'blur(18px)',
           borderLeft: '1px solid rgba(255,255,255,.35)',
-          backgroundImage: 'linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 45%, #E2E8F0 100%)',
         }}
       >
         <Link
           href="/"
           aria-label="Back to Home"
-          className="absolute top-6 left-6 z-50 flex items-center gap-2 h-11 px-4 rounded-xl bg-white border border-slate-300 text-slate-700 text-sm font-medium transition-colors duration-200 hover:bg-slate-50 hover:border-slate-400"
+          className="absolute top-6 left-6 z-50 flex items-center gap-2 h-11 px-4 rounded-xl bg-white border border-gray-300 text-gray-700 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 hover:border-gray-400"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Home
@@ -145,14 +187,14 @@ export default function LoginPage() {
         <div className="mx-auto w-full max-w-[460px]">
           <div className="text-center mb-12">
             <Image
-              src="/images/afcsc-logo.png"
-              alt="AFCSC Logo"
+              src={logoSrc}
+              alt={collegeName}
               width={115}
               height={115}
               priority
               className="mx-auto object-contain mt-14"
             />
-            <h1 className="text-4xl font-bold text-[#0B3D91] mt-2 mb-3">
+            <h1 className="text-4xl font-bold mt-2 mb-3" style={{ color: primaryColor }}>
               Welcome Back
             </h1>
             <p className="text-gray-600 text-lg">
@@ -160,7 +202,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="h-px w-full bg-slate-300/40 my-8" />
+          <div className="h-px w-full bg-gray-300/40 my-8" />
 
           {error && (
             <div className="mb-8 rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-700" role="alert">
@@ -182,7 +224,11 @@ export default function LoginPage() {
                 autoComplete="email"
                 aria-label="Email address"
                 placeholder="Enter your email"
-                className="w-full h-14 rounded-xl border border-gray-300 bg-white px-4 text-black placeholder:text-gray-400 transition-all duration-200 hover:border-gray-400 focus:border-[#1F6FEB] focus:outline-none focus:ring-2 focus:ring-[#1F6FEB]/20 text-base"
+                className="w-full h-14 rounded-xl border border-gray-300 bg-white px-4 text-black placeholder:text-gray-400 transition-all duration-200 hover:border-gray-400 focus:outline-none focus:ring-2 text-base"
+                style={{
+                  borderColor: undefined,
+                  '--tw-ring-color': `${secondaryColor}33`,
+                } as React.CSSProperties}
               />
             </div>
 
@@ -200,7 +246,10 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   aria-label="Password"
                   placeholder="Enter your password"
-                  className="w-full h-14 rounded-xl border border-gray-300 bg-white px-4 pr-12 text-black placeholder:text-gray-400 transition-all duration-200 hover:border-gray-400 focus:border-[#1F6FEB] focus:outline-none focus:ring-2 focus:ring-[#1F6FEB]/20 text-base"
+                  className="w-full h-14 rounded-xl border border-gray-300 bg-white px-4 pr-12 text-black placeholder:text-gray-400 transition-all duration-200 hover:border-gray-400 focus:outline-none focus:ring-2 text-base"
+                  style={{
+                    '--tw-ring-color': `${secondaryColor}33`,
+                  } as React.CSSProperties}
                 />
                 <button
                   type="button"
@@ -230,7 +279,8 @@ export default function LoginPage() {
                     type="checkbox"
                     checked={rememberDevice}
                     onChange={(e) => setRememberDevice(e.target.checked)}
-                    className="h-5 w-5 rounded border-gray-300 text-[#0B3D91] focus:ring-[#0B3D91] transition-colors duration-200"
+                    className="h-5 w-5 rounded border-gray-300 focus:ring-2 transition-colors duration-200"
+                    style={{ color: primaryColor, accentColor: primaryColor }}
                     aria-label="Remember this device"
                   />
                   <label htmlFor="rememberDevice" className="text-sm text-gray-700">
@@ -239,7 +289,8 @@ export default function LoginPage() {
                 </div>
                 <a
                   href="/forgot-password"
-                  className="text-sm text-[#0B3D91] hover:text-[#1F6FEB] hover:underline transition-colors duration-200"
+                  className="text-sm hover:underline transition-colors duration-200"
+                  style={{ color: primaryColor }}
                   aria-label="Forgot password"
                 >
                   Forgot Password?
@@ -252,7 +303,11 @@ export default function LoginPage() {
                 type="submit"
                 disabled={loading}
                 aria-label="Sign in"
-                className="group flex w-full justify-center items-center gap-2 h-14 rounded-xl bg-gradient-to-b from-[#1F6FEB] to-[#0B3D91] px-4 text-sm font-medium text-white shadow-[0_10px_25px_rgba(11,61,145,.18)] transition-all duration-200 hover:brightness-105 hover:translate-y-[-2px] hover:shadow-[0_16px_32px_rgba(11,61,145,.25)] active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-[0_10px_25px_rgba(11,61,145,.18)]"
+                className="group flex w-full justify-center items-center gap-2 h-14 rounded-xl px-4 text-sm font-medium text-white transition-all duration-200 hover:brightness-105 hover:translate-y-[-2px] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                style={{
+                  background: `linear-gradient(to bottom, ${secondaryColor}, ${primaryColor})`,
+                  boxShadow: `0 10px 25px ${primaryColor}33`,
+                }}
               >
                 {loading ? (
                   <svg className="-ml-1 h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -281,7 +336,8 @@ export default function LoginPage() {
             <p>Need help?</p>
             <a
               href="mailto:it-support@afcsc.edu.ng"
-              className="text-[#0B3D91] hover:text-[#1F6FEB] hover:underline transition-colors duration-200"
+              className="hover:underline transition-colors duration-200"
+              style={{ color: primaryColor }}
               aria-label="Contact system administrator"
             >
               Contact the System Administrator

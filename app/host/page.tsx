@@ -660,7 +660,7 @@ export default function HostPortalPage() {
                       </td>
                       <td className="px-4 py-3 text-gray-600">{appt.visitor?.visitor_organization || '—'}</td>
                       <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                        {new Date(appt.appointment_date).toLocaleDateString()}
+                        {appt.appointment_date ? new Date(appt.appointment_date).toLocaleDateString() : '—'}
                       </td>
                       <td className="px-4 py-3 text-gray-600">
                         {appt.expected_arrival ? new Date(appt.expected_arrival).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
@@ -971,7 +971,7 @@ export default function HostPortalPage() {
               </div>
               <div>
                 <span className="text-xs font-medium text-gray-500 uppercase">Date</span>
-                <p className="text-sm text-gray-900">{new Date(selectedAppointment.appointment_date).toLocaleString()}</p>
+                <p className="text-sm text-gray-900">{selectedAppointment.appointment_date ? new Date(selectedAppointment.appointment_date).toLocaleString() : '—'}</p>
               </div>
               <div>
                 <span className="text-xs font-medium text-gray-500 uppercase">Purpose</span>

@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth-client'
-import { Loader2, Save, Printer, Download, Mail, Eye, RefreshCw, Shield } from 'lucide-react'
-import { getBadges, getBadgeById, reprintBadge, cancelBadge } from '@/lib/client/badges'
+import { Loader2, Printer, Download, Eye, Shield } from 'lucide-react'
+import { getBadges, reprintBadge, cancelBadge } from '@/lib/client/badges'
 import { printBadgeWindow } from '@/lib/badge/badge-print'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -12,7 +11,6 @@ import BadgeLayout from '@/components/BadgeLayout'
 import type { VisitorBadge } from '@/lib/badge/badge-types'
 
 export default function AdminBadgesPage() {
-  const [userRole, setUserRole] = useState<string>('')
   const [badges, setBadges] = useState<VisitorBadge[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -43,7 +41,6 @@ export default function AdminBadgesPage() {
         window.location.href = '/unauthorized'
         return
       }
-      setUserRole(user.role)
       fetchBadges()
     }
     checkAuth()
@@ -88,7 +85,7 @@ export default function AdminBadgesPage() {
       root.render(<BadgeLayout badge={badge} />)
 
       await new Promise<void>(resolve => {
-        const raf = requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
           setTimeout(resolve, 150)
         })
       })
@@ -110,9 +107,7 @@ export default function AdminBadgesPage() {
         format: 'a4',
       })
 
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      const pageHeight = pdf.internal.pageSize.getHeight()
-      const imgWidth = pageWidth - 20
+      const imgWidth = pdf.internal.pageSize.getWidth() - 20
       const imgHeight = (canvas.height * imgWidth) / canvas.width
 
       pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight)

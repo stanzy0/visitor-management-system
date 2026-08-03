@@ -305,27 +305,29 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
         cancelledAppointments: cancelledAppointmentsRes.count ?? 0,
       })
 
-      const processByDay = (data: { created_at: string }[] | undefined) => {
-        const map = new Map<string, number>()
-        data?.forEach((r) => {
-          const d = new Date(r.created_at).toISOString().split('T')[0]
-          map.set(d, (map.get(d) || 0) + 1)
-        })
-        return Array.from(map.entries())
-          .map(([date, count]) => ({ name: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), count }))
-          .sort((a, b) => a.name.localeCompare(b.name))
-      }
+        const processByDay = (data: { created_at: string | null | undefined }[] | undefined) => {
+          const map = new Map<string, number>()
+          data?.forEach((r) => {
+            if (!r.created_at) return
+            const d = new Date(r.created_at).toISOString().split('T')[0]
+            map.set(d, (map.get(d) || 0) + 1)
+          })
+          return Array.from(map.entries())
+            .map(([date, count]) => ({ name: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), count }))
+            .sort((a, b) => a.name.localeCompare(b.name))
+        }
 
-      const processByMonth = (data: { created_at: string }[] | undefined) => {
-        const map = new Map<string, number>()
-        data?.forEach((r) => {
-          const d = new Date(r.created_at)
-          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-          map.set(key, (map.get(key) || 0) + 1)
-        })
-        return Array.from(map.entries())
-          .map(([month, count]) => ({ name: month, count }))
-      }
+        const processByMonth = (data: { created_at: string | null | undefined }[] | undefined) => {
+          const map = new Map<string, number>()
+          data?.forEach((r) => {
+            if (!r.created_at) return
+            const d = new Date(r.created_at)
+            const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+            map.set(key, (map.get(key) || 0) + 1)
+          })
+          return Array.from(map.entries())
+            .map(([month, count]) => ({ name: month, count }))
+        }
 
       const processField = (data: Record<string, unknown>[] | undefined, field: string) => {
         const map = new Map<string, number>()

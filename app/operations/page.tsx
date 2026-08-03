@@ -127,38 +127,6 @@ export default function OperationsPage() {
   const [actionLoading, setActionLoading] = useState(false)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (!PERMISSIONS[user.role]?.includes('operations')) {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setUserRole(user.role)
-      setAuthChecking(false)
-      fetchOperations()
-      fetchFilterOptions()
-      setupRealtime()
-    }
-    checkAuth()
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!authChecking) {
-      fetchOperations()
-    }
-  }, [search, statusFilter, visitorTypeFilter, departmentFilter, officeLocationFilter])
-
   const fetchFilterOptions = async () => {
     try {
       const [deptRes, typeRes, officeRes] = await Promise.all([
@@ -222,6 +190,38 @@ export default function OperationsPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_documents' }, () => fetchOperations())
       .subscribe()
   }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('operations')) {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setUserRole(user.role)
+      setAuthChecking(false)
+      fetchOperations()
+      fetchFilterOptions()
+      setupRealtime()
+    }
+    checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!authChecking) {
+      setTimeout(() => fetchOperations(), 0)
+    }
+  }, [search, statusFilter, visitorTypeFilter, departmentFilter, officeLocationFilter])
 
   const handleEmergencyAction = async (action: 'emergency_lockdown' | 'emergency_unlock') => {
     setActionLoading(true)
@@ -671,7 +671,7 @@ function ActivityFeedSection({ activities }: { activities: OperationsData['activ
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm text-gray-900 font-medium">{activity.message}</p>
-              <p className="text-xs text-gray-500">{new Date(activity.timestamp).toLocaleString()}</p>
+              <p className="text-xs text-gray-500">{activity.timestamp ? new Date(activity.timestamp).toLocaleString() : '—'}</p>
             </div>
             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${priorityColors[activity.priority]}`}>
               {activity.priority}
@@ -709,7 +709,7 @@ function SecurityPanelSection({ security }: { security: OperationsData['security
                     <p className="text-sm text-gray-900 font-medium">{alert.title}</p>
                     <p className="text-xs text-gray-500">{alert.alert_type} - {alert.severity}</p>
                   </div>
-                  <span className="text-xs text-gray-500">{new Date(alert.created_at).toLocaleTimeString()}</span>
+                  <span className="text-xs text-gray-500">{alert.created_at ? new Date(alert.created_at).toLocaleTimeString() : '—'}</span>
                 </div>
               ))}
             </div>
@@ -768,7 +768,7 @@ function WaitingQueuesSection({ queues }: { queues: OperationsData['queues'] }) 
                   <div key={item.id} className="p-2 bg-white rounded border border-gray-100">
                     <p className="text-sm font-medium text-gray-900">{item.visitor_name}</p>
                     <p className="text-xs text-gray-500">{item.host || 'No host'} - {item.department || 'No dept'}</p>
-                    <p className="text-xs text-gray-400">{new Date(item.waiting_since).toLocaleTimeString()}</p>
+                    <p className="text-xs text-gray-400">{item.waiting_since ? new Date(item.waiting_since).toLocaleTimeString() : '—'}</p>
                   </div>
                 ))}
               </div>
@@ -911,8 +911,8 @@ function ActiveBadgesSection({ badges, onReprintBadge }: { badges: OperationsDat
                 <tr key={b.id}>
                   <td className="px-3 py-2 text-gray-900 font-medium">{b.badge_number}</td>
                   <td className="px-3 py-2 text-gray-600">{b.visitor_name}</td>
-                  <td className="px-3 py-2 text-gray-600">{new Date(b.issued_at).toLocaleString()}</td>
-                  <td className="px-3 py-2 text-gray-600">{new Date(b.expires_at).toLocaleString()}</td>
+                  <td className="px-3 py-2 text-gray-600">{b.issued_at ? new Date(b.issued_at).toLocaleString() : '—'}</td>
+                  <td className="px-3 py-2 text-gray-600">{b.expires_at ? new Date(b.expires_at).toLocaleString() : '—'}</td>
                   <td className="px-3 py-2 text-gray-600">{b.status}</td>
                   <td className="px-3 py-2">
                     <button onClick={() => onReprintBadge(b.visit_id)} className="text-blue-600 hover:text-blue-800 text-xs font-medium">Reprint</button>

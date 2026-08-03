@@ -81,7 +81,7 @@ export async function POST(
         .update({
           printed_at: new Date().toISOString(),
           printed_by: null,
-          reprint_count: (badge as any).reprint_count + 1,
+          reprint_count: (badge as { reprint_count: number }).reprint_count + 1,
         })
         .eq('id', id)
 
@@ -108,7 +108,7 @@ export async function POST(
         .update({
           printed_at: new Date().toISOString(),
           printed_by: null,
-          reprint_count: (badge as any).reprint_count + 1,
+          reprint_count: (badge as { reprint_count: number }).reprint_count + 1,
         })
         .eq('id', id)
 

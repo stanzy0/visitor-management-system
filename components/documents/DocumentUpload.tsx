@@ -135,7 +135,7 @@ export default function DocumentUpload({ visitorId, onUploadComplete, disabled }
         >
           <option value="National ID">National ID</option>
           <option value="International Passport">International Passport</option>
-          <option value="Driver's License">Driver's License</option>
+          <option value="Driver&apos;s License">Driver&apos;s License</option>
           <option value="Military ID">Military ID</option>
           <option value="Staff ID">Staff ID</option>
           <option value="Invitation Letter">Invitation Letter</option>

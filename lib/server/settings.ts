@@ -13,7 +13,7 @@ export async function getSystemSetting(key: string): Promise<string | number | b
   return data.value
 }
 
-export async function getSystemSettings(keys: string[]): Promise<Record<string, any>> {
+export async function getSystemSettings(keys: string[]): Promise<Record<string, unknown>> {
   if (!supabaseAdmin) return {}
 
   const { data, error } = await supabaseAdmin
@@ -23,8 +23,8 @@ export async function getSystemSettings(keys: string[]): Promise<Record<string, 
 
   if (error || !data) return {}
 
-  const result: Record<string, any> = {}
-  data.forEach((row: { key: string; value: any }) => {
+  const result: Record<string, unknown> = {}
+  data.forEach((row: { key: string; value: unknown }) => {
     result[row.key] = row.value
   })
 

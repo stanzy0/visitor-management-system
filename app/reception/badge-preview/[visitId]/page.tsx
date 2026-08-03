@@ -17,10 +17,6 @@ export default function BadgePreviewPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchPreviewData()
-  }, [visitId])
-
   const fetchPreviewData = async () => {
     try {
       setLoading(true)
@@ -42,6 +38,10 @@ export default function BadgePreviewPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    setTimeout(() => fetchPreviewData(), 0)
+  }, [visitId])
 
   const handleApprove = async () => {
     setSaving(true)

@@ -3,7 +3,8 @@ import react from '@vitejs/plugin-react'
 import { resolve } from 'path'
 
 export default defineConfig({
-  plugins: [react() as any],
+  // @ts-expect-error - vitest bundles its own Vite instance, causing type mismatch
+  plugins: [react()],
   test: {
     environment: 'jsdom',
     globals: true,

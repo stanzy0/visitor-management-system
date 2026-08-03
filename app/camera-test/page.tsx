@@ -183,7 +183,7 @@ export default function CameraTestPage() {
       <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
         <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 8 }}>Logs</h2>
         <div style={{ maxHeight: 400, overflowY: 'auto', background: '#111827', color: '#10b981', padding: 12, borderRadius: 6, fontSize: 12 }}>
-          {log.length === 0 && <div style={{ color: '#6b7280' }}>No logs yet. Click "Start Camera".</div>}
+          {log.length === 0 && <div style={{ color: '#6b7280' }}>No logs yet. Click &quot;Start Camera&quot;.</div>}
           {log.map((entry, i) => (
             <div key={i} style={{ marginBottom: 4 }}>{entry}</div>
           ))}

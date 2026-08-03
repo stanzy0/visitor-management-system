@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth-client'
-import { Loader2, Download, RefreshCw, Trash2, Check, AlertTriangle } from 'lucide-react'
+import { Loader2, Download, RefreshCw, AlertTriangle } from 'lucide-react'
 
 interface BackupRecord {
   id: string
@@ -15,7 +15,6 @@ interface BackupRecord {
 }
 
 export default function AdminBackupPage() {
-  const [userRole, setUserRole] = useState<string>('')
   const [backups, setBackups] = useState<BackupRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -57,7 +56,6 @@ export default function AdminBackupPage() {
         window.location.href = '/unauthorized'
         return
       }
-      setUserRole(user.role)
       fetchBackups()
     }
     checkAuth()
@@ -100,7 +98,7 @@ export default function AdminBackupPage() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000))
       setNotification({ type: 'success', message: 'Backup restore initiated successfully' })
-    } catch (err) {
+    } catch {
       setNotification({ type: 'error', message: 'Failed to restore backup' })
     } finally {
       setRestoring(null)
@@ -169,7 +167,7 @@ export default function AdminBackupPage() {
                     <td className="px-4 py-3 text-gray-600">{backup.size}</td>
                     <td className="px-4 py-3 text-gray-600">{backup.created_by}</td>
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                      {new Date(backup.created_at).toLocaleString()}
+                      {backup.created_at ? new Date(backup.created_at).toLocaleString() : '—'}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${

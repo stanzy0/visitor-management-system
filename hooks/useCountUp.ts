@@ -9,7 +9,7 @@ export function useCountUp(target: number, duration = 1000, enabled = true) {
 
   useEffect(() => {
     if (!enabled) {
-      setCount(target)
+      setTimeout(() => setCount(target), 0)
       return
     }
 

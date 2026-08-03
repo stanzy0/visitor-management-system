@@ -79,7 +79,7 @@ export default function PortalDashboardPage() {
   }, [registrationNumber])
 
   useEffect(() => {
-    fetchPortalData()
+    setTimeout(() => fetchPortalData(), 0)
   }, [fetchPortalData])
 
   useEffect(() => {

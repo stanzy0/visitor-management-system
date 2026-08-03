@@ -31,7 +31,7 @@ interface Visit {
   check_out_time: string | null
   created_at: string
   visitor: { full_name: string; visitor_organization: string; photo_url?: string | null } | null
-  employee: { full_name: string; department?: string } | null
+  employee: { full_name: string; department: string } | null
   badge?: VisitorBadgeType | null
 }
 
@@ -58,34 +58,13 @@ export default function BadgesPage() {
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (!PERMISSIONS[user.role]?.includes('badges')) {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setAuthChecking(false)
-      fetchBadges()
-      fetchVisits()
-      setupRealtime()
-    }
-    checkAuth()
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-    }
-  }, [])
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 3000)
+  }
 
   const fetchBadges = async () => {
-    setLoading(true)
-
+    setTimeout(() => setLoading(true), 0)
     const { data, error } = await supabase
       .from('visitor_badges')
       .select('*')
@@ -97,7 +76,7 @@ export default function BadgesPage() {
       setBadges(data || [])
     }
 
-    setLoading(false)
+    setTimeout(() => setLoading(false), 0)
   }
 
   const fetchVisits = async () => {
@@ -138,10 +117,30 @@ export default function BadgesPage() {
       .subscribe()
   }
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 3000)
-  }
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('badges')) {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setAuthChecking(false)
+      fetchBadges()
+      fetchVisits()
+      setupRealtime()
+    }
+    checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
+  }, [])
 
   const handleGenerateBadge = async (visitId: string) => {
     try {
@@ -503,7 +502,7 @@ export default function BadgesPage() {
                         visit.status === 'checked_out' ? 'bg-gray-50 text-gray-700 border-gray-200' :
                         'bg-amber-50 text-amber-700 border-amber-200'
                       }`}>
-                        {visit.status.replace('_', ' ')}
+                         {(visit.status || 'unknown').replace('_', ' ')}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -561,7 +560,7 @@ export default function BadgesPage() {
           <VisitorBadge
             badge={{
               ...selectedBadge,
-              visit: selectedBadge.visit as any,
+              visit: selectedBadge.visit as Visit,
             }}
             onClose={() => setSelectedBadge(null)}
             onPrint={() => handlePrint(selectedBadge.id)}

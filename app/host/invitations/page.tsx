@@ -90,7 +90,7 @@ export default function HostInvitationsPage() {
 
   useEffect(() => {
     if (employeeId) {
-      fetchInvitations()
+      setTimeout(() => fetchInvitations(), 0)
     }
   }, [employeeId, statusFilter, search])
 
@@ -212,7 +212,7 @@ export default function HostInvitationsPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-600">{inv.visitor_email}</td>
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                      {new Date(inv.expected_date).toLocaleDateString()}
+                       {inv.expected_date ? new Date(inv.expected_date).toLocaleDateString() : '—'}
                     </td>
                     <td className="px-4 py-3 text-gray-600">
                       {inv.expected_time ? new Date(`1970-01-01T${inv.expected_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}

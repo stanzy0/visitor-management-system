@@ -39,6 +39,42 @@ export default function RestoreCenterPage() {
   const [restoring, setRestoring] = useState(false)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
+  const fetchBackups = async () => {
+    setTimeout(() => setLoading(true), 0)
+    try {
+      const res = await fetch('/api/deployment?section=backups')
+      const json = await res.json()
+      if (json.success) {
+        setBackups(json.data.filter((b: Backup) => b.status === 'completed'))
+      }
+    } catch (err) {
+      console.error('Error fetching backups:', err)
+    } finally {
+      setTimeout(() => setLoading(false), 0)
+    }
+  }
+
+  const handleRestore = async () => {
+    if (!selectedBackup || confirmText !== 'RESTORE') {
+      alert('Please type RESTORE to confirm')
+      return
+    }
+    setTimeout(() => setRestoring(true), 0)
+    try {
+      await fetch('/api/deployment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'restore', backup_id: selectedBackup, restore_type: restoreType }),
+      })
+      fetchBackups()
+    } catch (err) {
+      console.error('Error restoring backup:', err)
+      alert('Failed to restore backup')
+    } finally {
+      setTimeout(() => setRestoring(false), 0)
+    }
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -55,43 +91,6 @@ export default function RestoreCenterPage() {
     }
     checkAuth()
   }, [])
-
-  const fetchBackups = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/deployment?section=backups')
-      const json = await res.json()
-      if (json.success) {
-        setBackups(json.data.filter((b: Backup) => b.status === 'completed'))
-      }
-    } catch (err) {
-      console.error('Error fetching backups:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleRestore = async () => {
-    if (!selectedBackup || confirmText !== 'RESTORE') {
-      alert('Please type RESTORE to confirm')
-      return
-    }
-    setRestoring(true)
-    try {
-      await fetch('/api/deployment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'restore', backup_id: selectedBackup, restore_type: restoreType }),
-      })
-      alert('Restore initiated successfully')
-      setSelectedBackup(null)
-      setConfirmText('')
-    } catch (err) {
-      console.error('Error restoring:', err)
-    } finally {
-      setRestoring(false)
-    }
-  }
 
   const formatBytes = (bytes: number | null) => {
     if (!bytes) return 'N/A'
@@ -197,7 +196,7 @@ export default function RestoreCenterPage() {
                     <td className="px-4 py-3 text-gray-900 font-mono text-xs">{backup.id.slice(0, 8)}</td>
                     <td className="px-4 py-3 text-gray-600 capitalize">{backup.backup_type}</td>
                     <td className="px-4 py-3 text-gray-600">{formatBytes(backup.backup_size_bytes)}</td>
-                    <td className="px-4 py-3 text-gray-600">{new Date(backup.created_at).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-gray-600">{backup.created_at ? new Date(backup.created_at).toLocaleString() : '—'}</td>
                   </tr>
                 ))}
               </tbody>

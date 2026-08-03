@@ -1,4 +1,5 @@
 import PublicRegistrationWizard from '@/components/PublicRegistrationWizard'
+import Link from 'next/link'
 
 export default function RegisterPage() {
   return (
@@ -16,8 +17,8 @@ export default function RegisterPage() {
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <a href="/register/status" className="text-sm font-medium text-blue-600 hover:text-blue-700">Check Status</a>
-              <a href="/" className="text-sm font-medium text-gray-700 hover:text-gray-900">Home</a>
+              <Link href="/register/status" className="text-sm font-medium text-blue-600 hover:text-blue-700">Check Status</Link>
+              <Link href="/" className="text-sm font-medium text-gray-700 hover:text-gray-900">Home</Link>
             </div>
           </div>
         </div>

@@ -70,8 +70,10 @@ export default function AdminLogsPage() {
 
   useEffect(() => {
     if (userRole === 'Admin') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchLogs()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userRole, levelFilter, categoryFilter, search])
 
   const handleExportCSV = async () => {
@@ -208,7 +210,7 @@ export default function AdminLogsPage() {
                     <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{log.details || '—'}</td>
                     <td className="px-4 py-3 text-gray-600">{log.source || '—'}</td>
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                      {new Date(log.created_at).toLocaleString()}
+                      {log.created_at ? new Date(log.created_at).toLocaleString() : '—'}
                     </td>
                   </tr>
                 ))}

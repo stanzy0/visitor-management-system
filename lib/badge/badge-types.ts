@@ -51,7 +51,7 @@ export interface VisitorBadge {
     department_display: boolean
     office_display: boolean
     signature_area: boolean
-    layout: any[]
+    layout: unknown[]
   } | null
   printer?: {
     id: string
@@ -59,7 +59,7 @@ export interface VisitorBadge {
     printer_type: string
     paper_size: string
     orientation: string
-    margins: any
+    margins: Record<string, unknown>
     copies: number
     is_default: boolean
   } | null
@@ -113,7 +113,7 @@ export interface BadgeTemplate {
   department_display: boolean
   office_display: boolean
   signature_area: boolean
-  layout: any[]
+  layout: unknown[]
   is_default: boolean
   created_by?: string | null
   created_at: string
@@ -126,7 +126,7 @@ export interface Printer {
   printer_type: string
   paper_size: string
   orientation: string
-  margins: any
+  margins: { top: number; right: number; bottom: number; left: number }
   copies: number
   is_default: boolean
   created_at: string
@@ -141,6 +141,6 @@ export interface BadgeHistoryRecord {
   reason?: string | null
   printer_name?: string | null
   template_name?: string | null
-  metadata?: any
+  metadata?: Record<string, unknown>
   created_at: string
 }

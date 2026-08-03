@@ -17,10 +17,6 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
   const [loading, setLoading] = useState(true)
   const [showAll, setShowAll] = useState(false)
 
-  useEffect(() => {
-    fetchNotifications()
-  }, [showAll])
-
   const fetchNotifications = async () => {
     try {
       setLoading(true)
@@ -40,6 +36,10 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    setTimeout(() => fetchNotifications(), 0)
+  }, [showAll])
 
   const handleMarkAsRead = async (id: string) => {
     await fetch(`/api/notifications/${id}`, {
@@ -73,8 +73,8 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
     onUpdate()
   }
 
-  const displayedNotifications = showAll ? notifications : notifications.slice(0, 20)
-  const unreadCount = notifications.filter(n => !n.is_read).length
+  const displayedNotifications = showAll ? notifications : (notifications || []).slice(0, 20)
+  const unreadCount = (notifications || []).filter(n => !n.is_read).length
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
@@ -89,8 +89,10 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
     }
   }
 
-  const formatTime = (dateStr: string) => {
+  const formatTime = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '—'
     const date = new Date(dateStr)
+    if (isNaN(date.getTime())) return '—'
     const now = new Date()
     const diff = now.getTime() - date.getTime()
     const minutes = Math.floor(diff / 60000)

@@ -7,6 +7,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, Legend, AreaChart, Area,
 } from 'recharts'
+import { LucideIcon } from 'lucide-react'
 import {
   Users, Clock, Calendar, FileText, ShieldAlert, TrendingUp, AlertTriangle,
   Download, Printer, Loader2, RefreshCw, UserCheck, ShieldCheck, BadgeCheck,
@@ -134,67 +135,8 @@ export default function AnalyticsPage() {
   const [showFilters, setShowFilters] = useState(false)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (!PERMISSIONS[user.role]?.includes('analytics')) {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setUserRole(user.role)
-      setAuthChecking(false)
-      fetchAnalytics()
-      fetchFilterOptions()
-      setupRealtime()
-    }
-    checkAuth()
-
-    return () => {
-      if (realtimeChannel.current) {
-        supabase.removeChannel(realtimeChannel.current)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!authChecking) {
-      fetchAnalytics()
-    }
-  }, [dateRange, department, visitorType, hostFilter, officeLocation, customStart, customEnd])
-
-  const fetchFilterOptions = async () => {
-    try {
-      const [deptRes, typeRes, hostRes, officeRes] = await Promise.all([
-        supabase.from('employees').select('department').not('department', 'is', null),
-        supabase.from('visitors').select('visitor_type').not('visitor_type', 'is', null),
-        supabase.from('employees').select('id, full_name').order('full_name'),
-        supabase.from('employees').select('office_location').not('office_location', 'is', null),
-      ])
-
-      const deptSet = new Set<string>()
-      deptRes.data?.forEach((d: any) => deptSet.add(d.department))
-      setDepartments(Array.from(deptSet).sort())
-
-      const typeSet = new Set<string>()
-      typeRes.data?.forEach((t: any) => typeSet.add(t.visitor_type))
-      setVisitorTypes(Array.from(typeSet).sort())
-
-      setHosts(hostRes.data || [])
-
-      const officeSet = new Set<string>()
-      officeRes.data?.forEach((o: any) => officeSet.add(o.office_location))
-      setOfficeLocations(Array.from(officeSet).sort())
-    } catch (err) {
-      console.error('Error fetching filter options:', err)
-    }
-  }
-
   const fetchAnalytics = async () => {
-    setLoading(true)
+    setTimeout(() => setLoading(true), 0)
     try {
       const params = new URLSearchParams()
       params.set('dateRange', dateRange)
@@ -208,12 +150,39 @@ export default function AnalyticsPage() {
       const res = await fetch(`/api/analytics?${params.toString()}`)
       const json = await res.json()
       if (json.success) {
-        setData(json.data)
+        setTimeout(() => setData(json.data), 0)
       }
     } catch (err) {
       console.error('Error fetching analytics:', err)
     } finally {
-      setLoading(false)
+      setTimeout(() => setLoading(false), 0)
+    }
+  }
+
+  const fetchFilterOptions = async () => {
+    try {
+      const [deptRes, typeRes, hostRes, officeRes] = await Promise.all([
+        supabase.from('employees').select('department').not('department', 'is', null),
+        supabase.from('visitors').select('visitor_type').not('visitor_type', 'is', null),
+        supabase.from('employees').select('id, full_name').order('full_name'),
+        supabase.from('employees').select('office_location').not('office_location', 'is', null),
+      ])
+
+      const deptSet = new Set<string>()
+      deptRes.data?.forEach((d: { department: string }) => deptSet.add(d.department))
+      setDepartments(Array.from(deptSet).sort())
+
+      const typeSet = new Set<string>()
+      typeRes.data?.forEach((t: { visitor_type: string }) => typeSet.add(t.visitor_type))
+      setVisitorTypes(Array.from(typeSet).sort())
+
+      setHosts(hostRes.data || [])
+
+      const officeSet = new Set<string>()
+      officeRes.data?.forEach((o: { office_location: string }) => officeSet.add(o.office_location))
+      setOfficeLocations(Array.from(officeSet).sort())
+    } catch (err) {
+      console.error('Error fetching filter options:', err)
     }
   }
 
@@ -250,6 +219,38 @@ export default function AnalyticsPage() {
       console.error('Export log error:', err)
     }
   }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('analytics')) {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setUserRole(user.role)
+      setAuthChecking(false)
+      fetchAnalytics()
+      fetchFilterOptions()
+      setupRealtime()
+    }
+    checkAuth()
+
+    return () => {
+      if (realtimeChannel.current) {
+        supabase.removeChannel(realtimeChannel.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!authChecking) {
+      fetchAnalytics()
+    }
+  }, [dateRange, department, visitorType, hostFilter, officeLocation, customStart, customEnd])
 
   const exportPDF = async () => {
     setExporting(true)
@@ -314,7 +315,7 @@ export default function AnalyticsPage() {
       logExport('Excel')
       if (!data) return
 
-      const wsData: any[][] = [
+      const wsData: unknown[][] = [
         ['Executive Analytics Report'],
         [`Generated: ${new Date().toLocaleString()}`],
         [`Date Range: ${dateRange}`],
@@ -541,7 +542,7 @@ export default function AnalyticsPage() {
   )
 }
 
-function KPICards({ kpis }: { kpis: Array<{ title: string; value: number; icon: any; color: string }> }) {
+function KPICards({ kpis }: { kpis: Array<{ title: string; value: number; icon: LucideIcon; color: string }> }) {
   const colorClasses: Record<string, string> = {
     blue: 'bg-blue-50 text-blue-600', green: 'bg-green-50 text-green-600', purple: 'bg-purple-50 text-purple-600',
     indigo: 'bg-indigo-50 text-indigo-600', amber: 'bg-amber-50 text-amber-600', red: 'bg-red-50 text-red-600',
@@ -726,7 +727,7 @@ function SecurityAnalyticsSection({ data }: { data: AnalyticsData['securityAnaly
   )
 }
 
-function KPIBadge({ title, value, icon: Icon, color }: { title: string; value: number | string; icon: any; color: string }) {
+function KPIBadge({ title, value, icon: Icon, color }: { title: string; value: number | string; icon: LucideIcon; color: string }) {
   const colorClasses: Record<string, string> = {
     blue: 'bg-blue-50 text-blue-600', green: 'bg-green-50 text-green-600', purple: 'bg-purple-50 text-purple-600',
     indigo: 'bg-indigo-50 text-indigo-600', amber: 'bg-amber-50 text-amber-600', red: 'bg-red-50 text-red-600',
@@ -761,7 +762,7 @@ function DocumentAnalyticsSection({ data }: { data: AnalyticsData['documentAnaly
         <div>
           <h4 className="text-sm font-medium text-gray-700 mb-2">Verification Success Rate</h4>
           <ResponsiveContainer width="100%" height={150}>
-            <PieChart><Pie data={[{ name: 'Approved', value: successRate }, { name: 'Other', value: 100 - successRate }]} cx="50%" cy="50%" innerRadius={40} outerRadius={60} dataKey="value"><Cell fill="#10b981" /><Cell fill="#e5e7eb" /></Pie><Tooltip formatter={(value: any) => `${value}%`} /></PieChart>
+            <PieChart><Pie data={[{ name: 'Approved', value: successRate }, { name: 'Other', value: 100 - successRate }]} cx="50%" cy="50%" innerRadius={40} outerRadius={60} dataKey="value"><Cell fill="#10b981" /><Cell fill="#e5e7eb" /></Pie><Tooltip formatter={(value) => `${Number(value ?? 0)}%`} /></PieChart>
           </ResponsiveContainer>
         </div>
       </div>
@@ -884,7 +885,7 @@ function RepeatVisitorsSection({ visitors }: { visitors: AnalyticsData['repeatVi
                   <td className="px-3 py-2 text-gray-900 font-medium">{v.full_name}</td>
                   <td className="px-3 py-2 text-gray-600">{v.visitor_organization || '-'}</td>
                   <td className="px-3 py-2 text-gray-600">{v.visits}</td>
-                  <td className="px-3 py-2 text-gray-600">{new Date(v.lastVisit).toLocaleDateString()}</td>
+                  <td className="px-3 py-2 text-gray-600">{v.lastVisit ? new Date(v.lastVisit).toLocaleDateString() : '—'}</td>
                 </tr>
               ))}
             </tbody>

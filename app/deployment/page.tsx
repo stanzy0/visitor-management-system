@@ -63,6 +63,24 @@ export default function DeploymentDashboardPage() {
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
+  const fetchData = async () => {
+    setTimeout(() => setLoading(true), 0)
+    try {
+      const res = await fetch('/api/deployment?section=dashboard')
+      const json = await res.json()
+      if (json.success) {
+        setBackups(json.data.backups)
+        setDeployments(json.data.deployments)
+        setMaintenance(json.data.maintenance)
+        setSystemInfo(json.data.systemInfo)
+      }
+    } catch (err) {
+      console.error('Error fetching deployment data:', err)
+    } finally {
+      setTimeout(() => setLoading(false), 0)
+    }
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -79,24 +97,6 @@ export default function DeploymentDashboardPage() {
     }
     checkAuth()
   }, [])
-
-  const fetchData = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/deployment?section=dashboard')
-      const json = await res.json()
-      if (json.success) {
-        setBackups(json.data.backups)
-        setDeployments(json.data.deployments)
-        setMaintenance(json.data.maintenance)
-        setSystemInfo(json.data.systemInfo)
-      }
-    } catch (err) {
-      console.error('Error fetching deployment data:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   if (authChecking) {
     return (

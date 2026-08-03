@@ -72,7 +72,7 @@ export default function ActivityTimeline({ events }: ActivityTimelineProps) {
         <div className="relative">
           <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-blue-200 via-gray-200 to-transparent" />
           <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-4">
-            {events.slice(0, 10).map((event, index) => {
+            {(events || []).slice(0, 10).map((event, index) => {
               const config = typeConfig[event.type] || typeConfig.other
               const Icon = config.icon
               return (

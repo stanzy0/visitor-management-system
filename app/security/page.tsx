@@ -29,23 +29,6 @@ export default function SecurityDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [authChecking, setAuthChecking] = useState(true)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (!PERMISSIONS[user.role]?.includes('scanner')) {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setAuthChecking(false)
-      fetchStats()
-    }
-    checkAuth()
-  }, [])
-
   const fetchStats = async () => {
     setLoading(true)
     try {
@@ -73,6 +56,23 @@ export default function SecurityDashboardPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (!PERMISSIONS[user.role]?.includes('scanner')) {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setAuthChecking(false)
+      fetchStats()
+    }
+    checkAuth()
+  }, [])
 
   useEffect(() => {
     const channel = supabase

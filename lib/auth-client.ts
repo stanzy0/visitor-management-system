@@ -5,35 +5,39 @@ export { PERMISSIONS }
 export type { UserRole, UserWithRole }
 
 export async function getCurrentUser(): Promise<UserWithRole | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-  if (!user) return null
+    if (!user) return null
 
-  const { data: userRole, error } = await supabase
-    .from('user_roles')
-    .select('*')
-    .eq('user_id', user.id)
-    .single()
+    const { data: userRole, error } = await supabase
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
 
-  if (error || !userRole) {
+    if (error || !userRole) {
+      return {
+        id: user.id,
+        email: user.email || '',
+        full_name: null,
+        role: 'Receptionist' as UserRole,
+        created_at: null,
+      }
+    }
+
     return {
       id: user.id,
       email: user.email || '',
-      full_name: null,
-      role: 'Receptionist' as UserRole,
-      created_at: null,
+      full_name: userRole.full_name,
+      role: userRole.role as UserRole,
+      created_at: userRole.created_at,
+      must_change_password: userRole.must_change_password ?? false,
     }
-  }
-
-  return {
-    id: user.id,
-    email: user.email || '',
-    full_name: userRole.full_name,
-    role: userRole.role as UserRole,
-    created_at: userRole.created_at,
-    must_change_password: userRole.must_change_password ?? false,
+  } catch {
+    return null
   }
 }
 

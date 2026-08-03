@@ -142,8 +142,10 @@ export default function HostAppointmentsPage() {
 
   useEffect(() => {
     if (employeeId !== null) {
-      fetchAppointments()
-      fetchVisitors()
+      setTimeout(() => {
+        fetchAppointments()
+        fetchVisitors()
+      }, 0)
     }
   }, [employeeId, statusFilter, search])
 

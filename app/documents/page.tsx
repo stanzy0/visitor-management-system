@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth-client'
 import { getAuthHeaders } from '@/lib/client/api'
@@ -57,17 +58,6 @@ export default function DocumentsPage() {
   const canRequestReplacement = userRole === 'Admin' || userRole === 'Receptionist'
   const canView = true
 
-  useEffect(() => {
-    checkAuth()
-  }, [])
-
-  useEffect(() => {
-    if (!authChecking) {
-      fetchVerifications()
-      fetchStats()
-    }
-  }, [filters, authChecking])
-
   const checkAuth = async () => {
     const user = await getCurrentUser()
     if (!user) {
@@ -80,7 +70,7 @@ export default function DocumentsPage() {
 
   const fetchVerifications = async () => {
     try {
-      setLoading(true)
+      setTimeout(() => setLoading(true), 0)
       const params = new URLSearchParams()
       if (filters.search) params.set('search', filters.search)
       if (filters.document_type) params.set('document_type', filters.document_type)
@@ -105,7 +95,7 @@ export default function DocumentsPage() {
     } catch (error) {
       console.error('Failed to fetch verifications:', error)
     } finally {
-      setLoading(false)
+      setTimeout(() => setLoading(false), 0)
     }
   }
 
@@ -122,6 +112,19 @@ export default function DocumentsPage() {
       console.error('Failed to fetch stats:', error)
     }
   }
+
+  useEffect(() => {
+    setTimeout(() => checkAuth(), 0)
+  }, [])
+
+  useEffect(() => {
+    if (!authChecking) {
+      setTimeout(() => {
+        fetchVerifications()
+        fetchStats()
+      }, 0)
+    }
+  }, [filters, authChecking])
 
   const handleApprove = async (id: string) => {
     try {
@@ -233,9 +236,9 @@ export default function DocumentsPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
-          <a href="/dashboard" className="text-sm text-blue-600 hover:underline">
+          <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">
             ← Back to Dashboard
-          </a>
+          </Link>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -292,7 +295,7 @@ export default function DocumentsPage() {
                   <option value="">All Document Types</option>
                   <option value="National Identity Card">National Identity Card</option>
                   <option value="International Passport">International Passport</option>
-                  <option value="Driver's License">Driver's License</option>
+                  <option value="Driver&apos;s License">Driver&apos;s License</option>
                   <option value="Military Identity Card">Military Identity Card</option>
                   <option value="Staff Identity Card">Staff Identity Card</option>
                   <option value="Invitation Letter">Invitation Letter</option>
@@ -387,7 +390,7 @@ export default function DocumentsPage() {
                         <td className="px-4 py-3 text-gray-600">{verification.document_type}</td>
                         <td className="px-4 py-3 text-gray-600 font-mono">{verification.document_number || '—'}</td>
                         <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                          {new Date(verification.created_at).toLocaleDateString()}
+                           {verification.created_at ? new Date(verification.created_at).toLocaleDateString() : '—'}
                         </td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${statusConfig.color}`}>
@@ -632,12 +635,12 @@ function DocumentDetailModal({
                   </div>
                   <div>
                     <span className="text-xs font-medium text-gray-500 uppercase">Upload Date</span>
-                    <p className="text-sm text-gray-700">{new Date(document.created_at).toLocaleString()}</p>
+                    <p className="text-sm text-gray-700">{document.created_at ? new Date(document.created_at).toLocaleString() : '—'}</p>
                   </div>
                   {document.approved_at && (
                     <div>
                       <span className="text-xs font-medium text-gray-500 uppercase">Verified Date</span>
-                      <p className="text-sm text-gray-700">{new Date(document.approved_at).toLocaleString()}</p>
+                      <p className="text-sm text-gray-700">{document.approved_at ? new Date(document.approved_at).toLocaleString() : '—'}</p>
                     </div>
                   )}
                   {document.approved_by && (

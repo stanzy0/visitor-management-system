@@ -184,9 +184,9 @@ export async function getVisitorTrends(dateRange: string): Promise<VisitorTrends
   const peakDaysData = await supabaseAdmin.from('visits').select('created_at').gte('created_at', new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString())
   const durationData = await supabaseAdmin.from('visits').select('check_in_time, check_out_time').not('check_out_time', 'is', null).gte('check_in_time', start.toISOString())
 
-  const processByDay = (data: any[]) => {
+  const processByDay = (data: Array<{ created_at: string }>) => {
     const map = new Map<string, number>()
-    data?.forEach((r: any) => {
+    data?.forEach((r: { created_at: string }) => {
       const d = new Date(r.created_at).toISOString().split('T')[0]
       map.set(d, (map.get(d) || 0) + 1)
     })
@@ -195,9 +195,9 @@ export async function getVisitorTrends(dateRange: string): Promise<VisitorTrends
       .sort((a, b) => a.date.localeCompare(b.date))
   }
 
-  const processByWeek = (data: any[]) => {
+  const processByWeek = (data: Array<{ created_at: string }>) => {
     const map = new Map<string, number>()
-    data?.forEach((r: any) => {
+    data?.forEach((r: { created_at: string }) => {
       const d = new Date(r.created_at)
       const weekStart = new Date(d.getTime() - d.getDay() * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
       map.set(weekStart, (map.get(weekStart) || 0) + 1)
@@ -207,9 +207,9 @@ export async function getVisitorTrends(dateRange: string): Promise<VisitorTrends
       .sort((a, b) => a.week.localeCompare(b.week))
   }
 
-  const processByMonth = (data: any[]) => {
+  const processByMonth = (data: Array<{ created_at: string }>) => {
     const map = new Map<string, number>()
-    data?.forEach((r: any) => {
+    data?.forEach((r: { created_at: string }) => {
       const d = new Date(r.created_at)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
       map.set(key, (map.get(key) || 0) + 1)
@@ -218,9 +218,9 @@ export async function getVisitorTrends(dateRange: string): Promise<VisitorTrends
       .map(([month, count]) => ({ month, count }))
   }
 
-  const processPeakHours = (data: any[]) => {
+  const processPeakHours = (data: Array<{ check_in_time: string | null }>) => {
     const map = new Map<number, number>()
-    data?.forEach((r: any) => {
+    data?.forEach((r: { check_in_time: string | null }) => {
       if (r.check_in_time) {
         const h = new Date(r.check_in_time).getHours()
         map.set(h, (map.get(h) || 0) + 1)
@@ -231,9 +231,9 @@ export async function getVisitorTrends(dateRange: string): Promise<VisitorTrends
       .sort((a, b) => parseInt(a.hour) - parseInt(b.hour))
   }
 
-  const processPeakDays = (data: any[]) => {
+  const processPeakDays = (data: Array<{ created_at: string }>) => {
     const map = new Map<string, number>()
-    data?.forEach((r: any) => {
+    data?.forEach((r: { created_at: string }) => {
       const d = new Date(r.created_at)
       const day = d.toLocaleDateString('en-US', { weekday: 'short' })
       map.set(day, (map.get(day) || 0) + 1)
@@ -243,7 +243,7 @@ export async function getVisitorTrends(dateRange: string): Promise<VisitorTrends
   }
 
   const avgDuration = durationData.data?.length
-    ? Math.round(durationData.data.reduce((acc: number, r: any) => {
+    ? Math.round(durationData.data.reduce((acc: number, r: { check_in_time: string; check_out_time: string }) => {
         const start = new Date(r.check_in_time).getTime()
         const end = new Date(r.check_out_time).getTime()
         return acc + (end - start) / (1000 * 60)
@@ -270,10 +270,12 @@ export async function getHostAnalytics(dateRange: string): Promise<HostAnalytics
   const { start, end } = getDateRange(dateRange)
   const visits = await supabaseAdmin.from('visits').select('employee:employees(full_name, department, office_location)').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
 
-  const processByField = (data: any[], field: string) => {
+  const visitsData = (visits.data || []) as Array<{ employee?: { full_name?: string; department?: string; office_location?: string } | null }>
+
+  const processByField = (data: Array<{ employee?: { full_name?: string; department?: string; office_location?: string } | null }>, field: keyof { full_name?: string; department?: string; office_location?: string }) => {
     const map = new Map<string, number>()
-    data?.forEach((r: any) => {
-      const val = r.employee?.[field] || 'Unknown'
+    data?.forEach((r: { employee?: { full_name?: string; department?: string; office_location?: string } | null }) => {
+      const val = typeof r.employee === 'object' && r.employee !== null ? String(r.employee[field] ?? 'Unknown') : 'Unknown'
       map.set(val, (map.get(val) || 0) + 1)
     })
     return Array.from(map.entries())
@@ -283,11 +285,11 @@ export async function getHostAnalytics(dateRange: string): Promise<HostAnalytics
   }
 
   return {
-    topHosts: processByField(visits.data || [], 'full_name').map(item => ({ ...item, department: '' })),
-    topDepartments: processByField(visits.data || [], 'department').map(item => ({ name: item.name, visits: item.visits })),
-    visitorsPerDepartment: processByField(visits.data || [], 'department').map(item => ({ name: item.name, count: item.visits })),
-    visitorsPerOfficeLocation: processByField(visits.data || [], 'office_location').map(item => ({ name: item.name, count: item.visits })),
-    topEmployees: processByField(visits.data || [], 'full_name').map(item => ({ name: item.name, visits: item.visits })),
+    topHosts: processByField(visitsData, 'full_name').map(item => ({ ...item, department: '' })),
+    topDepartments: processByField(visitsData, 'department').map(item => ({ name: item.name, visits: item.visits })),
+    visitorsPerDepartment: processByField(visitsData, 'department').map(item => ({ name: item.name, count: item.visits })),
+    visitorsPerOfficeLocation: processByField(visitsData, 'office_location').map(item => ({ name: item.name, count: item.visits })),
+    topEmployees: processByField(visitsData, 'full_name').map(item => ({ name: item.name, visits: item.visits })),
     repeatVisitorsByHost: [],
   }
 }
@@ -304,7 +306,7 @@ export async function getSecurityAnalytics(dateRange: string): Promise<SecurityA
   const alerts = await supabaseAdmin.from('security_alerts').select('severity, alert_type').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
 
   const deniedReasons: Record<string, number> = {}
-  alerts.data?.forEach((a: any) => {
+  alerts.data?.forEach((a: { alert_type: string }) => {
     deniedReasons[a.alert_type] = (deniedReasons[a.alert_type] || 0) + 1
   })
 
@@ -312,7 +314,7 @@ export async function getSecurityAnalytics(dateRange: string): Promise<SecurityA
     rejectedVisitors: rejected.count || 0,
     deniedEntryReasons: Object.entries(deniedReasons).map(([reason, count]) => ({ reason, count })),
     watchlistMatches: watchlist.count || 0,
-    criticalAlerts: (alerts.data || []).filter((a: any) => a.severity === 'Critical').length,
+    criticalAlerts: (alerts.data || []).filter((a: { severity: string }) => a.severity === 'Critical').length,
     avgGateProcessingTime: '5m',
     securityHolds: 0,
     visitorExitDelays: 0,
@@ -336,7 +338,7 @@ export async function getDocumentAnalytics(dateRange: string): Promise<DocumentA
 
   let avgTime = '0h 0m'
   if (approved.data && approved.data.length > 0) {
-    const times = approved.data.filter((d: any) => d.verified_at).map((d: any) => new Date(d.verified_at).getTime() - new Date(d.created_at).getTime())
+    const times = approved.data.filter((d: { verified_at: string | null }) => d.verified_at).map((d: { verified_at: string; created_at: string }) => new Date(d.verified_at).getTime() - new Date(d.created_at).getTime())
     if (times.length > 0) {
       const avgMs = times.reduce((a: number, b: number) => a + b, 0) / times.length
       const hours = Math.floor(avgMs / (1000 * 60 * 60))
@@ -417,7 +419,7 @@ export async function getPropertyAnalytics(dateRange: string): Promise<PropertyA
 
   const types = await supabaseAdmin.from('assets').select('property_type').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
   const typeCounts: Record<string, number> = {}
-  types.data?.forEach((a: any) => {
+  types.data?.forEach((a: { property_type?: string }) => {
     const t = a.property_type || 'Other'
     typeCounts[t] = (typeCounts[t] || 0) + 1
   })
@@ -441,7 +443,7 @@ export async function getVisitorTypes(dateRange: string): Promise<VisitorTypes> 
   const { data } = await supabaseAdmin.from('visitors').select('visitor_type').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
 
   const counts: Record<string, number> = {}
-  data?.forEach((v: any) => {
+  data?.forEach((v: { visitor_type: string }) => {
     const t = v.visitor_type || 'Other'
     counts[t] = (counts[t] || 0) + 1
   })
@@ -460,7 +462,7 @@ export async function getVisitorSources(dateRange: string): Promise<VisitorSourc
   const { data } = await supabaseAdmin.from('visits').select('source').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
 
   const counts: Record<string, number> = {}
-  data?.forEach((v: any) => {
+  data?.forEach((v: { source: string }) => {
     const s = v.source || 'Unknown'
     counts[s] = (counts[s] || 0) + 1
   })
@@ -478,23 +480,35 @@ export async function getRepeatVisitors(dateRange: string): Promise<RepeatVisito
   const { start, end } = getDateRange(dateRange)
   const { data } = await supabaseAdmin.from('visits').select('visitor_id, visitor:visitors(full_name, visitor_organization, photo_url), created_at').gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
 
-  const visitorMap = new Map<string, any>()
-  data?.forEach((v: any) => {
-    if (!v.visitor_id) return
-    const existing = visitorMap.get(v.visitor_id)
+  type RepeatVisitorEntry = { id: string; full_name: string; visitor_organization: string | null; photo_url: string | null; visits: number; lastVisit: string }
+  const visitorMap = new Map<string, RepeatVisitorEntry>()
+  data?.forEach((v: Record<string, unknown>) => {
+    if (typeof v.visitor_id !== 'string') return
+    const visitorId = v.visitor_id
+    const createdAt = typeof v.created_at === 'string' ? v.created_at : new Date().toISOString()
+    const existing = visitorMap.get(visitorId)
     if (existing) {
       existing.visits += 1
-      if (new Date(v.created_at) > new Date(existing.lastVisit)) {
-        existing.lastVisit = v.created_at
+      if (new Date(createdAt) > new Date(existing.lastVisit)) {
+        existing.lastVisit = createdAt
       }
     } else {
-      visitorMap.set(v.visitor_id, {
-        id: v.visitor_id,
-        full_name: typeof v.visitor === 'object' ? v.visitor?.full_name : 'Unknown',
-        visitor_organization: typeof v.visitor === 'object' ? v.visitor?.visitor_organization : null,
-        photo_url: typeof v.visitor === 'object' ? v.visitor?.photo_url : null,
+      let fullName = 'Unknown'
+      let visitorOrg: string | null = null
+      let photoUrl: string | null = null
+      if (typeof v.visitor === 'object' && v.visitor !== null) {
+        const visitorObj = v.visitor as Record<string, unknown>
+        fullName = typeof visitorObj.full_name === 'string' ? visitorObj.full_name : 'Unknown'
+        visitorOrg = typeof visitorObj.visitor_organization === 'string' ? visitorObj.visitor_organization : null
+        photoUrl = typeof visitorObj.photo_url === 'string' ? visitorObj.photo_url : null
+      }
+      visitorMap.set(visitorId, {
+        id: visitorId,
+        full_name: fullName,
+        visitor_organization: visitorOrg,
+        photo_url: photoUrl,
         visits: 1,
-        lastVisit: v.created_at,
+        lastVisit: createdAt,
       })
     }
   })

@@ -289,12 +289,12 @@ export default function EmailLogsPage() {
               )}
               <div>
                 <span className="text-xs font-medium text-gray-500 uppercase">Created</span>
-                <p className="text-sm text-gray-900">{new Date(previewLog.created_at).toLocaleString()}</p>
+                <p className="text-sm text-gray-900">{previewLog.created_at ? new Date(previewLog.created_at).toLocaleString() : '—'}</p>
               </div>
               {previewLog.sent_at && (
                 <div>
                   <span className="text-xs font-medium text-gray-500 uppercase">Sent At</span>
-                  <p className="text-sm text-gray-900">{new Date(previewLog.sent_at).toLocaleString()}</p>
+                  <p className="text-sm text-gray-900">{previewLog.sent_at ? new Date(previewLog.sent_at).toLocaleString() : '—'}</p>
                 </div>
               )}
             </div>

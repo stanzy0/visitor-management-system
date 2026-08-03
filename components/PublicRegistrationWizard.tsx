@@ -340,56 +340,6 @@ export default function PublicRegistrationWizard() {
       })
   }, [])
 
-  useEffect(() => {
-    if (formData.employee_id && formData.visit_date && formData.arrival_time) {
-      checkAvailability()
-    }
-  }, [formData.employee_id, formData.visit_date, formData.arrival_time, formData.expected_duration])
-
-  useEffect(() => {
-    if (!formData.employee_id) return
-
-    const channel = supabase
-      .channel('host-availability-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'appointments',
-          filter: `employee_id=eq.${formData.employee_id}`,
-        },
-        (payload) => {
-          if (payload.new && (payload.new as any).appointment_date === formData.visit_date) {
-            checkAvailability()
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'employees',
-          filter: `id=eq.${formData.employee_id}`,
-        },
-        () => {
-          checkAvailability()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [formData.employee_id, formData.visit_date])
-
-  const totalSteps = 7
-
-  const updateField = (field: string, value: string | boolean | number | null) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-  }
-
   const checkAvailability = async () => {
     if (!formData.employee_id || !formData.visit_date || !formData.arrival_time) {
       setAvailabilityStatus(null)
@@ -424,6 +374,50 @@ export default function PublicRegistrationWizard() {
     } finally {
       setCheckingAvailability(false)
     }
+  }
+
+  useEffect(() => {
+    if (!formData.employee_id) return
+
+    const channel = supabase
+      .channel('host-availability-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'appointments',
+          filter: `employee_id=eq.${formData.employee_id}`,
+        },
+        (payload) => {
+          if (payload.new && (payload.new as { appointment_date?: string }).appointment_date === formData.visit_date) {
+            checkAvailability()
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'employees',
+          filter: `id=eq.${formData.employee_id}`,
+        },
+        () => {
+          checkAvailability()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [formData.employee_id, formData.visit_date])
+
+  const totalSteps = 7
+
+  const updateField = (field: string, value: string | boolean | number | null) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
   const next = async () => {

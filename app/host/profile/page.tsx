@@ -85,7 +85,7 @@ export default function HostProfilePage() {
 
   useEffect(() => {
     if (employeeId) {
-      fetchProfile()
+      setTimeout(() => fetchProfile(), 0)
     }
   }, [employeeId])
 

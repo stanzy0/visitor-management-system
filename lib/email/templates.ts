@@ -23,7 +23,7 @@ interface TemplateData {
   orgEmail?: string
   orgPhone?: string
   orgAddress?: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export function getTemplateContent(

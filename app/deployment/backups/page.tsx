@@ -41,6 +41,37 @@ export default function BackupsPage() {
   const [selectedType, setSelectedType] = useState('full')
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
+  const fetchBackups = async () => {
+    setTimeout(() => setLoading(true), 0)
+    try {
+      const res = await fetch('/api/deployment?section=backups')
+      const json = await res.json()
+      if (json.success) {
+        setBackups(json.data)
+      }
+    } catch (err) {
+      console.error('Error fetching backups:', err)
+    } finally {
+      setTimeout(() => setLoading(false), 0)
+    }
+  }
+
+  const createBackup = async () => {
+    setTimeout(() => setCreating(true), 0)
+    try {
+      await fetch('/api/deployment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create_backup', backup_type: selectedType }),
+      })
+      fetchBackups()
+    } catch (err) {
+      console.error('Error creating backup:', err)
+    } finally {
+      setTimeout(() => setCreating(false), 0)
+    }
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -57,37 +88,6 @@ export default function BackupsPage() {
     }
     checkAuth()
   }, [])
-
-  const fetchBackups = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/deployment?section=backups')
-      const json = await res.json()
-      if (json.success) {
-        setBackups(json.data)
-      }
-    } catch (err) {
-      console.error('Error fetching backups:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const createBackup = async () => {
-    setCreating(true)
-    try {
-      await fetch('/api/deployment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create_backup', backup_type: selectedType }),
-      })
-      fetchBackups()
-    } catch (err) {
-      console.error('Error creating backup:', err)
-    } finally {
-      setCreating(false)
-    }
-  }
 
   const deleteBackup = async (backupId: string) => {
     if (!confirm('Are you sure you want to delete this backup?')) return
@@ -234,7 +234,7 @@ export default function BackupsPage() {
                         {backup.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{new Date(backup.created_at).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-gray-600">{backup.created_at ? new Date(backup.created_at).toLocaleString() : '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <button className="p-1 text-gray-400 hover:text-blue-600" title="Download">

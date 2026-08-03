@@ -219,7 +219,7 @@ export async function addBadgeHistoryRecord(record: {
   reason?: string | null
   printer_name?: string | null
   template_name?: string | null
-  metadata?: any
+  metadata?: Record<string, unknown>
 }): Promise<BadgeHistoryRecord> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
@@ -283,7 +283,7 @@ export async function validateBadge(qrToken: string): Promise<{
     return { valid: false, reason: 'Badge visit not found', badge: badge as VisitorBadge }
   }
 
-  const visit = badge.visit as any
+  const visit = badge.visit as Record<string, unknown>
   if (visit.status === 'checked_out') {
     return { valid: false, reason: 'Visitor has checked out', badge: badge as VisitorBadge }
   }
@@ -338,7 +338,7 @@ export async function expireOldBadges(): Promise<number> {
   return count
 }
 
-export async function getBadgeStatistics(): Promise<any> {
+export async function getBadgeStatistics(): Promise<{ totalIssued: number; totalPrinted: number; activeBadges: number; expiredBadges: number; checkedOutBadges: number; cancelledBadges: number; revokedBadges: number; reprints: number }> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   const [
@@ -361,7 +361,7 @@ export async function getBadgeStatistics(): Promise<any> {
     supabaseAdmin.from('visitor_badges').select('reprint_count').neq('reprint_count', 0),
   ])
 
-  const totalReprints = reprints.data?.reduce((sum, b: any) => sum + (b.reprint_count || 0), 0) || 0
+  const totalReprints = reprints.data?.reduce((sum, b: Record<string, unknown>) => sum + ((b.reprint_count as number) || 0), 0) || 0
 
   return {
     totalIssued: totalIssued.count || 0,

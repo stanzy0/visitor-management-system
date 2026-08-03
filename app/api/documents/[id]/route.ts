@@ -6,7 +6,7 @@ import { VisitorDocument, ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '@/lib/types/
 import { approveDocument, rejectDocument, requestReplacement, markReplacementUploaded } from '@/lib/server/document-verification'
 import { createAdminNotification, createReceptionistNotification, createHostNotification, createSystemNotification } from '@/lib/notifications'
 
-function mapToDocumentVerification(doc: any) {
+function mapToDocumentVerification(doc: VisitorDocument) {
   return {
     id: doc.id,
     visitor_id: doc.visitor_id,
@@ -24,7 +24,6 @@ function mapToDocumentVerification(doc: any) {
     created_at: doc.created_at,
     updated_at: doc.updated_at,
     visitor: doc.visitor,
-    visit: doc.visit || null,
   }
 }
 
@@ -281,9 +280,9 @@ export async function POST(
         })
 
         return NextResponse.json({ success: true, document })
-      } catch (err: any) {
-        console.log('[Documents API] approval result: failed, document id:', id, 'error:', err.message)
-        return NextResponse.json({ error: err.message, details: err }, { status: 500 })
+      } catch (err: unknown) {
+        console.log('[Documents API] approval result: failed, document id:', id, 'error:', err instanceof Error ? err.message : 'Unknown error')
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error', details: err }, { status: 500 })
       }
     }
 
@@ -316,9 +315,9 @@ export async function POST(
         })
 
         return NextResponse.json({ success: true, document })
-      } catch (err: any) {
-        console.log('[Documents API] rejection result: failed, document id:', id, 'error:', err.message)
-        return NextResponse.json({ error: err.message, details: err }, { status: 500 })
+      } catch (err: unknown) {
+        console.log('[Documents API] rejection result: failed, document id:', id, 'error:', err instanceof Error ? err.message : 'Unknown error')
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error', details: err }, { status: 500 })
       }
     }
 
@@ -351,9 +350,9 @@ export async function POST(
         })
 
         return NextResponse.json({ success: true, document })
-      } catch (err: any) {
-        console.log('[Documents API] replacement result: failed, document id:', id, 'error:', err.message)
-        return NextResponse.json({ error: err.message, details: err }, { status: 500 })
+      } catch (err: unknown) {
+        console.log('[Documents API] replacement result: failed, document id:', id, 'error:', err instanceof Error ? err.message : 'Unknown error')
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error', details: err }, { status: 500 })
       }
     }
 
@@ -373,9 +372,9 @@ export async function POST(
         ).catch(() => {})
 
         return NextResponse.json({ success: true, document })
-      } catch (err: any) {
-        console.log('[Documents API] mark_replacement_uploaded result: failed, document id:', id, 'error:', err.message)
-        return NextResponse.json({ error: err.message, details: err }, { status: 500 })
+      } catch (err: unknown) {
+        console.log('[Documents API] mark_replacement_uploaded result: failed, document id:', id, 'error:', err instanceof Error ? err.message : 'Unknown error')
+        return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error', details: err }, { status: 500 })
       }
     }
 

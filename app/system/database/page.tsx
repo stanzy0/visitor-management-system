@@ -26,6 +26,21 @@ export default function DatabaseHealthPage() {
   const [exporting, setExporting] = useState(false)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
+  const fetchData = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/system?section=database')
+      const json = await res.json()
+      if (json.success) {
+        setData(json.data)
+      }
+    } catch (err) {
+      console.error('Error fetching database health:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -42,21 +57,6 @@ export default function DatabaseHealthPage() {
     }
     checkAuth()
   }, [])
-
-  const fetchData = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/system?section=database')
-      const json = await res.json()
-      if (json.success) {
-        setData(json.data)
-      }
-    } catch (err) {
-      console.error('Error fetching database health:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const exportReport = () => {
     if (!data) return

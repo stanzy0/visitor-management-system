@@ -194,7 +194,7 @@ export default function VisitorsPage() {
   const [videoReady, setVideoReady] = useState(false)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [watchlistMatch, setWatchlistMatch] = useState<any | null>(null)
+  const [watchlistMatch, setWatchlistMatch] = useState<{ id: string; full_name: string; reason: string; category?: string; status?: string } | null>(null)
   const [watchlistModalOpen, setWatchlistModalOpen] = useState(false)
   const [pendingRegistration, setPendingRegistration] = useState<VisitorFormData | null>(null)
   const [userRole, setUserRole] = useState<UserRole>('Receptionist')
@@ -656,7 +656,7 @@ export default function VisitorsPage() {
           return
         }
 
-        const docPayload: any = {
+        const docPayload: Record<string, unknown> = {
           visitor_id: visitorData![0].id,
           document_type: data.doc_type,
           document_number: data.doc_number,
@@ -708,7 +708,7 @@ export default function VisitorsPage() {
       },
     ])
 
-    logAuditAction('Override Approved', 'watchlist', watchlistMatch?.id, `Watchlist override approved for ${pendingRegistration.full_name}`)
+    logAuditAction('Override Approved', 'watchlist', watchlistMatch?.id ?? null, `Watchlist override approved for ${pendingRegistration.full_name}`)
 
     setWatchlistModalOpen(false)
     setWatchlistMatch(null)

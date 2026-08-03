@@ -38,7 +38,7 @@ export default function PhotoCapture({ value, onChange, error, required = true }
 
   useEffect(() => {
     if (!value) {
-      setMode('idle')
+      setTimeout(() => setMode('idle'), 0)
     }
   }, [value])
 

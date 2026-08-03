@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth-client'
-import { Loader2, Users, Shield, Clock, UserCheck, Calendar, RefreshCw, AlertTriangle, Database, Activity, Mail, HardDrive } from 'lucide-react'
+import { Loader2, Users, Shield, Clock, UserCheck, Calendar, RefreshCw, AlertTriangle, Database, Activity, Mail, HardDrive, Monitor, Lock, QrCode, Printer, Bell } from 'lucide-react'
 
 interface AdminDashboardData {
   stats: {
@@ -18,17 +18,26 @@ interface AdminDashboardData {
     activeVisits: number
     pendingRegistrations: number
     overstayedVisitors: number
+    failedLogins: number
+    emailQueue: number
+    onlineReceptionists: number
   }
   health: {
     databaseStatus: string
     realtimeStatus: string
     emailStatus: string
     storageUsage: string
+    services: Array<{
+      service: string
+      status: string
+      latency?: string | null
+      last_checked: string
+      details?: string | null
+    }>
   }
 }
 
 export default function AdminDashboardPage() {
-  const [userRole, setUserRole] = useState<string>('')
   const [data, setData] = useState<AdminDashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -69,7 +78,6 @@ export default function AdminDashboardPage() {
         window.location.href = '/unauthorized'
         return
       }
-      setUserRole(user.role)
       fetchData()
 
       realtimeChannel.current = supabase
@@ -87,34 +95,6 @@ export default function AdminDashboardPage() {
       }
     }
   }, [])
-
-  const getHealthColor = (status: string) => {
-    switch (status) {
-      case 'healthy':
-      case 'configured':
-        return 'bg-green-50 text-green-700'
-      case 'error':
-      case 'not_configured':
-        return 'bg-red-50 text-red-700'
-      default:
-        return 'bg-amber-50 text-amber-700'
-    }
-  }
-
-  const getHealthLabel = (status: string) => {
-    switch (status) {
-      case 'healthy':
-        return 'Healthy'
-      case 'configured':
-        return 'Configured'
-      case 'error':
-        return 'Error'
-      case 'not_configured':
-        return 'Not Configured'
-      default:
-        return status
-    }
-  }
 
   if (loading) {
     return (
@@ -155,15 +135,20 @@ export default function AdminDashboardPage() {
 
         {data && (
           <>
-            {/* User Statistics */}
+            {/* Core KPIs */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <StatCard title="Total Users" value={data.stats.totalUsers.toString()} icon={Users} color="blue" />
               <StatCard title="Active Users" value={data.stats.activeUsers.toString()} icon={UserCheck} color="green" />
-              <StatCard title="Locked Accounts" value={data.stats.lockedAccounts.toString()} icon={AlertTriangle} color="red" />
-              <StatCard title="Administrators" value={data.stats.administrators.toString()} icon={Shield} color="purple" />
-              <StatCard title="Receptionists" value={data.stats.receptionists.toString()} icon={Users} color="blue" />
-              <StatCard title="Security Officers" value={data.stats.securityOfficers.toString()} icon={Shield} color="amber" />
-              <StatCard title="Host Employees" value={data.stats.hostEmployees.toString()} icon={Users} color="green" />
+              <StatCard title="Online Receptionists" value={data.stats.onlineReceptionists.toString()} icon={Monitor} color="purple" />
+              <StatCard title="Failed Logins" value={data.stats.failedLogins.toString()} icon={Lock} color="red" />
+            </div>
+
+            {/* System Metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard title="Database Status" value={data.health.databaseStatus === 'healthy' ? 'Healthy' : data.health.databaseStatus} icon={Database} color={data.health.databaseStatus === 'healthy' ? 'green' : 'red'} />
+              <StatCard title="Storage Usage" value={data.health.storageUsage} icon={HardDrive} color="blue" />
+              <StatCard title="Email Queue" value={data.stats.emailQueue.toString()} icon={Mail} color="amber" />
+              <StatCard title="System Health" value={`${data.health.services?.filter((s: { status: string }) => s.status === 'operational').length || 0}/${data.health.services?.length || 8}`} icon={Activity} color="green" />
             </div>
 
             {/* Visitor Statistics */}
@@ -176,14 +161,21 @@ export default function AdminDashboardPage() {
 
             {/* System Health */}
             <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-              <div className="p-4 border-b border-gray-200">
+              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">System Health</h3>
+                <span className="text-sm text-gray-500">Last checked: {new Date().toLocaleTimeString()}</span>
               </div>
               <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <HealthCard title="Database" status={data.health.databaseStatus} icon={Database} />
-                <HealthCard title="Realtime" status={data.health.realtimeStatus} icon={Activity} />
-                <HealthCard title="Email" status={data.health.emailStatus} icon={Mail} />
-                <HealthCard title="Storage" status={data.health.storageUsage} icon={HardDrive} />
+                {data.health.services?.map((service: { service: string; status: string; latency?: string | null; details?: string | null }) => (
+                  <HealthCard key={service.service} title={service.service} status={service.status} icon={getServiceIcon(service.service)} details={service.details} />
+                )) || (
+                  <>
+                    <HealthCard title="Database" status={data.health.databaseStatus} icon={Database} />
+                    <HealthCard title="Realtime" status={data.health.realtimeStatus} icon={Activity} />
+                    <HealthCard title="Email" status={data.health.emailStatus} icon={Mail} />
+                    <HealthCard title="Storage" status={data.health.storageUsage} icon={HardDrive} />
+                  </>
+                )}
               </div>
             </div>
           </>
@@ -223,17 +215,21 @@ function StatCard({ title, value, icon: Icon, color }: { title: string; value: s
   )
 }
 
-function HealthCard({ title, status, icon: Icon }: { title: string; status: string; icon: React.ComponentType<{ className?: string }> }) {
+function HealthCard({ title, status, icon: Icon, details }: { title: string; status: string; icon: React.ComponentType<{ className?: string }>; details?: string | null }) {
   const getHealthColor = (status: string) => {
     switch (status) {
       case 'healthy':
       case 'configured':
+      case 'operational':
         return 'bg-green-50 text-green-700'
       case 'error':
+      case 'disconnected':
       case 'not_configured':
         return 'bg-red-50 text-red-700'
-      default:
+      case 'warning':
         return 'bg-amber-50 text-amber-700'
+      default:
+        return 'bg-gray-50 text-gray-700'
     }
   }
 
@@ -243,10 +239,16 @@ function HealthCard({ title, status, icon: Icon }: { title: string; status: stri
         return 'Healthy'
       case 'configured':
         return 'Configured'
+      case 'operational':
+        return 'Operational'
       case 'error':
         return 'Error'
+      case 'disconnected':
+        return 'Disconnected'
       case 'not_configured':
         return 'Not Configured'
+      case 'warning':
+        return 'Warning'
       default:
         return status
     }
@@ -259,8 +261,30 @@ function HealthCard({ title, status, icon: Icon }: { title: string; status: stri
         <Icon className="h-4 w-4 text-gray-400" />
       </div>
       <p className={`mt-2 text-sm font-medium ${getHealthColor(status)}`}>{getHealthLabel(status)}</p>
+      {details && <p className="mt-1 text-xs text-gray-500">{details}</p>}
     </div>
   )
+}
+
+function getServiceIcon(service: string) {
+  switch (service.toLowerCase()) {
+    case 'database':
+      return Database
+    case 'realtime':
+      return Activity
+    case 'storage':
+      return HardDrive
+    case 'email service':
+      return Mail
+    case 'qr service':
+      return QrCode
+    case 'badge service':
+      return Printer
+    case 'notification queue':
+      return Bell
+    default:
+      return Monitor
+  }
 }
 
 function QuickLink({ href, label, icon: Icon }: { href: string; label: string; icon: React.ComponentType<{ className?: string }> }) {

@@ -30,11 +30,11 @@ describe('buildBadgeQrValue', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
     process.env.NEXT_PUBLIC_APP_URL = 'https://visitor-management-system-alpha-neon.vercel.app'
-    ;(process.env as any).NODE_ENV = 'test'
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = 'test'
   })
 
   afterEach(() => {
-    ;(process.env as any).NODE_ENV = originalNodeEnv
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = originalNodeEnv
     process.env.NEXT_PUBLIC_APP_URL = originalAppUrl
   })
 

@@ -31,6 +31,30 @@ export default function SystemInfoPage() {
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
+  const fetchSystemInfo = async () => {
+    setTimeout(() => setLoading(true), 0)
+    try {
+      const res = await fetch('/api/deployment?section=system-info')
+      const json = await res.json()
+      if (json.success) {
+        setSystemInfo(json.data)
+      }
+    } catch (err) {
+      console.error('Error fetching system info:', err)
+    } finally {
+      setTimeout(() => setLoading(false), 0)
+    }
+  }
+
+  const formatBytes = (bytes: number | null) => {
+    if (!bytes) return 'N/A'
+    if (bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -47,30 +71,6 @@ export default function SystemInfoPage() {
     }
     checkAuth()
   }, [])
-
-  const fetchSystemInfo = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/deployment?section=system-info')
-      const json = await res.json()
-      if (json.success) {
-        setSystemInfo(json.data)
-      }
-    } catch (err) {
-      console.error('Error fetching system info:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const formatBytes = (bytes: number | null) => {
-    if (!bytes) return 'N/A'
-    if (bytes === 0) return '0 B'
-    const k = 1024
-    const sizes = ['B', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
-  }
 
   if (authChecking) {
     return (
@@ -150,7 +150,7 @@ export default function SystemInfoPage() {
           <InfoCard label="Active Sessions" value={systemInfo.active_sessions?.toString() || 'N/A'} icon={Users} />
           <InfoCard label="Logged-in Users" value={systemInfo.logged_in_users?.toString() || 'N/A'} icon={Users} />
           <InfoCard label="Realtime Status" value={systemInfo.realtime_status || 'N/A'} icon={Globe} />
-          <InfoCard label="Last Checked" value={new Date(systemInfo.checked_at).toLocaleString()} icon={Clock} />
+          <InfoCard label="Last Checked" value={systemInfo.checked_at ? new Date(systemInfo.checked_at).toLocaleString() : 'N/A'} icon={Clock} />
         </div>
 
         {/* Status Indicators */}

@@ -28,25 +28,8 @@ export default function VersionManagementPage() {
   const [deployments, setDeployments] = useState<Deployment[]>([])
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (user.role !== 'Admin') {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setAuthChecking(false)
-      fetchDeployments()
-    }
-    checkAuth()
-  }, [])
-
   const fetchDeployments = async () => {
-    setLoading(true)
+    setTimeout(() => setLoading(true), 0)
     try {
       const res = await fetch('/api/deployment?section=deployments')
       const json = await res.json()
@@ -56,7 +39,7 @@ export default function VersionManagementPage() {
     } catch (err) {
       console.error('Error fetching deployments:', err)
     } finally {
-      setLoading(false)
+      setTimeout(() => setLoading(false), 0)
     }
   }
 
@@ -73,6 +56,23 @@ export default function VersionManagementPage() {
       console.error('Error rolling back:', err)
     }
   }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (user.role !== 'Admin') {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setAuthChecking(false)
+      fetchDeployments()
+    }
+    checkAuth()
+  }, [])
 
   if (authChecking) {
     return (
@@ -167,7 +167,7 @@ export default function VersionManagementPage() {
                     <td className="px-4 py-3 text-gray-600 font-mono text-xs">{deployment.commit_hash ? deployment.commit_hash.slice(0, 8) : 'N/A'}</td>
                     <td className="px-4 py-3 text-gray-600">{deployment.build_number || 'N/A'}</td>
                     <td className="px-4 py-3 text-gray-600 capitalize">{deployment.environment}</td>
-                    <td className="px-4 py-3 text-gray-600">{new Date(deployment.deployed_at).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-gray-600">{deployment.deployed_at ? new Date(deployment.deployed_at).toLocaleString() : '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${deployment.rolled_back ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
                         {deployment.rolled_back ? 'Rolled Back' : 'Active'}

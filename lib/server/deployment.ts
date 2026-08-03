@@ -9,7 +9,7 @@ export interface Backup {
   storage_size_bytes: number | null
   status: string
   checksum: string | null
-  metadata: Record<string, any> | null
+  metadata: Record<string, unknown> | null
   created_by: string | null
   created_at: string
   completed_at: string | null
@@ -50,7 +50,7 @@ export interface SystemInfo {
 export interface ConfigurationSnapshot {
   id: string
   name: string
-  configuration: Record<string, any>
+  configuration: Record<string, unknown>
   created_by: string | null
   created_at: string
 }
@@ -309,7 +309,7 @@ export async function getConfigurationSnapshots(): Promise<ConfigurationSnapshot
   return (data || []) as ConfigurationSnapshot[]
 }
 
-export async function createConfigurationSnapshot(name: string, configuration: Record<string, any>, userId: string | null): Promise<ConfigurationSnapshot | null> {
+export async function createConfigurationSnapshot(name: string, configuration: Record<string, unknown>, userId: string | null): Promise<ConfigurationSnapshot | null> {
   if (!supabaseAdmin) return null
 
   const { data, error } = await supabaseAdmin

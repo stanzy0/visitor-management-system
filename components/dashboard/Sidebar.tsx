@@ -108,14 +108,14 @@ export default function Sidebar({ open, onClose, userRole, userEmail, onLogout, 
   const [isDesktop, setIsDesktop] = useState(true)
 
   useEffect(() => {
-    setMounted(true)
+    setTimeout(() => setMounted(true), 0)
     const timer = setInterval(() => setLiveTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1024px)')
-    setIsDesktop(mq.matches)
+    setTimeout(() => setIsDesktop(mq.matches), 0)
     const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
@@ -174,7 +174,7 @@ export default function Sidebar({ open, onClose, userRole, userEmail, onLogout, 
         </div>
 
         <div className="p-4 border-b border-slate-800 bg-gradient-to-br from-slate-900 to-slate-800">
-          <p className="text-sm font-medium text-white">{greeting}, {userEmail.split('@')[0]}</p>
+          <p className="text-sm font-medium text-white">{greeting}, {(userEmail || '').split('@')[0]}</p>
           <div className="flex items-center gap-2 mt-1">
             <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             <p className="text-xs text-slate-400 font-mono">

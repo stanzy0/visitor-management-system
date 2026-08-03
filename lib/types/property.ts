@@ -77,7 +77,7 @@ export interface PropertyHistoryRecord {
   new_status?: string | null
   performed_by?: string | null
   reason?: string | null
-  metadata?: any
+  metadata?: Record<string, unknown>
   created_at: string
 }
 

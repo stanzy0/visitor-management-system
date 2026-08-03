@@ -9,12 +9,6 @@ export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
 
-  useEffect(() => {
-    fetchUnreadCount()
-    const interval = setInterval(fetchUnreadCount, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
   const fetchUnreadCount = async () => {
     try {
       const res = await fetch('/api/notifications', {
@@ -28,6 +22,12 @@ export default function NotificationBell() {
       console.error('Failed to fetch unread count:', error)
     }
   }
+
+  useEffect(() => {
+    setTimeout(() => fetchUnreadCount(), 0)
+    const interval = setInterval(() => setTimeout(() => fetchUnreadCount(), 0), 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <>

@@ -284,7 +284,7 @@ export default function IncidentsPage() {
                       </td>
                       <td className="px-4 py-4 text-gray-600">{incident.assigned_to || '—'}</td>
                       <td className="px-4 py-4 text-gray-600 whitespace-nowrap">
-                        {new Date(incident.created_at).toLocaleDateString()}
+                         {incident.created_at ? new Date(incident.created_at).toLocaleDateString() : '—'}
                       </td>
                       <td className="px-4 py-4 text-right">
                         <a

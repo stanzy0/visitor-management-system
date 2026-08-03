@@ -11,6 +11,7 @@ import { buildAppointmentConfirmationEmail } from '@/lib/email/appointment-email
 import { generateICS, downloadICS } from '@/lib/calendar/ics'
 import type { Appointment, AppointmentStats } from '@/lib/types/appointment'
 import NotificationBell from '@/components/notifications/NotificationBell'
+import AppointmentKPICards from '@/components/appointments/AppointmentKPICards'
 
 type Status = Appointment['status']
 
@@ -30,6 +31,7 @@ const selectClasses = 'w-full rounded-lg border border-gray-300 bg-white px-3 py
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [stats, setStats] = useState<AppointmentStats | null>(null)
   const [visitors, setVisitors] = useState<Array<{ id: string; full_name: string; visitor_organization: string | null }>>([])
   const [employees, setEmployees] = useState<Array<{ id: string; full_name: string; department: string; office_location: string }>>([])
   const [loading, setLoading] = useState(true)
@@ -74,16 +76,13 @@ export default function AppointmentsPage() {
 
   const fetchAppointments = async () => {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('appointments')
-      .select('*, visitor:visitors(full_name, visitor_organization, photo_url), employee:employees(full_name, department, office_location)')
-      .order('appointment_date', { ascending: true })
-      .order('appointment_time', { ascending: true })
-
-    if (error) {
-      showNotification('error', error.message)
+    const response = await fetch('/api/appointments')
+    const result = await response.json()
+    if (result.success) {
+      setAppointments(result.data || [])
+      setStats(result.stats || null)
     } else {
-      setAppointments(data || [])
+      showNotification('error', result.error || 'Failed to fetch appointments')
     }
     setLoading(false)
   }
@@ -358,6 +357,8 @@ export default function AppointmentsPage() {
             {notification.message}
           </div>
         )}
+
+        <AppointmentKPICards stats={stats} loading={loading} />
 
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">

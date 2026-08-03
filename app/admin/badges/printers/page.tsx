@@ -7,7 +7,6 @@ import { Loader2, Plus, Edit, Trash2, X, Save, Printer as PrinterIcon } from 'lu
 import type { Printer } from '@/lib/badge/badge-types'
 
 export default function AdminPrintersPage() {
-  const [userRole, setUserRole] = useState<string>('')
   const [printers, setPrinters] = useState<Printer[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -60,7 +59,6 @@ export default function AdminPrintersPage() {
         window.location.href = '/unauthorized'
         return
       }
-      setUserRole(user.role)
       fetchPrinters()
     }
     checkAuth()

@@ -30,7 +30,10 @@ export default function NotificationDropdown({ onClose }: NotificationDropdownPr
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -166,7 +169,7 @@ export default function NotificationDropdown({ onClose }: NotificationDropdownPr
                   <p className="font-medium text-gray-900 text-sm">{notification.title}</p>
                   <p className="text-sm text-gray-600 mt-1 line-clamp-2">{notification.message}</p>
                   <p className="text-xs text-gray-500 mt-2">
-                    {formatDistanceToNowStrict(new Date(notification.created_at), { addSuffix: true })}
+                    {formatDistanceToNowStrict(new Date(notification.created_at || new Date().toISOString()), { addSuffix: true })}
                   </p>
                 </div>
                 <div className="flex items-center gap-1">

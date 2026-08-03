@@ -3,18 +3,17 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth-client'
-import { Loader2, Save, Mail, Send, Check } from 'lucide-react'
+import { Loader2, Save, Mail, Send } from 'lucide-react'
 
 interface EmailSetting {
   id?: string
   key: string
-  value: any
+  value: unknown
   category: string
   description?: string
 }
 
 export default function AdminEmailPage() {
-  const [userRole, setUserRole] = useState<string>('')
   const [settings, setSettings] = useState<Record<string, EmailSetting>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -62,7 +61,6 @@ export default function AdminEmailPage() {
         window.location.href = '/unauthorized'
         return
       }
-      setUserRole(user.role)
       fetchSettings()
     }
     checkAuth()
@@ -136,7 +134,7 @@ export default function AdminEmailPage() {
     }
   }
 
-  const updateSetting = (key: string, value: any) => {
+  const updateSetting = (key: string, value: unknown) => {
     setSettings((prev) => ({
       ...prev,
       [key]: { ...prev[key], value },
@@ -194,7 +192,7 @@ export default function AdminEmailPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Sender Name</label>
                 <input
                   type="text"
-                  value={settings.sender_name?.value || ''}
+                  value={String(settings.sender_name?.value || '')}
                   onChange={(e) => updateSetting('sender_name', e.target.value)}
                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -203,7 +201,7 @@ export default function AdminEmailPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Sender Email</label>
                 <input
                   type="email"
-                  value={settings.sender_email?.value || ''}
+                  value={String(settings.sender_email?.value || '')}
                   onChange={(e) => updateSetting('sender_email', e.target.value)}
                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -212,7 +210,7 @@ export default function AdminEmailPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Reply-To Email</label>
                 <input
                   type="email"
-                  value={settings.reply_to_email?.value || ''}
+                  value={String(settings.reply_to_email?.value || '')}
                   onChange={(e) => updateSetting('reply_to_email', e.target.value)}
                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
@@ -235,7 +233,7 @@ export default function AdminEmailPage() {
                   <span className="text-sm font-medium text-gray-700">{item.label}</span>
                   <input
                     type="checkbox"
-                    checked={settings[item.key]?.value || false}
+                     checked={Boolean(settings[item.key]?.value)}
                     onChange={(e) => updateSetting(item.key, e.target.checked)}
                     className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />

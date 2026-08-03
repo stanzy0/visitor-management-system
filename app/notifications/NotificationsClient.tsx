@@ -46,7 +46,7 @@ export default function NotificationsClient() {
   }, [filters])
 
   useEffect(() => {
-    fetchNotifications()
+    setTimeout(() => fetchNotifications(), 0)
   }, [fetchNotifications])
 
   const handleMarkAsRead = async (id: string) => {

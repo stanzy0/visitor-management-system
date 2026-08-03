@@ -17,7 +17,7 @@ export async function getVisitForBadgePreview(visitId: string): Promise<BadgePre
 
   if (error || !data) return null
 
-  return transformVisit(data as any)
+  return transformVisit(data as Record<string, unknown>)
 }
 
 export async function getBadgeTemplates(): Promise<BadgeTemplateOption[]> {
@@ -130,26 +130,29 @@ export async function getDefaultTemplates(): Promise<BadgeTemplateOption[]> {
   ]
 }
 
-function transformVisit(data: any): BadgePreviewVisit {
+function transformVisit(data: Record<string, unknown>): BadgePreviewVisit {
   const visitor = Array.isArray(data.visitor) ? data.visitor[0] : data.visitor
   const employee = Array.isArray(data.employee) ? data.employee[0] : data.employee
   const appointment = Array.isArray(data.appointment) ? data.appointment[0] : data.appointment
 
+  const getString = (val: unknown, fallback: string | null = null): string | null => typeof val === 'string' ? val : fallback
+  const getNumber = (val: unknown, fallback: number = 0): number => typeof val === 'number' ? val : fallback
+
   return {
-    id: data.id,
-    registration_number: data.registration_number,
-    status: data.status,
-    visitor_type: data.visitor_type,
-    source: data.source,
-    purpose: data.purpose,
-    visit_date: data.visit_date,
-    arrival_time: data.arrival_time,
-    expected_duration: data.expected_duration,
-    office_location: data.office_location,
-    check_in_time: data.check_in_time,
-    check_out_time: data.check_out_time,
-    created_at: data.created_at,
-    rejection_reason: data.rejection_reason,
+    id: getString(data.id) || '',
+    registration_number: getString(data.registration_number) || '',
+    status: getString(data.status) || '',
+    visitor_type: getString(data.visitor_type) || '',
+    source: getString(data.source) || '',
+    purpose: getString(data.purpose) || '',
+    visit_date: getString(data.visit_date) || '',
+    arrival_time: getString(data.arrival_time),
+    expected_duration: getNumber(data.expected_duration),
+    office_location: getString(data.office_location),
+    check_in_time: getString(data.check_in_time),
+    check_out_time: getString(data.check_out_time),
+    created_at: getString(data.created_at) || '',
+    rejection_reason: getString(data.rejection_reason),
     visitor: visitor || null,
     employee: employee || null,
     appointment: appointment || null,

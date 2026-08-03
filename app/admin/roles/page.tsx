@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { getCurrentUser } from '@/lib/auth-client'
-import { Loader2, Plus, Edit, Trash2, X, Save, Shield, Check } from 'lucide-react'
+import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
+import { Loader2, Plus, Edit, Trash2, X, Save, Shield } from 'lucide-react'
 
 interface AdminRole {
   id: string
@@ -14,23 +14,9 @@ interface AdminRole {
   created_at: string
 }
 
-const ALL_PERMISSIONS = [
-  'dashboard',
-  'reception',
-  'security',
-  'host',
-  'appointments',
-  'visitors',
-  'reports',
-  'audit-logs',
-  'documents',
-  'watchlist',
-  'office-locations',
-  'settings',
-]
+const ALL_PERMISSIONS = Array.from(new Set(Object.values(PERMISSIONS).flat())).sort()
 
 export default function AdminRolesPage() {
-  const [userRole, setUserRole] = useState<string>('')
   const [roles, setRoles] = useState<AdminRole[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -79,7 +65,6 @@ export default function AdminRolesPage() {
         window.location.href = '/unauthorized'
         return
       }
-      setUserRole(user.role)
       fetchRoles()
     }
     checkAuth()

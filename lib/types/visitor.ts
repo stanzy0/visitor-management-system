@@ -14,6 +14,17 @@ export interface Visitor {
   created_at: string
 }
 
+export interface Visit {
+  id: string
+  purpose: string
+  status: 'pending' | 'approved' | 'rejected' | 'checked_in' | 'checked_out'
+  check_in_time: string | null
+  check_out_time: string | null
+  created_at: string
+  qr_code: string | null
+  employee: { full_name: string; department: string } | null
+}
+
 export interface VisitorFormData {
   full_name: string
   email: string

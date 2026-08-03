@@ -28,6 +28,18 @@ export default function RegisterPropertyPage() {
     remarks: '',
   })
 
+  const fetchVisits = async () => {
+    try {
+      const res = await fetch('/api/visits')
+      const json = await res.json()
+      if (json.success) {
+        setVisits(json.data.filter((v: any) => v.status === 'checked_in'))
+      }
+    } catch (err) {
+      console.error('Failed to fetch visits:', err)
+    }
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -40,18 +52,6 @@ export default function RegisterPropertyPage() {
     }
     checkAuth()
   }, [])
-
-  const fetchVisits = async () => {
-    try {
-      const res = await fetch('/api/visits')
-      const json = await res.json()
-      if (json.success) {
-        setVisits(json.data.filter((v: any) => v.status === 'checked_in'))
-      }
-    } catch (err) {
-      console.error('Failed to fetch visits:', err)
-    }
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth-client'
-import { Loader2, Save, RefreshCw, Shield, UserCheck, Clock, Calendar, Mail } from 'lucide-react'
+import { Loader2, Save, Shield, UserCheck, Calendar, Mail, Printer, QrCode, Globe, Palette, HardDrive } from 'lucide-react'
 
 interface SettingRow {
   id?: string
   key: string
-  value: any
+  value: unknown
   category: string
   description?: string
   is_sensitive?: boolean
@@ -56,10 +56,41 @@ const EMAIL_NOTIFICATION_SETTINGS: SettingRow[] = [
   { key: 'badge_ready_emails', value: true, category: 'email', description: 'Send email when badge is ready' },
 ]
 
-type SettingTab = 'general' | 'security' | 'registration' | 'appointment' | 'email'
+const BADGE_SETTINGS: SettingRow[] = [
+  { key: 'badge_template_id', value: '', category: 'badge', description: 'Default badge template ID' },
+  { key: 'badge_expiry_hours', value: 8, category: 'badge', description: 'Badge expiry in hours' },
+  { key: 'require_badge_photo', value: true, category: 'badge', description: 'Require photo on badge' },
+  { key: 'auto_print_badge', value: false, category: 'badge', description: 'Auto-print badge on check-in' },
+  { key: 'badge_reprint_allowed', value: true, category: 'badge', description: 'Allow badge reprint' },
+]
+
+const QR_SETTINGS: SettingRow[] = [
+  { key: 'qr_code_enabled', value: true, category: 'qr', description: 'Enable QR code generation' },
+  { key: 'qr_code_expiry_hours', value: 24, category: 'qr', description: 'QR code expiry in hours' },
+  { key: 'require_qr_scan', value: true, category: 'qr', description: 'Require QR scan for check-in' },
+]
+
+const PORTAL_SETTINGS: SettingRow[] = [
+  { key: 'portal_enabled', value: true, category: 'portal', description: 'Enable visitor portal' },
+  { key: 'portal_allow_self_registration', value: false, category: 'portal', description: 'Allow self-registration via portal' },
+  { key: 'portal_require_host_approval', value: true, category: 'portal', description: 'Require host approval in portal' },
+]
+
+const APPEARANCE_SETTINGS: SettingRow[] = [
+  { key: 'theme', value: 'light', category: 'appearance', description: 'Default theme (light/dark)' },
+  { key: 'primary_color', value: '#0B3D91', category: 'appearance', description: 'Primary brand color' },
+  { key: 'sidebar_collapsed', value: false, category: 'appearance', description: 'Collapse sidebar by default' },
+]
+
+const BACKUP_SETTINGS: SettingRow[] = [
+  { key: 'auto_backup_enabled', value: true, category: 'backup', description: 'Enable automatic backups' },
+  { key: 'backup_frequency', value: 'daily', category: 'backup', description: 'Backup frequency (hourly/daily/weekly)' },
+  { key: 'backup_retention_days', value: 30, category: 'backup', description: 'Backup retention in days' },
+]
+
+type SettingTab = 'general' | 'security' | 'registration' | 'appointment' | 'email' | 'badge' | 'qr' | 'portal' | 'appearance' | 'backup'
 
 export default function AdminSettingsPage() {
-  const [userRole, setUserRole] = useState<string>('')
   const [settings, setSettings] = useState<Record<string, SettingRow>>({})
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -83,7 +114,7 @@ export default function AdminSettingsPage() {
       }
 
       const map: Record<string, SettingRow> = {}
-      const allDefaults = [...GENERAL_SETTINGS, ...SECURITY_SETTINGS, ...REGISTRATION_SETTINGS, ...APPOINTMENT_SETTINGS, ...EMAIL_NOTIFICATION_SETTINGS]
+      const allDefaults = [...GENERAL_SETTINGS, ...SECURITY_SETTINGS, ...REGISTRATION_SETTINGS, ...APPOINTMENT_SETTINGS, ...EMAIL_NOTIFICATION_SETTINGS, ...BADGE_SETTINGS, ...QR_SETTINGS, ...PORTAL_SETTINGS, ...APPEARANCE_SETTINGS, ...BACKUP_SETTINGS]
       allDefaults.forEach((def) => {
         const existing = result.data?.find((s: SettingRow) => s.key === def.key)
         map[def.key] = existing || { ...def }
@@ -108,7 +139,6 @@ export default function AdminSettingsPage() {
         window.location.href = '/unauthorized'
         return
       }
-      setUserRole(user.role)
       fetchSettings()
     }
     checkAuth()
@@ -150,7 +180,7 @@ export default function AdminSettingsPage() {
     }
   }
 
-  const updateSetting = (key: string, value: any) => {
+  const updateSetting = (key: string, value: unknown) => {
     setSettings((prev) => ({
       ...prev,
       [key]: { ...prev[key], value },
@@ -160,9 +190,14 @@ export default function AdminSettingsPage() {
   const tabs = [
     { id: 'general' as SettingTab, label: 'General', icon: Shield },
     { id: 'security' as SettingTab, label: 'Security', icon: Shield },
-    { id: 'registration' as SettingTab, label: 'Registration', icon: UserCheck },
+    { id: 'registration' as SettingTab, label: 'Visitor Policies', icon: UserCheck },
     { id: 'appointment' as SettingTab, label: 'Appointments', icon: Calendar },
-    { id: 'email' as SettingTab, label: 'Email Notifications', icon: Mail },
+    { id: 'email' as SettingTab, label: 'Email', icon: Mail },
+    { id: 'badge' as SettingTab, label: 'Badge Config', icon: Printer },
+    { id: 'qr' as SettingTab, label: 'QR Settings', icon: QrCode },
+    { id: 'portal' as SettingTab, label: 'Portal', icon: Globe },
+    { id: 'appearance' as SettingTab, label: 'Appearance', icon: Palette },
+    { id: 'backup' as SettingTab, label: 'Backup', icon: HardDrive },
   ]
 
   const getSettingsForTab = (tab: SettingTab) => {
@@ -177,6 +212,16 @@ export default function AdminSettingsPage() {
         return APPOINTMENT_SETTINGS
       case 'email':
         return EMAIL_NOTIFICATION_SETTINGS
+      case 'badge':
+        return BADGE_SETTINGS
+      case 'qr':
+        return QR_SETTINGS
+      case 'portal':
+        return PORTAL_SETTINGS
+      case 'appearance':
+        return APPEARANCE_SETTINGS
+      case 'backup':
+        return BACKUP_SETTINGS
     }
   }
 
@@ -245,7 +290,7 @@ export default function AdminSettingsPage() {
                       <label className="flex items-center gap-2">
                         <input
                           type="checkbox"
-                          checked={settings[setting.key]?.value || false}
+                           checked={Boolean(settings[setting.key]?.value)}
                           onChange={(e) => updateSetting(setting.key, e.target.checked)}
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
@@ -254,7 +299,7 @@ export default function AdminSettingsPage() {
                     ) : (
                       <input
                         type={typeof settings[setting.key]?.value === 'number' ? 'number' : 'text'}
-                        value={settings[setting.key]?.value || ''}
+                        value={String(settings[setting.key]?.value || '')}
                         onChange={(e) => updateSetting(setting.key, typeof settings[setting.key]?.value === 'number' ? parseInt(e.target.value) || 0 : e.target.value)}
                         className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />

@@ -71,7 +71,7 @@ export interface BadgeTemplateOption {
   department_display: boolean
   office_display: boolean
   signature_area: boolean
-  layout: any[]
+  layout: unknown[]
   is_default: boolean
 }
 

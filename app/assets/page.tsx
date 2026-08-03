@@ -14,6 +14,21 @@ export default function AssetsPage() {
   const [statusFilter, setStatusFilter] = useState<PropertyStatus | 'all'>('all')
   const [selectedItem, setSelectedItem] = useState<PropertyItem | null>(null)
 
+  const fetchItems = async () => {
+    setTimeout(() => setLoading(true), 0)
+    try {
+      const res = await fetch('/api/assets' + (statusFilter !== 'all' ? `?status=${statusFilter}` : '') + (search ? `?search=${search}` : ''))
+      const json = await res.json()
+      if (json.success) {
+        setItems(json.data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch property items:', err)
+    } finally {
+      setTimeout(() => setLoading(false), 0)
+    }
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -28,6 +43,10 @@ export default function AssetsPage() {
   }, [])
 
   useEffect(() => {
+    setTimeout(() => fetchItems(), 0)
+  }, [statusFilter, search])
+
+  useEffect(() => {
     const channel = supabase
       .channel('property-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'property_items' }, () => fetchItems())
@@ -37,25 +56,6 @@ export default function AssetsPage() {
       supabase.removeChannel(channel)
     }
   }, [])
-
-  const fetchItems = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/assets' + (statusFilter !== 'all' ? `?status=${statusFilter}` : '') + (search ? `?search=${search}` : ''))
-      const json = await res.json()
-      if (json.success) {
-        setItems(json.data)
-      }
-    } catch (err) {
-      console.error('Failed to fetch property items:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchItems()
-  }, [statusFilter, search])
 
   const handleExport = async (format: 'csv' | 'pdf' | 'excel') => {
     try {

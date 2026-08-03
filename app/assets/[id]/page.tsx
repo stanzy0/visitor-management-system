@@ -11,6 +11,33 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
   const [history, setHistory] = useState<PropertyHistoryRecord[]>([])
   const [loading, setLoading] = useState(true)
 
+  const fetchItem = async () => {
+    try {
+      setTimeout(() => setLoading(true), 0)
+      const res = await fetch(`/api/assets/${params.id}`)
+      const json = await res.json()
+      if (json.success) {
+        setItem(json.data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch property item:', err)
+    } finally {
+      setTimeout(() => setLoading(false), 0)
+    }
+  }
+
+  const fetchHistory = async () => {
+    try {
+      const res = await fetch(`/api/assets/${params.id}/history`)
+      const json = await res.json()
+      if (json.success) {
+        setHistory(json.data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch history:', err)
+    }
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -34,32 +61,6 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
       supabase.removeChannel(channel)
     }
   }, [params.id])
-
-  const fetchItem = async () => {
-    try {
-      const res = await fetch(`/api/assets/${params.id}`)
-      const json = await res.json()
-      if (json.success) {
-        setItem(json.data)
-      }
-    } catch (err) {
-      console.error('Failed to fetch property item:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchHistory = async () => {
-    try {
-      const res = await fetch(`/api/assets/${params.id}/history`)
-      const json = await res.json()
-      if (json.success) {
-        setHistory(json.data)
-      }
-    } catch (err) {
-      console.error('Failed to fetch history:', err)
-    }
-  }
 
   if (loading) {
     return (
@@ -176,13 +177,13 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                 </div>
                 <div className="flex justify-between py-2 border-b border-gray-100">
                   <span className="text-gray-600">Registered At</span>
-                  <span className="font-medium">{new Date(item.created_at).toLocaleString()}</span>
+                  <span className="font-medium">{item.created_at ? new Date(item.created_at).toLocaleString() : '—'}</span>
                 </div>
                 {item.confiscated && (
                   <>
                     <div className="flex justify-between py-2 border-b border-gray-100">
                       <span className="text-gray-600">Confiscated At</span>
-                      <span className="font-medium">{new Date(item.confiscated_at!).toLocaleString()}</span>
+                      <span className="font-medium">{item.confiscated_at ? new Date(item.confiscated_at).toLocaleString() : '—'}</span>
                     </div>
                     <div className="flex justify-between py-2 border-b border-gray-100">
                       <span className="text-gray-600">Confiscated By</span>
@@ -197,7 +198,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                 {item.released_at && (
                   <div className="flex justify-between py-2 border-b border-gray-100">
                     <span className="text-gray-600">Released At</span>
-                    <span className="font-medium">{new Date(item.released_at).toLocaleString()}</span>
+                    <span className="font-medium">{item.released_at ? new Date(item.released_at).toLocaleString() : '—'}</span>
                   </div>
                 )}
               </div>

@@ -33,23 +33,6 @@ export default function ErrorCenterPage() {
   const [filter, setFilter] = useState<'all' | 'resolved' | 'unresolved'>('unresolved')
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const user = await getCurrentUser()
-      if (!user) {
-        window.location.href = '/login'
-        return
-      }
-      if (user.role !== 'Admin') {
-        window.location.href = '/unauthorized'
-        return
-      }
-      setAuthChecking(false)
-      fetchErrors()
-    }
-    checkAuth()
-  }, [filter])
-
   const fetchErrors = async () => {
     setLoading(true)
     try {
@@ -66,6 +49,23 @@ export default function ErrorCenterPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+      if (user.role !== 'Admin') {
+        window.location.href = '/unauthorized'
+        return
+      }
+      setAuthChecking(false)
+      fetchErrors()
+    }
+    checkAuth()
+  }, [filter])
 
   const markResolved = async (errorId: string) => {
     try {

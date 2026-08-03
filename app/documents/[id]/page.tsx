@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth-client'
 import { getAuthHeaders } from '@/lib/client/api'
@@ -45,11 +46,6 @@ export default function DocumentDetailPage() {
   const canReject = userRole === 'Admin' || userRole === 'Receptionist'
   const canRequestReplacement = userRole === 'Admin' || userRole === 'Receptionist'
 
-  useEffect(() => {
-    checkAuth()
-    fetchDocument()
-  }, [documentId])
-
   const checkAuth = async () => {
     const user = await getCurrentUser()
     if (!user) {
@@ -61,7 +57,7 @@ export default function DocumentDetailPage() {
 
   const fetchDocument = async () => {
     try {
-      setLoading(true)
+      setTimeout(() => setLoading(true), 0)
       const res = await fetch(`/api/documents/${documentId}`, {
         headers: await getAuthHeaders(),
       })
@@ -74,9 +70,16 @@ export default function DocumentDetailPage() {
     } catch {
       setError('Failed to load document')
     } finally {
-      setLoading(false)
+      setTimeout(() => setLoading(false), 0)
     }
   }
+
+  useEffect(() => {
+    setTimeout(() => {
+      checkAuth()
+      fetchDocument()
+    }, 0)
+  }, [documentId])
 
   const handleApprove = async () => {
     if (!doc) return
@@ -192,9 +195,9 @@ export default function DocumentDetailPage() {
         <div className="text-center">
           <p className="text-red-600 font-medium">Error</p>
           <p className="text-sm text-gray-500 mt-1">{error || 'Document not found'}</p>
-          <a href="/documents" className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+          <Link href="/documents" className="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             Back to Documents
-          </a>
+          </Link>
         </div>
       </div>
     )
@@ -206,9 +209,9 @@ export default function DocumentDetailPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
-          <a href="/documents" className="text-sm text-blue-600 hover:underline">
+          <Link href="/documents" className="text-sm text-blue-600 hover:underline">
             ← Back to Documents
-          </a>
+          </Link>
         </div>
 
         {notification && (
@@ -278,12 +281,12 @@ export default function DocumentDetailPage() {
                 </div>
                 <div>
                   <span className="text-xs font-medium text-gray-500 uppercase">Uploaded</span>
-                  <p className="text-sm text-gray-700">{new Date(doc.created_at).toLocaleString()}</p>
+                  <p className="text-sm text-gray-700">{doc.created_at ? new Date(doc.created_at).toLocaleString() : '—'}</p>
                 </div>
                 {doc.approved_at && (
                   <div>
                     <span className="text-xs font-medium text-gray-500 uppercase">Verified At</span>
-                    <p className="text-sm text-gray-700">{new Date(doc.approved_at).toLocaleString()}</p>
+                    <p className="text-sm text-gray-700">{doc.approved_at ? new Date(doc.approved_at).toLocaleString() : '—'}</p>
                   </div>
                 )}
               </div>

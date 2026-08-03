@@ -86,7 +86,7 @@ export default function HostReportsPage() {
 
   useEffect(() => {
     if (employeeId) {
-      fetchReport()
+      setTimeout(() => fetchReport(), 0)
     }
   }, [employeeId, range])
 
@@ -266,7 +266,7 @@ export default function HostReportsPage() {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-gray-600">
-                            {new Date(visit.created_at).toLocaleDateString()}
+                             {visit.created_at ? new Date(visit.created_at).toLocaleDateString() : '—'}
                           </td>
                         </tr>
                       ))}

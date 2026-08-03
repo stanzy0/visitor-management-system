@@ -8,11 +8,11 @@ describe('getPortalUrl', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
     process.env.NEXT_PUBLIC_APP_URL = 'https://visitor-management-system-alpha-neon.vercel.app'
-    ;(process.env as any).NODE_ENV = 'test'
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = 'test'
   })
 
   afterEach(() => {
-    ;(process.env as any).NODE_ENV = originalNodeEnv
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = originalNodeEnv
     process.env.NEXT_PUBLIC_APP_URL = originalAppUrl
   })
 
@@ -32,19 +32,19 @@ describe('getPortalUrl', () => {
   })
 
   it('should throw if NEXT_PUBLIC_APP_URL contains localhost in production', () => {
-    ;(process.env as any).NODE_ENV = 'production'
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = 'production'
     process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
     expect(() => getPortalUrl('token123')).toThrow('contains localhost in production')
   })
 
   it('should throw if NEXT_PUBLIC_APP_URL is not HTTPS in production', () => {
-    ;(process.env as any).NODE_ENV = 'production'
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = 'production'
     process.env.NEXT_PUBLIC_APP_URL = 'http://visitor-management-system-alpha-neon.vercel.app'
     expect(() => getPortalUrl('token123')).toThrow('must use HTTPS in production')
   })
 
   it('should allow localhost in development', () => {
-    ;(process.env as any).NODE_ENV = 'development'
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = 'development'
     process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
     const url = getPortalUrl('token123')
     expect(url).toBe('http://localhost:3000/portal/token123')
@@ -63,11 +63,11 @@ describe('verifyPortalUrl', () => {
 
   beforeEach(() => {
     process.env.NEXT_PUBLIC_APP_URL = 'https://visitor-management-system-alpha-neon.vercel.app'
-    ;(process.env as any).NODE_ENV = 'test'
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = 'test'
   })
 
   afterEach(() => {
-    ;(process.env as any).NODE_ENV = originalNodeEnv
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = originalNodeEnv
     process.env.NEXT_PUBLIC_APP_URL = originalAppUrl
   })
 
@@ -88,11 +88,11 @@ describe('getBaseUrl', () => {
   const originalNodeEnv = process.env.NODE_ENV
 
   beforeEach(() => {
-    ;(process.env as any).NODE_ENV = 'test'
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = 'test'
   })
 
   afterEach(() => {
-    ;(process.env as any).NODE_ENV = originalNodeEnv
+    ;(process.env as unknown as Record<string, string>).NODE_ENV = originalNodeEnv
     process.env.NEXT_PUBLIC_APP_URL = originalAppUrl
   })
 

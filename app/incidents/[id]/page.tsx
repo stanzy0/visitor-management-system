@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { Loader2, ArrowLeft, AlertTriangle, CheckCircle2, Clock, XCircle, FileText, Download, Send, UserCheck, ShieldAlert, Package, BadgeCheck, Home, Plus } from 'lucide-react'
@@ -216,7 +217,7 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
         <div className="text-center">
           <XCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">Incident not found</p>
-          <a href="/incidents" className="text-blue-600 hover:underline mt-2 inline-block">Back to incidents</a>
+          <Link href="/incidents" className="text-blue-600 hover:underline mt-2 inline-block">Back to incidents</Link>
         </div>
       </div>
     )
@@ -234,17 +235,17 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
 
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex items-center gap-4">
-          <a href="/incidents" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900">
+          <Link href="/incidents" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900">
             <ArrowLeft className="h-5 w-5" />
             Back
-          </a>
+          </Link>
           <div className="flex-1">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-gray-900">{incident.title}</h1>
               <span className="text-sm text-gray-500">{incident.incident_number}</span>
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              {incident.category} • Reported {new Date(incident.created_at).toLocaleString()}
+              {incident.category} • Reported {incident.created_at ? new Date(incident.created_at).toLocaleString() : '—'}
             </p>
           </div>
         </div>
@@ -333,7 +334,7 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
             <h3 className="text-lg font-semibold text-green-900 mb-2">Resolution</h3>
             <p className="text-sm text-green-800">{incident.resolution}</p>
             {incident.resolved_at && (
-              <p className="text-xs text-green-700 mt-2">Resolved at {new Date(incident.resolved_at).toLocaleString()}</p>
+              <p className="text-xs text-green-700 mt-2">Resolved at {incident.resolved_at ? new Date(incident.resolved_at).toLocaleString() : '—'}</p>
             )}
           </div>
         )}
@@ -393,7 +394,7 @@ export default function IncidentDetailPage({ params }: { params: { id: string } 
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">{entry.description}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {new Date(entry.created_at).toLocaleString()} • By {entry.performed_by || 'System'}
+                    {entry.created_at ? new Date(entry.created_at).toLocaleString() : '—'} • By {entry.performed_by || 'System'}
                   </p>
                 </div>
               </div>

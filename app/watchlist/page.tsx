@@ -133,7 +133,7 @@ export default function WatchlistPage() {
       .eq('role', 'Admin')
 
     const profiles: UserProfile[] = []
-    data?.forEach((u: any) => {
+    data?.forEach((u: { user_id: string; full_name: string; email: string }) => {
       profiles.push({
         id: u.user_id,
         full_name: u.full_name,
@@ -433,7 +433,7 @@ export default function WatchlistPage() {
                         {entry.added_by}
                       </td>
                       <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                        {new Date(entry.created_at).toLocaleDateString()}
+                         {entry.created_at ? new Date(entry.created_at).toLocaleDateString() : '—'}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">

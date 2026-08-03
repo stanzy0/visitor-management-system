@@ -59,8 +59,10 @@ export default function AdminBadgeHistoryPage() {
 
   useEffect(() => {
     if (userRole === 'Admin') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchHistory()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userRole, actionFilter, search])
 
   const handleExportCSV = async () => {
@@ -189,7 +191,7 @@ export default function AdminBadgeHistoryPage() {
                     <td className="px-4 py-3 text-gray-600">{record.template_name || '—'}</td>
                     <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{record.reason || '—'}</td>
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                      {new Date(record.created_at).toLocaleString()}
+                      {record.created_at ? new Date(record.created_at).toLocaleString() : '—'}
                     </td>
                   </tr>
                 ))}

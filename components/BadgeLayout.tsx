@@ -6,6 +6,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import type { VisitorBadge } from '@/lib/badge/badge-types'
 import { BADGE_LAYOUT, BADGE_QR_SETTINGS, BADGE_STATUS } from '@/lib/badge/badge-constants'
 import { buildBadgeQrValue } from '@/lib/badge/badge-utils'
+import { useBranding } from '@/hooks/useBranding'
 
 interface BadgeLayoutProps {
   badge: VisitorBadge
@@ -23,6 +24,7 @@ const isDev = process.env.NODE_ENV === 'development'
 
 export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: BadgeLayoutProps) {
   const [imageError, setImageError] = useState(false)
+  const { branding } = useBranding()
 
   const qrValue = buildBadgeQrValue(badge)
 
@@ -50,21 +52,33 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
   const visitorName = badge.visit?.visitor?.full_name || 'Visitor'
   const visitorInitial = visitorName.charAt(0).toUpperCase()
 
+  const primaryColor = branding?.primary_color || '#1e40af'
+  const badgeHeaderText = branding?.badge_header_text || 'VISITOR'
+  const badgeTemplateUrl = branding?.badge_template_url || null
+  const logoUrl = branding?.logo_url || null
+  const signatureUrl = branding?.signature_url || null
+  const stampUrl = branding?.stamp_url || null
+
   return (
     <div className="flex items-center justify-center" role="img" aria-label={`Visitor badge for ${visitorName}`}>
       <div
         id="visitor-badge-print-area"
-        className="relative rounded-xl border-2 border-gray-300 bg-white p-6 w-full"
+        className="relative rounded-xl border-2 bg-white w-full"
         style={{
           maxWidth: BADGE_LAYOUT.MAX_WIDTH,
           aspectRatio: BADGE_LAYOUT.ASPECT_RATIO,
+          borderColor: '#e5e7eb',
+          backgroundImage: badgeTemplateUrl ? `url(${badgeTemplateUrl})` : undefined,
+          backgroundSize: '100% 100%',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
         }}
       >
         <div
-          className="absolute top-0 left-0 right-0 flex items-center justify-center"
-          style={{ height: BADGE_LAYOUT.HEADER_HEIGHT }}
+          className="absolute top-0 left-0 right-0 flex items-center justify-center rounded-t-xl"
+          style={{ height: BADGE_LAYOUT.HEADER_HEIGHT, backgroundColor: primaryColor }}
         >
-          <span className="text-white font-bold text-lg tracking-wider">VISITOR</span>
+          <span className="text-white font-bold text-lg tracking-wider">{badgeHeaderText}</span>
         </div>
 
         <div
@@ -75,6 +89,12 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
             {badge.badge_status}
           </div>
         </div>
+
+        {logoUrl && (
+          <div className="absolute top-2 left-2 z-10">
+            <Image src={logoUrl} alt="Logo" width={28} height={28} className="rounded object-contain bg-white/80 p-0.5" unoptimized />
+          </div>
+        )}
 
         {watermark && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10" aria-hidden="true">
@@ -91,9 +111,9 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
           </div>
         )}
 
-        <div className="pt-12 pb-4 flex gap-6">
-          <div className="flex-1 space-y-3">
-            <div className="flex items-center gap-4">
+        <div className="pt-8 pb-2 px-4 flex gap-4" style={{ height: '100%' }}>
+          <div className="flex-1 flex flex-col justify-between min-w-0">
+            <div className="flex items-center gap-3">
               {showPhoto ? (
                 <Image
                   src={badge.visit!.visitor!.photo_url as string}
@@ -123,27 +143,27 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
               </div>
             </div>
 
-            <div className="space-y-1 text-sm">
+            <div className="space-y-0.5 text-sm">
               <div className="flex">
-                <span className="text-gray-500 w-32">Host:</span>
+                <span className="text-gray-500 w-28">Host:</span>
                 <span className="text-gray-900 font-medium">{badge.visit?.employee?.full_name || '—'}</span>
               </div>
               <div className="flex">
-                <span className="text-gray-500 w-32">Department:</span>
+                <span className="text-gray-500 w-28">Department:</span>
                 <span className="text-gray-900">{badge.visit?.employee?.department || '—'}</span>
               </div>
               <div className="flex">
-                <span className="text-gray-500 w-32">Purpose:</span>
+                <span className="text-gray-500 w-28">Purpose:</span>
                 <span className="text-gray-900">{badge.visit?.purpose || '—'}</span>
               </div>
               <div className="flex">
-                <span className="text-gray-500 w-32">Badge #:</span>
+                <span className="text-gray-500 w-28">Badge #:</span>
                 <span className="text-gray-900 font-mono font-bold">{badge.badge_number}</span>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center gap-2">
+          <div className="flex flex-col items-center justify-center gap-1">
             <QRCodeSVG
               value={qrValue}
               size={BADGE_QR_SETTINGS.SIZE}
@@ -157,7 +177,7 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
           </div>
         </div>
 
-        <div className="mt-4 pt-3 border-t border-gray-200 flex justify-between text-xs text-gray-600">
+        <div className="absolute bottom-0 left-0 right-0 flex justify-between items-center border-t border-gray-200" style={{ padding: '2px 8px', fontSize: '10px' }}>
           <div>
             <span className="text-gray-500">Issued:</span>{' '}
             <span className="font-medium">{formatDate(badge.issued_at)}</span>
@@ -167,6 +187,18 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
             <span className="font-medium">{formatDate(badge.expires_at)}</span>
           </div>
         </div>
+
+        {signatureUrl && (
+          <div className="absolute bottom-6 left-4">
+            <Image src={signatureUrl} alt="Signature" width={60} height={20} className="object-contain opacity-80" unoptimized />
+          </div>
+        )}
+
+        {stampUrl && (
+          <div className="absolute bottom-4 right-4 z-10">
+            <Image src={stampUrl} alt="Stamp" width={36} height={36} className="object-contain opacity-90" unoptimized />
+          </div>
+        )}
       </div>
     </div>
   )

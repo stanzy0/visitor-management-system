@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { Loader2, Search, CheckCircle2, XCircle, Clock, LogOut, Package, QrCode, FileText, AlertTriangle, UserCheck, Printer, ShieldAlert, Home } from 'lucide-react'
@@ -150,26 +150,6 @@ export default function ExitControlPage() {
     checkAuth()
   }, [activeTab])
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('exit-control')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => {
-        fetchVisits()
-        if (activeTab === 'reports') fetchReport()
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'property_items' }, () => {
-        if (selectedVisit) loadProperties(selectedVisit.id)
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'security_alerts' }, () => {
-        if (selectedVisit) loadSecurityAlerts(selectedVisit.id)
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [selectedVisit, activeTab])
-
   const loadProperties = async (visitId: string) => {
     const { data } = await supabase
       .from('property_items')
@@ -221,6 +201,26 @@ export default function ExitControlPage() {
 
     setSecurityAlerts(alerts)
   }
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('exit-control')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => {
+        fetchVisits()
+        if (activeTab === 'reports') fetchReport()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'property_items' }, () => {
+        if (selectedVisit) loadProperties(selectedVisit.id)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'security_alerts' }, () => {
+        if (selectedVisit) loadSecurityAlerts(selectedVisit.id)
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [selectedVisit, activeTab])
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) return
@@ -485,6 +485,17 @@ export default function ExitControlPage() {
     )
   }
 
+  const [durationOnSite, setDurationOnSite] = useState('—')
+
+  useEffect(() => {
+    if (!selectedVisit?.check_in_time) {
+      setTimeout(() => setDurationOnSite('—'), 0)
+      return
+    }
+    const diff = Date.now() - new Date(selectedVisit.check_in_time).getTime()
+    setTimeout(() => setDurationOnSite(`${Math.round(diff / 60000)} min`), 0)
+  }, [selectedVisit?.check_in_time])
+
   return (
     <div className="min-h-screen bg-gray-50">
       {notification && (
@@ -651,9 +662,7 @@ export default function ExitControlPage() {
                     </div>
                     <div className="p-4 bg-gray-50 rounded-xl">
                       <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Duration on Site</p>
-                      <p className="text-base font-medium text-gray-900">
-                        {selectedVisit.check_in_time ? `${Math.round((Date.now() - new Date(selectedVisit.check_in_time).getTime()) / 60000)} min` : '—'}
-                      </p>
+                      <p className="text-base font-medium text-gray-900">{durationOnSite}</p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-xl">
                       <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Badge Number</p>

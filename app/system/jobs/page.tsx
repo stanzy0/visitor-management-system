@@ -27,6 +27,21 @@ export default function BackgroundJobsPage() {
   const [jobs, setJobs] = useState<BackgroundJob[]>([])
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
+  const fetchJobs = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/system?section=jobs')
+      const json = await res.json()
+      if (json.success) {
+        setJobs(json.data)
+      }
+    } catch (err) {
+      console.error('Error fetching jobs:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -43,21 +58,6 @@ export default function BackgroundJobsPage() {
     }
     checkAuth()
   }, [])
-
-  const fetchJobs = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/system?section=jobs')
-      const json = await res.json()
-      if (json.success) {
-        setJobs(json.data)
-      }
-    } catch (err) {
-      console.error('Error fetching jobs:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const runJob = async (jobName: string) => {
     try {

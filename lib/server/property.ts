@@ -193,7 +193,7 @@ export async function releasePropertyItem(id: string, releasedTo: string, signat
   return data as PropertyItem
 }
 
-export async function addPropertyHistory(propertyId: string, action: string, oldStatus?: string, newStatus?: string, performedBy?: string, reason?: string, metadata?: any): Promise<PropertyHistoryRecord> {
+export async function addPropertyHistory(propertyId: string, action: string, oldStatus?: string, newStatus?: string, performedBy?: string, reason?: string, metadata?: Record<string, unknown>): Promise<PropertyHistoryRecord> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   const { data, error } = await supabaseAdmin
@@ -264,7 +264,7 @@ export async function getPropertyStatistics(): Promise<PropertyStatistics> {
   ])
 
   const categoryCounts = new Map<string, number>()
-  byCategory.data?.forEach((item: any) => {
+  byCategory.data?.forEach((item: { category?: string }) => {
     const cat = item.category || 'Unknown'
     categoryCounts.set(cat, (categoryCounts.get(cat) || 0) + 1)
   })

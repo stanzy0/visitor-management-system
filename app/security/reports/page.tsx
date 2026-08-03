@@ -19,6 +19,21 @@ export default function SecurityReportsPage() {
     vehicleExits: 0,
   })
 
+  const fetchReports = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/security/reports')
+      const json = await res.json()
+      if (json.success) {
+        setReports(json.data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch security reports:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -35,21 +50,6 @@ export default function SecurityReportsPage() {
     }
     checkAuth()
   }, [])
-
-  const fetchReports = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/security/reports')
-      const json = await res.json()
-      if (json.success) {
-        setReports(json.data)
-      }
-    } catch (err) {
-      console.error('Failed to fetch security reports:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const exportPDF = () => {
     const doc = new jsPDF()

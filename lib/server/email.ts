@@ -6,7 +6,7 @@ export async function sendEmail(params: {
   recipientName?: string
   subject: string
   template: EmailTemplate
-  data: Record<string, any>
+  data: Record<string, string | number | boolean | undefined>
   relatedType?: string
   relatedId?: string
 }) {

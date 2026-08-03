@@ -28,7 +28,7 @@ export async function getHostDashboardStats(employeeId: string): Promise<HostDas
   }
 }
 
-export async function getHostVisitors(employeeId: string, filters: { status?: string; search?: string } = {}): Promise<any[]> {
+export async function getHostVisitors(employeeId: string, filters: { status?: string; search?: string } = {}): Promise<Record<string, unknown>[]> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   let query = supabaseAdmin
@@ -54,7 +54,7 @@ export async function getHostVisitors(employeeId: string, filters: { status?: st
   return data || []
 }
 
-export async function approveVisitor(visitId: string, employeeId: string): Promise<any> {
+export async function approveVisitor(visitId: string, employeeId: string): Promise<Record<string, unknown>> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   const { data: visit, error: fetchError } = await supabaseAdmin
@@ -94,7 +94,7 @@ export async function approveVisitor(visitId: string, employeeId: string): Promi
   return updated
 }
 
-export async function rejectVisitor(visitId: string, employeeId: string, reason: string): Promise<any> {
+export async function rejectVisitor(visitId: string, employeeId: string, reason: string): Promise<Record<string, unknown>> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   const { data: visit, error: fetchError } = await supabaseAdmin
@@ -134,7 +134,7 @@ export async function rejectVisitor(visitId: string, employeeId: string, reason:
   return updated
 }
 
-export async function getHostAppointments(employeeId: string): Promise<any[]> {
+export async function getHostAppointments(employeeId: string): Promise<Record<string, unknown>[]> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   const { data, error } = await supabaseAdmin
@@ -151,7 +151,7 @@ export async function getHostAppointments(employeeId: string): Promise<any[]> {
   return data || []
 }
 
-export async function createHostAppointment(employeeId: string, data: any): Promise<any> {
+export async function createHostAppointment(employeeId: string, data: Record<string, unknown>): Promise<Record<string, unknown>> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   const appointmentNumber = `APT-${Date.now().toString(36).toUpperCase()}`
@@ -177,7 +177,7 @@ export async function createHostAppointment(employeeId: string, data: any): Prom
   return appointment
 }
 
-export async function updateHostAppointment(id: string, employeeId: string, updates: any): Promise<any> {
+export async function updateHostAppointment(id: string, employeeId: string, updates: Record<string, unknown>): Promise<Record<string, unknown>> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   const { data: appointment, error: fetchError } = await supabaseAdmin
@@ -233,7 +233,7 @@ export async function deleteHostAppointment(id: string, employeeId: string): Pro
   await logAuditAction('Appointment Cancelled by Host', 'appointment', id, `Host cancelled appointment ${id}`)
 }
 
-export async function getHostInvitations(employeeId: string): Promise<any[]> {
+export async function getHostInvitations(employeeId: string): Promise<Record<string, unknown>[]> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   const { data, error } = await supabaseAdmin
@@ -249,7 +249,7 @@ export async function getHostInvitations(employeeId: string): Promise<any[]> {
   return data || []
 }
 
-export async function createHostInvitation(employeeId: string, data: any): Promise<any> {
+export async function createHostInvitation(employeeId: string, data: Record<string, unknown>): Promise<Record<string, unknown>> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   const token = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, '0')).join('')
@@ -335,7 +335,7 @@ export async function getHostReport(employeeId: string, range: 'today' | '7days'
   ])
 
   const visitorCounts = new Map<string, number>()
-  frequentVisitorsRes.data?.forEach((v: any) => {
+  frequentVisitorsRes.data?.forEach((v: Record<string, unknown>) => {
     const visitor = Array.isArray(v.visitor) ? v.visitor[0] : v.visitor
     const name = visitor?.full_name || 'Unknown'
     visitorCounts.set(name, (visitorCounts.get(name) || 0) + 1)
@@ -350,11 +350,11 @@ export async function getHostReport(employeeId: string, range: 'today' | '7days'
     monthlyVisitors: monthlyVisitorsRes.count ?? 0,
     frequentVisitors,
     pendingVisitors: pendingVisitorsRes.count ?? 0,
-    visitorHistory: (visitorHistoryRes.data || []).map((v: any) => {
+    visitorHistory: (visitorHistoryRes.data || []).map((v) => {
       const visitor = Array.isArray(v.visitor) ? v.visitor[0] : v.visitor
       return {
         id: v.id,
-        visitor_name: visitor?.full_name || 'Unknown',
+        visitor_name: typeof visitor === 'object' && visitor !== null ? String(visitor.full_name || 'Unknown') : 'Unknown',
         purpose: v.purpose,
         status: v.status,
         check_in_time: v.check_in_time,

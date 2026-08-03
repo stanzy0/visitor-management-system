@@ -7,7 +7,6 @@ import { Loader2, Plus, Edit, Trash2, X, Save, Shield } from 'lucide-react'
 import type { BadgeTemplate } from '@/lib/badge/badge-types'
 
 export default function AdminBadgeTemplatesPage() {
-  const [userRole, setUserRole] = useState<string>('')
   const [templates, setTemplates] = useState<BadgeTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -31,7 +30,7 @@ export default function AdminBadgeTemplatesPage() {
     department_display: true,
     office_display: true,
     signature_area: false,
-    layout: [] as any[],
+    layout: [] as unknown[],
     is_default: false,
   })
 
@@ -70,7 +69,6 @@ export default function AdminBadgeTemplatesPage() {
         window.location.href = '/unauthorized'
         return
       }
-      setUserRole(user.role)
       fetchTemplates()
     }
     checkAuth()

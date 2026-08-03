@@ -33,6 +33,21 @@ export default function StorageMonitorPage() {
   const [buckets, setBuckets] = useState<StorageBucket[]>([])
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
 
+  const fetchData = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/system?section=storage')
+      const json = await res.json()
+      if (json.success) {
+        setBuckets(json.data)
+      }
+    } catch (err) {
+      console.error('Error fetching storage data:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     const checkAuth = async () => {
       const user = await getCurrentUser()
@@ -49,21 +64,6 @@ export default function StorageMonitorPage() {
     }
     checkAuth()
   }, [])
-
-  const fetchData = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch('/api/system?section=storage')
-      const json = await res.json()
-      if (json.success) {
-        setBuckets(json.data)
-      }
-    } catch (err) {
-      console.error('Error fetching storage data:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const deleteOrphaned = async (bucketName: string) => {
     try {

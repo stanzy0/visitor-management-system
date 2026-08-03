@@ -166,7 +166,7 @@ export async function getOperationsKpis(): Promise<OperationsKpis> {
     .select('id')
     .eq('status', 'approved')
 
-  const approvedIds = (approvedVisits.data || []).map((v: any) => v.id)
+  const approvedIds = (approvedVisits.data || []).map((v: { id: string }) => v.id)
 
   const badgesWithNoPrint = await supabaseAdmin
     .from('visitor_badges')
@@ -271,7 +271,7 @@ export async function getActivityFeed(limit: number = 50): Promise<ActivityItem[
     .order('created_at', { ascending: false })
     .limit(limit)
 
-  lifecycleEvents.data?.forEach((event: any) => {
+  lifecycleEvents.data?.forEach((event: { id: string; to_status: string; from_status?: string; created_at: string }) => {
     const priority = ['checked_out', 'rejected', 'overstayed'].includes(event.to_status) ? 'high' : 'medium'
     activities.push({
       id: event.id,
@@ -290,7 +290,7 @@ export async function getActivityFeed(limit: number = 50): Promise<ActivityItem[
     .order('created_at', { ascending: false })
     .limit(limit)
 
-  auditLogs.data?.forEach((log: any) => {
+  auditLogs.data?.forEach((log: { id: string; action: string; created_at: string }) => {
     let priority: ActivityItem['priority'] = 'low'
     let icon = 'FileText'
     let color = 'gray'
@@ -326,7 +326,7 @@ export async function getActivityFeed(limit: number = 50): Promise<ActivityItem[
     .order('created_at', { ascending: false })
     .limit(limit)
 
-  notifications.data?.forEach((notif: any) => {
+  notifications.data?.forEach((notif: { id: string; title: string; type: string; created_at: string }) => {
     let priority: ActivityItem['priority'] = 'medium'
     let icon = 'Bell'
     let color = 'blue'
@@ -358,7 +358,7 @@ export async function getActivityFeed(limit: number = 50): Promise<ActivityItem[
     .order('created_at', { ascending: false })
     .limit(limit)
 
-  alerts.data?.forEach((alert: any) => {
+  alerts.data?.forEach((alert: { id: string; alert_type: string; severity: string; title: string; created_at: string }) => {
     activities.push({
       id: alert.id,
       type: 'security_alert',
@@ -399,22 +399,24 @@ export async function getWaitingQueues(): Promise<{
     .eq('status', 'approved')
     .order('created_at', { ascending: true })
 
-  const badgeQueue = (approved.data || []).filter((v: any) => !v.badge?.printed_at).map((v: any) => ({
+  const approvedData = (approved.data || []) as Array<{ id: string; visitor?: { full_name?: string; visitor_organization?: string | null } | null; employee?: { full_name?: string; department?: string | null } | null; badge?: { printed_at?: string | null } | null; created_at: string; status: string }>
+
+  const badgeQueue = approvedData.filter((v) => !v.badge?.printed_at).map((v) => ({
     id: v.id,
-    visitor_name: typeof v.visitor === 'object' ? v.visitor?.full_name : 'Unknown',
-    company: typeof v.visitor === 'object' ? v.visitor?.visitor_organization : null,
-    host: typeof v.employee === 'object' ? v.employee?.full_name : null,
-    department: typeof v.employee === 'object' ? v.employee?.department : null,
+    visitor_name: typeof v.visitor === 'object' && v.visitor !== null ? String(v.visitor.full_name || 'Unknown') : 'Unknown',
+    company: typeof v.visitor === 'object' && v.visitor !== null ? v.visitor.visitor_organization ?? null : null,
+    host: typeof v.employee === 'object' && v.employee !== null ? v.employee.full_name ?? null : null,
+    department: typeof v.employee === 'object' && v.employee !== null ? v.employee.department ?? null : null,
     waiting_since: v.created_at,
     status: v.status,
   }))
 
-  const securityQueue = (approved.data || []).filter((v: any) => v.badge?.printed_at).map((v: any) => ({
+  const securityQueue = approvedData.filter((v) => v.badge?.printed_at).map((v) => ({
     id: v.id,
-    visitor_name: typeof v.visitor === 'object' ? v.visitor?.full_name : 'Unknown',
-    company: typeof v.visitor === 'object' ? v.visitor?.visitor_organization : null,
-    host: typeof v.employee === 'object' ? v.employee?.full_name : null,
-    department: typeof v.employee === 'object' ? v.employee?.department : null,
+    visitor_name: typeof v.visitor === 'object' && v.visitor !== null ? String(v.visitor.full_name || 'Unknown') : 'Unknown',
+    company: typeof v.visitor === 'object' && v.visitor !== null ? v.visitor.visitor_organization ?? null : null,
+    host: typeof v.employee === 'object' && v.employee !== null ? v.employee.full_name ?? null : null,
+    department: typeof v.employee === 'object' && v.employee !== null ? v.employee.department ?? null : null,
     waiting_since: v.created_at,
     status: v.status,
   }))
@@ -426,12 +428,13 @@ export async function getWaitingQueues(): Promise<{
     .order('created_at', { ascending: true })
     .limit(20)
 
-  const document = (documentQueue.data || []).map((d: any) => ({
+  const documentQueueData = (documentQueue.data || []) as Array<{ id: string; visitor?: { full_name?: string; visitor_organization?: string | null } | null; visit?: { employee?: { full_name?: string; department?: string | null } | null } | null; created_at: string; verification_status: string }>
+  const document = documentQueueData.map((d) => ({
     id: d.id,
-    visitor_name: typeof d.visitor === 'object' ? d.visitor?.full_name : 'Unknown',
-    company: typeof d.visitor === 'object' ? d.visitor?.visitor_organization : null,
-    host: typeof d.visit?.employee === 'object' ? d.visit.employee?.full_name : null,
-    department: typeof d.visit?.employee === 'object' ? d.visit.employee?.department : null,
+    visitor_name: typeof d.visitor === 'object' && d.visitor !== null ? String(d.visitor.full_name || 'Unknown') : 'Unknown',
+    company: typeof d.visitor === 'object' && d.visitor !== null ? d.visitor.visitor_organization ?? null : null,
+    host: typeof d.visit?.employee === 'object' && d.visit.employee !== null ? d.visit.employee.full_name ?? null : null,
+    department: typeof d.visit?.employee === 'object' && d.visit.employee !== null ? d.visit.employee.department ?? null : null,
     waiting_since: d.created_at,
     status: d.verification_status,
   }))
@@ -444,25 +447,28 @@ export async function getWaitingQueues(): Promise<{
     .order('created_at', { ascending: true })
     .limit(20)
 
+  const receptionData = (reception.data || []) as Array<{ id: string; visitor?: { full_name?: string; visitor_organization?: string | null } | null; employee?: { full_name?: string; department?: string | null } | null; created_at: string; status: string }>
+  const exitQueueData = (exitQueue.data || []) as Array<{ id: string; visitor?: { full_name?: string; visitor_organization?: string | null } | null; employee?: { full_name?: string; department?: string | null } | null; created_at: string; status: string }>
+
   return {
-    reception: (reception.data || []).map((v: any) => ({
+    reception: receptionData.map((v) => ({
       id: v.id,
-      visitor_name: typeof v.visitor === 'object' ? v.visitor?.full_name : 'Unknown',
-      company: typeof v.visitor === 'object' ? v.visitor?.visitor_organization : null,
-      host: typeof v.employee === 'object' ? v.employee?.full_name : null,
-      department: typeof v.employee === 'object' ? v.employee?.department : null,
+      visitor_name: typeof v.visitor === 'object' && v.visitor !== null ? String(v.visitor.full_name || 'Unknown') : 'Unknown',
+      company: typeof v.visitor === 'object' && v.visitor !== null ? v.visitor.visitor_organization ?? null : null,
+      host: typeof v.employee === 'object' && v.employee !== null ? v.employee.full_name ?? null : null,
+      department: typeof v.employee === 'object' && v.employee !== null ? v.employee.department ?? null : null,
       waiting_since: v.created_at,
       status: v.status,
     })),
     badge: badgeQueue,
     security: securityQueue,
     document,
-    exit: (exitQueue.data || []).map((v: any) => ({
+    exit: exitQueueData.map((v) => ({
       id: v.id,
-      visitor_name: typeof v.visitor === 'object' ? v.visitor?.full_name : 'Unknown',
-      company: typeof v.visitor === 'object' ? v.visitor?.visitor_organization : null,
-      host: typeof v.employee === 'object' ? v.employee?.full_name : null,
-      department: typeof v.employee === 'object' ? v.employee?.department : null,
+      visitor_name: typeof v.visitor === 'object' && v.visitor !== null ? String(v.visitor.full_name || 'Unknown') : 'Unknown',
+      company: typeof v.visitor === 'object' && v.visitor !== null ? v.visitor.visitor_organization ?? null : null,
+      host: typeof v.employee === 'object' && v.employee !== null ? v.employee.full_name ?? null : null,
+      department: typeof v.employee === 'object' && v.employee !== null ? v.employee.department ?? null : null,
       waiting_since: v.created_at,
       status: v.status,
     })),
@@ -484,21 +490,22 @@ export async function getOverstayPanel(): Promise<OverstayVisitor[]> {
 
   if (!data) return []
 
-  return data.map((v: any) => {
+  const overstayData = data as Array<{ id: string; check_in_time?: string | null; expires_at?: string | null; created_at: string; visitor?: { full_name?: string; visitor_organization?: string | null; emergency_contact?: string | null } | null; employee?: { full_name?: string; office_location?: string | null } | null; badge?: { badge_number?: string | null } | null }>
+
+  return overstayData.map((v) => {
     const checkIn = v.check_in_time ? new Date(v.check_in_time) : new Date(v.created_at)
     const expires = v.expires_at ? new Date(v.expires_at) : new Date(checkIn.getTime() + 24 * 60 * 60 * 1000)
     const hoursOverdue = Math.max(0, Math.round((new Date().getTime() - expires.getTime()) / (1000 * 60 * 60)))
 
     return {
       id: v.id,
-      visitor_name: typeof v.visitor === 'object' ? v.visitor?.full_name : 'Unknown',
-      company: typeof v.visitor === 'object' ? v.visitor?.visitor_organization : null,
-      host: typeof v.employee === 'object' ? v.employee?.full_name : null,
-      office: typeof v.employee === 'object' ? v.employee?.office_location : null,
+      visitor_name: typeof v.visitor === 'object' && v.visitor !== null ? String(v.visitor.full_name || 'Unknown') : 'Unknown',
+      company: typeof v.visitor === 'object' && v.visitor !== null ? v.visitor.visitor_organization ?? null : null,
+      host: typeof v.employee === 'object' && v.employee !== null ? v.employee.full_name ?? null : null,
+      office: typeof v.employee === 'object' && v.employee !== null ? v.employee.office_location ?? null : null,
       hours_overdue: hoursOverdue,
-      check_in_time: v.check_in_time,
-      badge_number: typeof v.badge === 'object' ? v.badge?.badge_number : null,
-      emergency_contact: typeof v.visitor === 'object' ? v.visitor?.emergency_contact : null,
+      check_in_time: v.check_in_time ?? null,
+      badge_number: typeof v.badge === 'object' && v.badge !== null ? v.badge.badge_number ?? null : null,
     }
   })
 }
@@ -565,17 +572,17 @@ export async function getHostAvailability(): Promise<HostAvailability> {
     .select('employee_id')
     .eq('status', 'checked_in')
 
-  const activeVisitEmployeeIds = new Set((activeVisits.data || []).map((v: any) => v.employee_id))
+  const activeVisitEmployeeIds = new Set((activeVisits.data || []).map((v: { employee_id: string }) => v.employee_id))
 
   const available: Array<{ id: string; full_name: string; department: string | null }> = []
   const inAppointments: Array<{ id: string; full_name: string; department: string | null; appointment_time: string }> = []
   const unavailable: Array<{ id: string; full_name: string; department: string | null; reason: string }> = []
   const outsideOffice: Array<{ id: string; full_name: string; office_location: string | null }> = []
 
-  const employeesList = (employees.data || []) as any[]
-  const appointmentsList = (appointments.data || []) as any[]
+  const employeesList = (employees.data || []) as Array<{ id: string; full_name: string; department: string | null; office_location: string | null; status: string }>
+  const appointmentsList = (appointments.data || []) as Array<{ employee_id: string; appointment_time: string }>
 
-  employeesList.forEach((emp: any) => {
+  employeesList.forEach((emp: { id: string; full_name: string; department: string | null; office_location: string | null; status: string }) => {
     if (emp.status !== 'active') {
       unavailable.push({ id: emp.id, full_name: emp.full_name, department: emp.department, reason: 'Inactive' })
       return
@@ -585,9 +592,9 @@ export async function getHostAvailability(): Promise<HostAvailability> {
       return
     }
 
-    const hasAppointment = appointmentsList.some((a: any) => a.employee_id === emp.id)
+    const hasAppointment = appointmentsList.some((a: { employee_id: string }) => a.employee_id === emp.id)
     if (hasAppointment) {
-      const appt = appointmentsList.find((a: any) => a.employee_id === emp.id)
+      const appt = appointmentsList.find((a: { employee_id: string }) => a.employee_id === emp.id)
       inAppointments.push({ id: emp.id, full_name: emp.full_name, department: emp.department, appointment_time: appt?.appointment_time || '' })
     } else {
       available.push({ id: emp.id, full_name: emp.full_name, department: emp.department })
@@ -615,9 +622,10 @@ export async function getOfficeOccupancy(): Promise<OfficeOccupancy[]> {
 
   const map = new Map<string, { department: string; office_location: string; visitor_count: number }>()
 
-  data.forEach((v: any) => {
-    const dept = v.employee?.department || 'Unknown'
-    const office = v.employee?.office_location || 'Unknown'
+  const officeData = data as Array<{ employee?: { department?: string; office_location?: string } | null }>
+  officeData.forEach((v) => {
+    const dept = typeof v.employee === 'object' && v.employee !== null ? String(v.employee.department || 'Unknown') : 'Unknown'
+    const office = typeof v.employee === 'object' && v.employee !== null ? String(v.employee.office_location || 'Unknown') : 'Unknown'
     const key = `${dept}|${office}`
     const existing = map.get(key)
     if (existing) {
@@ -644,16 +652,22 @@ export async function getActiveBadges(): Promise<ActiveBadge[]> {
 
   if (!data) return []
 
-  return data.map((b: any) => ({
-    id: b.id,
-    badge_number: b.badge_number,
-    visitor_name: typeof b.visit?.visitor === 'object' ? b.visit?.visitor?.full_name : 'Unknown',
-    company: typeof b.visit?.visitor === 'object' ? b.visit?.visitor?.visitor_organization : null,
-    issued_at: b.issued_at,
-    expires_at: b.expires_at,
-    status: b.badge_status,
-    visit_id: b.visit_id,
-  }))
+  const badgeData = data as Array<{ id: string; badge_number: string; badge_status: string; issued_at: string; expires_at: string; visit_id: string; visit?: { visitor?: { full_name?: string; visitor_organization?: string | null } | null } | null }>
+
+  return badgeData.map((b) => {
+    const visitorName = typeof b.visit?.visitor === 'object' && b.visit?.visitor !== null ? String(b.visit.visitor.full_name || 'Unknown') : 'Unknown'
+    const company = typeof b.visit?.visitor === 'object' && b.visit?.visitor !== null ? b.visit.visitor.visitor_organization ?? null : null
+    return {
+      id: b.id,
+      badge_number: b.badge_number,
+      visitor_name: visitorName,
+      company: company,
+      issued_at: b.issued_at,
+      expires_at: b.expires_at,
+      status: b.badge_status,
+      visit_id: b.visit_id,
+    }
+  })
 }
 
 export async function getActiveProperty(): Promise<ActivePropertyItem[]> {
@@ -670,15 +684,20 @@ export async function getActiveProperty(): Promise<ActivePropertyItem[]> {
 
   if (!data) return []
 
-  return data.map((p: any) => ({
-    id: p.id,
-    visit_id: p.visit_id,
-    visitor_name: typeof p.visit?.visitor === 'object' ? p.visit?.visitor?.full_name : 'Unknown',
-    property_type: p.property_type,
-    description: p.description,
-    status: p.status,
-    created_at: p.created_at,
-  }))
+  const propertyData = data as Array<{ id: string; visit_id: string; property_type: string; description: string | null; status: string; created_at: string; visit?: { visitor?: { full_name?: string | null } | null } | null }>
+
+  return propertyData.map((p) => {
+    const visitorName = typeof p.visit?.visitor === 'object' && p.visit?.visitor !== null ? String(p.visit.visitor.full_name || 'Unknown') : 'Unknown'
+    return {
+      id: p.id,
+      visit_id: p.visit_id,
+      visitor_name: visitorName,
+      property_type: p.property_type,
+      description: p.description,
+      status: p.status,
+      created_at: p.created_at,
+    }
+  })
 }
 
 export async function forceCheckout(visitId: string, performedBy: string | null): Promise<boolean> {

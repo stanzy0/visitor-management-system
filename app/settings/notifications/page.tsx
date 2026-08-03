@@ -19,10 +19,6 @@ export default function NotificationSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  useEffect(() => {
-    fetchPreferences()
-  }, [])
-
   const fetchPreferences = async () => {
     try {
       const res = await fetch('/api/settings/notifications')
@@ -36,6 +32,10 @@ export default function NotificationSettingsPage() {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    setTimeout(() => fetchPreferences(), 0)
+  }, [])
 
   const handleSave = async () => {
     setSaving(true)
