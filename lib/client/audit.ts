@@ -12,7 +12,6 @@ export async function logAuditAction(
       headers: await getAuthHeaders(),
       body: JSON.stringify({ action, entityType, entityId, details }),
     })
-  } catch (err) {
-    console.warn('Audit logging skipped:', err)
+   } catch (err) {
   }
 }

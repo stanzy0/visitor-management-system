@@ -16,7 +16,7 @@ export async function GET(
     const invitation = await getInvitationByToken(token)
 
     if (!invitation) {
-      return NextResponse.json({ error: 'Invalid invitation link' }, { status: 404 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }
 
     if (invitation.status === 'Expired' || invitation.status === 'Cancelled' || invitation.status === 'Completed') {
@@ -30,13 +30,13 @@ export async function GET(
     const expiresAt = new Date(invitation.expires_at)
     if (now > expiresAt) {
       await updateInvitationStatus(token, 'Expired')
-      return NextResponse.json({ error: 'This invitation has expired. Please contact your host.' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     return NextResponse.json({ data: invitation })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -52,29 +52,29 @@ export async function POST(
     switch (action) {
       case 'register': {
         if (!supabaseAdmin) {
-          return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+          return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
         }
 
         const { full_name, email, phone, organization, address, nationality, gender, vehicle_plate, vehicle_type, emergency_contact, purpose, accept_privacy } = body
 
         if (!full_name || !email || !accept_privacy) {
-          return NextResponse.json({ error: 'Missing required fields or privacy policy not accepted' }, { status: 400 })
+          return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
         }
 
         const invitation = await getInvitationByToken(token)
         if (!invitation) {
-          return NextResponse.json({ error: 'Invalid invitation' }, { status: 404 })
+          return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
         }
 
         if (invitation.status === 'Completed' || invitation.status === 'Expired' || invitation.status === 'Cancelled') {
-          return NextResponse.json({ error: `Invitation is ${invitation.status.toLowerCase()}` }, { status: 400 })
+          return NextResponse.json({ success: false, message: `Invitation is ${invitation.status.toLowerCase()}`, error: `Invitation is ${invitation.status.toLowerCase()}` }, { status: 400 })
         }
 
         const now = new Date()
         const expiresAt = new Date(invitation.expires_at)
         if (now > expiresAt) {
           await updateInvitationStatus(token, 'Expired')
-          return NextResponse.json({ error: 'Invitation expired' }, { status: 400 })
+          return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
         }
 
         const { data: existingVisitor } = await supabase
@@ -104,7 +104,7 @@ export async function POST(
             .single()
 
           if (visitorError || !newVisitor) {
-            return NextResponse.json({ error: visitorError?.message || 'Failed to create visitor' }, { status: 400 })
+            return NextResponse.json({ success: false, message: visitorError?.message || 'Failed to create visitor', error: visitorError?.message || 'Failed to create visitor' }, { status: 400 })
           }
 
           visitorId = newVisitor.id
@@ -124,7 +124,7 @@ export async function POST(
             .eq('id', visitorId)
 
           if (updateError) {
-            return NextResponse.json({ error: updateError.message }, { status: 400 })
+            return NextResponse.json({ success: false, message: updateError.message, error: updateError.message }, { status: 400 })
           }
         }
 
@@ -144,7 +144,7 @@ export async function POST(
           .single()
 
         if (appointmentError || !appointment) {
-          return NextResponse.json({ error: appointmentError?.message || 'Failed to create appointment' }, { status: 400 })
+          return NextResponse.json({ success: false, message: appointmentError?.message || 'Failed to create appointment', error: appointmentError?.message || 'Failed to create appointment' }, { status: 400 })
         }
 
         await updateInvitationStatus(token, 'Completed')
@@ -156,7 +156,7 @@ export async function POST(
 
       case 'approve': {
         if (!supabaseAdmin) {
-          return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+          return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
         }
 
         const invitation = await approveInvitation(token)
@@ -214,7 +214,7 @@ export async function POST(
 
       case 'reject': {
         if (!supabaseAdmin) {
-          return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+          return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
         }
 
         const invitation = await rejectInvitation(token)
@@ -235,7 +235,7 @@ export async function POST(
       case 'cancel': {
         const invitation = await getInvitationByToken(token)
         if (!invitation) {
-          return NextResponse.json({ error: 'Invitation not found' }, { status: 404 })
+          return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
         }
 
         await cancelInvitation(token)
@@ -245,10 +245,10 @@ export async function POST(
       }
 
       default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+        return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

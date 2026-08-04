@@ -247,21 +247,18 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
           .select('visitor_id')
           .not('visitor_id', 'is', null)
 
-        const uniqueVisitorIds = [...new Set((docVisitorIds || []).map((d: { visitor_id: string }) => d.visitor_id).filter(Boolean))]
+         const uniqueVisitorIds = [...new Set((docVisitorIds || []).map((d: { visitor_id: string }) => d.visitor_id).filter(Boolean))]
 
-        console.log('[Dashboard] uniqueVisitorIds', uniqueVisitorIds)
-
-        if (uniqueVisitorIds.length === 0) {
+         if (uniqueVisitorIds.length === 0) {
           const { count } = await supabase
             .from('visitors')
             .select('id', { count: 'exact', head: true })
           return { count }
         }
 
-        const postgrestFilter = `(${uniqueVisitorIds.join(',')})`
-        console.log('[Dashboard] PostgREST filter', postgrestFilter)
+         const postgrestFilter = `(${uniqueVisitorIds.join(',')})`
 
-        const { count } = await supabase
+         const { count } = await supabase
           .from('visitors')
           .select('id', { count: 'exact', head: true })
           .not('id', 'in', postgrestFilter)
@@ -407,21 +404,12 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lifecycle_events' }, () => fetchAllRef.current())
        .on('postgres_changes', { event: '*', schema: 'public', table: 'security_alerts' }, () => fetchAllRef.current())
        .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_documents' }, () => fetchAllRef.current())
-       .subscribe()
+        .subscribe()
 
-    const interval = setInterval(async () => {
-      try {
-        await fetch('/api/lifecycle/expired-visits', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
-      } catch {
-        // silent
-      }
-    }, 60000)
-
-    return () => {
-      supabase.removeChannel(channel)
-      clearInterval(interval)
-    }
-  }, [fetchAll])
+     return () => {
+       supabase.removeChannel(channel)
+     }
+   }, [fetchAll])
 
   const trendLabel = useMemo(() => {
     if (stats.visitorsTrend > 0) return `+${(stats.visitorsTrend * 100).toFixed(0)}%`

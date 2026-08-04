@@ -21,20 +21,20 @@ async function logAuditAction(action: string, entityType: string, entityId: stri
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
     const { secret, code } = await request.json()
 
     if (!secret || !code) {
-      return NextResponse.json({ error: 'Secret and code are required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const isValid = verifyTOTP(secret, code)
 
     if (!isValid) {
-      return NextResponse.json({ error: 'Invalid verification code' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const encryptedSecret = encryptSecret(secret)
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     await logAuditAction('Two-Factor Enabled', 'user', user.id, `MFA enabled for ${user.email}`)
@@ -66,6 +66,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     console.error('MFA enable error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

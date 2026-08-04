@@ -62,8 +62,6 @@ export default function UsersPage() {
       .select('*')
       .order('created_at', { ascending: false })
 
-    console.log('[FETCH USERS] Result:', { count: data?.length || 0, error: error?.message })
-
     if (error) {
       showNotification('error', error.message)
     } else {
@@ -145,7 +143,6 @@ export default function UsersPage() {
     if (!confirm('Are you sure you want to remove this user assignment?')) return
 
     const userToDelete = users.find((u) => u.user_id === userId)
-    console.log('[DELETE UI] Attempting to delete user:', { userId, email: userToDelete?.email, currentUsersCount: users.length })
 
     try {
       const res = await fetch('/api/users/delete', {
@@ -154,19 +151,16 @@ export default function UsersPage() {
         body: JSON.stringify({ userId }),
       })
 
-      const data = await res.json()
-      console.log('[DELETE UI] Delete response:', { status: res.status, data })
+       const data = await res.json()
 
-      if (!res.ok) {
+       if (!res.ok) {
         showNotification('error', data.error || 'Failed to delete user')
       } else {
         logAuditAction('Role Removed', 'user', userId, `Role removed for ${userToDelete?.email}`)
         showNotification('success', 'User role removed successfully')
       }
 
-      fetchUsers().then(() => {
-        console.log('[DELETE UI] After fetchUsers, users count:', users.length)
-      })
+       fetchUsers().then(() => {})
     } catch {
       showNotification('error', 'An unexpected error occurred. Please try again.')
     }

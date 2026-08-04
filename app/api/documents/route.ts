@@ -31,11 +31,11 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     const { data, error, count } = await query
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     const mappedData = (data || []).map(mapToDocumentVerification)
@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
     })
   } catch (err) {
     console.error('[Documents API] GET error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -114,11 +114,11 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const formData = await request.formData()
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
         })
 
       if (uploadError) {
-        return NextResponse.json({ error: uploadError.message }, { status: 500 })
+        return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
       }
 
       const { data: publicUrlData } = supabaseAdmin.storage
@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     await logAuditAction(
@@ -251,6 +251,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(mapToDocumentVerification(data), { status: 201 })
   } catch (err) {
     console.error('[Documents API] POST error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

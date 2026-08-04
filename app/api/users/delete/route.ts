@@ -20,19 +20,19 @@ async function logAuditAction(action: string, entityType: string, entityId: stri
 export async function DELETE(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status as never })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status as never })
   }
 
   try {
     const { userId } = await request.json()
 
     if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const admin = supabaseAdmin
     if (!admin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { data: beforeDelete } = await admin
@@ -40,41 +40,34 @@ export async function DELETE(request: NextRequest) {
       .select('*')
       .eq('user_id', userId)
 
-    console.log('[DELETE USER] Rows before delete:', beforeDelete)
-
     if (!beforeDelete || beforeDelete.length === 0) {
       await logAuditAction('User Already Deleted', 'user', userId, `No user_roles row found for ${userId}`)
       return NextResponse.json({ success: false, message: 'No matching user_roles row found.', rowsDeleted: 0 }, { status: 404 })
     }
 
     const { data: deletedRows, error: deleteError } = await admin
-      .from('user_roles')
-      .delete()
-      .eq('user_id', userId)
-      .select()
+       .from('user_roles')
+       .delete()
+       .eq('user_id', userId)
+       .select()
 
-    console.log('[DELETE USER] Deleted rows:', deletedRows)
-
-    if (deleteError || !deletedRows || deletedRows.length === 0) {
+     if (deleteError || !deletedRows || deletedRows.length === 0) {
       console.error('[DELETE USER] Delete failed:', deleteError?.message)
       await logAuditAction('User Delete Failed', 'user', userId, `user_roles delete failed: ${deleteError?.message || 'no rows deleted'}`)
       return NextResponse.json({ success: false, reason: deleteError?.message || 'No rows deleted', rowsDeleted: 0 }, { status: 500 })
     }
 
     const { data: afterDelete } = await admin
-      .from('user_roles')
-      .select('*')
-      .eq('user_id', userId)
+       .from('user_roles')
+       .select('*')
+       .eq('user_id', userId)
 
-    console.log('[DELETE USER] Rows after delete:', afterDelete)
-
-    let authDeleted = false
+     let authDeleted = false
     if (admin) {
       const { error: authError } = await admin.auth.admin.deleteUser(userId)
 
-      if (authError) {
-        console.log('[DELETE USER] Auth deletion error:', authError.message)
-        authDeleted = false
+       if (authError) {
+         authDeleted = false
       } else {
         authDeleted = true
       }

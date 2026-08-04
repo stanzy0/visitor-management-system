@@ -179,18 +179,8 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
             </div>
           </div>
 
-          <div style={{ gridColumn: '3', gridRow: '2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.2mm' }}>
-            {(() => {
-              const qrPayload = qrValue
-              console.log({
-                badge_id: badge.id,
-                badge_number: badge.badge_number,
-                qr_token: badge.qr_token,
-                qr_payload: qrPayload,
-              })
-              return null
-            })()}
-            <QRCodeSVG
+           <div style={{ gridColumn: '3', gridRow: '2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.2mm' }}>
+             <QRCodeSVG
               value={qrValue}
               size={BADGE_QR_SETTINGS.SIZE}
               style={{ width: '16mm', height: '16mm' }}

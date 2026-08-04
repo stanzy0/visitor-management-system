@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const { email, password, rememberDevice } = await request.json()
 
     if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const supabase = await createClient()
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (error || !data.user) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Invalid email or password', error: 'Invalid email or password' }, { status: 401 })
     }
 
     const { data: userRole } = await supabase
@@ -42,11 +42,11 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!userRole) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }
 
     if (userRole.locked_until && new Date(userRole.locked_until) > new Date()) {
-      return NextResponse.json({ error: 'Account temporarily locked due to too many failed attempts' }, { status: 423 })
+      return NextResponse.json({ success: false, message: 'Account temporarily locked due to too many failed attempts', error: 'Account temporarily locked' }, { status: 423 })
     }
 
     if (userRole.two_factor_enabled) {
@@ -85,6 +85,6 @@ export async function POST(request: NextRequest) {
     return response
   } catch (err) {
     console.error('MFA login error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

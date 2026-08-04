@@ -10,13 +10,13 @@ export async function GET(
   try {
     const user = await getCurrentUser()
     if (!user || !PERMISSIONS[user.role]?.includes('employees')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await params
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { data, error } = await supabaseAdmin
@@ -26,12 +26,12 @@ export async function GET(
       .single()
 
     if (error || !data) {
-      return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }
 
     return NextResponse.json({ data: data as Employee })
   } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -42,13 +42,13 @@ export async function PUT(
   try {
     const user = await getCurrentUser()
     if (!user || !PERMISSIONS[user.role]?.includes('employees')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await params
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const body = (await request.json()) as Partial<EmployeeFormData> & {
@@ -107,12 +107,12 @@ export async function PUT(
       .single()
 
     if (error || !data) {
-      return NextResponse.json({ error: error?.message || 'Failed to update employee' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     return NextResponse.json({ data: data as Employee })
   } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -123,13 +123,13 @@ export async function DELETE(
   try {
     const user = await getCurrentUser()
     if (!user || !PERMISSIONS[user.role]?.includes('employees')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     const { id } = await params
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { error } = await supabaseAdmin
@@ -138,11 +138,11 @@ export async function DELETE(
       .eq('id', id)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      return NextResponse.json({ success: false, message: error.message, error: error.message }, { status: 400 })
     }
 
     return NextResponse.json({ success: true })
   } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

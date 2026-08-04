@@ -5,7 +5,7 @@ import { getPropertyItems } from '@/lib/server/property'
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(['Admin', 'Receptionist', 'Security'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -50,6 +50,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: items })
   } catch (err) {
     console.error('Export property items error:', err)
-    return NextResponse.json({ error: 'Failed to export property items' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
   }
 }

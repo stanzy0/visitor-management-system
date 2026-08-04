@@ -6,7 +6,7 @@ import { logAuditAction } from '@/lib/server/audit'
 export async function POST(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -14,12 +14,12 @@ export async function POST(request: NextRequest) {
     const { id, status } = body
 
     if (!id || !status) {
-      return NextResponse.json({ error: 'Appointment ID and status are required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const appointment = await getAppointmentById(id)
     if (!appointment) {
-      return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }
 
     const updated = await updateAppointmentStatus(id, status)
@@ -28,6 +28,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: updated })
   } catch (err) {
     console.error('Appointment check-in error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to update appointment' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

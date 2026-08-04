@@ -125,48 +125,43 @@ export async function approveDocument(
   approvedBy: string,
   notes?: string
 ): Promise<VisitorDocument> {
-  if (!supabaseAdmin) throw new Error('Service role key not configured')
+   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
-  console.log('Updating visitor_documents...', documentId)
-  const { data, error } = await supabaseAdmin
-    .from('visitor_documents')
-    .update({
-      verification_status: 'Verified',
+   const { data, error } = await supabaseAdmin
+     .from('visitor_documents')
+     .update({
+       verification_status: 'Verified',
       verified: true,
       verified_by: approvedBy,
       verified_at: new Date().toISOString(),
       verification_notes: notes || null,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', documentId)
-    .select(`
-      *,
-      visitor:visitors(full_name, email, visitor_organization, photo_url)
-    `)
-    .single()
+     .eq('id', documentId)
+     .select(`
+       *,
+       visitor:visitors(full_name, email, visitor_organization, photo_url)
+     `)
+     .single()
 
-  console.log('Rows updated:', error ? 0 : 1)
-  if (error) {
-    console.log('Error:', error.message)
-    throw error
-  }
-  console.log('Returned row:', data)
+   if (error) {
+     throw error
+   }
 
-  return data as VisitorDocument
-}
+   return data as VisitorDocument
+ }
 
-export async function rejectDocument(
+ export async function rejectDocument(
   documentId: string,
   rejectedBy: string,
   reason: string
 ): Promise<VisitorDocument> {
-  if (!supabaseAdmin) throw new Error('Service role key not configured')
+   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
-  console.log('Updating visitor_documents...', documentId)
-  const { data, error } = await supabaseAdmin
-    .from('visitor_documents')
-    .update({
-      verification_status: 'Rejected',
+   const { data, error } = await supabaseAdmin
+     .from('visitor_documents')
+     .update({
+       verification_status: 'Rejected',
       verified: false,
       verification_notes: reason,
       updated_at: new Date().toISOString(),
@@ -176,29 +171,25 @@ export async function rejectDocument(
       *,
       visitor:visitors(full_name, email, visitor_organization, photo_url)
     `)
-    .single()
+     .single()
 
-  console.log('Rows updated:', error ? 0 : 1)
-  if (error) {
-    console.log('Error:', error.message)
-    throw error
-  }
-  console.log('Returned row:', data)
+   if (error) {
+     throw error
+   }
 
-  return data as VisitorDocument
-}
+   return data as VisitorDocument
+ }
 
-export async function requestReplacement(
+ export async function requestReplacement(
   documentId: string,
   reason: string
 ): Promise<VisitorDocument> {
-  if (!supabaseAdmin) throw new Error('Service role key not configured')
+   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
-  console.log('Updating visitor_documents...', documentId)
-  const { data, error } = await supabaseAdmin
-    .from('visitor_documents')
-    .update({
-      verification_status: 'Replacement Requested',
+   const { data, error } = await supabaseAdmin
+     .from('visitor_documents')
+     .update({
+       verification_status: 'Replacement Requested',
       replacement_requested: true,
       verification_notes: reason,
       updated_at: new Date().toISOString(),
@@ -208,26 +199,22 @@ export async function requestReplacement(
       *,
       visitor:visitors(full_name, email, visitor_organization, photo_url)
     `)
-    .single()
+     .single()
 
-  console.log('Rows updated:', error ? 0 : 1)
-  if (error) {
-    console.log('Error:', error.message)
-    throw error
-  }
-  console.log('Returned row:', data)
+   if (error) {
+     throw error
+   }
 
-  return data as VisitorDocument
-}
+   return data as VisitorDocument
+ }
 
-export async function markReplacementUploaded(documentId: string): Promise<VisitorDocument> {
-  if (!supabaseAdmin) throw new Error('Service role key not configured')
+ export async function markReplacementUploaded(documentId: string): Promise<VisitorDocument> {
+   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
-  console.log('Updating visitor_documents...', documentId)
-  const { data, error } = await supabaseAdmin
-    .from('visitor_documents')
-    .update({
-      verification_status: 'Reuploaded',
+   const { data, error } = await supabaseAdmin
+     .from('visitor_documents')
+     .update({
+       verification_status: 'Reuploaded',
       replacement_uploaded: true,
       updated_at: new Date().toISOString(),
     })
@@ -236,17 +223,14 @@ export async function markReplacementUploaded(documentId: string): Promise<Visit
       *,
       visitor:visitors(full_name, email, visitor_organization, photo_url)
     `)
-    .single()
+     .single()
 
-  console.log('Rows updated:', error ? 0 : 1)
-  if (error) {
-    console.log('Error:', error.message)
-    throw error
-  }
-  console.log('Returned row:', data)
+   if (error) {
+     throw error
+   }
 
-  return data as VisitorDocument
-}
+   return data as VisitorDocument
+ }
 
 export async function getVerificationHistory(visitorId: string): Promise<VisitorDocument[]> {
   if (!supabaseAdmin) return []

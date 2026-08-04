@@ -18,7 +18,6 @@ export default function CameraTestPage() {
 
   const addLog = (msg: string) => {
     setLog(prev => [...prev, `[${new Date().toISOString().split('T')[1].split('.')[0]}] ${msg}`])
-    console.log('[camera-test]', msg)
   }
 
   const startCamera = async () => {

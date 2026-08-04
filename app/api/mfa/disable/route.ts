@@ -19,14 +19,14 @@ async function logAuditAction(action: string, entityType: string, entityId: stri
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
     const { password } = await request.json()
 
     if (!password) {
-      return NextResponse.json({ error: 'Password is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const { error: authError } = await supabase.auth.signInWithPassword({
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (authError) {
-      return NextResponse.json({ error: 'Invalid password' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const { error } = await supabase
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       .eq('user_id', user.id)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     await logAuditAction('Two-Factor Disabled', 'user', user.id, `MFA disabled for ${user.email}`)
@@ -57,6 +57,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('MFA disable error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

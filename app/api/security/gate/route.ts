@@ -6,7 +6,7 @@ import { getCurrentUser } from '@/lib/auth'
 export async function POST(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const { visitor_id, visit_id, badge_id, verification_method, decision, denial_reason, activity_type = 'entry_attempt', direction = 'in', gate = 'Main Gate' } = body
 
     if (!visitor_id) {
-      return NextResponse.json({ error: 'Visitor ID is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const user = await getCurrentUser()
@@ -46,6 +46,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: activity }, { status: 201 })
   } catch (err) {
     console.error('Gate check-in error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to process gate check-in' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

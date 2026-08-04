@@ -5,7 +5,7 @@ import { getWatchlistEntries, createWatchlistEntry, updateWatchlistEntry, delete
 export async function GET(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -13,14 +13,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: entries })
   } catch (err) {
     console.error('Watchlist fetch error:', err)
-    return NextResponse.json({ error: 'Failed to fetch watchlist' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -29,14 +29,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: entry }, { status: 201 })
   } catch (err) {
     console.error('Watchlist create error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to create watchlist entry' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function PUT(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -44,21 +44,21 @@ export async function PUT(request: NextRequest) {
     const { id, ...updates } = body
 
     if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const entry = await updateWatchlistEntry(id, updates)
     return NextResponse.json({ success: true, data: entry })
   } catch (err) {
     console.error('Watchlist update error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to update watchlist entry' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function DELETE(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -66,13 +66,13 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id')
 
     if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     await deleteWatchlistEntry(id)
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Watchlist delete error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to delete watchlist entry' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

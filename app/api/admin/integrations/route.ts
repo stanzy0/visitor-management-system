@@ -5,7 +5,7 @@ import { getIntegrations, updateIntegration } from '@/lib/server/admin'
 export async function GET(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -13,14 +13,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: integrations })
   } catch (err) {
     console.error('Fetch integrations error:', err)
-    return NextResponse.json({ error: 'Failed to fetch integrations' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
   }
 }
 
 export async function PUT(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -28,13 +28,13 @@ export async function PUT(request: NextRequest) {
     const { id, ...updates } = body
 
     if (!id) {
-      return NextResponse.json({ error: 'Integration ID is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     await updateIntegration(id, updates)
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Update integration error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to update integration' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

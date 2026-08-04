@@ -7,7 +7,7 @@ import { getBaseUrl } from '@/lib/utils/portal-url'
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(['Admin', 'Receptionist', 'Host Employee'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const userEmail = authResult.userEmail || ''
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     let query = supabaseAdmin
@@ -42,20 +42,20 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+      return NextResponse.json({ success: false, message: error.message, error: error.message }, { status: 400 })
     }
 
     return NextResponse.json({ data: data || [] })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   const authResult = await requireRole(['Admin', 'Host Employee'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -63,11 +63,11 @@ export async function POST(request: NextRequest) {
     const { visitor_name, visitor_email, visitor_phone, visitor_organization, purpose, expected_date, expected_time, vehicle_required, number_of_visitors, notes } = body
 
     if (!visitor_name || !visitor_email || !purpose || !expected_date) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     let hostEmployeeId = body.host_employee_id
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (!employee) {
-        return NextResponse.json({ error: 'Host employee record not found' }, { status: 400 })
+        return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
       }
 
       hostEmployeeId = employee.id
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error || !invitation) {
-      return NextResponse.json({ error: error?.message || 'Failed to create invitation' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const { data: host } = await supabaseAdmin
@@ -139,6 +139,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ data: invitation }, { status: 201 })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

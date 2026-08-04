@@ -3,18 +3,24 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logAuditAction } from '@/lib/server/audit'
 import { createHostEmployeeNotification, createSystemNotification } from '@/lib/notifications'
 import { sendEmail } from '@/lib/server/email'
+import { checkRateLimit, rateLimitResponse } from '@/lib/server/rate-limit'
 
 export async function POST(request: NextRequest) {
+  const rateLimit = checkRateLimit(request)
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimit.resetAt)
+  }
+
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const body = await request.json()
     const { visit_id } = body
 
     if (!visit_id) {
-      return NextResponse.json({ error: 'visit_id is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const { data: visit, error: visitError } = await supabaseAdmin
@@ -24,23 +30,23 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (visitError || !visit) {
-      return NextResponse.json({ error: 'Visit not found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }
 
     if (visit.status === 'checked_in') {
-      return NextResponse.json({ error: 'Visitor has already checked in' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     if (visit.status === 'checked_out') {
-      return NextResponse.json({ error: 'Visitor has already checked out' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     if (visit.status === 'cancelled') {
-      return NextResponse.json({ error: 'Visit has been cancelled' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     if (visit.status === 'rejected') {
-      return NextResponse.json({ error: 'Visit has been rejected' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const checkInTime = new Date().toISOString()
@@ -54,7 +60,7 @@ export async function POST(request: NextRequest) {
       .eq('id', visit_id)
 
     if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     const visitor = Array.isArray(visit.visitor) ? visit.visitor[0] : visit.visitor
@@ -101,6 +107,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     console.error('Kiosk check-in error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

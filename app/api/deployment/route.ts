@@ -18,7 +18,7 @@ import {
 export async function GET(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -56,18 +56,18 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ success: true, data: snapshots })
       }
       default:
-        return NextResponse.json({ error: 'Invalid section' }, { status: 400 })
+        return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
   } catch (err) {
     console.error('Deployment fetch error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
       case 'create_backup': {
         const { backup_type } = body
         if (!backup_type) {
-          return NextResponse.json({ error: 'backup_type is required' }, { status: 400 })
+          return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
         }
         const backup = await createBackup(backup_type, authResult.userEmail || null)
         return NextResponse.json({ success: !!backup, data: backup })
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       case 'delete_backup': {
         const { backup_id } = body
         if (!backup_id) {
-          return NextResponse.json({ error: 'backup_id is required' }, { status: 400 })
+          return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
         }
         const success = await deleteBackup(backup_id)
         return NextResponse.json({ success })
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       case 'rollback': {
         const { deployment_id } = body
         if (!deployment_id) {
-          return NextResponse.json({ error: 'deployment_id is required' }, { status: 400 })
+          return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
         }
         const success = await rollbackDeployment(deployment_id)
         return NextResponse.json({ success })
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       case 'export_configuration': {
         const { name, configuration } = body
         if (!name || !configuration) {
-          return NextResponse.json({ error: 'name and configuration are required' }, { status: 400 })
+          return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
         }
         const snapshot = await createConfigurationSnapshot(name, configuration, authResult.userEmail || null)
         return NextResponse.json({ success: !!snapshot, data: snapshot })
@@ -119,10 +119,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, data: { checks, passed, total, score: total > 0 ? Math.round((passed / total) * 100) : 0 } })
       }
       default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+        return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
   } catch (err) {
     console.error('Deployment action error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

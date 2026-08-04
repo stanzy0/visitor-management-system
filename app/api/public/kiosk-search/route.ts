@@ -4,14 +4,14 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 export async function GET(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { searchParams } = new URL(request.url)
     const q = searchParams.get('q')
 
     if (!q || q.trim().length < 2) {
-      return NextResponse.json({ error: 'Search term must be at least 2 characters' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const term = q.trim()
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       .limit(50)
 
     if (visitorError) {
-      return NextResponse.json({ error: visitorError.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     if (!visitors || visitors.length === 0) {
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       .limit(20)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     const results = (visits || []).map((visit: any) => {
@@ -88,6 +88,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: results })
   } catch (err) {
     console.error('Kiosk search error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: notifications, stats, unreadCount })
   } catch (err) {
     console.error('Notifications fetch error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -34,14 +34,14 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
     const { title, message, type, priority, recipient_role, related_type, related_id, action_url } = body
 
     if (!title || !message) {
-      return NextResponse.json({ error: 'Title and message are required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const { createNotification } = await import('@/lib/notifications')
@@ -58,13 +58,13 @@ export async function POST(request: NextRequest) {
     )
 
     if (!notification) {
-      return NextResponse.json({ error: 'Failed to create notification' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, data: notification }, { status: 201 })
   } catch (err) {
     console.error('Notification creation error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -72,7 +72,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -84,9 +84,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success })
     }
 
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
   } catch (err) {
     console.error('Notification delete error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

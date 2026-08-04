@@ -358,10 +358,8 @@ export default function PublicRegistrationWizard() {
         duration: String(formData.expected_duration || 60),
       })
 
-      const res = await fetch(`/api/public/host-availability?${params}`)
-      console.log('[host-availability] request', `/api/public/host-availability?${params}`)
-      const data = await res.json()
-      console.log('[host-availability] response', data)
+       const res = await fetch(`/api/public/host-availability?${params}`)
+       const data = await res.json()
       setAvailabilityStatus(data.status || null)
       setAvailabilityMessage(data.message || null)
       setAvailabilityAlternatives(data.alternatives || [])
@@ -500,45 +498,38 @@ export default function PublicRegistrationWizard() {
   }
   const back = () => setStep((s) => Math.max(s - 1, 1))
 
-  const handleDocUpload = async (file: File, side: 'front' | 'back') => {
-    console.log('[handleDocUpload] Starting upload for', side, 'file:', file.name, 'type:', file.type, 'size:', file.size)
-    setDocUploadError(null)
+   const handleDocUpload = async (file: File, side: 'front' | 'back') => {
+     setDocUploadError(null)
 
-    const storagePath = `public-reg/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-    console.log('[handleDocUpload] Storage path:', storagePath)
+     const storagePath = `public-reg/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
 
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('visitor-documents')
       .upload(storagePath, file, {
         contentType: file.type,
         upsert: false,
-      })
+       })
 
-    console.log('[handleDocUpload] Upload result:', uploadError ? 'ERROR' : 'SUCCESS')
-    if (uploadError) {
+     if (uploadError) {
       console.error('[handleDocUpload] Upload failed:', uploadError)
       setDocUploadError(uploadError.message)
       return
     }
 
     const {
-      data: { publicUrl },
-    } = supabase.storage
-      .from('visitor-documents')
-      .getPublicUrl(storagePath)
+       data: { publicUrl },
+     } = supabase.storage
+       .from('visitor-documents')
+       .getPublicUrl(storagePath)
 
-    console.log('[handleDocUpload] Public URL:', publicUrl)
-
-    if (side === 'front') {
+     if (side === 'front') {
       updateField('doc_front_url', publicUrl)
       updateField('front_image_url', publicUrl)
     } else {
-      updateField('doc_back_url', publicUrl)
-      updateField('back_image_url', publicUrl)
-    }
-
-    console.log('[handleDocUpload] Updated field for', side, ':', side === 'front' ? 'doc_front_url' : 'doc_back_url')
-  }
+       updateField('doc_back_url', publicUrl)
+       updateField('back_image_url', publicUrl)
+     }
+   }
 
   const handleSubmit = async () => {
     const allErrors: Record<string, string | null> = {
@@ -607,113 +598,58 @@ export default function PublicRegistrationWizard() {
         return
       }
 
-      const regNumber = `REG-${Date.now().toString(36).toUpperCase()}`
-
-      const { data: employee } = await supabase
-        .from('employees')
-        .select('id, full_name, department, office_location')
-        .eq('id', formData.employee_id)
-        .single()
-
-      if (!employee) {
-        setError('Invalid host employee selected')
-        setSubmitting(false)
-        return
-      }
-
-      const { data: visitor, error: visitorError } = await supabase
-        .from('visitors')
-        .insert({
-          full_name: formData.full_name,
-          email: formData.email,
-          phone: formData.phone,
-          visitor_organization: formData.visitor_organization,
-          visitor_address: formData.visitor_address,
-          nationality: formData.nationality,
-          gender: formData.gender,
-          photo_url: formData.photo_url,
-          emergency_contact: formData.emergency_phone,
-          vehicle_plate: formData.registration_number,
-          vehicle_type: formData.vehicle_type,
-        })
-        .select()
-        .single()
-
-      if (visitorError || !visitor) {
-        setError(visitorError?.message || 'Failed to create visitor record')
-        setSubmitting(false)
-        return
-      }
-
-      const { data: visit, error: visitError } = await supabase
-        .from('visits')
-        .insert({
-          visitor_id: visitor.id,
-          employee_id: employee.id,
+       const registerResponse = await fetch('/api/public/register', {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+           full_name: formData.full_name,
+           phone: formData.phone,
+           email: formData.email,
+           visitor_organization: formData.visitor_organization,
+           visitor_address: formData.visitor_address,
+           nationality: formData.nationality,
+           gender: formData.gender,
+           photo_url: formData.photo_url,
+           emergency_phone: formData.emergency_phone,
+           registration_number: formData.registration_number,
+           vehicle_type: formData.vehicle_type,
+           employee_id: formData.employee_id,
            purpose: formData.purpose === 'Other' ? customPurpose : formData.purpose,
-          status: 'pending',
-          source: 'public',
-          registration_number: regNumber,
-          visitor_type: visitorType,
-          notes: formData.notes,
-          appointment_id: null,
-        })
-        .select()
-        .single()
+           visit_date: formData.visit_date,
+           arrival_time: formData.arrival_time,
+           expected_duration: formData.expected_duration,
+           has_vehicle: formData.has_vehicle,
+           visitor_type: visitorType,
+           notes: formData.notes,
+           doc_type: formData.doc_type,
+           doc_number: formData.doc_number,
+           issuing_country: formData.issuing_country,
+           expiry_date: formData.expiry_date,
+           doc_front_url: formData.doc_front_url,
+           doc_back_url: formData.doc_back_url || null,
+         }),
+       })
 
-      if (visitError || !visit) {
-        setError(visitError?.message || 'Failed to create visit record')
-        setSubmitting(false)
-        return
-      }
+       if (!registerResponse.ok) {
+         const errData = await registerResponse.json()
+         setError(errData.error || 'Registration failed')
+         setSubmitting(false)
+         return
+       }
 
-      if (docUploadError) {
-        setError(docUploadError)
-        setSubmitting(false)
-        return
-      }
+        const registerData = await registerResponse.json()
+        const regNumber = registerData.data.registrationNumber
+        const visitId = registerData.data.visitId
+        const badgeId = registerData.data.badgeId || null
+        const badgeNumber = registerData.data.badgeNumber || null
 
-      if (formData.doc_number && formData.doc_front_url) {
-        const insertPayload = {
-          visitor_id: visitor.id,
-          document_type: formData.doc_type,
-          document_number: formData.doc_number,
-          issuing_country: formData.issuing_country,
-          expiry_date: formData.expiry_date,
-          front_image_url: formData.doc_front_url,
-          file_url: formData.doc_front_url,
-          back_image_url: formData.doc_back_url || null,
-          verified: false,
-          verification_status: 'Pending',
-        }
-        
-        console.log('[PublicRegistrationWizard] Insert payload before visitor_documents:', insertPayload)
-        
-        const isStorageUrl = insertPayload.front_image_url.startsWith('http')
-        if (!isStorageUrl) {
-          const msg = `Refusing to insert non-Storage URL into visitor_documents: ${insertPayload.front_image_url}`
-          console.error('[PublicRegistrationWizard]', msg)
-          setError('Document upload failed. Only Storage URLs are accepted.')
-          setSubmitting(false)
-          return
-        }
-        
-        const { error: docError } = await supabase.from('visitor_documents').insert(insertPayload)
-        
-        if (docError) {
-          console.error('[PublicRegistrationWizard] visitor_documents insert error:', docError)
-        } else {
-          console.log('[PublicRegistrationWizard] visitor_documents insert succeeded')
-        }
-      }
+        const QRCode = (await import('qrcode')).default
+        const qrPayload = JSON.stringify({ registrationNumber: regNumber, visitId, type: 'public-visitor' })
+        const qrDataUrl = await QRCode.toDataURL(qrPayload, { width: 300, margin: 2 })
 
-      const QRCode = (await import('qrcode')).default
-      const qrPayload = JSON.stringify({ registrationNumber: regNumber, visitId: visit.id, type: 'public-visitor' })
-      const qrDataUrl = await QRCode.toDataURL(qrPayload, { width: 300, margin: 2 })
-
-      setRegistrationNumber(regNumber)
-      setQrCodeUrl(qrDataUrl)
-      setSubmitted(true)
+        setRegistrationNumber(regNumber)
+        setQrCodeUrl(qrDataUrl)
+        setSubmitted(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {
@@ -1385,7 +1321,7 @@ const isStepInvalid = () => {
             ) : (
               <button
                 onClick={handleSubmit}
-                disabled={submitting || !formData.accept_terms}
+                disabled={submitting || submitted || !formData.accept_terms}
                 className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-6 py-3 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 min-h-[52px]"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}

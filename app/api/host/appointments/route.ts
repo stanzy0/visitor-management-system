@@ -5,7 +5,7 @@ import { getHostAppointments, createHostAppointment, updateHostAppointment, dele
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(['Host Employee', 'Admin'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -14,14 +14,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: appointments })
   } catch (err) {
     console.error('Host appointments error:', err)
-    return NextResponse.json({ error: 'Failed to fetch appointments' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   const authResult = await requireRole(['Host Employee', 'Admin'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -31,14 +31,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: appointment }, { status: 201 })
   } catch (err) {
     console.error('Create appointment error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to create appointment' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function PUT(request: NextRequest) {
   const authResult = await requireRole(['Host Employee', 'Admin'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -49,14 +49,14 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ success: true, data: appointment })
   } catch (err) {
     console.error('Update appointment error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to update appointment' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function DELETE(request: NextRequest) {
   const authResult = await requireRole(['Host Employee', 'Admin'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -65,13 +65,13 @@ export async function DELETE(request: NextRequest) {
     const employeeId = request.headers.get('x-employee-id') || 'default'
 
     if (!id) {
-      return NextResponse.json({ error: 'Appointment ID is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     await deleteHostAppointment(id, employeeId)
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Delete appointment error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to delete appointment' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

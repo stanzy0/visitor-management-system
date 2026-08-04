@@ -34,11 +34,11 @@ export async function GET(
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { id } = await params
@@ -53,13 +53,13 @@ export async function GET(
       .single()
 
     if (error) {
-      return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }
 
     return NextResponse.json(mapToDocumentVerification(data))
   } catch (err) {
     console.error('[Documents API] GET error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -70,11 +70,11 @@ export async function PATCH(
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { id } = await params
@@ -120,7 +120,7 @@ export async function PATCH(
       .single()
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     const action = body.verification_status === 'Verified'
@@ -134,7 +134,7 @@ export async function PATCH(
     return NextResponse.json(mapToDocumentVerification(data))
   } catch (err) {
     console.error('[Documents API] PATCH error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -145,11 +145,11 @@ export async function DELETE(
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { id } = await params
@@ -173,7 +173,7 @@ export async function DELETE(
       .eq('id', id)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     await logAuditAction('Document Deleted', 'visitor_document', id, `Document ${id} deleted`)
@@ -181,7 +181,7 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[Documents API] DELETE error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -192,17 +192,16 @@ export async function POST(
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const admin = supabaseAdmin
 
     const { id } = await params
-    console.log('[Documents API] POST received, id:', id, 'action parsed will follow')
 
     const contentType = request.headers.get('content-type') || ''
     const isFormData = contentType.includes('multipart/form-data')
@@ -227,26 +226,19 @@ export async function POST(
       reason = body.reason || null
     }
 
-    console.log('[Documents API] POST parsed: id:', id, 'action:', action, 'notes:', notes, 'reason:', reason, 'file:', file ? file.name : null)
-
     const { data: existing, error: lookupError } = await admin
       .from('visitor_documents')
       .select('*')
       .eq('id', id)
       .single()
 
-    console.log('[Documents API] Document lookup result:', existing ? 'found' : 'not found', 'error:', lookupError?.message || 'none', 'id:', id)
-
     if (lookupError || !existing) {
-      console.log('[Documents API] Document not found in database, id:', id, 'lookupError:', lookupError?.message || 'no error object')
-      return NextResponse.json({ error: 'Document not found', details: lookupError?.message || 'No matching document found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: 'Document not found', error: 'Document not found', details: lookupError?.message || 'No matching document found' }, { status: 404 })
     }
 
     if (action === 'approve') {
-      console.log('[Documents API] action: approve, document id:', id)
       try {
         const document = await approveDocument(id, user.id, notes || undefined)
-        console.log('[Documents API] approval result: success, document id:', id)
         await logAuditAction('Document Approved', 'visitor_document', id, `Document ${existing.document_type} approved for visitor ${existing.visitor_id}`)
 
         admin.from('visitor_documents').select('visitor_id, visit_id').eq('id', id).single().then(({ data: doc }) => {
@@ -279,24 +271,20 @@ export async function POST(
           }
         })
 
-        return NextResponse.json({ success: true, document })
-      } catch (err: unknown) {
-        console.log('[Documents API] approval result: failed, document id:', id, 'error:', err instanceof Error ? err.message : 'Unknown error')
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error', details: err }, { status: 500 })
+       return NextResponse.json({ success: true, document })
+       } catch (err: unknown) {
+         return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
       }
     }
 
     if (action === 'reject') {
-      console.log('[Documents API] action: reject, document id:', id)
       if (!reason) {
-        console.log('[Documents API] rejection result: failed, no reason provided, document id:', id)
-        return NextResponse.json({ error: 'Rejection reason is required' }, { status: 400 })
+        return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
       }
 
-      try {
-        const document = await rejectDocument(id, user.id, reason)
-        console.log('[Documents API] rejection result: success, document id:', id)
-        await logAuditAction('Document Rejected', 'visitor_document', id, `Document ${existing.document_type} rejected for visitor ${existing.visitor_id}`)
+       try {
+         const document = await rejectDocument(id, user.id, reason)
+         await logAuditAction('Document Rejected', 'visitor_document', id, `Document ${existing.document_type} rejected for visitor ${existing.visitor_id}`)
 
         admin.from('visitor_documents').select('visitor_id').eq('id', id).single().then(({ data: doc }) => {
           if (doc?.visitor_id) {
@@ -315,23 +303,19 @@ export async function POST(
         })
 
         return NextResponse.json({ success: true, document })
-      } catch (err: unknown) {
-        console.log('[Documents API] rejection result: failed, document id:', id, 'error:', err instanceof Error ? err.message : 'Unknown error')
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error', details: err }, { status: 500 })
+       } catch (err: unknown) {
+         return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
       }
     }
 
     if (action === 'replacement') {
-      console.log('[Documents API] action: replacement, document id:', id)
       if (!reason) {
-        console.log('[Documents API] replacement result: failed, no reason provided, document id:', id)
-        return NextResponse.json({ error: 'Replacement reason is required' }, { status: 400 })
+        return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
       }
 
-      try {
-        const document = await requestReplacement(id, reason)
-        console.log('[Documents API] replacement result: success, document id:', id)
-        await logAuditAction('Replacement Requested', 'visitor_document', id, `Replacement requested for document ${existing.document_type}`)
+       try {
+         const document = await requestReplacement(id, reason)
+         await logAuditAction('Replacement Requested', 'visitor_document', id, `Replacement requested for document ${existing.document_type}`)
 
         admin.from('visitor_documents').select('visitor_id').eq('id', id).single().then(({ data: doc }) => {
           if (doc?.visitor_id) {
@@ -350,18 +334,15 @@ export async function POST(
         })
 
         return NextResponse.json({ success: true, document })
-      } catch (err: unknown) {
-        console.log('[Documents API] replacement result: failed, document id:', id, 'error:', err instanceof Error ? err.message : 'Unknown error')
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error', details: err }, { status: 500 })
+       } catch (err: unknown) {
+         return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
       }
     }
 
-    if (action === 'mark_replacement_uploaded') {
-      console.log('[Documents API] action: mark_replacement_uploaded, document id:', id)
-      try {
-        const document = await markReplacementUploaded(id)
-        console.log('[Documents API] mark_replacement_uploaded result: success, document id:', id)
-        await logAuditAction('Replacement Uploaded', 'visitor_document', id, `Replacement uploaded for document ${existing.document_type}`)
+     if (action === 'mark_replacement_uploaded') {
+       try {
+         const document = await markReplacementUploaded(id)
+         await logAuditAction('Replacement Uploaded', 'visitor_document', id, `Replacement uploaded for document ${existing.document_type}`)
 
         createReceptionistNotification(
           'Replacement Uploaded',
@@ -372,36 +353,32 @@ export async function POST(
         ).catch(() => {})
 
         return NextResponse.json({ success: true, document })
-      } catch (err: unknown) {
-        console.log('[Documents API] mark_replacement_uploaded result: failed, document id:', id, 'error:', err instanceof Error ? err.message : 'Unknown error')
-        return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error', details: err }, { status: 500 })
+       } catch (err: unknown) {
+         return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
       }
     }
 
-    if (action === 'replace' && file && file.size > 0) {
-      console.log('[Documents API] action: replace (file upload), document id:', id)
-      if (file.size > MAX_FILE_SIZE) {
-        console.log('[Documents API] replace result: failed, file too large, document id:', id)
-        return NextResponse.json(
+     if (action === 'replace' && file && file.size > 0) {
+       if (file.size > MAX_FILE_SIZE) {
+         return NextResponse.json(
           { error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB` },
           { status: 400 }
         )
       }
 
-      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-        console.log('[Documents API] replace result: failed, unsupported file type, document id:', id)
-        return NextResponse.json(
-          { error: `Unsupported file type: ${file.type}` },
-          { status: 400 }
-        )
-      }
+       if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+         return NextResponse.json(
+           { error: `Unsupported file type: ${file.type}` },
+           { status: 400 }
+         )
+       }
 
-      if (existing.file_url) {
-        const path = existing.file_url.split('/visitor-documents/')[1]
-        if (path) {
-          await admin.storage.from('visitor-documents').remove([path])
-        }
-      }
+       if (existing.file_url) {
+         const path = existing.file_url.split('/visitor-documents/')[1]
+         if (path) {
+           await admin.storage.from('visitor-documents').remove([path])
+         }
+       }
 
       const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '-').replace(/-+/g, '-')
       const uniqueFileName = `${existing.visitor_id}/${Date.now()}-${sanitizedName}`
@@ -412,9 +389,8 @@ export async function POST(
           upsert: false,
         })
 
-      if (uploadError) {
-        console.log('[Documents API] replace result: failed, upload error:', uploadError.message, 'document id:', id)
-        return NextResponse.json({ error: uploadError.message }, { status: 500 })
+       if (uploadError) {
+         return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
       }
 
       const { data: publicUrlData } = admin.storage
@@ -439,41 +415,35 @@ export async function POST(
         `)
         .single()
 
-      if (error) {
-        console.log('[Documents API] replace result: failed, Supabase error:', error.message, 'document id:', id)
-        return NextResponse.json({ error: error.message }, { status: 500 })
-      }
+       if (error) {
+         return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
+       }
 
-      await logAuditAction('Document Replaced', 'visitor_document', id, `Document ${id} replaced`)
+       await logAuditAction('Document Replaced', 'visitor_document', id, `Document ${id} replaced`)
 
-      console.log('[Documents API] replace result: success, document id:', id)
-      return NextResponse.json(mapToDocumentVerification(data))
+       return NextResponse.json(mapToDocumentVerification(data))
     }
 
     if (action === 'download') {
-      console.log('[Documents API] action: download, document id:', id)
       const { data: doc } = await admin
         .from('visitor_documents')
         .select('file_url, front_image_url, file_name, document_type')
         .eq('id', id)
         .single()
 
-      const fileUrl = doc?.file_url || doc?.front_image_url
-      if (!fileUrl) {
-        console.log('[Documents API] download result: failed, no file available, document id:', id)
-        return NextResponse.json({ error: 'No file available' }, { status: 404 })
+       const fileUrl = doc?.file_url || doc?.front_image_url
+       if (!fileUrl) {
+         return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
       }
 
-      await logAuditAction('Document Downloaded', 'visitor_document', id, `Document ${doc.document_type} downloaded`)
+       await logAuditAction('Document Downloaded', 'visitor_document', id, `Document ${doc.document_type} downloaded`)
 
-      console.log('[Documents API] download result: success, document id:', id)
-      return NextResponse.json({ url: fileUrl, file_name: doc.file_name })
+       return NextResponse.json({ url: fileUrl, file_name: doc.file_name })
     }
 
-    console.log('[Documents API] action: invalid, document id:', id)
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
   } catch (err) {
     console.error('[Documents API] POST error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

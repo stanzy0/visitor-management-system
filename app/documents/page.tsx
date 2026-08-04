@@ -78,21 +78,17 @@ export default function DocumentsPage() {
       if (filters.date_from) params.set('date_from', filters.date_from)
       if (filters.date_to) params.set('date_to', filters.date_to)
 
-      console.log('[Documents Page] Fetching with params:', params.toString())
-
-      const res = await fetch(`/api/documents?${params.toString()}`, {
+       const res = await fetch(`/api/documents?${params.toString()}`, {
         headers: await getAuthHeaders(),
       })
-      const json = await res.json()
-      console.log('[Documents Page] Response:', json)
-      if (res.ok) {
-        const documents = json.data || []
-        console.log('[Documents Page] Loaded documents:', documents)
-        setVerifications(documents)
-      } else {
-        console.log('[Documents Page] API error:', json.error)
-      }
-    } catch (error) {
+       const json = await res.json()
+       if (res.ok) {
+         const documents = json.data || []
+         setVerifications(documents)
+        } else {
+          setNotification({ type: 'error', message: json.error || 'Failed to load verifications' })
+        }
+      } catch (error) {
       console.error('Failed to fetch verifications:', error)
     } finally {
       setTimeout(() => setLoading(false), 0)

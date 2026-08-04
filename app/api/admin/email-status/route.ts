@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const authResult = await requireAdmin()
     if (!authResult.authorized) {
-      return NextResponse.json({ error: authResult.error }, { status: authResult.status as number })
+      return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status as number })
     }
 
     const configured = !!process.env.RESEND_API_KEY

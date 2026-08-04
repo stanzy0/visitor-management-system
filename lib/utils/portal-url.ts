@@ -37,21 +37,13 @@ export function getPortalUrl(qrToken: string): string {
   const encodedToken = encodeURIComponent(qrToken)
   const portalUrl = `${appUrl}/portal/${encodedToken}`
 
-  if (!portalUrl.includes('/portal/') || !portalUrl.includes(encodedToken)) {
-    const error = `Generated URL does not match expected format: ${portalUrl}`
-    console.error('[Portal URL Error]', { error, timestamp: new Date().toISOString() })
-    throw new Error(error)
-  }
+    if (!portalUrl.includes('/portal/') || !portalUrl.includes(encodedToken)) {
+     const error = `Generated URL does not match expected format: ${portalUrl}`
+     console.error('[Portal URL Error]', { error, timestamp: new Date().toISOString() })
+     throw new Error(error)
+   }
 
-  console.log('[QR Portal URL Generated]', {
-    qr_token: qrToken,
-    portal_url: portalUrl,
-    environment: process.env.NODE_ENV,
-    app_url: appUrl,
-    timestamp: new Date().toISOString(),
-  })
-
-  return portalUrl
+   return portalUrl
 }
 
 export function verifyPortalUrl(url: string, qrToken: string): boolean {

@@ -18,12 +18,12 @@ function calculateDuration(checkInTime: string): string {
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(['Security', 'Admin', 'Receptionist'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
         .single()
 
       if (visitError || !visit) {
-        return NextResponse.json({ error: 'Visit not found' }, { status: 404 })
+        return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
       }
 
       const { data: properties } = await supabaseAdmin
@@ -67,25 +67,25 @@ export async function GET(request: NextRequest) {
       .order('check_in_time', { ascending: true })
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, data: visits || [] })
   } catch (err) {
     console.error('Exit control fetch error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   const authResult = await requireRole(['Security', 'Admin'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const body = await request.json()
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     } = body
 
     if (!visitor_id) {
-      return NextResponse.json({ error: 'Visitor ID is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const user = await getCurrentUser()
@@ -212,6 +212,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: activity }, { status: 201 })
   } catch (err) {
     console.error('Exit processing error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

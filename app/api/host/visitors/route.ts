@@ -5,7 +5,7 @@ import { getHostVisitors, approveVisitor, rejectVisitor } from '@/lib/server/hos
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(['Host Employee', 'Admin'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -18,14 +18,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: visitors })
   } catch (err) {
     console.error('Host visitors error:', err)
-    return NextResponse.json({ error: 'Failed to fetch visitors' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   const authResult = await requireRole(['Host Employee', 'Admin'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -41,15 +41,15 @@ export async function POST(request: NextRequest) {
 
     if (action === 'reject') {
       if (!reason) {
-        return NextResponse.json({ error: 'Rejection reason is required' }, { status: 400 })
+        return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
       }
       const updated = await rejectVisitor(visitId, employeeId, reason)
       return NextResponse.json({ success: true, data: updated })
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
   } catch (err) {
     console.error('Host visitor action error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to process action' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

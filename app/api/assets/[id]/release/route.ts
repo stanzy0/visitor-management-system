@@ -5,7 +5,7 @@ import { releasePropertyItem } from '@/lib/server/property'
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authResult = await requireRole(['Admin', 'Security'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -14,13 +14,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { released_to, signature_url } = body
 
     if (!released_to) {
-      return NextResponse.json({ error: 'released_to is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const item = await releasePropertyItem(id, released_to, signature_url, authResult.userEmail)
     return NextResponse.json({ success: true, data: item })
   } catch (err) {
     console.error('Release property item error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to release property item' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

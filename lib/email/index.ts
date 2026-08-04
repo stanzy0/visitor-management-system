@@ -14,9 +14,8 @@ function getResendApiKey(): string | undefined {
 
 export async function sendEmail(payload: EmailPayload): Promise<boolean> {
   const apiKey = getResendApiKey()
-  if (!apiKey) {
-    console.warn('RESEND_API_KEY not configured. Email not sent.')
-    await logEmail({
+   if (!apiKey) {
+     await logEmail({
       ...payload,
       status: 'failed',
       error_message: 'RESEND_API_KEY not configured',

@@ -12,7 +12,7 @@ import QRCode from 'qrcode'
 export async function POST(request: NextRequest) {
   const authResult = await requireRole(['Admin', 'Receptionist'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -20,11 +20,11 @@ export async function POST(request: NextRequest) {
     const { visit_id, action, reason } = body
 
     if (!visit_id || !action) {
-      return NextResponse.json({ error: 'visit_id and action are required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { data: visit, error: fetchError } = await supabaseAdmin
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (fetchError || !visit) {
-      return NextResponse.json({ error: 'Visit not found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }
 
     const visitor = Array.isArray(visit.visitor) ? visit.visitor[0] : visit.visitor
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
           error: badgeError?.message,
           timestamp: new Date().toISOString(),
         })
-        return NextResponse.json({ error: 'Failed to create badge' }, { status: 500 })
+        return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
       }
 
       if (!badge.qr_token || !badge.badge_number) {
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
           badge_id: badge.id,
           timestamp: new Date().toISOString(),
         })
-        return NextResponse.json({ error: 'Badge creation failed: missing qr_token' }, { status: 500 })
+        return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
       }
 
       const { error: updateError } = await supabaseAdmin
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
         .eq('id', visit_id)
 
       if (updateError) {
-        return NextResponse.json({ error: 'Failed to update visit status' }, { status: 500 })
+        return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
       }
 
       const portalUrl = getPortalUrl(badge.qr_token)
@@ -107,26 +107,14 @@ export async function POST(request: NextRequest) {
           .delete()
           .eq('id', badge.id)
 
-        return NextResponse.json(
-          { error: `QR verification failed: ${qrVerification.error}` },
-          { status: 500 }
-        )
-      }
+         return NextResponse.json(
+           { error: `QR verification failed: ${qrVerification.error}` },
+           { status: 500 }
+         )
+       }
 
-      console.log('[Badge Created - Public Registration]', {
-        badge_number: badge.badge_number,
-        qr_token: badge.qr_token,
-        portal_url: portalUrl,
-        visit_id,
-        registration_number: visit.registration_number,
-        visitor_id: visitor?.id,
-        visitor_name: visitor?.full_name,
-        environment: process.env.NODE_ENV,
-        timestamp: new Date().toISOString(),
-      })
-
-      await sendEmail({
-        to: visitor?.email || '',
+        await sendEmail({
+          to: visitor?.email || '',
         recipientName: visitor?.full_name || 'Visitor',
         subject: `Registration Approved - ${visit.registration_number}`,
         template: 'registration_approved',
@@ -190,7 +178,7 @@ export async function POST(request: NextRequest) {
         .eq('id', visit_id)
 
       if (updateError) {
-        return NextResponse.json({ error: 'Failed to update visit status' }, { status: 500 })
+        return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
       }
 
       await sendEmail({
@@ -215,7 +203,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true })
     }
 
-    return NextResponse.json({ error: 'Invalid action. Use approve or reject.' }, { status: 400 })
+    return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
   } catch (err) {
     console.error('[Public Registrations API] Error:', err)
     return NextResponse.json(
@@ -229,23 +217,19 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
-    }
+     try {
+     if (!supabaseAdmin) {
+       return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
+     }
 
-    console.log('STEP 1 - Checking if visits table exists and is accessible')
-
-    const { data: visits, error: visitsError } = await supabaseAdmin
+     const { data: visits, error: visitsError } = await supabaseAdmin
       .from('visits')
       .select('*')
       .eq('source', 'public')
       .eq('status', 'pending')
-      .order('created_at', { ascending: true })
+       .order('created_at', { ascending: true })
 
-    console.log('STEP 1 OK - Visits query completed')
-
-    if (visitsError) {
+     if (visitsError) {
       console.error('[Public Registrations API] Visits query error:', {
         message: visitsError.message,
         details: visitsError.details,
@@ -280,13 +264,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    if (!visits || visits.length === 0) {
-      return NextResponse.json({ success: true, data: [] })
-    }
+     if (!visits || visits.length === 0) {
+       return NextResponse.json({ success: true, data: [] })
+     }
 
-    console.log('STEP 2 - Checking visitors table')
-
-    const visitorIds = [...new Set(visits.map((v: any) => v.visitor_id).filter(Boolean))]
+     const visitorIds = [...new Set(visits.map((v: any) => v.visitor_id).filter(Boolean))]
     const employeeIds = [...new Set(visits.map((v: any) => v.employee_id).filter(Boolean))]
 
     const { data: visitors, error: visitorsError } = visitorIds.length
@@ -294,11 +276,9 @@ export async function GET(request: NextRequest) {
           .from('visitors')
           .select('id, full_name, email, phone')
           .in('id', visitorIds)
-      : { data: [], error: null }
+       : { data: [], error: null }
 
-    console.log('STEP 2 OK - Visitors query completed')
-
-    if (visitorsError) {
+     if (visitorsError) {
       console.error('[Public Registrations API] Visitors query error:', {
         message: visitorsError.message,
         details: visitorsError.details,
@@ -330,21 +310,17 @@ export async function GET(request: NextRequest) {
           source: 'visitors query',
         },
         { status: 500 }
-      )
-    }
+       )
+     }
 
-    console.log('STEP 3 - Checking employees table')
-
-    const { data: employees, error: employeesError } = employeeIds.length
+     const { data: employees, error: employeesError } = employeeIds.length
       ? await supabaseAdmin
           .from('employees')
           .select('id, full_name, department')
           .in('id', employeeIds)
-      : { data: [], error: null }
+       : { data: [], error: null }
 
-    console.log('STEP 3 OK - Employees query completed')
-
-    if (employeesError) {
+     if (employeesError) {
       console.error('[Public Registrations API] Employees query error:', {
         message: employeesError.message,
         details: employeesError.details,

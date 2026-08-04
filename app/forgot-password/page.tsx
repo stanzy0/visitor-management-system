@@ -17,24 +17,20 @@ export default function ForgotPasswordPage() {
     setError(null)
 
     try {
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      })
+       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+         redirectTo: `${window.location.origin}/reset-password`,
+       })
 
-      console.log('DATA:', data)
-      console.error('ERROR:', error)
-
-      if (error) {
+       if (error) {
         setError(error.message)
-      } else {
-        try {
-          await logAuditAction('Password Reset Requested', 'authentication', null, `Password reset request for ${email}`)
-        } catch (err) {
-          console.warn('Audit logging skipped:', err)
-        }
-        setSent(true)
-      }
-    } catch {
+       } else {
+         try {
+           await logAuditAction('Password Reset Requested', 'authentication', null, `Password reset request for ${email}`)
+         } catch (err) {
+           setSent(true)
+         }
+       }
+     } catch {
       setError('An unexpected error occurred. Please try again.')
     } finally {
       setLoading(false)

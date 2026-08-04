@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getBranding } from '@/lib/server/branding'
 
 const APP_VERSION = process.env.APP_VERSION || '1.0.0'
 
@@ -8,6 +9,7 @@ interface HealthCheck {
   storage: boolean
   email: boolean
   environment: boolean
+  branding: boolean
   timestamp: string
   version: string
   details?: Record<string, unknown>
@@ -19,6 +21,7 @@ export async function GET(request: NextRequest) {
     storage: false,
     email: false,
     environment: false,
+    branding: false,
     timestamp: new Date().toISOString(),
     version: APP_VERSION,
   }
@@ -66,9 +69,23 @@ export async function GET(request: NextRequest) {
       health.storage = false
       details.storage = { accessible: false, error: err instanceof Error ? err.message : 'Unknown error' }
     }
+
+    try {
+      const branding = await getBranding()
+      health.branding = !!branding
+      details.branding = {
+        configured: health.branding,
+        has_logo: !!branding?.logo_url,
+        has_colors: !!(branding?.primary_color && branding?.secondary_color),
+      }
+    } catch {
+      health.branding = false
+      details.branding = { configured: false, error: 'Failed to load branding' }
+    }
   } else {
     details.database = { connected: false, error: 'supabaseAdmin not initialized' }
     details.storage = { accessible: false, error: 'supabaseAdmin not initialized' }
+    details.branding = { configured: false, error: 'supabaseAdmin not initialized' }
   }
 
   const hasResendKey = !!process.env.RESEND_API_KEY
@@ -77,7 +94,7 @@ export async function GET(request: NextRequest) {
     configured: health.email,
   }
 
-  const allHealthy = health.database && health.storage && health.email && health.environment
+  const allHealthy = health.database && health.storage && health.email && health.environment && health.branding
 
   return NextResponse.json(
     {

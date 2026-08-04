@@ -5,7 +5,7 @@ import { confiscatePropertyItem, addPropertyHistory } from '@/lib/server/propert
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authResult = await requireRole(['Admin', 'Security'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -14,13 +14,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { reason, expected_release_at } = body
 
     if (!reason) {
-      return NextResponse.json({ error: 'Reason is required for confiscation' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const item = await confiscatePropertyItem(id, reason, authResult.userEmail || 'system', expected_release_at)
     return NextResponse.json({ success: true, data: item })
   } catch (err) {
     console.error('Confiscate property item error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to confiscate property item' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -6,7 +6,7 @@ import { generateSecret } from '@/lib/mfa/totp'
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
@@ -18,6 +18,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     console.error('MFA setup error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

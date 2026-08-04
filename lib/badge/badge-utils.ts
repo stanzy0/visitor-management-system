@@ -71,18 +71,10 @@ export function buildBadgeQrValue(badge: VisitorBadge): string {
       environment: process.env.NODE_ENV,
       timestamp: new Date().toISOString(),
     })
-    throw new Error(error)
-  }
+     throw new Error(error)
+   }
 
-  console.log('[Badge QR Generated]', {
-    badge_number: badge.badge_number,
-    qr_token: badge.qr_token,
-    portal_url: portalUrl,
-    environment: process.env.NODE_ENV,
-    timestamp: new Date().toISOString(),
-  })
-
-  return portalUrl
+   return portalUrl
 }
 
 export function calculateExpiry(hours: number = BADGE_DEFAULT_EXPIRY_HOURS): Date {

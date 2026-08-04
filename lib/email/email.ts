@@ -50,9 +50,8 @@ export async function sendEmailQueued(params: SendEmailParams): Promise<void> {
 export async function sendEmailWithLogging(params: SendEmailParams): Promise<boolean> {
   const success = await sendEmail(params)
 
-  if (!success) {
-    console.warn(`Email to ${params.to} failed, queueing for retry`)
-    await queueEmail({
+   if (!success) {
+     await queueEmail({
       ...params,
     })
   }

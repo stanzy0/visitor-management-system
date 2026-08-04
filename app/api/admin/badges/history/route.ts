@@ -5,7 +5,7 @@ import { getBadgeHistory, addBadgeHistoryRecord } from '@/lib/server/badges'
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(['Admin', 'Receptionist', 'Security'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -16,14 +16,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: history })
   } catch (err) {
     console.error('Fetch badge history error:', err)
-    return NextResponse.json({ error: 'Failed to fetch badge history' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   const authResult = await requireRole(['Admin', 'Receptionist', 'Security'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -32,6 +32,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: record }, { status: 201 })
   } catch (err) {
     console.error('Add badge history error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to add badge history' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

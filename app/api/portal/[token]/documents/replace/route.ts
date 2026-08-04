@@ -8,11 +8,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { token } = await params
     const visit = await resolveVisit(token)
     if (!visit) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     if (visit.status !== 'pending') {
-      return NextResponse.json({ error: 'Documents can only be replaced while visit is pending' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const formData = await request.formData()
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const documentId = formData.get('documentId') as string | null
 
     if (!file || !documentId) {
-      return NextResponse.json({ error: 'File and documentId are required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const updated = await replacePortalDocument(documentId, file, visit.visitor.id, visit.id)
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ success: true, data: updated })
   } catch (err) {
     console.error('Portal replace document error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 

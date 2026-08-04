@@ -30,18 +30,18 @@ export async function POST(request: NextRequest) {
   const authResult = requireAdmin()
   if (!(await authResult).authorized) {
     const result = await authResult
-    return NextResponse.json({ error: result.error }, { status: result.status })
+    return NextResponse.json({ success: false, message: result.error, error: result.error }, { status: result.status })
   }
 
   try {
     const { email, full_name, role } = await request.json()
 
     if (!email || !role) {
-      return NextResponse.json({ error: 'Email and role are required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const tempPassword = generateTemporaryPassword()
@@ -55,9 +55,9 @@ export async function POST(request: NextRequest) {
 
     if (authError) {
       if (authError.message.includes('already exists')) {
-        return NextResponse.json({ error: 'User with this email already exists' }, { status: 400 })
+        return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
       }
-      return NextResponse.json({ error: authError.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     const userId = authUser.user.id
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       } catch (err) {
         console.error('Failed to log failed user creation audit:', err)
       }
-      return NextResponse.json({ error: dbError.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     try {
@@ -110,6 +110,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     console.error('Create user error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

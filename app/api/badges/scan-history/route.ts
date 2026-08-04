@@ -6,7 +6,7 @@ import type { VerificationResult } from '@/lib/types/badge-scan'
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(['Admin', 'Security', 'Receptionist'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -27,6 +27,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result)
   } catch (err) {
     console.error('[Scan History] Error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

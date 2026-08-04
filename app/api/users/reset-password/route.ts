@@ -29,20 +29,20 @@ async function logAuditAction(action: string, entityType: string, entityId: stri
 export async function POST(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status as never })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status as never })
   }
 
   try {
     const { userId, email } = await request.json()
 
     if (!userId) {
-      return NextResponse.json({ error: 'User ID is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const tempPassword = generateTemporaryPassword()
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     await logAuditAction('Password Reset', 'user', userId, `Password reset for ${email}`)
@@ -61,6 +61,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (err) {
     console.error('Reset password error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

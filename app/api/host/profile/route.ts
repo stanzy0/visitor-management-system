@@ -5,26 +5,26 @@ import { getHostProfile, updateHostProfile } from '@/lib/server/host'
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(['Host Employee', 'Admin'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
     const employeeId = request.headers.get('x-employee-id') || 'default'
     const profile = await getHostProfile(employeeId)
     if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }
     return NextResponse.json({ success: true, data: profile })
   } catch (err) {
     console.error('Host profile error:', err)
-    return NextResponse.json({ error: 'Failed to fetch profile' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
   }
 }
 
 export async function PUT(request: NextRequest) {
   const authResult = await requireRole(['Host Employee', 'Admin'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -34,6 +34,6 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ success: true, data: profile })
   } catch (err) {
     console.error('Update profile error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to update profile' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

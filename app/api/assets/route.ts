@@ -6,7 +6,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(['Admin', 'Receptionist', 'Security', 'Host Employee'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     let effectiveEmployeeId = employeeId
     if (!effectiveEmployeeId && authResult.userEmail) {
       if (!supabaseAdmin) {
-        return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+        return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
       }
       const { data: employee } = await supabaseAdmin
         .from('employees')
@@ -36,14 +36,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: items })
   } catch (err) {
     console.error('Fetch property items error:', err)
-    return NextResponse.json({ error: 'Failed to fetch property items' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   const authResult = await requireRole(['Admin', 'Receptionist'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     const { visit_id, visitor_id, employee_id, ...itemData } = body
 
     if (!visit_id || !visitor_id || !employee_id) {
-      return NextResponse.json({ error: 'visit_id, visitor_id, and employee_id are required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const item = await createPropertyItem(
@@ -67,6 +67,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: item }, { status: 201 })
   } catch (err) {
     console.error('Create property item error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to create property item' }, { status: 500 })
-  }
-}
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
+   }
+ }

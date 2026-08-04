@@ -5,7 +5,7 @@ import { queueEmail } from '@/lib/email'
 export async function POST(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     const { to, recipientName, subject, template, data, relatedType, relatedId } = body
 
     if (!to || !subject || !template) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     await queueEmail({
@@ -29,6 +29,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error queuing email:', error)
-    return NextResponse.json({ error: 'Failed to queue email' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
   }
 }

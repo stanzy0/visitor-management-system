@@ -5,7 +5,7 @@ import { getDepartments, createDepartment, updateDepartment, deleteDepartment } 
 export async function GET(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -13,14 +13,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: departments })
   } catch (err) {
     console.error('Fetch departments error:', err)
-    return NextResponse.json({ error: 'Failed to fetch departments' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -28,21 +28,21 @@ export async function POST(request: NextRequest) {
     const { name, head_name, building, is_active } = body
 
     if (!name) {
-      return NextResponse.json({ error: 'Department name is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const department = await createDepartment({ name, head_name, building, is_active })
     return NextResponse.json({ success: true, data: department }, { status: 201 })
   } catch (err) {
     console.error('Create department error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to create department' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function PUT(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -50,21 +50,21 @@ export async function PUT(request: NextRequest) {
     const { id, name, head_name, building, is_active } = body
 
     if (!id) {
-      return NextResponse.json({ error: 'Department ID is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const department = await updateDepartment(id, { name, head_name, building, is_active })
     return NextResponse.json({ success: true, data: department })
   } catch (err) {
     console.error('Update department error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to update department' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function DELETE(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -72,13 +72,13 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id')
 
     if (!id) {
-      return NextResponse.json({ error: 'Department ID is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     await deleteDepartment(id)
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Delete department error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Failed to delete department' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

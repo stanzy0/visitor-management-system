@@ -7,11 +7,11 @@ export async function GET(request: NextRequest) {
     const q = searchParams.get('q')
 
     if (!q) {
-      return NextResponse.json({ error: 'Search term is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     let data: any = null
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     if (error || !data) {
       console.error('[public/status] lookup error', { q, error, data })
-      return NextResponse.json({ error: 'Registration not found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }
 
     const visit = data as any
@@ -94,6 +94,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (err) {
     console.error('Public status check error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

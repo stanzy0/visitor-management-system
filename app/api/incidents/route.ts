@@ -6,12 +6,12 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     const allowedRoles = ['Admin', 'Security', 'Operations', 'Receptionist', 'Commandant']
     if (!allowedRoles.includes(user.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return NextResponse.json({ success: false, message: 'Insufficient permissions', error: 'Forbidden' }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: incidents })
   } catch (err) {
     console.error('Incidents fetch error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -38,19 +38,19 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
     }
 
     const allowedRoles = ['Admin', 'Security', 'Operations', 'Receptionist']
     if (!allowedRoles.includes(user.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      return NextResponse.json({ success: false, message: 'Insufficient permissions', error: 'Forbidden' }, { status: 403 })
     }
 
     const body = await request.json()
     const { title, description, category, severity, visitor_id, visit_id, employee_id, assigned_to, location } = body
 
     if (!title || !description) {
-      return NextResponse.json({ error: 'Title and description are required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const incident = await createIncident(
@@ -72,6 +72,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: incident }, { status: 201 })
   } catch (err) {
     console.error('Incident creation error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

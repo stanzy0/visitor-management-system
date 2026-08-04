@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
     const registrationNumber = searchParams.get('reg')
     
     if (!registrationNumber) {
-      return NextResponse.json({ error: 'Registration number required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const { data: vehicle, error } = await supabase
@@ -24,11 +24,11 @@ export async function GET(req: NextRequest) {
       .single()
 
     if (error) {
-      return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }
 
     return NextResponse.json({ vehicle })
   }
 
-  return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+  return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
 }

@@ -31,7 +31,7 @@ function isWeekday(dateStr: string): boolean {
 export async function GET(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     const duration = parseInt(searchParams.get('duration') || '60', 10)
 
     if (!employee_id || !date || !time) {
-      return NextResponse.json({ error: 'employee_id, date, and time are required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const startMinutes = timeToMinutes(time)
@@ -51,11 +51,9 @@ export async function GET(request: NextRequest) {
       .from('employees')
       .select('id, full_name, office_location')
       .eq('id', employee_id)
-      .single()
+       .single()
 
-    console.log('[host-availability] employee lookup', { employee_id, employee })
-
-    if (!employee) {
+     if (!employee) {
       return NextResponse.json({ status: 'Unavailable', message: 'Employee not found.', disabled: true } as AvailabilityResponse)
     }
 

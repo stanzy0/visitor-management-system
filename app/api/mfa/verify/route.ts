@@ -21,14 +21,14 @@ async function logAuditAction(action: string, entityType: string, entityId: stri
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
     const { code, type } = await request.json()
 
     if (!code) {
-      return NextResponse.json({ error: 'Code is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     const { data: userRole } = await supabase
@@ -38,11 +38,11 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!userRole?.two_factor_secret) {
-      return NextResponse.json({ error: 'MFA not enabled' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     if (userRole.locked_until && new Date(userRole.locked_until) > new Date()) {
-      return NextResponse.json({ error: 'Account temporarily locked due to too many failed attempts' }, { status: 423 })
+      return NextResponse.json({ success: false, message: 'Account temporarily locked due to too many failed attempts', error: 'Account temporarily locked' }, { status: 423 })
     }
 
     let valid = false
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
       await logAuditAction('Failed MFA Login', 'user', user.id, `Failed MFA attempt for ${user.email}`)
 
-      return NextResponse.json({ error: 'Invalid verification code' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     await supabase.from('user_roles').update({
@@ -99,6 +99,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('MFA verify error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

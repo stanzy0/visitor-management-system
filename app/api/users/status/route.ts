@@ -20,14 +20,14 @@ async function logAuditAction(action: string, entityType: string, entityId: stri
 export async function PATCH(request: NextRequest) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status as never })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status as never })
   }
 
   try {
     const { userId, action } = await request.json()
 
     if (!userId || !action) {
-      return NextResponse.json({ error: 'User ID and action are required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     let updateData: { ban_duration?: string; must_change_password?: boolean } = {}
@@ -39,11 +39,11 @@ export async function PATCH(request: NextRequest) {
     } else if (action === 'force-password-reset') {
       updateData = { must_change_password: true }
     } else {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     if (action === 'force-password-reset') {
@@ -57,7 +57,7 @@ export async function PATCH(request: NextRequest) {
       })
 
       if (authError) {
-        return NextResponse.json({ error: authError.message }, { status: 500 })
+        return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
       }
 
       const { data: user } = await supabase
@@ -78,7 +78,7 @@ export async function PATCH(request: NextRequest) {
     const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, updateData)
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
     }
 
     const { data: user } = await supabase
@@ -92,6 +92,6 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('User status update error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

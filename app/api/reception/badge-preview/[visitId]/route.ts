@@ -12,7 +12,7 @@ import { getDocumentVerifications } from '@/lib/server/document-verification'
 export async function GET(request: NextRequest, { params }: { params: Promise<{ visitId: string }> }) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const visit = await getVisitForBadgePreview(visitId)
     if (!visit) {
-      return NextResponse.json({ error: 'Visit not found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }
 
     const templates = await getBadgeTemplates()
@@ -28,14 +28,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ success: true, data: { visit, templates } })
   } catch (err) {
     console.error('Badge preview fetch error:', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ visitId: string }> }) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
@@ -44,11 +44,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { action, reason, template_id, orientation, expires_at } = body
 
     if (!action || !['approve', 'reject'].includes(action)) {
-      return NextResponse.json({ error: 'Invalid action. Use approve or reject.' }, { status: 400 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { data: visit, error: fetchError } = await supabaseAdmin
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .single()
 
     if (fetchError || !visit) {
-      return NextResponse.json({ error: 'Visit not found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }
 
     const visitor = Array.isArray(visit.visitor) ? visit.visitor[0] : visit.visitor
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         .single()
 
       if (badgeError || !badge) {
-        return NextResponse.json({ error: 'Failed to create badge' }, { status: 500 })
+        return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
       }
 
       const { error: updateError } = await supabaseAdmin
@@ -105,23 +105,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         .eq('id', visitId)
 
       if (updateError) {
-        return NextResponse.json({ error: 'Failed to update visit status' }, { status: 500 })
+        return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
       }
 
-      const portalUrl = getPortalUrl(badge.qr_token)
-      const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
-
-      console.log('[Badge Created - Reception Preview]', {
-        badge_number: badge.badge_number,
-        qr_token: badge.qr_token,
-        portal_url: portalUrl,
-        visit_id: visitId,
-        registration_number: visit.registration_number,
-        visitor_id: visitor?.id,
-        visitor_name: visitor?.full_name,
-        environment: process.env.NODE_ENV,
-        timestamp: new Date().toISOString(),
-      })
+        const portalUrl = getPortalUrl(badge.qr_token)
+        const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
 
       await sendEmail({
         to: visitor?.email || '',
@@ -174,7 +162,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         .eq('id', visitId)
 
       if (updateError) {
-        return NextResponse.json({ error: 'Failed to update visit status' }, { status: 500 })
+        return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
       }
 
       await sendEmail({
@@ -198,9 +186,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ success: true })
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
   } catch (err) {
     console.error('Badge preview action error:', err)
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

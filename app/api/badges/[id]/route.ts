@@ -8,14 +8,14 @@ export async function GET(
 ) {
   const authResult = await requireAdmin()
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
     const { id } = await params
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     const { data, error } = await supabaseAdmin
@@ -25,13 +25,13 @@ export async function GET(
       .single()
 
     if (error || !data) {
-      return NextResponse.json({ error: 'Badge not found' }, { status: 404 })
+      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }
 
     return NextResponse.json({ data })
   } catch (err) {
     console.error(err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -41,14 +41,14 @@ export async function POST(
 ) {
   const authResult = await requireRole(['Admin', 'Receptionist'])
   if (!authResult.authorized) {
-    return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
 
   try {
     const { id } = await params
 
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Service role key not configured' }, { status: 500 })
+      return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
     let body
@@ -73,7 +73,7 @@ export async function POST(
         .single()
 
       if (!badge) {
-        return NextResponse.json({ error: 'Badge not found' }, { status: 404 })
+        return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
       }
 
       const { error } = await supabaseAdmin
@@ -86,7 +86,7 @@ export async function POST(
         .eq('id', id)
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 400 })
+        return NextResponse.json({ success: false, message: error.message, error: error.message }, { status: 400 })
       }
 
       return NextResponse.json({ success: true, message: 'Badge printed' })
@@ -100,7 +100,7 @@ export async function POST(
         .single()
 
       if (!badge) {
-        return NextResponse.json({ error: 'Badge not found' }, { status: 404 })
+        return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
       }
 
       const { error } = await supabaseAdmin
@@ -113,7 +113,7 @@ export async function POST(
         .eq('id', id)
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 400 })
+        return NextResponse.json({ success: false, message: error.message, error: error.message }, { status: 400 })
       }
 
       return NextResponse.json({ success: true, message: 'Badge reprinted' })
@@ -126,13 +126,13 @@ export async function POST(
         .eq('id', id)
 
       if (error) {
-        return NextResponse.json({ error: error.message }, { status: 400 })
+        return NextResponse.json({ success: false, message: error.message, error: error.message }, { status: 400 })
       }
 
       return NextResponse.json({ success: true, message: 'Badge cancelled' })
     }
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+    return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
   } catch (err) {
     console.error('Badge action error:', err)
 
