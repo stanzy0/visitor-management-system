@@ -54,6 +54,15 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: "/register",
+        headers: [
+          {
+            key: "Permissions-Policy",
+            value: "camera=(self), microphone=(), geolocation=()",
+          },
+        ],
+      },
     ];
   },
 };
