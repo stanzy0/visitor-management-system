@@ -105,45 +105,31 @@ export default function BadgePage({ params }: { params: Promise<{ id: string }> 
             </div>
           )}
           <div className="mt-6 print:hidden flex justify-center">
-            <button
-              onClick={async () => {
-                const tempBadge = {
-                  id: 'preview',
-                  visit_id: approvedVisit?.id || '',
-                  badge_number: visitor?.id?.slice(0, 8) || 'PREVIEW',
-                  qr_token: approvedVisit?.qr_code || 'preview',
-                  badge_status: 'Active' as const,
-                  issued_at: new Date().toISOString(),
-                  expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-                  printed_at: null,
-                  printed_by: null,
-                  reprint_count: 0,
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString(),
-                  visit: {
-                    id: approvedVisit?.id || '',
-                    visitor: visitor ? {
-                      full_name: visitor.full_name,
-                      visitor_organization: visitor.visitor_organization,
-                      photo_url: visitor.photo_url,
-                    } : null,
-                    employee: approvedVisit?.employee || null,
-                    purpose: approvedVisit?.purpose || '—',
-                    check_in_time: null,
-                    check_out_time: null,
-                  },
-                }
-                try {
-                  const { printBadgePreview } = await import('@/lib/badge/badge-print')
-                  await printBadgePreview(tempBadge as unknown as import('@/lib/badge/badge-types').VisitorBadge)
-                } catch {
-                  // popup blocked
-                }
-              }}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Print Badge
-            </button>
+              <button
+                onClick={async () => {
+                  if (!approvedVisit?.id) return
+
+                  try {
+                    const { data: badgeData } = await supabase
+                      .from('visitor_badges')
+                      .select('id')
+                      .eq('visit_id', approvedVisit.id)
+                      .single()
+
+                    if (badgeData?.id) {
+                      const { printBadgeWindow } = await import('@/lib/badge/badge-print')
+                      await printBadgeWindow(badgeData.id)
+                    } else {
+                      alert('No badge has been issued for this visit yet.')
+                    }
+                  } catch {
+                    // popup blocked
+                  }
+                }}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Print Badge
+              </button>
           </div>
         </div>
       </div>
