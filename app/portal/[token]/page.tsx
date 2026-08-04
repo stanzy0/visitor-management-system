@@ -10,7 +10,7 @@ import { getPortalUrl } from '@/lib/utils/portal-url'
 
 export default function PortalDashboardPage() {
   const params = useParams()
-  const registrationNumber = params.registrationNumber as string
+  const token = params.token as string
   const [loading, setLoading] = useState(true)
   const [visit, setVisit] = useState<PortalVisit | null>(null)
   const [lifecycleEvents, setLifecycleEvents] = useState<PortalLifecycleEvent[]>([])
@@ -23,7 +23,7 @@ export default function PortalDashboardPage() {
     try {
       setRefreshing(true)
 
-      const baseUrl = `/api/portal/${encodeURIComponent(registrationNumber)}`
+      const baseUrl = `/api/portal/${encodeURIComponent(token)}`
 
       const visitRes = await fetch(baseUrl)
       const visitJson = await visitRes.json()
@@ -68,7 +68,7 @@ export default function PortalDashboardPage() {
       setError(null)
 
       if (visitJson.data?.id) {
-        await logAuditAction('Portal Viewed', 'portal', visitJson.data.id, JSON.stringify({ registrationNumber }))
+        await logAuditAction('Portal Viewed', 'portal', visitJson.data.id, JSON.stringify({ token }))
       }
     } catch {
       setError('Failed to load portal data')
@@ -76,16 +76,16 @@ export default function PortalDashboardPage() {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [registrationNumber])
+  }, [token])
 
   useEffect(() => {
     setTimeout(() => fetchPortalData(), 0)
   }, [fetchPortalData])
 
   useEffect(() => {
-    if (!registrationNumber) return
+    if (!token) return
 
-    const channel = new BroadcastChannel(`portal-${registrationNumber}`)
+    const channel = new BroadcastChannel(`portal-${token}`)
     channel.onmessage = () => {
       fetchPortalData()
     }
@@ -93,7 +93,7 @@ export default function PortalDashboardPage() {
     return () => {
       channel.close()
     }
-  }, [registrationNumber, fetchPortalData])
+  }, [token, fetchPortalData])
 
   const handleDownloadQR = async () => {
     if (!visit?.badge?.qr_token) return
@@ -143,7 +143,7 @@ export default function PortalDashboardPage() {
     formData.append('file', file)
     formData.append('documentId', documentId)
 
-    const res = await fetch(`/api/portal/${encodeURIComponent(registrationNumber)}/documents/replace`, {
+    const res = await fetch(`/api/portal/${encodeURIComponent(token)}/documents/replace`, {
       method: 'POST',
       body: formData,
     })
@@ -154,7 +154,7 @@ export default function PortalDashboardPage() {
   }
 
   const handleRemoveDocument = async (documentId: string) => {
-    const res = await fetch(`/api/portal/${encodeURIComponent(registrationNumber)}/documents/remove`, {
+    const res = await fetch(`/api/portal/${encodeURIComponent(token)}/documents/remove`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ documentId }),

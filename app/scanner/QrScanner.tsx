@@ -168,7 +168,10 @@ export default function QrScanner() {
         }
 
         const visitData = data as VisitData
-        setScanResult(visitData)
+        const normalizedBadge = Array.isArray((visitData as any).badge)
+          ? ((visitData as any).badge[0] ?? null)
+          : (visitData as any).badge ?? null
+        setScanResult({ ...visitData, badge: normalizedBadge })
         await stopScanner()
 
         logAuditAction('QR Code Scanned', 'visit', visitData.id, `QR scanned for visitor ${visitData.visitor?.full_name}`)

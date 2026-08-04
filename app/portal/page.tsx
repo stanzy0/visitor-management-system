@@ -54,7 +54,10 @@ export default function PortalPage() {
       }
 
       setResult(data.data)
-      window.location.href = `/portal/${data.data.registration_number}`
+      const portalToken = data.data?.badge?.qr_token || data.data?.registration_number
+      if (portalToken) {
+        window.location.href = `/portal/${portalToken}`
+      }
     } catch {
       setError('An error occurred. Please try again.')
     } finally {
