@@ -87,28 +87,43 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
           }}
         >
           <div
-            className="flex items-center justify-center rounded-md"
             style={{
               gridColumn: '1 / -1',
               gridRow: '1',
+              display: 'grid',
+              gridTemplateColumns: '10mm 1fr auto',
+              alignItems: 'center',
               backgroundColor: primaryColor,
               color: '#ffffff',
-              fontSize: '3mm',
-              fontWeight: 'bold',
-              letterSpacing: '0.08em',
+              paddingLeft: '2mm',
               paddingRight: '2mm',
-              paddingLeft: '1mm',
-              paddingTop: '2mm',
-              position: 'relative',
+              height: '9mm',
+              borderRadius: '0.375rem',
             }}
           >
-            <span className="truncate">{badgeHeaderText}</span>
-            <span
-              className="absolute text-white text-[1.8mm] font-bold px-2 py-1 rounded-b-md"
-              style={{ right: 0, top: 0, backgroundColor: '#16a34a' }}
-            >
-              {badge.badge_status}
-            </span>
+            <div style={{ gridColumn: '1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {logoUrl && (
+                <Image
+                  src={logoUrl}
+                  alt="Logo"
+                  width={32}
+                  height={32}
+                  className="badge-logo rounded object-contain bg-white/80 p-0.5"
+                  style={{ width: '8mm', height: '8mm', maxWidth: '8mm', maxHeight: '8mm' }}
+                  unoptimized
+                />
+              )}
+            </div>
+            <div style={{ gridColumn: '2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span className="truncate" style={{ fontSize: '3mm', fontWeight: 'bold', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
+                {badgeHeaderText}
+              </span>
+            </div>
+            <div style={{ gridColumn: '3', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginRight: '2mm' }}>
+              <span className="text-white font-bold rounded-b-md" style={{ fontSize: '1.8mm', padding: '0.5mm 1mm', backgroundColor: '#16a34a', whiteSpace: 'nowrap' }}>
+                {badge.badge_status}
+              </span>
+            </div>
           </div>
 
           <div style={{ gridColumn: '1', gridRow: '2', display: 'flex', alignItems: 'start', justifyContent: 'center' }}>
@@ -211,12 +226,6 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
             </div>
           </div>
         </div>
-
-        {logoUrl && (
-          <div className="absolute top-1 left-1 z-10">
-            <Image src={logoUrl} alt="Logo" width={32} height={32} className="rounded object-contain bg-white/80 p-0.5" style={{ width: '8mm', height: '8mm' }} unoptimized />
-          </div>
-        )}
 
         {watermark && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10" aria-hidden="true">

@@ -1,6 +1,8 @@
 import { requireRole } from '@/lib/auth-helpers'
 import { getBadge } from '@/lib/badge/badge-service'
+import { getBranding } from '@/lib/server/branding'
 import PrintableBadge from '@/components/badges/PrintableBadge'
+import type { BrandingSettings } from '@/lib/types/branding'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +22,10 @@ export default async function PrintBadgeRoute({
 
   const { id } = await params
 
-  const badge = await getBadge(id)
+  const [badge, branding] = await Promise.all([
+    getBadge(id),
+    getBranding(),
+  ])
 
   if (!badge) {
     return (
@@ -30,5 +35,5 @@ export default async function PrintBadgeRoute({
     )
   }
 
-  return <PrintableBadge badge={badge} />
+  return <PrintableBadge badge={badge} branding={branding} />
 }

@@ -3,9 +3,9 @@
 import { useEffect, useRef } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import type { VisitorBadge } from '@/lib/badge/badge-types'
+import type { BrandingSettings } from '@/lib/types/branding'
 import { BADGE_QR_SETTINGS } from '@/lib/badge/badge-constants'
 import { buildBadgeQrValue } from '@/lib/badge/badge-utils'
-import { useBranding } from '@/hooks/useBranding'
 
 const PRINT_CSS = `
 @page {
@@ -75,6 +75,7 @@ const PRINT_CSS = `
 
 interface PrintableBadgeProps {
   badge: VisitorBadge
+  branding: BrandingSettings
   autoPrint?: boolean
   watermark?: string
 }
@@ -88,9 +89,15 @@ function preloadImage(src: string): Promise<void> {
   })
 }
 
-export default function PrintableBadge({ badge, autoPrint = true, watermark }: PrintableBadgeProps) {
-  const { branding } = useBranding()
+export default function PrintableBadge({ badge, branding, autoPrint = true, watermark }: PrintableBadgeProps) {
   const printTriggeredRef = useRef(false)
+
+  const primaryColor = branding.primary_color
+  const badgeHeaderText = branding.badge_header_text
+  const badgeTemplateUrl = branding.badge_template_url || null
+  const logoUrl = branding.logo_url || null
+  const signatureUrl = branding.signature_url || null
+  const stampUrl = branding.stamp_url || null
 
   useEffect(() => {
     const styleEl = document.createElement('style')
@@ -98,62 +105,55 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
     styleEl.textContent = PRINT_CSS
     document.head.appendChild(styleEl)
 
-    if (autoPrint && !printTriggeredRef.current) {
-      printTriggeredRef.current = true
-
-      const qrValue = buildBadgeQrValue(badge)
-      const badgeWatermark =
-        watermark ||
-        (badge.badge_status === 'Expired'
-          ? 'EXPIRED'
-          : badge.badge_status === 'Cancelled'
-            ? 'CANCELLED'
-            : undefined)
-
-      const primaryColor = branding?.primary_color || '#1e40af'
-      const badgeHeaderText = branding?.badge_header_text || 'VISITOR'
-      const badgeTemplateUrl = branding?.badge_template_url || null
-      const logoUrl = branding?.logo_url || null
-      const signatureUrl = branding?.signature_url || null
-      const stampUrl = branding?.stamp_url || null
-
-      const imageUrls = [
-        badge.visit?.visitor?.photo_url,
-        logoUrl,
-        signatureUrl,
-        stampUrl,
-        badgeTemplateUrl,
-      ].filter((url): url is string => Boolean(url))
-
-      const loadImages = async () => {
-        try {
-          await Promise.all(imageUrls.map((url) => preloadImage(url)))
-          await new Promise((resolve) => requestAnimationFrame(() => resolve(true)))
-          window.print()
-          setTimeout(() => {
-            window.close()
-          }, 100)
-        } catch (error) {
-          console.error('Badge print asset loading failed:', error)
-          await new Promise((resolve) => requestAnimationFrame(() => resolve(true)))
-          window.print()
-          setTimeout(() => {
-            window.close()
-          }, 100)
-        }
-      }
-
-      const timer = setTimeout(loadImages, 300)
-
+    if (!autoPrint || printTriggeredRef.current) {
       return () => {
-        clearTimeout(timer)
         if (styleEl.parentNode) {
           styleEl.parentNode.removeChild(styleEl)
         }
       }
     }
 
+    printTriggeredRef.current = true
+
+    const qrValue = buildBadgeQrValue(badge)
+    const badgeWatermark =
+      watermark ||
+      (badge.badge_status === 'Expired'
+        ? 'EXPIRED'
+        : badge.badge_status === 'Cancelled'
+          ? 'CANCELLED'
+          : undefined)
+
+    const imageUrls = [
+      badge.visit?.visitor?.photo_url,
+      logoUrl,
+      signatureUrl,
+      stampUrl,
+      badgeTemplateUrl,
+    ].filter((url): url is string => Boolean(url))
+
+    const loadImages = async () => {
+      try {
+        await Promise.all(imageUrls.map((url) => preloadImage(url)))
+        await new Promise((resolve) => requestAnimationFrame(() => resolve(true)))
+        window.print()
+        setTimeout(() => {
+          window.close()
+        }, 100)
+      } catch (error) {
+        console.error('Badge print asset loading failed:', error)
+        await new Promise((resolve) => requestAnimationFrame(() => resolve(true)))
+        window.print()
+        setTimeout(() => {
+          window.close()
+        }, 100)
+      }
+    }
+
+    const timer = setTimeout(loadImages, 300)
+
     return () => {
+      clearTimeout(timer)
       if (styleEl.parentNode) {
         styleEl.parentNode.removeChild(styleEl)
       }
@@ -172,13 +172,6 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
       : badge.badge_status === 'Cancelled'
         ? 'CANCELLED'
         : undefined)
-
-  const primaryColor = branding?.primary_color || '#1e40af'
-  const badgeHeaderText = branding?.badge_header_text || 'VISITOR'
-  const badgeTemplateUrl = branding?.badge_template_url || null
-  const logoUrl = branding?.logo_url || null
-  const signatureUrl = branding?.signature_url || null
-  const stampUrl = branding?.stamp_url || null
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '—'
@@ -221,19 +214,6 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
           </div>
         )}
 
-        {logoUrl && (
-          <div className="absolute top-1 left-1 z-10">
-            <img
-              src={logoUrl}
-              alt="Logo"
-              width={32}
-              height={32}
-              className="badge-logo rounded object-contain bg-white/80 p-0.5"
-              style={{ width: '8mm', height: '8mm' }}
-            />
-          </div>
-        )}
-
         <div
           style={{
             display: 'grid',
@@ -247,28 +227,42 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
           }}
         >
           <div
-            className="flex items-center justify-center rounded-md"
             style={{
               gridColumn: '1 / -1',
               gridRow: '1',
+              display: 'grid',
+              gridTemplateColumns: '10mm 1fr auto',
+              alignItems: 'center',
               backgroundColor: primaryColor,
               color: '#ffffff',
-              fontSize: '3mm',
-              fontWeight: 'bold',
-              letterSpacing: '0.08em',
+              paddingLeft: '2mm',
               paddingRight: '2mm',
-              paddingLeft: '1mm',
-              paddingTop: '2mm',
-              position: 'relative',
+              height: '9mm',
+              borderRadius: '0.375rem',
             }}
           >
-            <span className="truncate">{badgeHeaderText}</span>
-            <span
-              className="absolute text-white text-[1.8mm] font-bold px-2 py-1 rounded-b-md"
-              style={{ right: 0, top: 0, backgroundColor: '#16a34a' }}
-            >
-              {badge.badge_status}
-            </span>
+            <div style={{ gridColumn: '1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {logoUrl && (
+                <img
+                  src={logoUrl}
+                  alt="Logo"
+                  width={32}
+                  height={32}
+                  className="badge-logo rounded object-contain bg-white/80 p-0.5"
+                  style={{ width: '8mm', height: '8mm', maxWidth: '8mm', maxHeight: '8mm' }}
+                />
+              )}
+            </div>
+            <div style={{ gridColumn: '2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span className="truncate" style={{ fontSize: '3mm', fontWeight: 'bold', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>
+                {badgeHeaderText}
+              </span>
+            </div>
+            <div style={{ gridColumn: '3', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginRight: '2mm' }}>
+              <span className="text-white font-bold rounded-b-md" style={{ fontSize: '1.8mm', padding: '0.5mm 1mm', backgroundColor: '#16a34a', whiteSpace: 'nowrap' }}>
+                {badge.badge_status}
+              </span>
+            </div>
           </div>
 
           <div style={{ gridColumn: '1', gridRow: '2', display: 'flex', alignItems: 'start', justifyContent: 'center' }}>
@@ -324,7 +318,7 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
 
           <div style={{ gridColumn: '3', gridRow: '2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.2mm' }}>
             {(() => {
-              const qrPayload = qrValue
+              const qrPayload = buildBadgeQrValue(badge)
               console.log({
                 badge_id: badge.id,
                 badge_number: badge.badge_number,
@@ -334,7 +328,7 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
               return null
             })()}
             <QRCodeSVG
-              value={qrValue}
+              value={buildBadgeQrValue(badge)}
               size={BADGE_QR_SETTINGS.SIZE}
               style={{ width: '16mm', height: '16mm' }}
               aria-label="Badge QR code"
