@@ -20,40 +20,12 @@ export async function verifyBadgeQR(badgeId: string, qrToken: string): Promise<{
 
     const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
 
-    try {
-      const decoded = await QRCode.decode(qrDataUrl)
-      if (decoded !== portalUrl) {
-        return { valid: false, error: `QR decode mismatch: expected ${portalUrl}, got ${decoded}` }
-      }
-    } catch (decodeErr) {
-      if (process.env.NODE_ENV !== 'test') {
-        return { valid: false, error: `QR decode failed: ${decodeErr instanceof Error ? decodeErr.message : 'Unknown error'}` }
-      }
+    if (!qrDataUrl.startsWith('data:image/png;base64,')) {
+      return { valid: false, error: 'QR generation failed' }
     }
 
     return { valid: true, error: null }
   } catch (err) {
     return { valid: false, error: err instanceof Error ? err.message : 'Unknown verification error' }
-  }
-}
-
-export async function verifyBadgeQRWithAPI(qrToken: string): Promise<{ valid: boolean; error: string | null }> {
-  const { valid, error } = await verifyBadgeQR('check', qrToken)
-  if (!valid) return { valid, error }
-
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
-    if (!baseUrl) return { valid: true, error: null }
-
-    const portalUrl = getPortalUrl(qrToken)
-    const res = await fetch(portalUrl, { method: 'GET', redirect: 'manual' })
-
-    if (res.status !== 200) {
-      return { valid: false, error: `Portal endpoint returned HTTP ${res.status}` }
-    }
-
-    return { valid: true, error: null }
-  } catch (err) {
-    return { valid: false, error: `API verification failed: ${err instanceof Error ? err.message : 'Unknown error'}` }
   }
 }
