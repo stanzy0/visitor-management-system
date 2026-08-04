@@ -8,7 +8,7 @@ export const BADGE_STATUS = {
 export const BADGE_DEFAULT_EXPIRY_HOURS = 24
 
 export const BADGE_QR_SETTINGS = {
-  SIZE: 300,
+  SIZE: 180,
   MARGIN: 2,
   ERROR_CORRECTION_LEVEL: 'H' as const,
   TYPE: 'visitor-pass',

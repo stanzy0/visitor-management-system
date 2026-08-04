@@ -77,16 +77,17 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: '12mm 1fr 22mm',
-            gridTemplateRows: '7mm 1fr 7mm',
-            gap: '1mm',
+            gridTemplateColumns: '12mm 1fr 20mm',
+            gridTemplateRows: '9mm 1fr 7mm',
+            rowGap: '2mm',
+            columnGap: '0.5mm',
             padding: '1.5mm',
             boxSizing: 'border-box',
             height: '100%',
           }}
         >
           <div
-            className="flex items-center justify-center rounded-lg"
+            className="flex items-center justify-center rounded-md"
             style={{
               gridColumn: '1 / -1',
               gridRow: '1',
@@ -94,8 +95,9 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
               color: '#ffffff',
               fontSize: '3mm',
               fontWeight: 'bold',
-              letterSpacing: '0.05em',
+              letterSpacing: '0.08em',
               paddingRight: '2mm',
+              paddingLeft: '1mm',
               paddingTop: '2mm',
               position: 'relative',
             }}
@@ -109,7 +111,7 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
             </span>
           </div>
 
-          <div style={{ gridColumn: '1', gridRow: '2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ gridColumn: '1', gridRow: '2', display: 'flex', alignItems: 'start', justifyContent: 'center' }}>
             {showPhoto ? (
               <Image
                 src={badge.visit!.visitor!.photo_url as string}
@@ -117,13 +119,14 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
                 width={BADGE_LAYOUT.PHOTO_SIZE}
                 height={BADGE_LAYOUT.PHOTO_SIZE}
                 className="rounded object-cover border border-gray-200"
+                style={{ width: '12mm', height: '12mm' }}
                 onError={handleImageError}
                 unoptimized
               />
             ) : (
               <div
                 className="rounded bg-gray-200 flex items-center justify-center border border-gray-200"
-                style={{ width: BADGE_LAYOUT.PHOTO_SIZE, height: BADGE_LAYOUT.PHOTO_SIZE }}
+                style={{ width: '12mm', height: '12mm' }}
                 aria-hidden="true"
               >
                 <span className="text-2xl text-gray-500">{visitorInitial}</span>
@@ -131,37 +134,37 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
             )}
           </div>
 
-          <div style={{ gridColumn: '2', gridRow: '2', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0, gap: '2mm' }}>
+          <div style={{ gridColumn: '2', gridRow: '2', display: 'flex', flexDirection: 'column', minWidth: 0, paddingLeft: '1mm', paddingRight: '3mm' }}>
             <div className="min-w-0">
-              <h3 className="text-base font-bold text-gray-900 truncate">
+              <h3 className="text-base font-bold text-gray-900 truncate" style={{ fontSize: '3.2mm', lineHeight: '1.2' }}>
                 {visitorName}
               </h3>
-              <p className="text-xs text-gray-600 truncate">
+              <p className="text-gray-600 truncate" style={{ fontSize: '2.2mm', lineHeight: '1.2' }}>
                 {badge.visit?.visitor?.visitor_organization || '—'}
               </p>
             </div>
 
-            <div style={{ fontSize: '5.5pt', lineHeight: '1.5' }}>
-              <div className="flex" style={{ marginBottom: '1.5mm' }}>
+            <div style={{ fontSize: '5.5pt', lineHeight: '1.35', marginTop: '0.5mm' }}>
+              <div className="flex" style={{ marginBottom: '0.8mm' }}>
                 <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Host:</span>
                 <span className="text-gray-900 font-medium truncate">{badge.visit?.employee?.full_name || '—'}</span>
               </div>
-              <div className="flex" style={{ marginBottom: '1.5mm' }}>
+              <div className="flex" style={{ marginBottom: '0.8mm' }}>
                 <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Dept:</span>
                 <span className="text-gray-900 font-medium truncate">{badge.visit?.employee?.department || '—'}</span>
               </div>
-              <div className="flex" style={{ marginBottom: '1.5mm' }}>
+              <div className="flex" style={{ marginBottom: '0.8mm' }}>
                 <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Purpose:</span>
                 <span className="text-gray-900 truncate">{badge.visit?.purpose || '—'}</span>
               </div>
               <div className="flex">
                 <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Badge #:</span>
-                <span className="font-mono font-bold" style={{ color: primaryColor }}>{badge.badge_number}</span>
+                <span className="font-mono font-bold truncate" style={{ color: primaryColor }}>{badge.badge_number}</span>
               </div>
             </div>
           </div>
 
-          <div style={{ gridColumn: '3', gridRow: '2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '1mm', gap: '1mm' }}>
+          <div style={{ gridColumn: '3', gridRow: '2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1.2mm' }}>
             {(() => {
               const qrPayload = qrValue
               console.log({
@@ -175,21 +178,23 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
             <QRCodeSVG
               value={qrValue}
               size={BADGE_QR_SETTINGS.SIZE}
+              style={{ width: '16mm', height: '16mm' }}
               aria-label="Badge QR code"
             />
-            <p className="text-gray-500 text-center leading-tight" style={{ fontSize: '5pt' }}>
-              Scan for check-in/out and verification
+            <p className="text-gray-500 text-center leading-tight" style={{ fontSize: '5pt', lineHeight: '1.3' }}>
+              Scan for<br />Check-in / Verification
             </p>
           </div>
 
           <div
-            className="flex justify-between items-center border-t border-gray-200"
+            className="flex justify-between items-center"
             style={{
               gridColumn: '1 / -1',
               gridRow: '3',
-              padding: '0 2mm',
-              fontSize: '5.5pt',
+              fontSize: '1.6mm',
               color: '#6b7280',
+              paddingTop: '0.8mm',
+              borderTop: '1px solid #e5e7eb',
             }}
           >
             <div>
@@ -209,7 +214,7 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
 
         {logoUrl && (
           <div className="absolute top-1 left-1 z-10">
-            <Image src={logoUrl} alt="Logo" width={24} height={24} className="rounded object-contain bg-white/80 p-0.5" unoptimized />
+            <Image src={logoUrl} alt="Logo" width={32} height={32} className="rounded object-contain bg-white/80 p-0.5" style={{ width: '8mm', height: '8mm' }} unoptimized />
           </div>
         )}
 
