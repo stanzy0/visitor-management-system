@@ -164,76 +164,94 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
         )}
 
         <div
-          className="badge-header absolute top-0 left-0 right-0 flex items-center justify-center text-white font-bold tracking-wider rounded-t"
-          style={{ height: '7mm', fontSize: '3mm', backgroundColor: primaryColor }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '12mm 1fr 22mm',
+            gridTemplateRows: '7mm 1fr 7mm',
+            gap: '1mm',
+            padding: '1.5mm',
+            boxSizing: 'border-box',
+            height: '100%',
+          }}
         >
-          {badgeHeaderText}
-        </div>
+          <div
+            className="flex items-center justify-center rounded-md"
+            style={{
+              gridColumn: '1 / -1',
+              gridRow: '1',
+              backgroundColor: primaryColor,
+              color: '#ffffff',
+              fontSize: '3mm',
+              fontWeight: 'bold',
+              letterSpacing: '0.05em',
+              paddingRight: '2mm',
+              paddingTop: '2mm',
+              position: 'relative',
+            }}
+          >
+            <span className="truncate">{badgeHeaderText}</span>
+            <span
+              className="absolute text-white text-[1.8mm] font-bold px-2 py-1 rounded-b-md"
+              style={{ right: 0, top: 0, backgroundColor: '#16a34a' }}
+            >
+              {badge.badge_status}
+            </span>
+          </div>
 
-        <div
-          className="absolute top-0 right-0 flex items-center justify-center text-white text-xs font-bold px-1 rounded-b"
-          style={{ height: '8mm', fontSize: '1.8mm', backgroundColor: '#16a34a' }}
-        >
-          {badge.badge_status}
-        </div>
+          <div style={{ gridColumn: '1', gridRow: '2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {showPhoto ? (
+              <Image
+                src={showPhoto}
+                alt={`${visitorName} photo`}
+                width={96}
+                height={96}
+                className="badge-photo rounded object-cover border border-gray-200"
+                style={{ width: '12mm', height: '12mm' }}
+                unoptimized
+                quality={100}
+              />
+            ) : (
+              <div
+                className="badge-photo rounded bg-gray-200 flex items-center justify-center border border-gray-200"
+                style={{ width: '12mm', height: '12mm', fontSize: '6mm' }}
+                aria-hidden="true"
+              >
+                {visitorInitial}
+              </div>
+            )}
+          </div>
 
-        <div className="flex gap-1" style={{ paddingTop: '4mm', paddingBottom: '1mm', paddingLeft: '1.5mm', paddingRight: '1.5mm', height: '100%' }}>
-          <div className="flex flex-row items-start gap-1" style={{ flex: '1 1 60%' }}>
-            <div className="flex-shrink-0">
-              {showPhoto ? (
-                <Image
-                  src={showPhoto}
-                  alt={`${visitorName} photo`}
-                  width={96}
-                  height={96}
-                  className="badge-photo rounded object-cover border border-gray-200"
-                  style={{ width: '12mm', height: '12mm' }}
-                  unoptimized
-                  quality={100}
-                />
-              ) : (
-                <div
-                  className="badge-photo rounded bg-gray-200 flex items-center justify-center border border-gray-200"
-                  style={{ width: '12mm', height: '12mm', fontSize: '6mm' }}
-                  aria-hidden="true"
-                >
-                  {visitorInitial}
-                </div>
-              )}
+          <div style={{ gridColumn: '2', gridRow: '2', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0, gap: '1.5mm' }}>
+            <div className="min-w-0">
+              <p className="badge-name font-bold text-gray-900 truncate" style={{ fontSize: '2.8mm' }}>
+                {visitorName}
+              </p>
+              <p className="badge-detail text-gray-600 truncate" style={{ fontSize: '2mm' }}>
+                {badge.visit?.visitor?.visitor_organization || '—'}
+              </p>
             </div>
 
-            <div className="flex flex-col justify-between min-w-0" style={{ gap: '1.5mm' }}>
-              <div className="min-w-0">
-                <p className="badge-name font-bold text-gray-900 truncate" style={{ fontSize: '2.8mm' }}>
-                  {visitorName}
-                </p>
-                <p className="badge-detail text-gray-600 truncate" style={{ fontSize: '2mm' }}>
-                  {badge.visit?.visitor?.visitor_organization || '—'}
-                </p>
+            <div style={{ fontSize: '5.5pt', lineHeight: '1.5' }}>
+              <div className="flex" style={{ marginBottom: '1.5mm' }}>
+                <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Host:</span>
+                <span className="text-gray-900 font-medium truncate">{badge.visit?.employee?.full_name || '—'}</span>
               </div>
-
-              <div className="space-y-1" style={{ fontSize: '5.5pt', lineHeight: '1.4' }}>
-                <div className="flex">
-                  <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Host:</span>
-                  <span className="text-gray-900 font-medium truncate">{badge.visit?.employee?.full_name || '—'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Dept:</span>
-                  <span className="text-gray-900 truncate">{badge.visit?.employee?.department || '—'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Purpose:</span>
-                  <span className="text-gray-900 truncate">{badge.visit?.purpose || '—'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Badge #:</span>
-                  <span className="text-gray-900 font-mono font-bold" style={{ color: primaryColor }}>{badge.badge_number}</span>
-                </div>
+              <div className="flex" style={{ marginBottom: '1.5mm' }}>
+                <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Dept:</span>
+                <span className="text-gray-900 font-medium truncate">{badge.visit?.employee?.department || '—'}</span>
+              </div>
+              <div className="flex" style={{ marginBottom: '1.5mm' }}>
+                <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Purpose:</span>
+                <span className="text-gray-900 truncate">{badge.visit?.purpose || '—'}</span>
+              </div>
+              <div className="flex">
+                <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Badge #:</span>
+                <span className="font-mono font-bold" style={{ color: primaryColor }}>{badge.badge_number}</span>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center" style={{ flex: '0 0 auto', gap: '0.8mm' }}>
+          <div style={{ gridColumn: '3', gridRow: '2', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginTop: '1mm', gap: '0.8mm' }}>
             {(() => {
               const qrPayload = qrValue
               console.log({
@@ -255,20 +273,29 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
               Scan for check-in/out and verification
             </p>
           </div>
-        </div>
 
-        <div className="absolute bottom-0 left-0 right-0 flex justify-between border-t border-gray-200" style={{ padding: '0.5mm 1.5mm', fontSize: '1.6mm', bottom: '1.5mm' }}>
-          <div>
-            <span className="text-gray-500">Issued: </span>
-            <span className="font-medium">
-              {badge.issued_at ? new Date(badge.issued_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
-            </span>
-          </div>
-          <div>
-            <span className="text-gray-500">Expires: </span>
-            <span className="font-medium">
-              {badge.expires_at ? new Date(badge.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
-            </span>
+          <div
+            className="flex justify-between items-center border-t border-gray-200"
+            style={{
+              gridColumn: '1 / -1',
+              gridRow: '3',
+              padding: '0 2mm',
+              fontSize: '1.6mm',
+              color: '#6b7280',
+            }}
+          >
+            <div>
+              <span className="text-gray-500">Issued: </span>
+              <span className="font-medium text-gray-900">
+                {badge.issued_at ? new Date(badge.issued_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500">Expires: </span>
+              <span className="font-medium text-gray-900">
+                {badge.expires_at ? new Date(badge.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
+              </span>
+            </div>
           </div>
         </div>
 
