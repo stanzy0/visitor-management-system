@@ -91,8 +91,8 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
         </div>
 
         {logoUrl && (
-          <div className="absolute top-2 left-2 z-10">
-            <Image src={logoUrl} alt="Logo" width={28} height={28} className="rounded object-contain bg-white/80 p-0.5" unoptimized />
+          <div className="absolute top-1 left-1 z-10">
+            <Image src={logoUrl} alt="Logo" width={24} height={24} className="rounded object-contain bg-white/80 p-0.5" unoptimized />
           </div>
         )}
 
@@ -111,102 +111,97 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
           </div>
         )}
 
-        <div className="pt-8 pb-2 px-4 flex gap-4" style={{ height: '100%' }}>
-          <div className="flex-1 flex flex-col justify-between min-w-0">
-            <div className="flex items-center gap-3">
+        <div className="flex gap-2" style={{ paddingTop: '6mm', paddingBottom: '5mm', paddingLeft: '2mm', paddingRight: '2mm', height: '100%' }}>
+          <div className="flex flex-row items-start gap-2" style={{ flex: '1 1 60%' }}>
+            <div className="flex-shrink-0">
               {showPhoto ? (
                 <Image
                   src={badge.visit!.visitor!.photo_url as string}
                   alt={`${visitorName} photo`}
                   width={BADGE_LAYOUT.PHOTO_SIZE}
                   height={BADGE_LAYOUT.PHOTO_SIZE}
-                  className="rounded-lg object-cover border border-gray-200"
+                  className="rounded object-cover border border-gray-200"
                   onError={handleImageError}
                   unoptimized
                 />
               ) : (
                 <div
-                  className="rounded-lg bg-gray-200 flex items-center justify-center border border-gray-200"
+                  className="rounded bg-gray-200 flex items-center justify-center border border-gray-200"
                   style={{ width: BADGE_LAYOUT.PHOTO_SIZE, height: BADGE_LAYOUT.PHOTO_SIZE }}
                   aria-hidden="true"
                 >
                   <span className="text-2xl text-gray-500">{visitorInitial}</span>
                 </div>
               )}
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">
+            </div>
+
+            <div className="flex flex-col justify-between min-w-0" style={{ gap: '2mm' }}>
+              <div className="min-w-0">
+                <h3 className="text-base font-bold text-gray-900 truncate">
                   {visitorName}
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs text-gray-600 truncate">
                   {badge.visit?.visitor?.visitor_organization || '—'}
                 </p>
               </div>
-            </div>
 
-            <div className="space-y-0.5 text-sm">
-              <div className="flex">
-                <span className="text-gray-500 w-28">Host:</span>
-                <span className="text-gray-900 font-medium">{badge.visit?.employee?.full_name || '—'}</span>
-              </div>
-              <div className="flex">
-                <span className="text-gray-500 w-28">Department:</span>
-                <span className="text-gray-900">{badge.visit?.employee?.department || '—'}</span>
-              </div>
-              <div className="flex">
-                <span className="text-gray-500 w-28">Purpose:</span>
-                <span className="text-gray-900">{badge.visit?.purpose || '—'}</span>
-              </div>
-              <div className="flex">
-                <span className="text-gray-500 w-28">Badge #:</span>
-                <span className="text-gray-900 font-mono font-bold">{badge.badge_number}</span>
+              <div className="space-y-1" style={{ fontSize: '5.5pt', lineHeight: '1.4' }}>
+                <div className="flex">
+                  <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Host:</span>
+                  <span className="text-gray-900 font-medium truncate">{badge.visit?.employee?.full_name || '—'}</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Dept:</span>
+                  <span className="text-gray-900 truncate">{badge.visit?.employee?.department || '—'}</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Purpose:</span>
+                  <span className="text-gray-900 truncate">{badge.visit?.purpose || '—'}</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Badge #:</span>
+                  <span className="text-gray-900 font-mono font-bold" style={{ color: primaryColor }}>{badge.badge_number}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center gap-1">
-            {(() => {
-              const qrPayload = qrValue
-              console.log({
-                badge_id: badge.id,
-                badge_number: badge.badge_number,
-                qr_token: badge.qr_token,
-                qr_payload: qrPayload,
-              })
-              return null
-            })()}
+          <div className="flex flex-col items-center justify-center" style={{ flex: '0 0 auto', gap: '1mm' }}>
             <QRCodeSVG
               value={qrValue}
               size={BADGE_QR_SETTINGS.SIZE}
               aria-label="Badge QR code"
             />
-            <p className="text-xs text-gray-500 text-center">
-              Scan for check-in/out
-              <br />
-              and verification
+            <p className="text-gray-500 text-center leading-tight" style={{ fontSize: '5pt' }}>
+              Scan for check-in/out and verification
             </p>
           </div>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 flex justify-between items-center border-t border-gray-200" style={{ padding: '2px 8px', fontSize: '10px' }}>
+        <div className="absolute bottom-0 left-0 right-0 flex justify-between items-center border-t border-gray-200" style={{ padding: '1mm 2mm', fontSize: '5.5pt', bottom: '2mm' }}>
           <div>
-            <span className="text-gray-500">Issued:</span>{' '}
-            <span className="font-medium">{formatDate(badge.issued_at)}</span>
+            <span className="text-gray-500">Issued: </span>
+            <span className="font-medium">
+              {badge.issued_at ? new Date(badge.issued_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
+            </span>
           </div>
           <div>
-            <span className="text-gray-500">Expires:</span>{' '}
-            <span className="font-medium">{formatDate(badge.expires_at)}</span>
+            <span className="text-gray-500">Expires: </span>
+            <span className="font-medium">
+              {badge.expires_at ? new Date(badge.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
+            </span>
           </div>
         </div>
 
         {signatureUrl && (
-          <div className="absolute bottom-6 left-4">
-            <Image src={signatureUrl} alt="Signature" width={60} height={20} className="object-contain opacity-80" unoptimized />
+          <div className="absolute left-2" style={{ bottom: '6mm' }}>
+            <Image src={signatureUrl} alt="Signature" width={50} height={16} className="object-contain opacity-80" unoptimized />
           </div>
         )}
 
         {stampUrl && (
-          <div className="absolute bottom-4 right-4 z-10">
-            <Image src={stampUrl} alt="Stamp" width={36} height={36} className="object-contain opacity-90" unoptimized />
+          <div className="absolute right-2 z-10" style={{ bottom: '5mm' }}>
+            <Image src={stampUrl} alt="Stamp" width={28} height={28} className="object-contain opacity-90" unoptimized />
           </div>
         )}
       </div>

@@ -177,9 +177,9 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
           {badge.badge_status}
         </div>
 
-        <div className="flex gap-1" style={{ paddingTop: '4mm', paddingBottom: '1mm', height: '100%' }}>
-          <div className="flex-1 flex flex-col justify-between min-w-0">
-            <div className="flex items-center gap-1">
+        <div className="flex gap-1" style={{ paddingTop: '4mm', paddingBottom: '1mm', paddingLeft: '1.5mm', paddingRight: '1.5mm', height: '100%' }}>
+          <div className="flex flex-row items-start gap-1" style={{ flex: '1 1 60%' }}>
+            <div className="flex-shrink-0">
               {showPhoto ? (
                 <Image
                   src={showPhoto}
@@ -200,6 +200,9 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
                   {visitorInitial}
                 </div>
               )}
+            </div>
+
+            <div className="flex flex-col justify-between min-w-0" style={{ gap: '1.5mm' }}>
               <div className="min-w-0">
                 <p className="badge-name font-bold text-gray-900 truncate" style={{ fontSize: '2.8mm' }}>
                   {visitorName}
@@ -208,29 +211,29 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
                   {badge.visit?.visitor?.visitor_organization || '—'}
                 </p>
               </div>
-            </div>
 
-            <div className="space-y-0.5" style={{ fontSize: '2mm' }}>
-              <div className="flex">
-                <span className="text-gray-500" style={{ width: '14mm' }}>Host:</span>
-                <span className="text-gray-900 font-medium truncate">{badge.visit?.employee?.full_name || '—'}</span>
-              </div>
-              <div className="flex">
-                <span className="text-gray-500" style={{ width: '14mm' }}>Dept:</span>
-                <span className="text-gray-900 truncate">{badge.visit?.employee?.department || '—'}</span>
-              </div>
-              <div className="flex">
-                <span className="text-gray-500" style={{ width: '14mm' }}>Purpose:</span>
-                <span className="text-gray-900 truncate">{badge.visit?.purpose || '—'}</span>
-              </div>
-              <div className="flex">
-                <span className="text-gray-500" style={{ width: '14mm' }}>Badge #:</span>
-                <span className="text-gray-900 font-mono font-bold">{badge.badge_number}</span>
+              <div className="space-y-1" style={{ fontSize: '5.5pt', lineHeight: '1.4' }}>
+                <div className="flex">
+                  <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Host:</span>
+                  <span className="text-gray-900 font-medium truncate">{badge.visit?.employee?.full_name || '—'}</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Dept:</span>
+                  <span className="text-gray-900 truncate">{badge.visit?.employee?.department || '—'}</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Purpose:</span>
+                  <span className="text-gray-900 truncate">{badge.visit?.purpose || '—'}</span>
+                </div>
+                <div className="flex">
+                  <span className="text-gray-500 flex-shrink-0" style={{ width: '18mm' }}>Badge #:</span>
+                  <span className="text-gray-900 font-mono font-bold" style={{ color: primaryColor }}>{badge.badge_number}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center gap-1">
+          <div className="flex flex-col items-center justify-center" style={{ flex: '0 0 auto', gap: '0.8mm' }}>
             {(() => {
               const qrPayload = qrValue
               console.log({
@@ -249,14 +252,12 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
               aria-label="Badge QR code"
             />
             <p className="badge-detail text-gray-500 text-center leading-tight" style={{ fontSize: '1.8mm' }}>
-              Scan for check-in/out
-              <br />
-              and verification
+              Scan for check-in/out and verification
             </p>
           </div>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 flex justify-between border-t border-gray-200" style={{ padding: '0.5mm 1.5mm', fontSize: '1.6mm' }}>
+        <div className="absolute bottom-0 left-0 right-0 flex justify-between border-t border-gray-200" style={{ padding: '0.5mm 1.5mm', fontSize: '1.6mm', bottom: '1.5mm' }}>
           <div>
             <span className="text-gray-500">Issued: </span>
             <span className="font-medium">
@@ -272,13 +273,13 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
         </div>
 
         {signatureUrl && (
-          <div className="absolute bottom-5 left-2">
+          <div className="absolute left-2" style={{ bottom: '5mm' }}>
             <Image src={signatureUrl} alt="Signature" width={50} height={16} className="object-contain opacity-80" unoptimized />
           </div>
         )}
 
         {stampUrl && (
-          <div className="absolute bottom-3 right-2 z-10">
+          <div className="absolute right-2 z-10" style={{ bottom: '4mm' }}>
             <Image src={stampUrl} alt="Stamp" width={28} height={28} className="object-contain opacity-90" unoptimized />
           </div>
         )}
