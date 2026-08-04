@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, FileText, Download, Printer, X, Edit3, CheckCircle2 } from 'lucide-react'
 import type { BadgePreviewVisit, BadgeTemplateOption } from '@/lib/types/badge-preview'
@@ -8,6 +8,7 @@ import type { VisitorBadge } from '@/lib/badge/badge-types'
 import BadgeLayout from '@/components/BadgeLayout'
 import BadgePreviewToolbar from '@/components/badges/BadgePreviewToolbar'
 import BadgeValidationChecklist from '@/components/badges/BadgeValidationChecklist'
+import { supabase } from '@/lib/supabase'
 
 interface BadgePreviewPanelProps {
   visit: BadgePreviewVisit
@@ -44,14 +45,43 @@ export default function BadgePreviewPanel({
   const [textColor, setTextColor] = useState('#1f2937')
   const [rejectReason, setRejectReason] = useState('')
   const [showRejectModal, setShowRejectModal] = useState(false)
+  const [realBadgeId, setRealBadgeId] = useState<string | null>(null)
+  const [printError, setPrintError] = useState<string | null>(null)
 
   const visitor = visit.visitor
   const employee = visit.employee
 
+  useEffect(() => {
+    const fetchBadge = async () => {
+      try {
+        const { data } = await supabase
+          .from('visitor_badges')
+          .select('id')
+          .eq('visit_id', visit.id)
+          .single()
+
+        if (data?.id) {
+          setRealBadgeId(data.id)
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    fetchBadge()
+  }, [visit.id])
+
   const handlePrint = async () => {
+    setPrintError(null)
+
+    if (!realBadgeId) {
+      setPrintError('No issued badge found for this visit. Please approve the registration first.')
+      return
+    }
+
     try {
-      const { printBadgePreview } = await import('@/lib/badge/badge-print')
-      await printBadgePreview(previewBadge as unknown as VisitorBadge)
+      const { printBadgeWindow } = await import('@/lib/badge/badge-print')
+      await printBadgeWindow(realBadgeId)
     } catch {
       // popup blocked or print failed
     }
@@ -272,6 +302,9 @@ export default function BadgePreviewPanel({
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">Badge Preview</h2>
                 <div className="flex items-center gap-2">
+                  {printError && (
+                    <p className="text-xs text-red-600">{printError}</p>
+                  )}
                   <button
                     onClick={handlePrint}
                     className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 min-h-[44px]"

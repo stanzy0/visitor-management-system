@@ -164,6 +164,16 @@ export const BadgeLayout = memo(function BadgeLayout({ badge, watermark }: Badge
           </div>
 
           <div className="flex flex-col items-center justify-center gap-1">
+            {(() => {
+              const qrPayload = qrValue
+              console.log({
+                badge_id: badge.id,
+                badge_number: badge.badge_number,
+                qr_token: badge.qr_token,
+                qr_payload: qrPayload,
+              })
+              return null
+            })()}
             <QRCodeSVG
               value={qrValue}
               size={BADGE_QR_SETTINGS.SIZE}

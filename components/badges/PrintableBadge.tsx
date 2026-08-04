@@ -231,6 +231,16 @@ export default function PrintableBadge({ badge, autoPrint = true, watermark }: P
           </div>
 
           <div className="flex flex-col items-center justify-center gap-1">
+            {(() => {
+              const qrPayload = qrValue
+              console.log({
+                badge_id: badge.id,
+                badge_number: badge.badge_number,
+                qr_token: badge.qr_token,
+                qr_payload: qrPayload,
+              })
+              return null
+            })()}
             <QRCodeSVG
               value={qrValue}
               size={180}
