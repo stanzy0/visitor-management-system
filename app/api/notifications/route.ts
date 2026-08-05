@@ -13,7 +13,6 @@ export async function GET(request: NextRequest) {
     const filters = {
       search: searchParams.get('search') || '',
       type: searchParams.get('type') || 'all',
-      priority: searchParams.get('priority') || 'all',
       read: searchParams.get('read') || 'all',
       dateFrom: searchParams.get('dateFrom') || '',
       dateTo: searchParams.get('dateTo') || '',
@@ -38,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, message, type, priority, recipient_role, related_type, related_id, action_url } = body
+    const { title, message, type, recipient_role, related_type, related_id } = body
 
     if (!title || !message) {
       return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
@@ -52,9 +51,7 @@ export async function POST(request: NextRequest) {
       user.id,
       recipient_role || null,
       related_type || null,
-      related_id || null,
-      priority || 'Normal',
-      action_url || null
+      related_id || null
     )
 
     if (!notification) {

@@ -4,10 +4,10 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    const q = searchParams.get('q')
+    const q = searchParams.get('q')?.trim()
 
     if (!q) {
-      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
+      return NextResponse.json({ success: false, message: 'Missing query parameter', error: 'Missing query parameter' }, { status: 400 })
     }
 
     if (!supabaseAdmin) {
@@ -69,7 +69,15 @@ export async function GET(request: NextRequest) {
 
     if (error || !data) {
       console.error('[public/status] lookup error', { q, error, data })
-      return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: error?.message || 'Registration not found', 
+          error: error?.message || 'Registration not found',
+          details: error 
+        }, 
+        { status: 404 }
+      )
     }
 
     const visit = data as any

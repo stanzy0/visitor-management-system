@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/server/email'
 import type { EmailTemplate } from '@/lib/email/types'
-import { createAdminNotification, createHostEmployeeNotification } from '@/lib/notifications'
+import { createAdminNotification, createHostEmployeeNotification } from '@/lib/server/notifications'
 import { logAuditAction } from '@/lib/server/audit'
 import QRCode from 'qrcode'
 import { checkRateLimit, rateLimitResponse } from '@/lib/server/rate-limit'
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     const { data: employee } = await supabaseAdmin
       .from('employees')
-      .select('id, full_name, department, office_location, user_id')
+      .select('id, full_name, email, department, office_location, user_id')
       .eq('id', employee_id)
       .single()
 
@@ -183,19 +183,18 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const { error: docError } = await supabaseAdmin.from('visitor_documents').insert({
-        visitor_id: visitor.id,
-        document_type: doc_type || 'National ID',
-        document_number: doc_number,
-        issuing_country: issuing_country || null,
-        expiry_date: expiry_date || null,
-        front_image_url: doc_front_url,
-        file_url: doc_front_url,
-        back_image_url: doc_back_url || null,
-        verified: false,
-        verification_status: 'Pending',
-        uploaded_by: visitor.id,
-      })
+const { error: docError } = await supabaseAdmin.from('visitor_documents').insert({
+      visitor_id: visitor.id,
+      document_type: doc_type || 'National ID',
+      document_number: doc_number,
+      issuing_country: issuing_country || null,
+      expiry_date: expiry_date || null,
+      front_image_url: doc_front_url,
+      file_url: doc_front_url,
+      back_image_url: doc_back_url || null,
+      verified: false,
+      verification_status: 'Pending',
+    })
 
       if (docError) {
         log(regNumber, 'FAILED: Could not save document', { error: docError.message })
@@ -206,22 +205,34 @@ export async function POST(request: NextRequest) {
 
       log(regNumber, 'Document saved', { doc_number, doc_type })
     }
-
+    
+    console.log("STEP 6");
     const qrToken = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, '0')).join('')
     const expiresAt = new Date()
     expiresAt.setHours(expiresAt.getHours() + 24)
+    
+    console.log("STEP 1");
 
-    const badgeNumberRes = await supabaseAdmin.rpc('generate_visitor_badge_number')
+    try {
+      const badgeNumberRes = await supabaseAdmin.rpc("generate_visitor_badge_number");
 
-    if (badgeNumberRes.error || !badgeNumberRes.data) {
-      log(regNumber, 'FAILED: Could not generate badge number', { error: badgeNumberRes.error?.message })
-      await supabaseAdmin.from('visits').delete().eq('id', visit.id)
-      await supabaseAdmin.from('visitors').delete().eq('id', visitor.id)
-      return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
+      console.log("STEP 2");
+      console.log(badgeNumberRes);
+
+      if (badgeNumberRes.error) {
+        console.error("RPC ERROR:", badgeNumberRes.error);
+        throw badgeNumberRes.error;
+      }
+
+      badgeNumber = badgeNumberRes.data;
+
+      console.log("STEP 3");
+    } catch (e) {
+      console.error("RPC THREW:", e);
+      throw e;
     }
 
-    badgeNumber = badgeNumberRes.data
-
+    console.log("STEP 4");
     const { data: badge, error: badgeError } = await supabaseAdmin
       .from('visitor_badges')
       .insert({
@@ -241,64 +252,81 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
     }
 
+    console.log("STEP 5");
+
     badgeId = badge.id
     log(regNumber, 'Badge created', { badgeId, badgeNumber })
 
+    console.log("STEP 7");
     let visitorEmailSent = false
     let hostEmailSent = false
 
-    try {
-      await sendEmail({
-        to: trimmedEmail,
-        recipientName: full_name,
-        subject: `Registration Submitted - ${regNumber}`,
-        template: 'registration_submitted' as EmailTemplate,
+    const visitorResult = await sendEmail({
+      to: trimmedEmail,
+      recipientName: full_name,
+      subject: `Registration Submitted - ${regNumber}`,
+      template: 'registration_submitted' as EmailTemplate,
+      data: {
+        visitorName: full_name,
+        registrationNumber: regNumber,
+        visitDate: visit_date,
+        arrivalTime: arrival_time || 'TBD',
+        hostName: employee.full_name,
+        location: employee.office_location || 'Reception',
+        orgName: 'AFCSC Visitor Management',
+      },
+      relatedType: 'visit',
+      relatedId: visit.id,
+    })
+
+    console.log("EMAIL RESULT:", visitorResult)
+    
+    visitorEmailSent = visitorResult.success
+
+    await createAdminNotification(
+      'New Online Registration',
+      `${full_name} has submitted a public registration (${regNumber}) for ${visit_date}.`,
+      'info',
+      'visit',
+      visit.id
+    )
+    log(regNumber, 'Admin notification created')
+
+    if (employee.email) {
+      const hostResult = await sendEmail({
+        to: employee.email,
+        recipientName: employee.full_name,
+        subject: `Visitor Registration - ${full_name}`,
+        template: 'visitor_arrival',
         data: {
           visitorName: full_name,
-          registrationNumber: regNumber,
-          visitDate: visit_date,
-          arrivalTime: arrival_time || 'TBD',
-          hostName: employee.full_name,
+          organization: visitor_organization || 'N/A',
+          purpose,
+          date: visit_date,
+          time: arrival_time || 'TBD',
+          badgeNumber,
           location: employee.office_location || 'Reception',
-          orgName: 'AFCSC Visitor Management',
         },
         relatedType: 'visit',
         relatedId: visit.id,
       })
-      visitorEmailSent = true
-      log(regNumber, 'Visitor email sent')
-    } catch (emailErr) {
-      console.error(`[PUBLIC-REGISTRATION] ${regNumber} | Visitor email failed`, emailErr)
-    }
 
-    try {
-      await createAdminNotification(
-        'New Online Registration',
-        `${full_name} has submitted a public registration (${regNumber}) for ${visit_date}.`,
-        'info',
-        'visit',
-        visit.id
-      )
-      log(regNumber, 'Admin notification created')
-    } catch (notifErr) {
-      console.error(`[PUBLIC-REGISTRATION] ${regNumber} | Admin notification failed`, notifErr)
-    }
+      console.log("EMAIL RESULT:", hostResult)
+      hostEmailSent = hostResult.success
 
-    if (employee.user_id) {
-      try {
+      if (hostEmailSent) {
         await createHostEmployeeNotification(
           employee.id,
-          'New Visitor Registration',
-          `${full_name} has registered to visit you on ${visit_date}.`,
+          'Visitor Registration Received',
+          `${full_name} has submitted a visitor registration (${regNumber}) for ${visit_date}.`,
           'visitor',
           'visit',
           visit.id
         )
-        hostEmailSent = true
         log(regNumber, 'Host notification created')
-      } catch (notifErr) {
-        console.error(`[PUBLIC-REGISTRATION] ${regNumber} | Host notification failed`, notifErr)
       }
+    } else {
+      log(regNumber, 'No host email - employee has no email address')
     }
 
     try {
@@ -334,8 +362,9 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     )
-  } catch (err) {
-    console.error(`[PUBLIC-REGISTRATION] ${regNumber || 'UNKNOWN'} | FATAL ERROR`, err)
+    } catch (err) {
+    console.error(`[PUBLIC-REGISTRATION] ${regNumber || 'UNKNOWN'} | FATAL ERROR`);
+    console.error(err);
 
     if (visitorId && supabaseAdmin) {
       try {
@@ -362,8 +391,12 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Internal server error' },
+      {
+        success: false,
+        message: err instanceof Error ? err.message : String(err),
+        error: err instanceof Error ? err.message : String(err),
+      },
       { status: 500 }
-    )
+    );
   }
 }

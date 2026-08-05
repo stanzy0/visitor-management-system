@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth-helpers'
-import { queueEmail } from '@/lib/email'
+import { sendEmail } from '@/lib/server/email'
+import type { EmailTemplate } from '@/lib/email/types'
 
 export async function POST(request: NextRequest) {
   const authResult = await requireAdmin()
@@ -16,19 +17,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
-    await queueEmail({
+    const result = await sendEmail({
       to,
       recipientName,
       subject,
-      template,
+      template: template as EmailTemplate,
       data: data || {},
       relatedType,
       relatedId,
     })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: result.success, error: result.success ? undefined : result.error })
   } catch (error) {
-    console.error('Error queuing email:', error)
+    console.error('Error sending email:', error)
     return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
   }
 }

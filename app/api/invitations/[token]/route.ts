@@ -3,8 +3,9 @@ import { supabase } from '@/lib/supabase'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getInvitationByToken, updateInvitationStatus, approveInvitation, rejectInvitation, cancelInvitation } from '@/lib/server/invitations'
 import { logAuditAction } from '@/lib/server/audit'
-import { queueEmail } from '@/lib/email'
+import { sendEmail } from '@/lib/server/email'
 import { getPortalUrl } from '@/lib/utils/portal-url'
+import type { EmailTemplate } from '@/lib/email/types'
 import QRCode from 'qrcode'
 
 export async function GET(
@@ -178,11 +179,11 @@ export async function POST(
           const portalUrl = getPortalUrl(badge.qr_token)
           const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
 
-          void queueEmail({
+          void sendEmail({
             to: invitation.visitor_email,
             recipientName: invitation.visitor_name,
             subject: 'Visitor Approval Confirmation',
-            template: 'invitation_approved',
+            template: 'invitation_approved' as EmailTemplate,
             data: {
               visitorName: invitation.visitor_name,
               hostName: host?.full_name || 'Our Team',

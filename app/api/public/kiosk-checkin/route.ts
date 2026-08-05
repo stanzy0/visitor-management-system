@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logAuditAction } from '@/lib/server/audit'
-import { createHostEmployeeNotification, createSystemNotification } from '@/lib/notifications'
+import { createHostEmployeeNotification, createSystemNotification } from '@/lib/server/notifications'
 import { sendEmail } from '@/lib/server/email'
 import { checkRateLimit, rateLimitResponse } from '@/lib/server/rate-limit'
 

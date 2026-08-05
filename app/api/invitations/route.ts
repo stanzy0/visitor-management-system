@@ -1,8 +1,9 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { requireRole } from '@/lib/auth-helpers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { queueEmail } from '@/lib/email'
+import { sendEmail } from '@/lib/server/email'
 import { getBaseUrl } from '@/lib/utils/portal-url'
+import type { EmailTemplate } from '@/lib/email/types'
 
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(['Admin', 'Receptionist', 'Host Employee'])
@@ -118,11 +119,11 @@ export async function POST(request: NextRequest) {
     const baseUrl = getBaseUrl()
     const registrationUrl = `${baseUrl}/register/${invitation.invitation_token}`
 
-    void queueEmail({
+    void sendEmail({
       to: visitor_email,
       recipientName: visitor_name,
       subject: `You're Invited to Visit - ${expected_date}`,
-      template: 'invitation_created',
+      template: 'invitation_created' as EmailTemplate,
       data: {
         visitorName: visitor_name,
         hostName: host?.full_name || 'Our Team',

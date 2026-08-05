@@ -1,6 +1,133 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import type { Notification, NotificationFilters, NotificationStats, NotificationPreferences } from '@/lib/types/notification'
 
+console.log("SERVICE ROLE EXISTS:", !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+
+export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'visitor' | 'appointment' | 'employee' | 'system' | 'watchlist_match' | 'watchlist_added' | 'watchlist_updated' | 'watchlist_override'
+
+export async function createNotification(
+  title: string,
+  message: string,
+  type: NotificationType = 'info',
+  userId?: string | null,
+  recipientRole?: string | null,
+  relatedType?: string,
+  relatedId?: string
+): Promise<Notification | null> {
+  console.log("Creating notification via SERVICE ROLE")
+  try {
+    if (!supabaseAdmin) {
+      console.error('Failed to create notification: supabaseAdmin not configured')
+      return null
+    }
+    const { data, error } = await supabaseAdmin.from('notifications').insert({
+      title,
+      message,
+      type,
+      user_id: userId || null,
+      recipient_role: recipientRole || null,
+      related_type: relatedType || null,
+      related_id: relatedId || null,
+    }).select('*').single()
+
+    if (error) {
+      console.error('Failed to create notification:', error)
+      return null
+    }
+
+    if (data) {
+      console.log('Notification created')
+      return data as Notification
+    }
+
+    console.error('Failed to create notification: No data returned')
+    return null
+  } catch (err) {
+    console.error('Notification creation failed:', err)
+    return null
+  }
+}
+
+export async function createAdminNotification(
+  title: string,
+  message: string,
+  type: NotificationType = 'info',
+  relatedType?: string,
+  relatedId?: string
+): Promise<Notification | null> {
+  return createNotification(title, message, type, null, 'Admin', relatedType, relatedId)
+}
+
+export async function createReceptionistNotification(
+  title: string,
+  message: string,
+  type: NotificationType = 'info',
+  relatedType?: string,
+  relatedId?: string
+): Promise<Notification | null> {
+  return createNotification(title, message, type, null, 'Receptionist', relatedType, relatedId)
+}
+
+export async function createSecurityNotification(
+  title: string,
+  message: string,
+  type: NotificationType = 'info',
+  relatedType?: string,
+  relatedId?: string
+): Promise<Notification | null> {
+  return createNotification(title, message, type, null, 'Security', relatedType, relatedId)
+}
+
+export async function createHostNotification(
+  userId: string,
+  title: string,
+  message: string,
+  type: NotificationType = 'info',
+  relatedType?: string,
+  relatedId?: string
+): Promise<Notification | null> {
+  return createNotification(title, message, type, userId, null, relatedType, relatedId)
+}
+
+export async function createHostEmployeeNotification(
+  employeeId: string,
+  title: string,
+  message: string,
+  type: NotificationType = 'info',
+  relatedType?: string,
+  relatedId?: string
+): Promise<Notification | null> {
+  try {
+    if (!supabaseAdmin) {
+      console.error('Failed to create host notification: supabaseAdmin not configured')
+      return null
+    }
+    const { data: employee } = await supabaseAdmin
+      .from('employees')
+      .select('user_id, email')
+      .eq('id', employeeId)
+      .single()
+
+    if (employee?.email) {
+      return createNotification(title, message, type, employee.user_id, null, relatedType, relatedId)
+    }
+
+    return null
+  } catch {
+    return null
+  }
+}
+
+export async function createSystemNotification(
+  title: string,
+  message: string,
+  type: NotificationType = 'info',
+  relatedType?: string,
+  relatedId?: string
+): Promise<Notification | null> {
+  return createNotification(title, message, type, null, null, relatedType, relatedId)
+}
+
 export async function getNotifications(filters: NotificationFilters, userId: string | null, userRole: string | null): Promise<Notification[]> {
   if (!supabaseAdmin) return []
 
@@ -23,10 +150,6 @@ export async function getNotifications(filters: NotificationFilters, userId: str
 
   if (filters.type && filters.type !== 'all') {
     query = query.eq('type', filters.type)
-  }
-
-  if (filters.priority && filters.priority !== 'all') {
-    query = query.eq('priority', filters.priority)
   }
 
   if (filters.read && filters.read !== 'all') {
@@ -53,7 +176,7 @@ export async function getNotifications(filters: NotificationFilters, userId: str
 
 export async function getNotificationStats(userId: string | null, userRole: string | null): Promise<NotificationStats> {
   if (!supabaseAdmin) {
-    return { total: 0, unread: 0, read: 0, byType: {}, byPriority: {}, avgResponseTime: null }
+    return { total: 0, unread: 0, read: 0, byType: {}, avgResponseTime: null }
   }
 
   let query = supabaseAdmin.from('notifications').select('*')
@@ -69,7 +192,7 @@ export async function getNotificationStats(userId: string | null, userRole: stri
   const { data, error } = await query
 
   if (error || !data) {
-    return { total: 0, unread: 0, read: 0, byType: {}, byPriority: {}, avgResponseTime: null }
+    return { total: 0, unread: 0, read: 0, byType: {}, avgResponseTime: null }
   }
 
   const notifications = data as Notification[]
@@ -78,11 +201,9 @@ export async function getNotificationStats(userId: string | null, userRole: stri
   const read = notifications.filter(n => n.is_read).length
 
   const byType: Record<string, number> = {}
-  const byPriority: Record<string, number> = {}
 
   notifications.forEach(n => {
     byType[n.type] = (byType[n.type] || 0) + 1
-    byPriority[n.priority] = (byPriority[n.priority] || 0) + 1
   })
 
   return {
@@ -90,7 +211,6 @@ export async function getNotificationStats(userId: string | null, userRole: stri
     unread,
     read,
     byType,
-    byPriority,
     avgResponseTime: null,
   }
 }

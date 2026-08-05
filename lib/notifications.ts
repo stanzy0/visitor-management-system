@@ -23,9 +23,7 @@ export async function createNotification(
   userId?: string | null,
   recipientRole?: string | null,
   relatedType?: string,
-  relatedId?: string,
-  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
-  action_url?: string | null
+  relatedId?: string
 ) {
   try {
     const { data, error } = await supabase.from('notifications').insert({
@@ -36,8 +34,6 @@ export async function createNotification(
       recipient_role: recipientRole || null,
       related_type: relatedType || null,
       related_id: relatedId || null,
-      priority,
-      action_url: action_url || null,
     }).select().single()
 
     if (error) {
@@ -58,11 +54,9 @@ export async function createAdminNotification(
   message: string,
   type: NotificationType = 'info',
   relatedType?: string,
-  relatedId?: string,
-  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
-  action_url?: string | null
+  relatedId?: string
 ) {
-  return createNotification(title, message, type, null, 'Admin', relatedType, relatedId, priority, action_url)
+  return createNotification(title, message, type, null, 'Admin', relatedType, relatedId)
 }
 
 export async function createReceptionistNotification(
@@ -70,11 +64,9 @@ export async function createReceptionistNotification(
   message: string,
   type: NotificationType = 'info',
   relatedType?: string,
-  relatedId?: string,
-  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
-  action_url?: string | null
+  relatedId?: string
 ) {
-  return createNotification(title, message, type, null, 'Receptionist', relatedType, relatedId, priority, action_url)
+  return createNotification(title, message, type, null, 'Receptionist', relatedType, relatedId)
 }
 
 export async function createSecurityNotification(
@@ -82,11 +74,9 @@ export async function createSecurityNotification(
   message: string,
   type: NotificationType = 'info',
   relatedType?: string,
-  relatedId?: string,
-  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
-  action_url?: string | null
+  relatedId?: string
 ) {
-  return createNotification(title, message, type, null, 'Security', relatedType, relatedId, priority, action_url)
+  return createNotification(title, message, type, null, 'Security', relatedType, relatedId)
 }
 
 export async function createHostNotification(
@@ -95,11 +85,9 @@ export async function createHostNotification(
   message: string,
   type: NotificationType = 'info',
   relatedType?: string,
-  relatedId?: string,
-  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
-  action_url?: string | null
+  relatedId?: string
 ) {
-  return createNotification(title, message, type, userId, null, relatedType, relatedId, priority, action_url)
+  return createNotification(title, message, type, userId, null, relatedType, relatedId)
 }
 
 export async function createHostEmployeeNotification(
@@ -108,19 +96,17 @@ export async function createHostEmployeeNotification(
   message: string,
   type: NotificationType = 'info',
   relatedType?: string,
-  relatedId?: string,
-  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
-  action_url?: string | null
+  relatedId?: string
 ) {
   try {
     const { data: employee } = await supabase
       .from('employees')
-      .select('user_id')
+      .select('user_id, email')
       .eq('id', employeeId)
       .single()
 
-    if (employee?.user_id) {
-      return createNotification(title, message, type, employee.user_id, null, relatedType, relatedId, priority, action_url)
+    if (employee?.email) {
+      return createNotification(title, message, type, employee.user_id, null, relatedType, relatedId)
     }
 
     return null
@@ -134,11 +120,9 @@ export async function createSystemNotification(
   message: string,
   type: NotificationType = 'info',
   relatedType?: string,
-  relatedId?: string,
-  priority: 'Low' | 'Normal' | 'High' | 'Critical' = 'Normal',
-  action_url?: string | null
+  relatedId?: string
 ) {
-  return createNotification(title, message, type, null, null, relatedType, relatedId, priority, action_url)
+  return createNotification(title, message, type, null, null, relatedType, relatedId)
 }
 
 export async function getNotifications(userId: string | null, limit: number = 50) {
@@ -346,6 +330,36 @@ export async function createWatchlistOverrideNotification(
     null,
     'Admin',
     'visitor_watchlist',
+    undefined
+  )
+}
+
+export async function createEmployeeAddedNotification(
+  employeeName: string,
+  addedBy: string
+) {
+  return createNotification(
+    'Employee Added',
+    `New employee ${employeeName} added by ${addedBy}.`,
+    'employee',
+    null,
+    'Admin',
+    'employee',
+    undefined
+  )
+}
+
+export async function createEmployeeUpdatedNotification(
+  employeeName: string,
+  updatedBy: string
+) {
+  return createNotification(
+    'Employee Updated',
+    `Employee ${employeeName} updated by ${updatedBy}.`,
+    'employee',
+    null,
+    'Admin',
+    'employee',
     undefined
   )
 }

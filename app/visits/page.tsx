@@ -249,36 +249,36 @@ export default function VisitsPage() {
         await handleGenerateBadge(visitId)
         const visit = visits.find(v => v.id === visitId)
         if (visit?.employee?.full_name) {
-          const { data: employee } = await supabase.from('employees').select('user_id').eq('full_name', visit.employee.full_name).single()
-          if (employee?.user_id) {
-            await createHostNotification(employee.user_id, 'Visitor Approved', `${visitorName}'s visit has been approved.`, 'visitor', 'visit', visitId, 'Normal', `/visits?id=${visitId}`)
+          const { data: employee } = await supabase.from('employees').select('user_id, email').eq('full_name', visit.employee.full_name).single()
+          if (employee?.email) {
+            await createHostNotification(employee.user_id, 'Visitor Approved', `${visitorName}'s visit has been approved.`, 'visitor', 'visit', visitId)
           }
         }
       } else if (newStatus === 'rejected') {
         logAuditAction('Visit Rejected', 'visit', visitId, `${visitorName}'s visit to ${hostName} rejected`)
         const visit = visits.find(v => v.id === visitId)
         if (visit?.employee?.full_name) {
-          const { data: employee } = await supabase.from('employees').select('user_id').eq('full_name', visit.employee.full_name).single()
-          if (employee?.user_id) {
-            await createHostNotification(employee.user_id, 'Visitor Rejected', `${visitorName}'s visit has been rejected.`, 'visitor', 'visit', visitId, 'High', `/visits?id=${visitId}`)
+          const { data: employee } = await supabase.from('employees').select('user_id, email').eq('full_name', visit.employee.full_name).single()
+          if (employee?.email) {
+            await createHostNotification(employee.user_id, 'Visitor Rejected', `${visitorName}'s visit has been rejected.`, 'visitor', 'visit', visitId)
           }
         }
       } else if (newStatus === 'checked_in') {
         logAuditAction('Visitor Checked In', 'visit', visitId, `${visitorName} checked in at ${currentTime}`)
         const visit = visits.find(v => v.id === visitId)
         if (visit?.employee?.full_name) {
-          const { data: employee } = await supabase.from('employees').select('user_id').eq('full_name', visit.employee.full_name).single()
-          if (employee?.user_id) {
-            await createHostNotification(employee.user_id, 'Visitor Arrived', `${visitorName} has checked in at ${currentTime}.`, 'visitor', 'visit', visitId, 'Normal', `/visits?id=${visitId}`)
+          const { data: employee } = await supabase.from('employees').select('user_id, email').eq('full_name', visit.employee.full_name).single()
+          if (employee?.email) {
+            await createHostNotification(employee.user_id, 'Visitor Arrived', `${visitorName} has checked in at ${currentTime}.`, 'visitor', 'visit', visitId)
           }
         }
       } else if (newStatus === 'checked_out') {
         logAuditAction('Visitor Checked Out', 'visit', visitId, `${visitorName} checked out at ${currentTime}`)
         const visit = visits.find(v => v.id === visitId)
         if (visit?.employee?.full_name) {
-          const { data: employee } = await supabase.from('employees').select('user_id').eq('full_name', visit.employee.full_name).single()
-          if (employee?.user_id) {
-            await createHostNotification(employee.user_id, 'Visitor Checked Out', `${visitorName} has checked out at ${currentTime}.`, 'visitor', 'visit', visitId, 'Normal', `/visits?id=${visitId}`)
+          const { data: employee } = await supabase.from('employees').select('user_id, email').eq('full_name', visit.employee.full_name).single()
+          if (employee?.email) {
+            await createHostNotification(employee.user_id, 'Visitor Checked Out', `${visitorName} has checked out at ${currentTime}.`, 'visitor', 'visit', visitId)
           }
         }
       }

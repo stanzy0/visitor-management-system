@@ -13,7 +13,6 @@ export default function NotificationsClient() {
   const [filters, setFilters] = useState<NotificationFilters>({
     search: '',
     type: 'all',
-    priority: 'all',
     read: 'all',
     dateFrom: '',
     dateTo: '',
@@ -25,7 +24,6 @@ export default function NotificationsClient() {
       const params = new URLSearchParams()
       if (filters.search) params.set('search', filters.search)
       if (filters.type !== 'all') params.set('type', filters.type)
-      if (filters.priority !== 'all') params.set('priority', filters.priority)
       if (filters.read !== 'all') params.set('read', filters.read)
       if (filters.dateFrom) params.set('dateFrom', filters.dateFrom)
       if (filters.dateTo) params.set('dateTo', filters.dateTo)

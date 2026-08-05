@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getCurrentUser } from '@/lib/auth'
-import { logAuditAction } from '@/lib/client/audit'
+import { logAuditAction } from '@/lib/server/audit'
 import { VisitorDocument, DOCUMENT_TYPES, ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '@/lib/types/document'
-import { createAdminNotification, createReceptionistNotification, createHostNotification, createSystemNotification } from '@/lib/notifications'
+import { createAdminNotification, createReceptionistNotification, createHostNotification, createSystemNotification } from '@/lib/server/notifications'
 
 function mapToDocumentVerification(doc: any) {
   return {

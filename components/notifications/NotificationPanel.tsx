@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, Check, Trash2, CheckCheck, ExternalLink } from 'lucide-react'
+import { X, Check, Trash2, CheckCheck } from 'lucide-react'
 import { getAuthHeaders } from '@/lib/client/api'
 import type { Notification } from '@/lib/types/notification'
 
@@ -76,19 +76,6 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
   const displayedNotifications = showAll ? notifications : (notifications || []).slice(0, 20)
   const unreadCount = (notifications || []).filter(n => !n.is_read).length
 
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case 'Critical':
-        return <span className="text-red-600">🔴</span>
-      case 'High':
-        return <span className="text-orange-600">🟠</span>
-      case 'Normal':
-        return <span className="text-blue-600">🔵</span>
-      default:
-        return <span className="text-gray-400">⚪</span>
-    }
-  }
-
   const formatTime = (dateStr: string | null | undefined) => {
     if (!dateStr) return '—'
     const date = new Date(dateStr)
@@ -96,7 +83,7 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
     const now = new Date()
     const diff = now.getTime() - date.getTime()
     const minutes = Math.floor(diff / 60000)
-    const hours = Math.floor(diff / 3600000)
+    const hours = Math.floor(diff / 86400000)
     const days = Math.floor(diff / 86400000)
 
     if (minutes < 1) return 'Just now'
@@ -173,7 +160,16 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-0.5">
-                      {getPriorityIcon(notification.priority)}
+                      {notification.type === 'success' && '✓'}
+                      {notification.type === 'warning' && '⚠'}
+                      {notification.type === 'error' && '✕'}
+                      {notification.type === 'visitor' && '👤'}
+                      {notification.type === 'appointment' && '📅'}
+                      {notification.type === 'employee' && '👨‍💼'}
+                      {notification.type === 'system' && '⚙'}
+                      {(notification.type === 'watchlist_match' || notification.type === 'watchlist_override') && '✋'}
+                      {(notification.type === 'watchlist_added' || notification.type === 'watchlist_updated') && '➕'}
+                      {(!notification.is_read && !['success', 'warning', 'error', 'visitor', 'appointment', 'employee', 'system', 'watchlist_match', 'watchlist_added', 'watchlist_updated', 'watchlist_override'].includes(notification.type)) && '•'}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
@@ -196,15 +192,6 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
                             <Check className="h-3 w-3" />
                             Mark Read
                           </button>
-                        )}
-                        {notification.action_url && (
-                          <a
-                            href={notification.action_url}
-                            className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 min-h-[32px]"
-                          >
-                            <ExternalLink className="h-3 w-3" />
-                            Open
-                          </a>
                         )}
                         <button
                           onClick={() => handleDelete(notification.id)}
@@ -233,19 +220,4 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
       </div>
     </div>
   )
-}
-
-function formatTime(dateStr: string) {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-
-  if (minutes < 1) return 'Just now'
-  if (minutes < 60) return `${minutes}m ago`
-  if (hours < 24) return `${hours}h ago`
-  if (days < 7) return `${days}d ago`
-  return date.toLocaleDateString()
 }

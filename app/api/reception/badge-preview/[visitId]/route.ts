@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth-helpers'
 import { getVisitForBadgePreview, getBadgeTemplates } from '@/lib/server/badge-preview'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { logAuditAction } from '@/lib/client/audit'
+import { logAuditAction } from '@/lib/server/audit'
 import { getPortalUrl } from '@/lib/utils/portal-url'
 import QRCode from 'qrcode'
 import { sendEmail } from '@/lib/server/email'
-import { createHostEmployeeNotification, createSystemNotification } from '@/lib/notifications'
+import { createHostEmployeeNotification, createSystemNotification } from '@/lib/server/notifications'
 import { getDocumentVerifications } from '@/lib/server/document-verification'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ visitId: string }> }) {

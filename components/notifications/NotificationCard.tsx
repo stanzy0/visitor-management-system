@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, Trash2, ExternalLink } from 'lucide-react'
+import { Check, Trash2 } from 'lucide-react'
 import type { Notification } from '@/lib/types/notification'
 
 interface NotificationCardProps {
@@ -10,16 +10,32 @@ interface NotificationCardProps {
 }
 
 export default function NotificationCard({ notification, onMarkAsRead, onDelete }: NotificationCardProps) {
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case 'Critical':
-        return <span className="text-red-600 text-lg">🔴</span>
-      case 'High':
-        return <span className="text-orange-600 text-lg">🟠</span>
-      case 'Normal':
-        return <span className="text-blue-600 text-lg">🔵</span>
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'success':
+        return '✓'
+      case 'warning':
+        return '⚠'
+      case 'error':
+        return '✕'
+      case 'visitor':
+        return '👤'
+      case 'appointment':
+        return '📅'
+      case 'employee':
+        return '👨‍💼'
+      case 'system':
+        return '⚙'
+      case 'watchlist_match':
+        return '✋'
+      case 'watchlist_added':
+        return '➕'
+      case 'watchlist_updated':
+        return '✏'
+      case 'watchlist_override':
+        return '✅'
       default:
-        return <span className="text-gray-400 text-lg">⚪</span>
+        return '•'
     }
   }
 
@@ -30,7 +46,7 @@ export default function NotificationCard({ notification, onMarkAsRead, onDelete 
     const now = new Date()
     const diff = now.getTime() - date.getTime()
     const minutes = Math.floor(diff / 60000)
-    const hours = Math.floor(diff / 3600000)
+    const hours = Math.floor(diff / 86400000)
     const days = Math.floor(diff / 86400000)
 
     if (minutes < 1) return 'Just now'
@@ -43,8 +59,8 @@ export default function NotificationCard({ notification, onMarkAsRead, onDelete 
   return (
     <div className={`rounded-lg border p-4 ${notification.is_read ? 'bg-white border-gray-200' : 'bg-blue-50 border-blue-200'}`}>
       <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 mt-0.5">
-          {getPriorityIcon(notification.priority)}
+        <div className="flex-shrink-0 mt-0.5 text-lg">
+          {getTypeIcon(notification.type)}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
@@ -67,15 +83,6 @@ export default function NotificationCard({ notification, onMarkAsRead, onDelete 
                 <Check className="h-3 w-3" />
                 Mark Read
               </button>
-            )}
-            {notification.action_url && (
-              <a
-                href={notification.action_url}
-                className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 min-h-[36px]"
-              >
-                <ExternalLink className="h-3 w-3" />
-                Open
-              </a>
             )}
             <button
               onClick={() => onDelete(notification.id)}

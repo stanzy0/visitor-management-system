@@ -38,28 +38,18 @@ export default function NotificationFilters({ filters, onFilterChange }: Notific
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
           >
             <option value="all">All Types</option>
-            <option value="Visitor">Visitor</option>
-            <option value="Appointment">Appointment</option>
-            <option value="Badge">Badge</option>
-            <option value="Security">Security</option>
-            <option value="System">System</option>
-            <option value="Asset">Asset</option>
-            <option value="Approval">Approval</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-          <select
-            value={filters.priority}
-            onChange={(e) => updateFilter('priority', e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-          >
-            <option value="all">All Priorities</option>
-            <option value="Low">Low</option>
-            <option value="Normal">Normal</option>
-            <option value="High">High</option>
-            <option value="Critical">Critical</option>
+            <option value="visitor">Visitor</option>
+            <option value="appointment">Appointment</option>
+            <option value="employee">Employee</option>
+            <option value="system">System</option>
+            <option value="info">Info</option>
+            <option value="success">Success</option>
+            <option value="warning">Warning</option>
+            <option value="error">Error</option>
+            <option value="watchlist_match">Watchlist Match</option>
+            <option value="watchlist_added">Watchlist Added</option>
+            <option value="watchlist_updated">Watchlist Updated</option>
+            <option value="watchlist_override">Watchlist Override</option>
           </select>
         </div>
 

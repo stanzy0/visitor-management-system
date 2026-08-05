@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { logAuditAction } from '@/lib/client/audit'
-import { createHostEmployeeNotification, createSystemNotification } from '@/lib/notifications'
+import { logAuditAction } from '@/lib/server/audit'
+import { createHostEmployeeNotification, createSystemNotification } from '@/lib/server/notifications'
 import type { HostDashboardStats, HostReport, EmployeeProfile } from '@/lib/types/host'
 
 export async function getHostDashboardStats(employeeId: string): Promise<HostDashboardStats> {

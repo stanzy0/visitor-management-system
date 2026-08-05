@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { replacePortalDocument } from '@/lib/server/portal'
 import { markReplacementUploaded } from '@/lib/server/document-verification'
-import { createReceptionistNotification, createSystemNotification } from '@/lib/notifications'
+import { createReceptionistNotification, createSystemNotification } from '@/lib/server/notifications'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {

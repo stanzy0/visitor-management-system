@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logAuditAction } from '@/lib/server/audit'
-import { createHostEmployeeNotification, createSecurityNotification, createSystemNotification } from '@/lib/notifications'
+import { createHostEmployeeNotification, createSecurityNotification, createSystemNotification } from '@/lib/server/notifications'
 import type { VisitLifecycleStatus, LifecycleEvent, MissingDocumentResult, ExpiredVisitResult } from '@/lib/types/lifecycle'
 
 const REQUIRED_DOCUMENT_TYPES = [
