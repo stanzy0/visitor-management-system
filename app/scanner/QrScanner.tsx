@@ -66,9 +66,11 @@ export default function QrScanner() {
   }, [])
 
   const handleScan = useCallback(async (decodedText: string) => {
+    alert('QR RAW:\n' + decodedText)
     console.log('QR RAW:', decodedText)
     try {
       const payload = JSON.parse(decodedText)
+      alert('QR PARSED PAYLOAD:\n' + JSON.stringify(payload, null, 2))
       console.log('QR PARSED PAYLOAD:', payload)
 
       if (payload.gate_pass || payload.reg) {
@@ -84,6 +86,7 @@ export default function QrScanner() {
           .eq('registration_number', regNumber)
           .single()
 
+        alert('LOOKUP RESULT (vehicle):\n' + JSON.stringify({ data, error }, null, 2))
         console.log('QR VEHICLE LOOKUP RESULT:', { regNumber, data, error })
         if (error || !data) {
           setError('Vehicle not found')
@@ -112,6 +115,7 @@ export default function QrScanner() {
           .eq('invitation_token', token)
           .single()
 
+        alert('LOOKUP RESULT (invitation):\n' + JSON.stringify({ invitation, invError }, null, 2))
         console.log('QR INVITATION LOOKUP RESULT:', { token, invitation, invError })
         if (invError || !invitation) {
           setError('Invitation not found')
@@ -166,6 +170,7 @@ export default function QrScanner() {
           .eq('id', visitId)
           .single()
 
+        alert('LOOKUP RESULT (visitor-pass):\n' + JSON.stringify({ data, error }, null, 2))
         console.log('QR VISITOR-PASS LOOKUP RESULT:', { visitId, data, error })
         if (error || !data) {
           setError('Visit not found')
@@ -209,6 +214,7 @@ export default function QrScanner() {
           .eq('source', 'public')
           .single()
 
+        alert('LOOKUP RESULT (public-visitor):\n' + JSON.stringify({ data, error }, null, 2))
         console.log('QR PUBLIC-VISITOR LOOKUP RESULT:', { regNumber, data, error })
         if (error || !data) {
           setError('Visit not found')

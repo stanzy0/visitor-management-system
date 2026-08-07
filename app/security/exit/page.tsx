@@ -267,6 +267,7 @@ export default function ExitControlPage() {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText: string) => {
+          alert('QR RAW:\n' + decodedText)
           console.log('QR RAW:', decodedText)
           setScanningQr(false)
           qrScannerRef.current?.stop()
@@ -275,6 +276,7 @@ export default function ExitControlPage() {
             let lookupValue = decodedText
             try {
               const parsed = JSON.parse(decodedText)
+              alert('QR PARSED PAYLOAD:\n' + JSON.stringify(parsed, null, 2))
               console.log('QR PARSED PAYLOAD:', parsed)
               if (parsed.qr_token) lookupValue = parsed.qr_token
               else if (parsed.type === 'public-visitor' && parsed.registrationNumber) lookupValue = parsed.registrationNumber
@@ -294,6 +296,7 @@ export default function ExitControlPage() {
               }
             }
 
+            alert('QR LOOKUP VALUE:\n' + lookupValue)
             console.log('QR LOOKUP VALUE:', lookupValue)
 
             const { data, error } = await supabase
@@ -304,6 +307,7 @@ export default function ExitControlPage() {
               .limit(1)
               .maybeSingle()
 
+            alert('LOOKUP RESULT (exit):\n' + JSON.stringify({ data, error }, null, 2))
             console.log('QR EXIT LOOKUP RESULT:', { lookupValue, data, error })
 
             if (error || !data) {

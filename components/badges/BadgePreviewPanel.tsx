@@ -108,7 +108,7 @@ export default function BadgePreviewPanel({
     id: 'preview',
     visit_id: visit.id,
     badge_number: 'PREVIEW',
-    qr_token: 'preview',
+    qr_token: Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, '0')).join(''),
     badge_status: 'Active' as const,
     issued_at: new Date().toISOString(),
     expires_at: `${expiryDate}T${expiryTime}:00`,

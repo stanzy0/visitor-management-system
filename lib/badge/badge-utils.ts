@@ -50,15 +50,7 @@ export function getBadgeStatusCssClass(status: BadgeStatus): string {
   }
 }
 
-export function isPreviewBadge(badge: VisitorBadge): boolean {
-  return badge.id === 'preview' || badge.qr_token === 'preview'
-}
-
 export function buildBadgeQrValue(badge: VisitorBadge): string {
-  if (isPreviewBadge(badge)) {
-    return 'PREVIEW_MODE'
-  }
-
   const portalUrl = getPortalUrl(badge.qr_token)
 
   if (!verifyPortalUrl(portalUrl, badge.qr_token)) {
