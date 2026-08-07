@@ -20,6 +20,7 @@ export interface PortalVisit {
   check_in_time: string | null
   check_out_time: string | null
   created_at: string
+  purpose: string | null
   visitor: {
     id: string
     full_name: string

@@ -17,6 +17,7 @@ export async function getPortalVisitByRegistrationNumber(registrationNumber: str
       check_in_time,
       check_out_time,
       created_at,
+      purpose,
       visitor:visitors(*),
       employee:employees(*),
       appointment:appointments(*),
@@ -58,13 +59,13 @@ export async function getPortalVisitByQRToken(qrToken: string): Promise<PortalVi
       check_in_time,
       check_out_time,
       created_at,
+      purpose,
       visitor:visitors(*),
       employee:employees(*),
       appointment:appointments(*),
       badge:visitor_badges(*)
     `)
     .eq('id', badge.visit_id)
-    .eq('source', 'public')
     .single()
 
   if (error || !data) {
@@ -217,6 +218,7 @@ interface RawVisit {
   status: string
   visitor_type: string
   source: string
+  purpose: string | null
   rejection_reason: string | null
   check_in_time: string | null
   check_out_time: string | null
@@ -281,6 +283,7 @@ function transformVisit(data: RawVisit): PortalVisit {
     check_in_time: data.check_in_time,
     check_out_time: data.check_out_time,
     created_at: data.created_at,
+    purpose: data.purpose,
     visitor: (visitor || null) as PortalVisit['visitor'],
     employee: employee || null,
     appointment: appointment || null,

@@ -24,9 +24,12 @@ export default function PortalDashboardPage() {
       setRefreshing(true)
 
       const baseUrl = `/api/portal/${encodeURIComponent(token)}`
+      console.log('[Portal Page] fetching:', baseUrl, 'token:', token)
 
       const visitRes = await fetch(baseUrl)
+      console.log('[Portal Page] visit response status:', visitRes.status, 'ok:', visitRes.ok)
       const visitJson = await visitRes.json()
+      console.log('[Portal Page] visit response data:', visitJson)
 
       if (!visitRes.ok) {
         setError(visitJson.error || 'Registration not found')
@@ -45,22 +48,40 @@ export default function PortalDashboardPage() {
       ])
 
       if (lifecycleRes.status === 'fulfilled') {
-        const json = await lifecycleRes.value.json()
-        setLifecycleEvents(json.data || [])
+        try {
+          const json = await lifecycleRes.value.json()
+          console.error('[Portal Page] lifecycle response:', json)
+          setLifecycleEvents(json.data || [])
+        } catch (e) {
+          console.error('[Portal Page] lifecycle parse error:', e)
+          setLifecycleEvents([])
+        }
       } else {
         setLifecycleEvents([])
       }
 
       if (documentsRes.status === 'fulfilled') {
-        const json = await documentsRes.value.json()
-        setDocuments(json.data || [])
+        try {
+          const json = await documentsRes.value.json()
+          console.error('[Portal Page] documents response:', json)
+          setDocuments(json.data || [])
+        } catch (e) {
+          console.error('[Portal Page] documents parse error:', e)
+          setDocuments([])
+        }
       } else {
         setDocuments([])
       }
 
       if (alertsRes.status === 'fulfilled') {
-        const json = await alertsRes.value.json()
-        setAlerts(json.data || [])
+        try {
+          const json = await alertsRes.value.json()
+          console.error('[Portal Page] alerts response:', json)
+          setAlerts(json.data || [])
+        } catch (e) {
+          console.error('[Portal Page] alerts parse error:', e)
+          setAlerts([])
+        }
       } else {
         setAlerts([])
       }
@@ -179,8 +200,8 @@ export default function PortalDashboardPage() {
         <div className="mx-auto max-w-3xl px-4 lg:px-6">
           <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
             <XCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Registration Not Found</h3>
-            <p className="text-gray-600">{error || 'Please check your registration number and try again.'}</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Badge not found.</h3>
+            <p className="text-gray-600">{error || 'Please check your QR code and try again.'}</p>
           </div>
         </div>
       </div>
@@ -190,31 +211,83 @@ export default function PortalDashboardPage() {
   const statusStyle = PORTAL_STATUS_STYLES[visit.status] || { bg: 'bg-gray-50', text: 'text-gray-700', label: visit.status }
   const currentStepIndex = LIFECYCLE_STEPS.findIndex(s => s.status === visit.status)
 
+  const visitorName = visit.visitor?.full_name || 'Visitor'
+  const visitorCompany = visit.visitor?.visitor_organization || null
+  const hostName = visit.employee?.full_name || null
+  const hostDepartment = visit.employee?.department || null
+  const visitPurpose = visit.purpose || null
+  const badgeNumber = visit.badge?.badge_number || null
+  const badgeStatus = visit.badge?.badge_status || null
+  const checkInTime = visit.check_in_time || null
+  const checkOutTime = visit.check_out_time || null
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-4xl px-4 lg:px-6 py-8 space-y-6">
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           <div className="p-6 md:p-8">
-            <div className="flex flex-col md:flex-row items-start gap-6">
-              <div className="flex-shrink-0">
-                {visit.visitor?.photo_url ? (
-                  <img src={visit.visitor.photo_url} alt={visit.visitor.full_name} className="h-24 w-24 rounded-full object-cover border-2 border-gray-200" />
-                ) : (
-                  <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-2xl text-gray-500">{(visit.visitor?.full_name || 'V').charAt(0)}</span>
+              <div className="flex flex-col md:flex-row items-start gap-6">
+                <div className="flex-shrink-0">
+                  {visit.visitor?.photo_url ? (
+                    <img src={visit.visitor.photo_url} alt={visitorName} className="h-24 w-24 rounded-full object-cover border-2 border-gray-200" />
+                  ) : (
+                    <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-2xl text-gray-500">{(visitorName || 'V').charAt(0)}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h1 className="text-2xl font-bold text-gray-900">{visitorName}</h1>
+                  <p className="text-gray-600 mt-1">Registration: <span className="font-mono font-semibold">{visit.registration_number}</span></p>
+                  <div className="flex flex-wrap items-center gap-3 mt-3">
+                    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${statusStyle.bg} ${statusStyle.text}`}>
+                      {statusStyle.label}
+                    </span>
+                    <span className="text-sm text-gray-500">Type: {visit.visitor_type}</span>
                   </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900">{visit.visitor?.full_name}</h1>
-                <p className="text-gray-600 mt-1">Registration: <span className="font-mono font-semibold">{visit.registration_number}</span></p>
-                <div className="flex flex-wrap items-center gap-3 mt-3">
-                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${statusStyle.bg} ${statusStyle.text}`}>
-                    {statusStyle.label}
-                  </span>
-                  <span className="text-sm text-gray-500">Type: {visit.visitor_type}</span>
                 </div>
               </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-6">Visitor Details</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Visitor Name</p>
+              <p className="text-sm font-medium text-gray-900">{visitorName}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Company</p>
+              <p className="text-sm font-medium text-gray-900">{visitorCompany || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Host Employee</p>
+              <p className="text-sm font-medium text-gray-900">{hostName || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Host Department</p>
+              <p className="text-sm font-medium text-gray-900">{hostDepartment || 'N/A'}</p>
+            </div>
+            <div className="sm:col-span-2">
+              <p className="text-sm text-gray-500">Visit Purpose</p>
+              <p className="text-sm font-medium text-gray-900">{visitPurpose || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Badge Number</p>
+              <p className="text-sm font-medium text-gray-900">{badgeNumber || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Status</p>
+              <p className="text-sm font-medium text-gray-900">{statusStyle.label}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Check-In Time</p>
+              <p className="text-sm font-medium text-gray-900">{checkInTime ? new Date(checkInTime).toLocaleString() : 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Check-Out Time</p>
+              <p className="text-sm font-medium text-gray-900">{checkOutTime ? new Date(checkOutTime).toLocaleString() : 'N/A'}</p>
             </div>
           </div>
         </div>
@@ -268,7 +341,7 @@ export default function PortalDashboardPage() {
               <div><p className="text-sm text-gray-500">Date</p><p className="text-sm font-medium text-gray-900">{visit.appointment.appointment_date}</p></div>
               <div><p className="text-sm text-gray-500">Time</p><p className="text-sm font-medium text-gray-900">{visit.appointment.appointment_time || 'TBD'}</p></div>
               <div><p className="text-sm text-gray-500">Expected Duration</p><p className="text-sm font-medium text-gray-900">{visit.appointment.expected_arrival || 'N/A'}</p></div>
-              <div><p className="text-sm text-gray-500">Purpose</p><p className="text-sm font-medium text-gray-900">{visit.appointment.purpose}</p></div>
+              <div><p className="text-sm text-gray-500">Purpose</p><p className="text-sm font-medium text-gray-900">{visit.appointment.purpose || 'N/A'}</p></div>
             </div>
           </div>
         )}
