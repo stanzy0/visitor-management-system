@@ -33,14 +33,14 @@ export default function VisitorTrendChart({ data, title = 'Visitor Trends', subt
       animate={{ opacity: 1, y: 0 }}
       className="rounded-[20px] border border-gray-200/60 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden"
     >
-      <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+      <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
           <p className="text-sm text-gray-500 mt-0.5">{subtitle}</p>
         </div>
       </div>
 
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         {loading ? (
           <div className="h-[200px] bg-gray-50 rounded-xl animate-pulse" />
         ) : displayData.length > 0 ? (

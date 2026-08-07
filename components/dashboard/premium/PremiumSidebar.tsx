@@ -102,6 +102,23 @@ interface PremiumSidebarProps {
   onToggleCollapse?: () => void
 }
 
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia(query).matches
+  })
+
+  useEffect(() => {
+    const mq = window.matchMedia(query)
+    const update = () => setMatches(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [query])
+
+  return matches
+}
+
 export default function PremiumSidebar({
   open,
   onClose,
@@ -113,31 +130,22 @@ export default function PremiumSidebar({
   onToggleCollapse,
 }: PremiumSidebarProps) {
   const [liveTime, setLiveTime] = useState(new Date())
-  const [isDesktop, setIsDesktop] = useState(true)
+  const isDesktop = useMediaQuery('(min-width: 1024px)')
 
   useEffect(() => {
     const timer = setInterval(() => setLiveTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
 
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px)')
-    setIsDesktop(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
-
   const getNavItems = (sectionItems: typeof NAV_SECTIONS[0]['items']) =>
     sectionItems.filter(item => PERMISSIONS[userRole]?.includes(item.permission))
 
-  const sidebarVisible = isDesktop || open
   const isCollapsed = collapsed && isDesktop
 
   return (
     <>
       <AnimatePresence>
-        {sidebarVisible && !isDesktop && (
+        {open && !isDesktop && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -152,11 +160,11 @@ export default function PremiumSidebar({
       <motion.aside
         initial={false}
         animate={{
-          x: sidebarVisible ? 0 : '-100%',
+          x: isDesktop ? 0 : (open ? 0 : '-100%'),
           width: isCollapsed ? 80 : 280,
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 border-r border-slate-800 shadow-2xl lg:relative lg:translate-x-0"
+        className="fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 border-r border-slate-800 shadow-2xl lg:relative lg:translate-x-0 lg:w-[280px]"
       >
         <div className="flex items-center justify-between p-5 border-b border-slate-800 flex-shrink-0">
           <motion.div

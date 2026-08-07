@@ -22,7 +22,7 @@ export default function ChartCard({ title, subtitle, children, onExport, exporti
       animate="visible"
       className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden"
     >
-      <div className="p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-gray-50/50 to-white">
+      <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-gray-50/50 to-white">
         <div>
           <h3 className="text-base font-semibold text-gray-900">{title}</h3>
           {subtitle && <p className="text-xs text-gray-500 mt-0.5 font-medium">{subtitle}</p>}

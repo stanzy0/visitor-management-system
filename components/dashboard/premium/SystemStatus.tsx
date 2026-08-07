@@ -54,7 +54,7 @@ export default function SystemStatus({ services = defaultServices }: SystemStatu
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-[20px] border border-gray-200/60 bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
+      className="rounded-[20px] border border-gray-200/60 bg-white p-4 sm:p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
     >
       <div className="flex items-center justify-between mb-5">
         <div>

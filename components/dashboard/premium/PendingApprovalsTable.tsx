@@ -42,7 +42,7 @@ export default function PendingApprovalsTable({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[20px] border border-gray-200/60 bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
+        className="rounded-[20px] border border-gray-200/60 bg-white p-4 sm:p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Pending Approvals</h2>
@@ -63,7 +63,7 @@ export default function PendingApprovalsTable({
       animate={{ opacity: 1, y: 0 }}
       className="rounded-[20px] border border-gray-200/60 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden"
     >
-      <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+      <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Pending Approvals</h2>
           <p className="text-sm text-gray-500 mt-0.5">{approvals.length} registration{approvals.length !== 1 ? 's' : ''} awaiting review</p>

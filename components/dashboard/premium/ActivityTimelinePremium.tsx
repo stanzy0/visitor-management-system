@@ -53,7 +53,7 @@ export default function ActivityTimelinePremium({ events }: ActivityTimelineProp
       animate={{ opacity: 1, y: 0 }}
       className="rounded-[20px] border border-gray-200/60 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden"
     >
-      <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+      <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Today&apos;s Activity</h2>
           <p className="text-sm text-gray-500 mt-0.5">Chronological timeline of events</p>
@@ -66,7 +66,7 @@ export default function ActivityTimelinePremium({ events }: ActivityTimelineProp
         </motion.span>
       </div>
 
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         <div className="relative">
           <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-primary/30 via-gray-200 to-transparent" />
           <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-4">
