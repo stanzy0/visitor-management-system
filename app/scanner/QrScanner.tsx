@@ -66,8 +66,10 @@ export default function QrScanner() {
   }, [])
 
   const handleScan = useCallback(async (decodedText: string) => {
+    console.log('QR RAW:', decodedText)
     try {
       const payload = JSON.parse(decodedText)
+      console.log('QR PARSED PAYLOAD:', payload)
 
       if (payload.gate_pass || payload.reg) {
         const regNumber = payload.reg
@@ -82,6 +84,7 @@ export default function QrScanner() {
           .eq('registration_number', regNumber)
           .single()
 
+        console.log('QR VEHICLE LOOKUP RESULT:', { regNumber, data, error })
         if (error || !data) {
           setError('Vehicle not found')
           return
@@ -109,6 +112,7 @@ export default function QrScanner() {
           .eq('invitation_token', token)
           .single()
 
+        console.log('QR INVITATION LOOKUP RESULT:', { token, invitation, invError })
         if (invError || !invitation) {
           setError('Invitation not found')
           return
@@ -162,6 +166,7 @@ export default function QrScanner() {
           .eq('id', visitId)
           .single()
 
+        console.log('QR VISITOR-PASS LOOKUP RESULT:', { visitId, data, error })
         if (error || !data) {
           setError('Visit not found')
           return
@@ -204,6 +209,7 @@ export default function QrScanner() {
           .eq('source', 'public')
           .single()
 
+        console.log('QR PUBLIC-VISITOR LOOKUP RESULT:', { regNumber, data, error })
         if (error || !data) {
           setError('Visit not found')
           return

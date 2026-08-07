@@ -267,6 +267,7 @@ export default function ExitControlPage() {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText: string) => {
+          console.log('QR RAW:', decodedText)
           setScanningQr(false)
           qrScannerRef.current?.stop()
 
@@ -274,6 +275,7 @@ export default function ExitControlPage() {
             let lookupValue = decodedText
             try {
               const parsed = JSON.parse(decodedText)
+              console.log('QR PARSED PAYLOAD:', parsed)
               if (parsed.qr_token) lookupValue = parsed.qr_token
               else if (parsed.type === 'public-visitor' && parsed.registrationNumber) lookupValue = parsed.registrationNumber
               else if (parsed.visitId) lookupValue = parsed.visitId
@@ -292,6 +294,8 @@ export default function ExitControlPage() {
               }
             }
 
+            console.log('QR LOOKUP VALUE:', lookupValue)
+
             const { data, error } = await supabase
               .from('visits')
               .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*), appointment:appointments(*)')
@@ -299,6 +303,8 @@ export default function ExitControlPage() {
               .or(`badge.qr_token.eq.${lookupValue},registration_number.eq.${lookupValue},id.eq.${lookupValue}`)
               .limit(1)
               .maybeSingle()
+
+            console.log('QR EXIT LOOKUP RESULT:', { lookupValue, data, error })
 
             if (error || !data) {
               showNotification('error', 'No matching checked-in visitor found')

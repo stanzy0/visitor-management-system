@@ -172,6 +172,7 @@ export default function KioskPage() {
           qrbox: { width: 250, height: 250 },
         },
         (decodedText: string) => {
+          console.log('QR RAW:', decodedText)
           handleQrScanned(decodedText)
         },
         () => {}
@@ -201,6 +202,7 @@ export default function KioskPage() {
           let token = decodedText
           try {
             const parsed = JSON.parse(decodedText)
+            console.log('QR PARSED PAYLOAD:', parsed)
             if (parsed.qr_token) token = parsed.qr_token
             else if (parsed.type === 'public-visitor' && parsed.registrationNumber) token = parsed.registrationNumber
           } catch {
@@ -221,10 +223,12 @@ export default function KioskPage() {
             }
           }
 
+          console.log('QR LOOKUP TOKEN:', token)
           const res = await fetch(`/api/public/status?q=${encodeURIComponent(token)}`)
-      const data = await res.json()
+          const data = await res.json()
+          console.log('QR STATUS RESPONSE:', { status: res.status, ok: res.ok, data })
 
-      if (res.ok && data.data) {
+          if (res.ok && data.data) {
         const visitData = data.data
         const mappedVisit: Visit = {
           id: visitData.registration_number,
