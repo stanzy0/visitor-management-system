@@ -36,7 +36,6 @@ export interface PortalVisit {
     full_name: string
     department: string | null
     office_location: string | null
-    phone_extension: string | null
     email: string | null
   } | null
   appointment: {

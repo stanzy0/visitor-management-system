@@ -26,7 +26,7 @@ export interface BadgePreviewEmployee {
   full_name: string
   department: string | null
   office_location: string | null
-  phone_extension: string | null
+  phone: string | null
   email: string | null
 }
 

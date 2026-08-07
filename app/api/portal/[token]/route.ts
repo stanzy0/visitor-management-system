@@ -23,7 +23,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     console.log('RESULT:', badge)
     console.log('ERROR:', badgeError)
 
-    if (badgeError || !badge) {
+    if (badgeError) {
+      console.log('BADGE QUERY FAILED')
+      return NextResponse.json({ success: false, reason: 'badge_query_failed', message: 'Badge lookup failed.', supabase_error: badgeError, token }, { status: 500 })
+    }
+
+    if (!badge) {
       console.log('NOT FOUND: visitor_badges')
       return NextResponse.json({ success: false, reason: 'badge_not_found', message: 'Badge not found.', error: 'Badge not found' }, { status: 404 })
     }
@@ -45,7 +50,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     console.log('RESULT:', visit)
     console.log('ERROR:', visitError)
 
-    if (visitError || !visit) {
+    if (visitError) {
+      console.log('VISIT QUERY FAILED')
+      return NextResponse.json({ success: false, reason: 'visit_query_failed', message: 'Visit lookup failed.', supabase_error: visitError, visit_id: badge.visit_id }, { status: 500 })
+    }
+
+    if (!visit) {
       console.log('NOT FOUND: visits')
       return NextResponse.json({ success: false, reason: 'visit_not_found', message: 'Visit not found.', error: 'Visit not found' }, { status: 404 })
     }
@@ -67,7 +77,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     console.log('RESULT:', visitor)
     console.log('ERROR:', visitorError)
 
-    if (visitorError || !visitor) {
+    if (visitorError) {
+      console.log('VISITOR QUERY FAILED')
+      return NextResponse.json({ success: false, reason: 'visitor_query_failed', message: 'Visitor lookup failed.', supabase_error: visitorError, visitor_id: visit.visitor_id }, { status: 500 })
+    }
+
+    if (!visitor) {
       console.log('NOT FOUND: visitor')
       return NextResponse.json({ success: false, reason: 'visitor_not_found', message: 'Visitor not found.', error: 'Visitor not found' }, { status: 404 })
     }
@@ -78,20 +93,47 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     console.log('STEP 4')
     console.log('QUERY NAME: employees lookup')
     console.log('INPUT:', visit.employee_id)
+    console.log('supabaseAdmin is service-role client:', !!supabaseAdmin)
+    console.log('supabaseAdmin !== null:', supabaseAdmin !== null)
     console.log('================================')
 
     const { data: employee, error: employeeError } = await supabaseAdmin
       .from('employees')
-      .select('id, full_name, department, office_location, phone_extension, email')
+      .select('id, full_name, department, office_location, email')
       .eq('id', visit.employee_id)
       .single()
 
-    console.log('RESULT:', employee)
-    console.log('ERROR:', employeeError)
+    console.log('employee_id:', visit.employee_id)
+    console.log('employee query result:', employee)
+    console.log('employee query error:', employeeError)
 
-    if (employeeError || !employee) {
+    if (employeeError) {
+      console.log('EMPLOYEE QUERY FAILED')
+      const supabaseErrorMessage = employeeError.message || JSON.stringify(employeeError)
+      return NextResponse.json({
+        success: false,
+        reason: 'employee_query_failed',
+        employee_id: visit.employee_id,
+        employee: employee,
+        supabase_error: {
+          code: employeeError.code,
+          message: employeeError.message,
+          details: employeeError.details,
+          hint: employeeError.hint,
+        },
+        supabase_error_raw: employeeError,
+        supabase_error_message: supabaseErrorMessage,
+      }, { status: 500 })
+    }
+
+    if (!employee) {
       console.log('NOT FOUND: employee')
-      return NextResponse.json({ success: false, reason: 'employee_not_found', message: 'Employee not found.', error: 'Employee not found' }, { status: 404 })
+      return NextResponse.json({
+        success: false,
+        reason: 'employee_not_found',
+        employee_id: visit.employee_id,
+        employee: employee,
+      }, { status: 404 })
     }
 
     console.log('FOUND EMPLOYEE')
@@ -112,6 +154,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
       console.log('RESULT:', appointmentData)
       console.log('ERROR:', appointmentError)
+
+      if (appointmentError) {
+        console.log('APPOINTMENT QUERY FAILED')
+      }
+
       appointment = appointmentData || null
     } else {
       console.log('RESULT: null (no appointment_id)')

@@ -389,7 +389,6 @@ export default function PortalDashboardPage() {
               <div><p className="text-sm text-gray-500">Host Name</p><p className="text-sm font-medium text-gray-900">{visit.employee.full_name}</p></div>
               <div><p className="text-sm text-gray-500">Department</p><p className="text-sm font-medium text-gray-900">{visit.employee.department || 'N/A'}</p></div>
               <div><p className="text-sm text-gray-500">Office Location</p><p className="text-sm font-medium text-gray-900">{visit.employee.office_location || 'N/A'}</p></div>
-              <div><p className="text-sm text-gray-500">Phone Extension</p><p className="text-sm font-medium text-gray-900">{visit.employee.phone_extension || 'N/A'}</p></div>
             </div>
           </div>
         )}
