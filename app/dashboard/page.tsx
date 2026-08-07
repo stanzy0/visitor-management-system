@@ -271,6 +271,12 @@ export default function DashboardPage() {
     checkAuth()
   }, [])
 
+  useEffect(() => {
+    if (!authChecking) {
+      console.log('[DASHBOARD-RENDER]', { sidebarOpen, authReady, userRole: userRole })
+    }
+  }, [authChecking, sidebarOpen, authReady, userRole])
+
   const handleExportDashboard = async (format: 'pdf' | 'excel' | 'csv') => {
     setExporting(true)
     try {
@@ -426,6 +432,15 @@ export default function DashboardPage() {
     description: a.details,
     type: a.action.includes('checkin') ? 'checkin' as const : a.action.includes('checkout') ? 'checkout' as const : a.action.includes('approve') ? 'approval' as const : a.action.includes('badge') ? 'badge' as const : a.action.includes('security') || a.action.includes('alert') ? 'security' as const : 'registration' as const,
   }))
+
+  useEffect(() => {
+    console.log('[BUILD-VERSION]', 'BUILD: 2026-08-06-Responsive-Fix-v2')
+    console.log('[HYDRATION-DEBUG]', {
+      windowInnerWidth: window.innerWidth,
+      matchMediaLg: window.matchMedia('(min-width: 1024px)').matches,
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'N/A',
+    })
+  }, [])
 
   if (authChecking) {
     return (

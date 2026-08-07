@@ -49,7 +49,7 @@ export default function RootLayout({
             pointerEvents: 'none',
           }}
         >
-          BUILD 2026-08-06-01
+          BUILD: 2026-08-06-Responsive-Fix-v2
         </div>
       </body>
     </html>
