@@ -142,16 +142,6 @@ export default function PremiumSidebar({
 
   const isCollapsed = collapsed && isDesktop
 
-  if (typeof window !== 'undefined') {
-    console.log('[PREMIUM-SIDEBAR]', {
-      isDesktop,
-      open,
-      sidebarVisible: isDesktop || open,
-      innerWidth: window.innerWidth,
-      matchMediaLg: window.matchMedia('(min-width: 1024px)').matches,
-    })
-  }
-
   return (
     <>
       <AnimatePresence>
