@@ -73,7 +73,7 @@ export default function PremiumStatCard({
       tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
       onKeyDown={onClick ? handleKeyDown : undefined}
-      className="group relative overflow-hidden rounded-[20px] border border-gray-200/60 bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-200 hover:shadow-[0_12px_35px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2"
+       className="group relative overflow-hidden rounded-[20px] border border-gray-200/60 bg-white p-4 sm:p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-200 hover:shadow-[0_12px_35px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
@@ -85,7 +85,7 @@ export default function PremiumStatCard({
           {loading ? (
             <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mt-2" />
           ) : (
-            <p className="text-3xl font-bold text-gray-900 tracking-tight mt-1">
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight mt-1">
               {typeof value === 'number' ? animatedValue.toLocaleString() : value}
             </p>
           )}
@@ -96,8 +96,8 @@ export default function PremiumStatCard({
           )}
         </div>
 
-        <div className={`p-3 rounded-xl ${c.iconBg} flex-shrink-0`}>
-          <Icon className="h-5 w-5" />
+        <div className={`p-2 sm:p-3 rounded-xl ${c.iconBg} flex-shrink-0`}>
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
       </div>
 

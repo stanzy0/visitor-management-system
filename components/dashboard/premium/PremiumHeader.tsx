@@ -15,6 +15,7 @@ interface PremiumHeaderProps {
   onFilterChange: (filters: DashboardFilters) => void
   onExport: (format: 'pdf' | 'excel' | 'csv') => void
   exporting: boolean
+  onMenuToggle?: () => void
 }
 
 export default function PremiumHeader({
@@ -24,6 +25,7 @@ export default function PremiumHeader({
   onFilterChange,
   onExport,
   exporting,
+  onMenuToggle,
 }: PremiumHeaderProps) {
   const router = useRouter()
   const [liveTime, setLiveTime] = useState(new Date())
@@ -66,7 +68,19 @@ export default function PremiumHeader({
       className="sticky top-0 z-30 border-b border-gray-200/60 bg-white/90 backdrop-blur-xl px-4 py-3 lg:px-6"
     >
       <div className="flex items-center justify-between">
-        <div className="flex flex-col">
+        <div className="flex items-center gap-3">
+          {onMenuToggle && (
+            <button
+              onClick={onMenuToggle}
+              aria-label="Toggle menu"
+              className="lg:hidden p-2 -ml-2 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          )}
+          <div className="flex flex-col">
           <motion.h1
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -84,6 +98,7 @@ export default function PremiumHeader({
             {currentDate}
           </motion.p>
         </div>
+      </div>
 
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex items-center text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200/60 font-mono">

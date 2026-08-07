@@ -470,10 +470,11 @@ export default function DashboardPage() {
           onFilterChange={(newFilters) => setFilters(newFilters as DashboardFilters)}
           onExport={handleExportDashboard}
           exporting={exporting}
+          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
         />
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          <div className="mx-auto max-w-7xl space-y-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
+          <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6">
             {loading && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -822,34 +823,34 @@ export default function DashboardPage() {
                     <h3 className="text-lg font-semibold text-gray-900">Export Dashboard</h3>
                     <p className="text-sm text-gray-500">Download current dashboard view</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleExportDashboard('csv')}
-                      disabled={exporting}
-                      className="inline-flex items-center gap-2 rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      aria-label="Export as CSV"
-                    >
-                      CSV
-                    </button>
-                    <button
-                      onClick={() => handleExportDashboard('excel')}
-                      disabled={exporting}
-                      className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500/50"
-                      aria-label="Export as Excel"
-                    >
-                      <Download className="h-4 w-4" />
-                      Excel
-                    </button>
-                    <button
-                      onClick={() => handleExportDashboard('pdf')}
-                      disabled={exporting}
-                      className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      aria-label="Export as PDF"
-                    >
-                      <Download className="h-4 w-4" />
-                      PDF
-                    </button>
-                  </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => handleExportDashboard('csv')}
+                        disabled={exporting}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[44px]"
+                        aria-label="Export as CSV"
+                      >
+                        CSV
+                      </button>
+                      <button
+                        onClick={() => handleExportDashboard('excel')}
+                        disabled={exporting}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500/50 min-h-[44px]"
+                        aria-label="Export as Excel"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span className="hidden sm:inline">Excel</span>
+                      </button>
+                      <button
+                        onClick={() => handleExportDashboard('pdf')}
+                        disabled={exporting}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[44px]"
+                        aria-label="Export as PDF"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span className="hidden sm:inline">PDF</span>
+                      </button>
+                    </div>
                 </div>
               </motion.div>
             )}
