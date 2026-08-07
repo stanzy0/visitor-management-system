@@ -545,29 +545,31 @@ export default function ExitControlPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {notification && (
-        <div className={`fixed top-0 left-0 right-0 z-50 p-4 text-center text-base font-medium shadow-lg ${
+        <div className={`fixed top-0 left-0 right-0 z-50 p-3 text-center text-sm sm:text-base font-medium shadow-lg ${
           notification.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
         }`}>
           {notification.message}
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Gate Pass & Exit Control</h1>
-            <p className="text-sm text-gray-500">Validate and process visitor exits</p>
+      <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+        <div className="flex flex-col gap-2 sm:gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Gate Pass & Exit Control</h1>
+              <p className="text-xs sm:text-sm text-gray-500">Validate and process visitor exits</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => { setActiveTab('pending'); fetchVisits(); }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === 'pending' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
+              className={`px-3 py-2.5 rounded-lg text-sm font-medium ${activeTab === 'pending' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
             >
               Pending Exit
             </button>
             <button
               onClick={() => { setActiveTab('reports'); fetchReport(); }}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === 'reports' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
+              className={`px-3 py-2.5 rounded-lg text-sm font-medium ${activeTab === 'reports' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
             >
               Reports
             </button>
@@ -622,7 +624,7 @@ export default function ExitControlPage() {
                         className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm"
                       />
                     </div>
-                    <button onClick={handleSearch} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+                    <button onClick={handleSearch} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 min-h-[44px]">
                       Search
                     </button>
                   </div>

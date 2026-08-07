@@ -270,44 +270,44 @@ export default function BadgesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
-        <div className="mb-6">
-          <a href="/dashboard" className="text-sm text-blue-600 hover:underline">
-            ← Back to Dashboard
-          </a>
+      <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+        <div className="mb-4 sm:mb-6">
+          <a href="/dashboard" className="text-sm text-blue-600 hover:underline">← Back to Dashboard</a>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Badge Management</h1>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search badge number, visitor, host, QR token..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={searchInputClasses}
-              />
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Badge Management</h1>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 sm:flex-none">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search badge number, visitor, host, QR token..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={searchInputClasses}
+                />
+              </div>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className={selectClasses}
+              >
+                <option value="all">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Expired">Expired</option>
+                <option value="Checked Out">Checked Out</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <button
+                onClick={fetchBadges}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 min-h-[44px]"
+              >
+                <RefreshCw className="h-4 w-4" />
+                <span className="hidden sm:inline">Refresh</span>
+              </button>
             </div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className={selectClasses}
-            >
-              <option value="all">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Expired">Expired</option>
-              <option value="Checked Out">Checked Out</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
-            <button
-              onClick={fetchBadges}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Refresh
-            </button>
           </div>
         </div>
 

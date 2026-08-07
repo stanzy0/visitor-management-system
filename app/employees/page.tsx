@@ -235,27 +235,27 @@ export default function EmployeesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Employees</h1>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search employees..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className={searchInputClasses}
-              />
-            </div>
+      <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Employees</h1>
             <button
               onClick={openAddModal}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors min-h-[44px]"
             >
               <Plus className="h-4 w-4" />
               Add Employee
             </button>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search employees..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={searchInputClasses}
+            />
           </div>
         </div>
 
@@ -330,15 +330,15 @@ export default function EmployeesPage() {
         </div>
 
         {modalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
+            <div className="w-full max-w-md rounded-t-2xl sm:rounded-xl bg-white shadow-xl max-h-[90vh] sm:max-h-[85vh] flex flex-col">
               <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
                 <h2 className="text-lg font-semibold text-gray-900">
                   {editingEmployee ? 'Edit Employee' : 'Add Employee'}
                 </h2>
                 <button
                   onClick={() => setModalOpen(false)}
-                  className="p-1 rounded-md hover:bg-gray-100"
+                  className="p-2 rounded-md hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
                   aria-label="Close modal"
                 >
                   <X className="h-5 w-5" />
