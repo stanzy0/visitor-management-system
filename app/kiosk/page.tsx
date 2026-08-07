@@ -6,6 +6,7 @@ import { Loader2, CheckCircle2, XCircle, Search, QrCode, Keyboard, Clock, MapPin
 import { logAuditAction } from '@/lib/client/audit'
 import { printBadgeWindow } from '@/lib/badge/badge-print'
 import { createBadge } from '@/lib/client/badges'
+import { parseQrPayload } from '@/lib/qr-parser'
 
 type Screen = 'welcome' | 'qr-scanner' | 'registration' | 'search' | 'confirmation' | 'processing' | 'waiting' | 'denied' | 'settings'
 
@@ -172,7 +173,6 @@ export default function KioskPage() {
           qrbox: { width: 250, height: 250 },
         },
         (decodedText: string) => {
-          alert('QR RAW:\n' + decodedText)
           console.log('QR RAW:', decodedText)
           handleQrScanned(decodedText)
         },
@@ -200,36 +200,29 @@ export default function KioskPage() {
         setLoading(true)
 
         try {
-          let token = decodedText
-          try {
-            const parsed = JSON.parse(decodedText)
-            alert('QR PARSED PAYLOAD:\n' + JSON.stringify(parsed, null, 2))
-            console.log('QR PARSED PAYLOAD:', parsed)
-            if (parsed.qr_token) token = parsed.qr_token
-            else if (parsed.type === 'public-visitor' && parsed.registrationNumber) token = parsed.registrationNumber
-          } catch {
-            // Not JSON — check if it's a URL and extract the token from the path
-            try {
-              const url = new URL(decodedText)
-              // URL like: https://app.vercel.app/portal/<qr_token>
-              const pathParts = url.pathname.split('/').filter(Boolean)
-              // Find the token part (should be the last segment after /visit/ or /portal/)
-              const visitIndex = pathParts.indexOf('visit')
-              if (visitIndex !== -1 && visitIndex + 1 < pathParts.length) {
-                token = decodeURIComponent(pathParts[visitIndex + 1])
-              } else if (pathParts.length > 0) {
-                token = decodeURIComponent(pathParts[pathParts.length - 1])
-              }
-            } catch {
-              // Not a URL either — use as-is
+          const parsed = parseQrPayload(decodedText)
+          console.log('QR PARSED PAYLOAD:', parsed)
+
+          if (parsed.kind === 'portal') {
+            const token = parsed.value
+            if (!token) {
+              setQrError('Invalid Portal QR Code')
+              setLoading(false)
+              return
             }
+
+            await logAuditAction('Portal QR Scanned', 'portal', token, JSON.stringify({ qr_token: token }))
+            window.location.href = `/portal/${encodeURIComponent(token)}`
+            return
           }
 
-          alert('QR LOOKUP TOKEN:\n' + token)
-          console.log('QR LOOKUP TOKEN:', token)
+          let token = decodedText
+          if (parsed.kind === 'visit' || parsed.kind === 'registration') {
+            token = parsed.value
+          }
+
           const res = await fetch(`/api/public/status?q=${encodeURIComponent(token)}`)
           const data = await res.json()
-          alert('LOOKUP RESULT (kiosk):\n' + JSON.stringify({ status: res.status, ok: res.ok, data }, null, 2))
           console.log('QR STATUS RESPONSE:', { status: res.status, ok: res.ok, data })
 
           if (res.ok && data.data) {

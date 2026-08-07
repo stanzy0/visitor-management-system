@@ -75,6 +75,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         }, { status: 400 })
       }
 
+      const { data: existingBadge } = await supabaseAdmin
+        .from('visitor_badges')
+        .select('id')
+        .eq('visit_id', visitId)
+        .single()
+
+      if (existingBadge) {
+        return NextResponse.json({ success: false, message: 'A badge already exists for this visit', error: 'Badge already issued' }, { status: 400 })
+      }
+
       const qrToken = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, '0')).join('')
 
       const badgeData: Record<string, unknown> = {

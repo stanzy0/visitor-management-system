@@ -6,6 +6,7 @@ import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { Loader2, Search, CheckCircle2, XCircle, Clock, LogOut, Package, QrCode, FileText, AlertTriangle, UserCheck, Printer, ShieldAlert, Home } from 'lucide-react'
 import type { Visit } from '@/lib/types/visit'
 import { logAuditAction } from '@/lib/client/audit'
+import { parseQrPayload } from '@/lib/qr-parser'
 
 type Tab = 'search' | 'pending' | 'reports'
 type BadgeReturnStatus = 'returned' | 'lost' | 'damaged'
@@ -267,36 +268,31 @@ export default function ExitControlPage() {
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         async (decodedText: string) => {
-          alert('QR RAW:\n' + decodedText)
           console.log('QR RAW:', decodedText)
           setScanningQr(false)
           qrScannerRef.current?.stop()
 
           try {
-            let lookupValue = decodedText
-            try {
-              const parsed = JSON.parse(decodedText)
-              alert('QR PARSED PAYLOAD:\n' + JSON.stringify(parsed, null, 2))
-              console.log('QR PARSED PAYLOAD:', parsed)
-              if (parsed.qr_token) lookupValue = parsed.qr_token
-              else if (parsed.type === 'public-visitor' && parsed.registrationNumber) lookupValue = parsed.registrationNumber
-              else if (parsed.visitId) lookupValue = parsed.visitId
-            } catch {
-              try {
-                const url = new URL(decodedText)
-                const pathParts = url.pathname.split('/').filter(Boolean)
-                const visitIndex = pathParts.indexOf('visit')
-                if (visitIndex !== -1 && visitIndex + 1 < pathParts.length) {
-                  lookupValue = decodeURIComponent(pathParts[visitIndex + 1])
-                } else if (pathParts.length > 0) {
-                  lookupValue = decodeURIComponent(pathParts[pathParts.length - 1])
-                }
-              } catch {
-                // use raw text as-is
+            const parsed = parseQrPayload(decodedText)
+            console.log('QR PARSED PAYLOAD:', parsed)
+
+            if (parsed.kind === 'portal') {
+              const token = parsed.value
+              if (!token) {
+                showNotification('error', 'Invalid Portal QR Code')
+                return
               }
+
+              await logAuditAction('Portal QR Scanned', 'portal', token, JSON.stringify({ qr_token: token }))
+              window.location.href = `/portal/${encodeURIComponent(token)}`
+              return
             }
 
-            alert('QR LOOKUP VALUE:\n' + lookupValue)
+            let lookupValue = decodedText
+            if (parsed.kind === 'visit' || parsed.kind === 'registration') {
+              lookupValue = parsed.value
+            }
+
             console.log('QR LOOKUP VALUE:', lookupValue)
 
             const { data, error } = await supabase
@@ -307,7 +303,6 @@ export default function ExitControlPage() {
               .limit(1)
               .maybeSingle()
 
-            alert('LOOKUP RESULT (exit):\n' + JSON.stringify({ data, error }, null, 2))
             console.log('QR EXIT LOOKUP RESULT:', { lookupValue, data, error })
 
             if (error || !data) {

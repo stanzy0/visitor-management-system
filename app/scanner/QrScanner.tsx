@@ -6,6 +6,7 @@ import { logAuditAction } from '@/lib/client/audit'
 import { Loader2, Camera, StopCircle, RefreshCw, QrCode } from 'lucide-react'
 import { Html5Qrcode } from 'html5-qrcode'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
+import { parseQrPayload } from '@/lib/qr-parser'
 
 interface VisitData {
   id: string
@@ -66,15 +67,26 @@ export default function QrScanner() {
   }, [])
 
   const handleScan = useCallback(async (decodedText: string) => {
-    alert('QR RAW:\n' + decodedText)
     console.log('QR RAW:', decodedText)
     try {
-      const payload = JSON.parse(decodedText)
-      alert('QR PARSED PAYLOAD:\n' + JSON.stringify(payload, null, 2))
-      console.log('QR PARSED PAYLOAD:', payload)
+      const parsed = parseQrPayload(decodedText)
+      console.log('QR PARSED PAYLOAD:', parsed)
 
-      if (payload.gate_pass || payload.reg) {
-        const regNumber = payload.reg
+      if (parsed.kind === 'portal') {
+        const token = parsed.value
+        if (!token) {
+          setError('Invalid Portal QR Code')
+          return
+        }
+
+        await stopScanner()
+        logAuditAction('Portal QR Scanned', 'portal', token, JSON.stringify({ qr_token: token }))
+        window.location.href = `/portal/${encodeURIComponent(token)}`
+        return
+      }
+
+      if (parsed.kind === 'vehicle') {
+        const regNumber = parsed.value
         if (!regNumber) {
           setError('Invalid Vehicle QR Code')
           return
@@ -86,7 +98,6 @@ export default function QrScanner() {
           .eq('registration_number', regNumber)
           .single()
 
-        alert('LOOKUP RESULT (vehicle):\n' + JSON.stringify({ data, error }, null, 2))
         console.log('QR VEHICLE LOOKUP RESULT:', { regNumber, data, error })
         if (error || !data) {
           setError('Vehicle not found')
@@ -102,8 +113,8 @@ export default function QrScanner() {
         return
       }
 
-      if (payload.type === 'invitation' || payload.token) {
-        const token = payload.token
+      if (parsed.kind === 'invitation') {
+        const token = parsed.value
         if (!token) {
           setError('Invalid Invitation QR Code')
           return
@@ -115,7 +126,6 @@ export default function QrScanner() {
           .eq('invitation_token', token)
           .single()
 
-        alert('LOOKUP RESULT (invitation):\n' + JSON.stringify({ invitation, invError }, null, 2))
         console.log('QR INVITATION LOOKUP RESULT:', { token, invitation, invError })
         if (invError || !invitation) {
           setError('Invitation not found')
@@ -157,8 +167,8 @@ export default function QrScanner() {
         await stopScanner()
         logAuditAction('Invitation QR Scanned', 'invitation', invitation.id, `QR scanned for invitation ${token}`)
         setScanned(true)
-      } else if (payload.type === 'visitor-pass' || payload.visitId) {
-        const visitId = payload.visitId || payload.visit_id
+      } else if (parsed.kind === 'visit') {
+        const visitId = parsed.value
         if (!visitId) {
           setError('Invalid Visitor QR Code')
           return
@@ -170,7 +180,6 @@ export default function QrScanner() {
           .eq('id', visitId)
           .single()
 
-        alert('LOOKUP RESULT (visitor-pass):\n' + JSON.stringify({ data, error }, null, 2))
         console.log('QR VISITOR-PASS LOOKUP RESULT:', { visitId, data, error })
         if (error || !data) {
           setError('Visit not found')
@@ -200,8 +209,8 @@ export default function QrScanner() {
         }
 
         setScanned(true)
-      } else if (payload.type === 'public-visitor' || payload.registrationNumber) {
-        const regNumber = payload.registrationNumber
+      } else if (parsed.kind === 'registration') {
+        const regNumber = parsed.value
         if (!regNumber) {
           setError('Invalid Public Visitor QR Code')
           return
@@ -214,7 +223,6 @@ export default function QrScanner() {
           .eq('source', 'public')
           .single()
 
-        alert('LOOKUP RESULT (public-visitor):\n' + JSON.stringify({ data, error }, null, 2))
         console.log('QR PUBLIC-VISITOR LOOKUP RESULT:', { regNumber, data, error })
         if (error || !data) {
           setError('Visit not found')

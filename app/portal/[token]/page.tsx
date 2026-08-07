@@ -18,27 +18,36 @@ export default function PortalDashboardPage() {
   const [alerts, setAlerts] = useState<PortalSecurityAlert[]>([])
   const [error, setError] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [warning, setWarning] = useState<string | null>(null)
 
   const fetchPortalData = useCallback(async () => {
     try {
       setRefreshing(true)
+      setWarning(null)
 
       const baseUrl = `/api/portal/${encodeURIComponent(token)}`
       console.log('[Portal Page] fetching:', baseUrl, 'token:', token)
 
       const visitRes = await fetch(baseUrl)
-      console.log('[Portal Page] visit response status:', visitRes.status, 'ok:', visitRes.ok)
       const visitJson = await visitRes.json()
-      console.log('[Portal Page] visit response data:', visitJson)
+      console.log('Portal API Response', visitJson)
+      console.log('Portal Visit', visitJson.data)
+      console.log('[Portal Page] visit response status:', visitRes.status, 'ok:', visitRes.ok)
 
-      if (!visitRes.ok) {
-        setError(visitJson.error || 'Registration not found')
+      if (!visitJson.success) {
+        const reason = visitJson.reason || 'unknown'
+        const message = visitJson.message || visitJson.error || 'Badge not found.'
+        console.error('[Portal Page] API returned failure:', reason, message)
+        if (!visit) {
+          setError(message)
+        }
         setLoading(false)
         setRefreshing(false)
         return
       }
 
       setVisit(visitJson.data)
+      console.log('Visit State', visitJson.data)
 
       // Fetch secondary data in parallel - don't block on failures
       const [lifecycleRes, documentsRes, alertsRes] = await Promise.allSettled([
@@ -55,9 +64,11 @@ export default function PortalDashboardPage() {
         } catch (e) {
           console.error('[Portal Page] lifecycle parse error:', e)
           setLifecycleEvents([])
+          setWarning('Some visit history could not be loaded.')
         }
       } else {
         setLifecycleEvents([])
+        setWarning('Some visit history could not be loaded.')
       }
 
       if (documentsRes.status === 'fulfilled') {
@@ -68,9 +79,11 @@ export default function PortalDashboardPage() {
         } catch (e) {
           console.error('[Portal Page] documents parse error:', e)
           setDocuments([])
+          setWarning('Some documents could not be loaded.')
         }
       } else {
         setDocuments([])
+        setWarning('Some documents could not be loaded.')
       }
 
       if (alertsRes.status === 'fulfilled') {
@@ -81,18 +94,25 @@ export default function PortalDashboardPage() {
         } catch (e) {
           console.error('[Portal Page] alerts parse error:', e)
           setAlerts([])
+          setWarning('Some security alerts could not be loaded.')
         }
       } else {
         setAlerts([])
+        setWarning('Some security alerts could not be loaded.')
       }
-
-      setError(null)
 
       if (visitJson.data?.id) {
-        await logAuditAction('Portal Viewed', 'portal', visitJson.data.id, JSON.stringify({ token }))
+        try {
+          await logAuditAction('Portal Viewed', 'portal', visitJson.data.id, JSON.stringify({ token }))
+        } catch (auditError) {
+          console.error('[Portal Page] audit log failed:', auditError)
+        }
       }
-    } catch {
-      setError('Failed to load portal data')
+    } catch (err) {
+      console.error('[Portal Page] fetchPortalData error:', err)
+      if (!visit) {
+        setError('Failed to load portal data')
+      }
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -194,7 +214,7 @@ export default function PortalDashboardPage() {
     )
   }
 
-  if (error || !visit) {
+  if (!visit) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="mx-auto max-w-3xl px-4 lg:px-6">
@@ -208,21 +228,37 @@ export default function PortalDashboardPage() {
     )
   }
 
-  const statusStyle = PORTAL_STATUS_STYLES[visit.status] || { bg: 'bg-gray-50', text: 'text-gray-700', label: visit.status }
-  const currentStepIndex = LIFECYCLE_STEPS.findIndex(s => s.status === visit.status)
+  if (error) {
+    console.warn('[Portal Page] Non-critical error:', error)
+  }
 
   const visitorName = visit.visitor?.full_name || 'Visitor'
-  const visitorCompany = visit.visitor?.visitor_organization || null
-  const hostName = visit.employee?.full_name || null
-  const hostDepartment = visit.employee?.department || null
-  const visitPurpose = visit.purpose || null
-  const badgeNumber = visit.badge?.badge_number || null
-  const badgeStatus = visit.badge?.badge_status || null
-  const checkInTime = visit.check_in_time || null
-  const checkOutTime = visit.check_out_time || null
+  const visitorCompany = visit.visitor?.visitor_organization
+  const hostName = visit.employee?.full_name
+  const hostDepartment = visit.employee?.department
+  const visitPurpose = visit.purpose
+  const badgeNumber = visit.badge?.badge_number
+  const statusStyle = PORTAL_STATUS_STYLES[visit.status] || { bg: 'bg-gray-50', text: 'text-gray-700', label: visit.status }
+  const checkInTime = visit.check_in_time
+  const checkOutTime = visit.check_out_time
+  const currentStepIndex = LIFECYCLE_STEPS.findIndex((step) => step.status === visit.status)
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {warning && (
+        <div className="mx-auto max-w-4xl px-4 lg:px-6 pt-6">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm">
+            {warning}
+          </div>
+        </div>
+      )}
+      {error && (
+        <div className="mx-auto max-w-4xl px-4 lg:px-6 pt-6">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-800 text-sm">
+            {error}
+          </div>
+        </div>
+      )}
       <div className="mx-auto max-w-4xl px-4 lg:px-6 py-8 space-y-6">
         <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
           <div className="p-6 md:p-8">
