@@ -271,21 +271,6 @@ export default function DashboardPage() {
     checkAuth()
   }, [])
 
-  useEffect(() => {
-    console.log('[BUILD-VERSION]', 'BUILD: 2026-08-06-Responsive-Fix-v2')
-    console.log('[HYDRATION-DEBUG]', {
-      windowInnerWidth: window.innerWidth,
-      matchMediaLg: window.matchMedia('(min-width: 1024px)').matches,
-      userAgent: navigator.userAgent,
-    })
-  }, [])
-
-  useEffect(() => {
-    if (!authChecking) {
-      console.log('[DASHBOARD-RENDERED]')
-    }
-  }, [authChecking])
-
   const handleExportDashboard = async (format: 'pdf' | 'excel' | 'csv') => {
     setExporting(true)
     try {
