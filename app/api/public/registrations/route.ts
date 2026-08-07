@@ -5,7 +5,7 @@ import { sendEmail } from '@/lib/server/email'
 import { createHostNotification, createSystemNotification, createAdminNotification, createReceptionistNotification, createSecurityNotification } from '@/lib/server/notification-service'
 import { logAuditAction } from '@/lib/server/audit'
 import { getSystemSetting } from '@/lib/server/settings'
-import { getPortalUrl } from '@/lib/utils/portal-url'
+import { buildPortalQrUrl } from '@/lib/utils/portal-url'
 import { verifyBadgeQR } from '@/lib/qrcode-verification'
 import QRCode from 'qrcode'
 
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
       }
 
-      const portalUrl = getPortalUrl(badge.qr_token)
+      const portalUrl = buildPortalQrUrl(badge.qr_token)
       const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
 
       const qrVerification = await verifyBadgeQR(badge.id, badge.qr_token)

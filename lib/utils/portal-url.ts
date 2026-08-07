@@ -44,7 +44,9 @@ export function getPortalUrl(qrToken: string): string {
    }
 
    return portalUrl
-}
+ }
+
+export const buildPortalQrUrl = getPortalUrl
 
 export function verifyPortalUrl(url: string, qrToken: string): boolean {
   try {

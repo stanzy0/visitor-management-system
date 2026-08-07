@@ -1,4 +1,4 @@
-import { getPortalUrl } from '@/lib/utils/portal-url'
+import { buildPortalQrUrl } from '@/lib/utils/portal-url'
 
 export async function hashIp(ip: string): Promise<string> {
   if (!ip || ip === 'unknown') return 'unknown'
@@ -87,7 +87,7 @@ export async function collectPortalAnalytics(
   let portalUrl: string | null = null
   try {
     if (visit.badge?.qr_token && !token.startsWith('REG-')) {
-      portalUrl = getPortalUrl(visit.badge.qr_token)
+      portalUrl = buildPortalQrUrl(visit.badge.qr_token)
     }
   } catch {
     portalUrl = null

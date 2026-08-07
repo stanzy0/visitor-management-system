@@ -45,7 +45,7 @@ export default function BadgePreviewPanel({
   const [textColor, setTextColor] = useState('#1f2937')
   const [rejectReason, setRejectReason] = useState('')
   const [showRejectModal, setShowRejectModal] = useState(false)
-  const [realBadgeId, setRealBadgeId] = useState<string | null>(null)
+  const [realBadge, setRealBadge] = useState<VisitorBadge | null>(null)
   const [printError, setPrintError] = useState<string | null>(null)
 
   const visitor = visit.visitor
@@ -56,12 +56,12 @@ export default function BadgePreviewPanel({
       try {
         const { data } = await supabase
           .from('visitor_badges')
-          .select('id')
+          .select('id, badge_number, qr_token, badge_status, issued_at, expires_at')
           .eq('visit_id', visit.id)
           .maybeSingle()
 
-        if (data?.id) {
-          setRealBadgeId(data.id)
+        if (data) {
+          setRealBadge(data as VisitorBadge)
         }
       } catch {
         // ignore
@@ -74,14 +74,14 @@ export default function BadgePreviewPanel({
   const handlePrint = async () => {
     setPrintError(null)
 
-    if (!realBadgeId) {
+    if (!realBadge?.id) {
       setPrintError('No issued badge found for this visit. Please approve the registration first.')
       return
     }
 
     try {
       const { printBadgeWindow } = await import('@/lib/badge/badge-print')
-      await printBadgeWindow(realBadgeId)
+      await printBadgeWindow(realBadge.id)
     } catch {
       // popup blocked or print failed
     }
@@ -323,7 +323,7 @@ export default function BadgePreviewPanel({
               </div>
               <div className="flex justify-center">
                 <div style={{ transform: orientation === 'portrait' ? 'rotate(90deg)' : 'none', transformOrigin: 'center' }}>
-                  <BadgeLayout badge={previewBadge as VisitorBadge} />
+                  <BadgeLayout badge={(realBadge || previewBadge) as VisitorBadge} />
                 </div>
               </div>
             </div>

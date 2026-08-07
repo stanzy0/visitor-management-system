@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { getPortalUrl } from '@/lib/utils/portal-url'
+import { buildPortalQrUrl } from '@/lib/utils/portal-url'
 import type { VisitorBadge } from '@/lib/badge/badge-types'
 
 export async function getBadge(id: string): Promise<VisitorBadge | null> {
@@ -31,7 +31,7 @@ export async function getBadgeByVisit(visitId: string): Promise<VisitorBadge | n
 export async function getBadgeQRCode(badgeId: string): Promise<string | null> {
   const badge = await getBadge(badgeId)
   if (!badge) return null
-  return getPortalUrl(badge.qr_token)
+  return buildPortalQrUrl(badge.qr_token)
 }
 
 export async function getBadgePrintData(badgeId: string): Promise<VisitorBadge | null> {

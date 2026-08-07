@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { getInvitationByToken, updateInvitationStatus, approveInvitation, rejectInvitation, cancelInvitation } from '@/lib/server/invitations'
 import { logAuditAction } from '@/lib/server/audit'
 import { sendEmail } from '@/lib/server/email'
-import { getPortalUrl } from '@/lib/utils/portal-url'
+import { buildPortalQrUrl } from '@/lib/utils/portal-url'
 import type { EmailTemplate } from '@/lib/email/types'
 import QRCode from 'qrcode'
 
@@ -176,7 +176,7 @@ export async function POST(
           .single()
 
         if (badge) {
-          const portalUrl = getPortalUrl(badge.qr_token)
+          const portalUrl = buildPortalQrUrl(badge.qr_token)
           const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
 
           void sendEmail({

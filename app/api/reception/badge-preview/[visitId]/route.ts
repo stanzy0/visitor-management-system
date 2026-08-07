@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/auth-helpers'
 import { getVisitForBadgePreview, getBadgeTemplates } from '@/lib/server/badge-preview'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logAuditAction } from '@/lib/server/audit'
-import { getPortalUrl } from '@/lib/utils/portal-url'
+import { buildPortalQrUrl } from '@/lib/utils/portal-url'
 import QRCode from 'qrcode'
 import { sendEmail } from '@/lib/server/email'
 import { createHostNotification, createSystemNotification, createReceptionistNotification, createSecurityNotification } from '@/lib/server/notification-service'
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: '' }, { status: 500 })
       }
 
-        const portalUrl = getPortalUrl(badge.qr_token)
+        const portalUrl = buildPortalQrUrl(badge.qr_token)
         const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
 
       await sendEmail({

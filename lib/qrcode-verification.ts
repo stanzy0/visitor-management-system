@@ -1,9 +1,9 @@
 import QRCode from 'qrcode'
-import { getPortalUrl, verifyPortalUrl } from '@/lib/utils/portal-url'
+import { buildPortalQrUrl, verifyPortalUrl } from '@/lib/utils/portal-url'
 
 export async function verifyBadgeQR(badgeId: string, qrToken: string): Promise<{ valid: boolean; error: string | null }> {
   try {
-    const portalUrl = getPortalUrl(qrToken)
+    const portalUrl = buildPortalQrUrl(qrToken)
 
     if (!verifyPortalUrl(portalUrl, qrToken)) {
       return { valid: false, error: 'Generated URL does not match expected format' }

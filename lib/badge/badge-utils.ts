@@ -1,4 +1,4 @@
-import { getPortalUrl, verifyPortalUrl } from '@/lib/utils/portal-url'
+import { buildPortalQrUrl, verifyPortalUrl } from '@/lib/utils/portal-url'
 import type { BadgeStatus, BadgePreviewData, VisitorBadge } from './badge-types'
 import { BADGE_QR_SETTINGS, BADGE_DATE_FORMAT, BADGE_LAYOUT, BADGE_PDF, BADGE_DEFAULT_EXPIRY_HOURS } from './badge-constants'
 
@@ -51,7 +51,7 @@ export function getBadgeStatusCssClass(status: BadgeStatus): string {
 }
 
 export function buildBadgeQrValue(badge: VisitorBadge): string {
-  const portalUrl = getPortalUrl(badge.qr_token)
+  const portalUrl = buildPortalQrUrl(badge.qr_token)
 
   if (!verifyPortalUrl(portalUrl, badge.qr_token)) {
     const error = `QR verification failed: generated URL does not match expected pattern for token ${badge.qr_token}`
@@ -67,7 +67,7 @@ export function buildBadgeQrValue(badge: VisitorBadge): string {
    }
 
    return portalUrl
-}
+ }
 
 export function calculateExpiry(hours: number = BADGE_DEFAULT_EXPIRY_HOURS): Date {
   const expiresAt = new Date()
