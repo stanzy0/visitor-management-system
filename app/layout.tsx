@@ -35,6 +35,22 @@ export default function RootLayout({
             {children}
           </NotificationProvider>
         </BrandingProvider>
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            right: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            color: 'white',
+            fontSize: '10px',
+            padding: '4px 8px',
+            fontFamily: 'monospace',
+            pointerEvents: 'none',
+          }}
+        >
+          BUILD: 2026-08-06-Responsive-Fix-v2
+        </div>
       </body>
     </html>
   );
