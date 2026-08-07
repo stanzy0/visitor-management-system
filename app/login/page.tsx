@@ -119,8 +119,8 @@ export default function LoginPage() {
   const collegeName = branding?.college_name || 'AFCSC Visitor Management'
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
-      <div className="relative hidden md:block w-1/2 h-full group">
+    <div className="flex flex-col lg:flex-row h-screen w-screen overflow-hidden">
+      <div className="relative w-full lg:w-1/2 h-[35vh] lg:h-full flex-shrink-0 group">
         <div
           className="absolute inset-0 z-10"
           style={{
@@ -135,7 +135,7 @@ export default function LoginPage() {
           sizes="(max-width:768px) 100vw, 50vw"
           className="object-cover transition-transform duration-[20s] ease-in-out group-hover:scale-105"
         />
-        <div className="absolute bottom-8 left-8 z-20 max-w-md">
+        <div className="absolute bottom-8 left-8 z-20 max-w-md hidden lg:block">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow-lg tracking-tight">
             Visitor Management System
           </h2>
@@ -169,7 +169,7 @@ export default function LoginPage() {
       </div>
 
       <div
-        className="relative w-full md:w-1/2 h-full flex flex-col justify-center px-16 lg:px-24"
+        className="relative w-full lg:w-1/2 flex-1 lg:h-full flex flex-col justify-start lg:justify-center px-5 lg:px-16 xl:px-24 overflow-y-auto"
         style={{
           background: 'rgba(255,255,255,.75)',
           backdropFilter: 'blur(18px)',
@@ -186,32 +186,32 @@ export default function LoginPage() {
         </Link>
 
         <div className="mx-auto w-full max-w-[460px]">
-          <div className="text-center mb-12">
+          <div className="text-center mb-8 lg:mb-12">
             <Image
               src={logoSrc}
               alt={collegeName}
               width={115}
               height={115}
               priority
-              className="mx-auto object-contain mt-14"
+              className="mx-auto object-contain mt-8 lg:mt-14"
             />
-            <h1 className="text-4xl font-bold mt-2 mb-3" style={{ color: primaryColor }}>
+            <h1 className="text-3xl lg:text-4xl font-bold mt-2 mb-3" style={{ color: primaryColor }}>
               Welcome Back
             </h1>
-            <p className="text-gray-600 text-lg">
+            <p className="text-gray-600 text-base lg:text-lg">
               Sign in to the Visitor Management System
             </p>
           </div>
 
-          <div className="h-px w-full bg-gray-300/40 my-8" />
+          <div className="h-px w-full bg-gray-300/40 my-6 lg:my-8" />
 
           {error && (
-            <div className="mb-8 rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-700" role="alert">
+            <div className="mb-6 lg:mb-8 rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-700" role="alert">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="w-full space-y-8">
+          <form onSubmit={handleLogin} className="w-full space-y-6 lg:space-y-8">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-3">
                 Email Address
@@ -327,7 +327,7 @@ export default function LoginPage() {
             </div>
           </form>
 
-          <div className="my-8 flex items-center">
+          <div className="my-6 lg:my-8 flex items-center">
             <div className="flex-1 border-t border-gray-300"></div>
             <span className="px-4 text-xs text-gray-500">Or</span>
             <div className="flex-1 border-t border-gray-300"></div>
