@@ -18,7 +18,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { visitId } = await params
 
+    console.log('[badge-preview] GET request', { visitId })
+
     const visit = await getVisitForBadgePreview(visitId)
+    console.log('[badge-preview] visit result', { visitId, visitFound: !!visit })
+
     if (!visit) {
       return NextResponse.json({ success: false, message: '', error: '' }, { status: 404 })
     }

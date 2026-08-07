@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     }
 
     let data: any = null
-    let error: any = null
+    let lastError: any = null
 
     const { data: regData, error: regError } = await supabaseAdmin
       .from('visits')
@@ -31,20 +31,26 @@ export async function GET(request: NextRequest) {
         employee:employees(full_name, department, office_location),
         badge:visitor_badges(badge_number, qr_token)
       `)
-      .eq('registration_number', q)
-      .eq('source', 'public')
-      .single()
+      .ilike('registration_number', `%${q}%`)
+      .maybeSingle()
 
-    data = regData
-    error = regError
+    console.log('[public/status] reg lookup', { q, regData, regError })
+
+    if (regData) {
+      data = regData
+    } else {
+      lastError = regError
+    }
 
     const { data: badgeData, error: badgeError } = await supabaseAdmin
       .from('visitor_badges')
       .select('visit_id')
       .eq('qr_token', q)
-      .single()
+      .maybeSingle()
 
-    if (badgeData?.visit_id) {
+    console.log('[public/status] badge lookup', { q, badgeData, badgeError })
+
+    if (badgeData?.visit_id && !data) {
       const { data: qrData, error: qrError } = await supabaseAdmin
         .from('visits')
         .select(`
@@ -60,22 +66,118 @@ export async function GET(request: NextRequest) {
           badge:visitor_badges(badge_number, qr_token)
         `)
         .eq('id', badgeData.visit_id)
-        .eq('source', 'public')
-        .single()
+        .maybeSingle()
 
-      data = qrData
-      error = qrError
+      console.log('[public/status] qr visit lookup', { q, badgeData, qrData, qrError })
+      if (qrData) {
+        data = qrData
+      } else {
+        lastError = qrError
+      }
     }
 
-    if (error || !data) {
-      console.error('[public/status] lookup error', { q, error, data })
+    if (!data) {
+      const { data: visitData, error: visitError } = await supabaseAdmin
+        .from('visits')
+        .select(`
+          registration_number,
+          status,
+          created_at,
+          check_in_time,
+          check_out_time,
+          visitor_id,
+          employee_id,
+          visitor:visitors(full_name),
+          employee:employees(full_name, department, office_location),
+          badge:visitor_badges(badge_number, qr_token)
+        `)
+        .eq('id', q)
+        .maybeSingle()
+
+      console.log('[public/status] visit id lookup', { q, visitData, visitError })
+      if (visitData) {
+        data = visitData
+      } else {
+        lastError = visitError
+      }
+    }
+
+    if (!data) {
+      const { data: visitByVisitor, error: visitorError } = await supabaseAdmin
+        .from('visits')
+        .select(`
+          registration_number,
+          status,
+          created_at,
+          check_in_time,
+          check_out_time,
+          visitor_id,
+          employee_id,
+          visitor:visitors(full_name),
+          employee:employees(full_name, department, office_location),
+          badge:visitor_badges(badge_number, qr_token)
+        `)
+        .eq('visitor_id', q)
+        .limit(1)
+
+      console.log('[public/status] visitor id lookup', { q, visitByVisitor, visitorError })
+
+      if (visitByVisitor && visitByVisitor.length > 0) {
+        data = visitByVisitor[0]
+      } else {
+        lastError = visitorError
+      }
+    }
+
+    if (!data) {
+      const { data: badgeByNumber, error: badgeNumberError } = await supabaseAdmin
+        .from('visitor_badges')
+        .select('visit_id, badge_number, qr_token')
+        .ilike('badge_number', `%${q}%`)
+        .maybeSingle()
+
+      console.log('[public/status] badge number lookup', { q, badgeByNumber, badgeNumberError })
+
+      if (badgeByNumber?.visit_id) {
+        const { data: visitByBadge, error: visitByBadgeError } = await supabaseAdmin
+          .from('visits')
+          .select(`
+            registration_number,
+            status,
+            created_at,
+            check_in_time,
+            check_out_time,
+            visitor_id,
+            employee_id,
+            visitor:visitors(full_name),
+            employee:employees(full_name, department, office_location),
+            badge:visitor_badges(badge_number, qr_token)
+          `)
+          .eq('id', badgeByNumber.visit_id)
+          .maybeSingle()
+
+        console.log('[public/status] visit by badge number lookup', { q, visitByBadge, visitByBadgeError })
+        if (visitByBadge) {
+          data = visitByBadge
+        } else {
+          lastError = visitByBadgeError
+        }
+      } else {
+        lastError = badgeNumberError
+      }
+    }
+
+    console.log('[public/status] final result', { q, data, lastError })
+
+    if (!data) {
+      console.error('[public/status] lookup error', { q, error: lastError, data })
       return NextResponse.json(
-        { 
-          success: false, 
-          message: error?.message || 'Registration not found', 
-          error: error?.message || 'Registration not found',
-          details: error 
-        }, 
+        {
+          success: false,
+          message: lastError?.message || 'Registration not found',
+          error: lastError?.message || 'Registration not found',
+          details: lastError
+        },
         { status: 404 }
       )
     }

@@ -15,6 +15,8 @@ export async function getVisitForBadgePreview(visitId: string): Promise<BadgePre
     .eq('id', visitId)
     .single()
 
+  console.log('[badge-preview] getVisitForBadgePreview', { visitId, data, error })
+
   if (error || !data) return null
 
   return transformVisit(data as Record<string, unknown>)
