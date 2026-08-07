@@ -58,7 +58,7 @@ export default function BadgePreviewPanel({
           .from('visitor_badges')
           .select('id')
           .eq('visit_id', visit.id)
-          .single()
+          .maybeSingle()
 
         if (data?.id) {
           setRealBadgeId(data.id)

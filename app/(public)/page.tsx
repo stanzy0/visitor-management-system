@@ -1,56 +1,158 @@
 import Link from 'next/link'
-import { ShieldCheck, Scan, UserCheck, Clock, FileText, Car, Bell, CheckCircle } from 'lucide-react'
+import {
+  ShieldCheck,
+  Scan,
+  UserCheck,
+  Clock,
+  FileText,
+  Car,
+  Bell,
+  CheckCircle,
+  MapPin,
+  Phone,
+  Mail,
+  Calendar,
+  Users,
+  Activity,
+  AlertCircle,
+  ArrowRight,
+  Menu,
+  X,
+} from 'lucide-react'
+import ImageWithFallback from '@/components/ui/ImageWithFallback'
+import MobileMenu from '@/components/ui/MobileMenu'
 
 export default function PublicLandingPage() {
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-200">
+      <header className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-6">
+          <div className="flex items-center justify-between py-3">
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-xl bg-blue-600 flex items-center justify-center">
-                <ShieldCheck className="h-7 w-7 text-white" />
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#0B3D91] to-[#0B3D91] flex items-center justify-center shadow-md">
+                <ShieldCheck className="h-6 w-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">AFCSC Visitor Management</h1>
-                <p className="text-sm text-gray-500">Armed Forces Command and Staff College</p>
+              <div className="flex items-center gap-2">
+                <ImageWithFallback
+                  src="/images/afcsc-logo.png"
+                  alt="AFCSC Logo"
+                  className="h-10 w-10 rounded-lg object-contain"
+                />
+                <div>
+                  <h1 className="text-base font-bold text-gray-900 leading-tight">
+                    Armed Forces Command and Staff College
+                  </h1>
+                  <p className="text-xs text-gray-500 leading-tight">Visitor Management System</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <Link href="/register/status" className="text-sm font-medium text-blue-600 hover:text-blue-700">
+            <nav className="hidden md:flex items-center gap-8">
+              <Link href="/register" className="text-sm font-medium text-gray-600 hover:text-[#0B3D91] transition-colors">
+                Register
+              </Link>
+              <Link href="/register/status" className="text-sm font-medium text-gray-600 hover:text-[#0B3D91] transition-colors">
                 Check Status
               </Link>
-              <Link href="/login" className="text-sm font-medium text-gray-700 hover:text-gray-900">
+              <Link href="/appointments" className="text-sm font-medium text-gray-600 hover:text-[#0B3D91] transition-colors">
+                Appointments
+              </Link>
+              <Link href="/login" className="inline-flex items-center gap-2 rounded-lg bg-[#C62828] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#7B0000] transition-colors shadow-md shadow-[#C62828]/20">
                 Staff Login
               </Link>
-            </div>
+            </nav>
+            <MobileMenu />
           </div>
         </div>
       </header>
 
       <main>
-        <section className="relative overflow-hidden bg-blue-50">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
+        <section className="relative overflow-hidden bg-gradient-to-br from-[#0B3D91] via-[#0B3D91] to-[#0A1628]">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#D4AF37] rounded-full blur-3xl"></div>
+            <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-[#C62828] rounded-full blur-3xl"></div>
+          </div>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 md:py-32 relative">
             <div className="text-center">
-              <h2 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-                Visitor Self-Registration
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 mb-8">
+                <span className="h-2 w-2 rounded-full bg-[#D4AF37] animate-pulse"></span>
+                <span className="text-sm font-medium text-white/90">Welcome to AFCSC</span>
+              </div>
+              <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
+                Armed Forces Command and Staff College
               </h2>
-              <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-                Welcome to the Armed Forces Command and Staff College. Register your visit online before arriving to save time at the gate.
+              <p className="mt-6 text-lg text-white/80 max-w-2xl mx-auto">
+                The Visitor Management System streamlines guest registration, badge generation, and security check-in for all visitors to the college premises.
               </p>
-              <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+              <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20 min-h-[52px]"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] px-8 py-4 text-lg font-semibold text-[#0A1628] hover:bg-[#F0D060] transition-colors shadow-lg shadow-yellow-500/20 min-h-[52px]"
                 >
-                  Start Registration
+                  <UserCheck className="h-5 w-5" />
+                  Register Visitor
                 </Link>
                 <Link
-                  href="/register/status"
-                  className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-4 text-lg font-semibold text-gray-700 hover:bg-gray-50 border border-gray-300 min-h-[52px]"
+                  href="/login"
+                  className="inline-flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 px-8 py-4 text-lg font-semibold text-white hover:bg-white/20 transition-colors min-h-[52px]"
                 >
-                  Check Registration Status
+                  Staff Login
                 </Link>
+              </div>
+            </div>
+          </div>
+          <div className="absolute bottom-0 left-0 right-0">
+            <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+              <path d="M0 60L60 50C120 40 240 20 360 15C480 10 600 20 720 25C840 30 960 30 1080 25C1200 20 1320 10 1380 5L1440 0H0V60Z" fill="white" />
+            </svg>
+          </div>
+        </section>
+
+        <section className="py-16 bg-white">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="rounded-2xl bg-gradient-to-br from-[#0B3D91] to-[#0B3D91] p-6 text-white shadow-lg shadow-[#0B3D91]/20 hover:shadow-xl hover:shadow-[#0B3D91]/30 transition-shadow">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center">
+                    <Users className="h-6 w-6 text-[#D4AF37]" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">2,450+</p>
+                    <p className="text-sm text-white/70">Employees</p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-br from-[#C62828] to-[#7B0000] p-6 text-white shadow-lg shadow-[#C62828]/20 hover:shadow-xl hover:shadow-[#C62828]/30 transition-shadow">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center">
+                    <Activity className="h-6 w-6 text-[#D4AF37]" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">187</p>
+                    <p className="text-sm text-white/70">Visitors Today</p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#F0D060] p-6 text-[#0A1628] shadow-lg shadow-yellow-500/20 hover:shadow-xl hover:shadow-yellow-500/30 transition-shadow">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
+                    <Clock className="h-6 w-6 text-[#0A1628]" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">42</p>
+                    <p className="text-sm text-[#0A1628]/70">Active Visits</p>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-br from-[#0A1628] to-[#1a2a4a] p-6 text-white shadow-lg shadow-gray-900/20 hover:shadow-xl hover:shadow-gray-900/30 transition-shadow">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-xl bg-[#D4AF37]/20 flex items-center justify-center">
+                    <AlertCircle className="h-6 w-6 text-[#D4AF37]" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">8</p>
+                    <p className="text-sm text-white/70">Pending Approvals</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -58,56 +160,106 @@ export default function PublicLandingPage() {
 
         <section className="py-20 bg-white">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">Visitor Guidelines</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="rounded-2xl border border-gray-200 p-6 shadow-sm">
-                <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
-                  <FileText className="h-6 w-6 text-blue-600" />
+            <div className="text-center mb-12">
+              <h3 className="text-3xl font-bold text-gray-900">Visitor Management Features</h3>
+              <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+                A comprehensive system designed to streamline visitor registration, security, and campus access management.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[
+                { icon: UserCheck, title: 'Visitor Registration', desc: 'Easy online registration for all visitors with ID verification and pre-approval workflows.', color: 'from-[#0B3D91] to-[#0B3D91]', iconBg: 'bg-[#0B3D91]', iconText: 'text-white' },
+                { icon: Scan, title: 'QR Badge Generation', desc: 'Instant QR code badges for quick and secure gate verification and check-in.', color: 'from-[#D4AF37] to-[#F0D060]', iconBg: 'bg-[#D4AF37]', iconText: 'text-[#0A1628]' },
+                { icon: Users, title: 'Employee Directory', desc: 'Access the employee directory to find hosts and departments quickly.', color: 'from-[#C62828] to-[#7B0000]', iconBg: 'bg-[#C62828]', iconText: 'text-white' },
+                { icon: Calendar, title: 'Appointment Scheduling', desc: 'Schedule and manage visitor appointments with real-time availability.', color: 'from-[#0B3D91] to-[#0B3D91]', iconBg: 'bg-[#0B3D91]', iconText: 'text-white' },
+                { icon: CheckCircle, title: 'Check-In / Check-Out', desc: 'Streamlined check-in and check-out process with digital signatures.', color: 'from-[#D4AF37] to-[#F0D060]', iconBg: 'bg-[#D4AF37]', iconText: 'text-[#0A1628]' },
+                { icon: Activity, title: 'Reports & Analytics', desc: 'Comprehensive reporting and analytics on visitor trends and security data.', color: 'from-[#C62828] to-[#7B0000]', iconBg: 'bg-[#C62828]', iconText: 'text-white' },
+                { icon: ShieldCheck, title: 'Security Monitoring', desc: 'Real-time security monitoring and alerting for all campus visitors.', color: 'from-[#0B3D91] to-[#0B3D91]', iconBg: 'bg-[#0B3D91]', iconText: 'text-white' },
+              ].map((feature, i) => (
+                <div key={i} className="group rounded-2xl bg-white p-8 shadow-sm border border-gray-100 hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 hover:-translate-y-1">
+                  <div className={`h-14 w-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                    <feature.icon className={`h-7 w-7 ${feature.iconText}`} />
+                  </div>
+                  <h4 className="text-lg font-semibold text-gray-900 mb-3">{feature.title}</h4>
+                  <p className="text-gray-600 leading-relaxed">{feature.desc}</p>
                 </div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">Valid ID Required</h4>
-                <p className="text-gray-600">Bring a valid government-issued photo ID that matches the details provided during registration.</p>
-              </div>
-              <div className="rounded-2xl border border-gray-200 p-6 shadow-sm">
-                <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
-                  <Clock className="h-6 w-6 text-blue-600" />
-                </div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">Arrive on Time</h4>
-                <p className="text-gray-600">Please arrive at the scheduled time. Early arrivals may need to wait until the appointed time.</p>
-              </div>
-              <div className="rounded-2xl border border-gray-200 p-6 shadow-sm">
-                <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
-                  <Car className="h-6 w-6 text-blue-600" />
-                </div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">Vehicle Information</h4>
-                <p className="text-gray-600">If driving, provide vehicle registration details during registration to expedite gate clearance.</p>
-              </div>
+              ))}
             </div>
           </div>
         </section>
 
         <section className="py-20 bg-gray-50">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">What to Expect</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <div className="mx-auto h-16 w-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl font-bold mb-4">1</div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">Register Online</h4>
-                <p className="text-gray-600">Complete the registration form with your details and visit information.</p>
+            <div className="text-center mb-12">
+              <h3 className="text-3xl font-bold text-gray-900">Campus Gallery</h3>
+              <p className="mt-4 text-lg text-gray-600">Explore the Armed Forces Command and Staff College campus.</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="relative group rounded-2xl overflow-hidden shadow-lg h-64">
+                <ImageWithFallback src="/images/home/hero.jpg" alt="Hero" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                  <span className="text-white font-semibold text-lg">Main Entrance</span>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="mx-auto h-16 w-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl font-bold mb-4">2</div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">Receive Confirmation</h4>
-                <p className="text-gray-600">You will receive an email confirmation with your registration number and QR code.</p>
+              <div className="relative group rounded-2xl overflow-hidden shadow-lg h-64">
+                <ImageWithFallback src="/images/home/campus.jpg" alt="Campus" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                  <span className="text-white font-semibold text-lg">Campus View</span>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="mx-auto h-16 w-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl font-bold mb-4">3</div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">Gate Verification</h4>
-                <p className="text-gray-600">At the gate, present your QR code and ID for security verification.</p>
+              <div className="relative group rounded-2xl overflow-hidden shadow-lg h-64">
+                <ImageWithFallback src="/images/home/gate.jpg" alt="Gate" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                  <span className="text-white font-semibold text-lg">Security Gate</span>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="mx-auto h-16 w-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl font-bold mb-4">4</div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">Check In</h4>
-                <p className="text-gray-600">After security clearance, proceed to your host department.</p>
+              <div className="relative group rounded-2xl overflow-hidden shadow-lg h-64">
+                <ImageWithFallback src="/images/home/auditorium.jpg" alt="Auditorium" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                  <span className="text-white font-semibold text-lg">Auditorium</span>
+                </div>
+              </div>
+              <div className="relative group rounded-2xl overflow-hidden shadow-lg h-64 md:col-span-2">
+                <ImageWithFallback src="/images/home/command.jpg" alt="Command" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                  <span className="text-white font-semibold text-lg">Command Headquarters</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-20 bg-gradient-to-br from-[#0A1628] to-[#1a2a4a]">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <h3 className="text-3xl font-bold text-white">About AFCSC</h3>
+                <p className="mt-4 text-lg text-white/70 leading-relaxed">
+                  The Armed Forces Command and Staff College is a premier military institution dedicated to training and educating senior military officers for command and staff roles. Our Visitor Management System ensures secure, efficient, and professional handling of all visitors to the college premises.
+                </p>
+                <p className="mt-4 text-lg text-white/70 leading-relaxed">
+                  The system provides seamless registration, QR badge generation, appointment scheduling, and real-time security monitoring — all designed to maintain the highest standards of campus security while providing a welcoming experience for guests.
+                </p>
+                <div className="mt-8 flex flex-wrap gap-4">
+                  <div className="flex items-center gap-2 text-white/80">
+                    <MapPin className="h-5 w-5 text-[#D4AF37]" />
+                    <span className="text-sm">Jiwa, Abuja, Nigeria</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-white/80">
+                    <Phone className="h-5 w-5 text-[#D4AF37]" />
+                    <span className="text-sm">+234 803 000 0000</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-white/80">
+                    <Mail className="h-5 w-5 text-[#D4AF37]" />
+                    <span className="text-sm">reception@afcsc.edu.ng</span>
+                  </div>
+                </div>
+              </div>
+              <div className="relative">
+                <div className="rounded-2xl overflow-hidden shadow-2xl">
+                  <ImageWithFallback src="/images/afcsc-login.jpg" alt="AFCSC Campus" className="w-full h-80 lg:h-96 object-cover" />
+                </div>
+                <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-[#D4AF37] rounded-2xl -z-10 opacity-20"></div>
               </div>
             </div>
           </div>
@@ -115,23 +267,25 @@ export default function PublicLandingPage() {
 
         <section className="py-20 bg-white">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="rounded-2xl bg-blue-50 border border-blue-100 p-8 md:p-12">
-              <div className="md:flex md:items-center md:justify-between">
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900">Need Assistance?</h3>
-                  <p className="mt-2 text-gray-600">Contact the reception desk for help with your registration.</p>
-                  <div className="mt-4 space-y-1 text-sm text-gray-600">
-                    <p><strong>Phone:</strong> +234 803 000 0000</p>
-                    <p><strong>Email:</strong> reception@afcsc.edu.ng</p>
-                    <p><strong>Hours:</strong> Monday - Friday, 8:00 AM - 5:00 PM</p>
-                  </div>
-                </div>
-                <div className="mt-6 md:mt-0">
+            <div className="rounded-3xl bg-gradient-to-br from-[#0B3D91] to-[#0B3D91] overflow-hidden shadow-2xl shadow-[#0B3D91]/20">
+              <div className="px-8 py-16 md:px-16 md:py-20 text-center">
+                <h3 className="text-3xl font-bold text-white sm:text-4xl">Ready to Register Your Visit?</h3>
+                <p className="mt-4 text-lg text-white/80 max-w-2xl mx-auto">
+                  Complete your visitor registration online before arriving at the college. Save time at the gate and ensure a smooth check-in experience.
+                </p>
+                <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
                   <Link
                     href="/register"
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white hover:bg-blue-700 shadow-lg min-h-[52px]"
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] px-8 py-4 text-lg font-semibold text-[#0A1628] hover:bg-[#F0D060] transition-colors shadow-lg shadow-yellow-500/20 min-h-[52px]"
                   >
-                    Register Now
+                    Start Registration
+                    <ArrowRight className="h-5 w-5" />
+                  </Link>
+                  <Link
+                    href="/register/status"
+                    className="inline-flex items-center gap-2 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 px-8 py-4 text-lg font-semibold text-white hover:bg-white/20 transition-colors min-h-[52px]"
+                  >
+                    Check Status
                   </Link>
                 </div>
               </div>
@@ -140,20 +294,58 @@ export default function PublicLandingPage() {
         </section>
       </main>
 
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <h4 className="text-lg font-semibold">Armed Forces Command and Staff College</h4>
-              <p className="mt-1 text-sm text-gray-400">Visitor Management System</p>
+      <footer className="bg-[#0A1628] text-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-[#0B3D91] to-[#0B3D91] flex items-center justify-center">
+                  <ShieldCheck className="h-6 w-6 text-white" />
+                </div>
+                <ImageWithFallback
+                  src="/images/afcsc-logo.png"
+                  alt="AFCSC Logo"
+                  className="h-10 w-10 rounded-lg object-contain"
+                />
+                <div>
+                  <h4 className="text-lg font-semibold">Armed Forces Command and Staff College</h4>
+                  <p className="text-sm text-white/50">Visitor Management System</p>
+                </div>
+              </div>
+              <p className="text-sm text-white/50 max-w-md mt-4 leading-relaxed">
+                Secure and efficient visitor management for the Armed Forces Command and Staff College. Streamlining guest access while maintaining the highest security standards.
+              </p>
             </div>
-            <div className="mt-4 md:mt-0 text-sm text-gray-400">
-              <p>Jiwa, Abuja, Nigeria</p>
-              <p>+234 803 000 0000</p>
+            <div>
+              <h5 className="text-sm font-semibold text-[#D4AF37] uppercase tracking-wider mb-4">Quick Links</h5>
+              <ul className="space-y-3">
+                <li><Link href="/register" className="text-sm text-white/60 hover:text-white transition-colors">Register Visitor</Link></li>
+                <li><Link href="/register/status" className="text-sm text-white/60 hover:text-white transition-colors">Check Status</Link></li>
+                <li><Link href="/appointments" className="text-sm text-white/60 hover:text-white transition-colors">Appointments</Link></li>
+                <li><Link href="/login" className="text-sm text-white/60 hover:text-white transition-colors">Staff Login</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h5 className="text-sm font-semibold text-[#D4AF37] uppercase tracking-wider mb-4">Contact</h5>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-2 text-sm text-white/60">
+                  <MapPin className="h-4 w-4 text-[#D4AF37]" />
+                  Jiwa, Abuja, Nigeria
+                </li>
+                <li className="flex items-center gap-2 text-sm text-white/60">
+                  <Phone className="h-4 w-4 text-[#D4AF37]" />
+                  +234 803 000 0000
+                </li>
+                <li className="flex items-center gap-2 text-sm text-white/60">
+                  <Mail className="h-4 w-4 text-[#D4AF37]" />
+                  reception@afcsc.edu.ng
+                </li>
+              </ul>
             </div>
           </div>
-          <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-400">
-            <p>© {new Date().getFullYear()} AFCSC. All rights reserved.</p>
+          <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row md:items-center md:justify-between">
+            <p className="text-sm text-white/40">© {new Date().getFullYear()} Armed Forces Command and Staff College. All rights reserved.</p>
+            <p className="text-sm text-white/40 mt-2 md:mt-0">Visitor Management System v2.0</p>
           </div>
         </div>
       </footer>

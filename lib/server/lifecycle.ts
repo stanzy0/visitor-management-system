@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logAuditAction } from '@/lib/server/audit'
-import { createHostEmployeeNotification, createSecurityNotification, createSystemNotification } from '@/lib/server/notifications'
+import { createHostNotification, createSecurityNotification, createSystemNotification } from '@/lib/server/notification-service'
 import type { VisitLifecycleStatus, LifecycleEvent, MissingDocumentResult, ExpiredVisitResult } from '@/lib/types/lifecycle'
 
 const REQUIRED_DOCUMENT_TYPES = [
@@ -154,7 +154,7 @@ export async function notifyHostOnCheckIn(visitId: string, visitorName: string, 
 
   const message = `Your visitor ${visitorName} has arrived at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${badgeNumber ? ` with badge ${badgeNumber}` : ''}.`
 
-  await createHostEmployeeNotification(
+  await createHostNotification(
     visit.employee_id as string,
     'Visitor Arrived',
     message,

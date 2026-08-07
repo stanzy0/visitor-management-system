@@ -7,6 +7,7 @@ import { getCurrentUser, UserRole } from '@/lib/auth-client'
 import { getAuthHeaders } from '@/lib/client/api'
 import { motion } from 'framer-motion'
 import { useBranding } from '@/hooks/useBranding'
+import { useNotifications } from '@/contexts/NotificationContext'
 import {
   Users,
   Clock,
@@ -80,9 +81,9 @@ export default function DashboardPage() {
   const [authReady, setAuthReady] = useState(false)
    const [chartColors, setChartColors] = useState<string[]>(COLORS)
   const { branding } = useBranding()
+  const { notifications, unreadCount } = useNotifications()
   const [filters, setFilters] = useState<DashboardFilters>({ range: 'today' })
   const [exporting, setExporting] = useState(false)
-  const [recentNotifications, setRecentNotifications] = useState<Array<{ id: string; title: string; message: string; type: string; created_at: string; is_read: boolean }>>([])
   const [appointmentsToday, setAppointmentsToday] = useState(0)
   const [securityStats, setSecurityStats] = useState({
     visitorsWaitingAtGate: 0,
@@ -95,15 +96,6 @@ export default function DashboardPage() {
     watchlistMatches: 0,
   })
   const [pendingOnlineRegistrations, setPendingOnlineRegistrations] = useState<Array<{ id: string; full_name: string; registration_number: string; created_at: string; purpose: string; employee: { full_name: string; department: string } | null }>>([])
-  const [propertyStats, setPropertyStats] = useState({
-    totalItems: 0,
-    itemsInside: 0,
-    confiscatedItems: 0,
-    pendingRelease: 0,
-    releasedToday: 0,
-    lostItems: 0,
-    damagedItems: 0,
-  })
   const [recentVisitors, setRecentVisitors] = useState<Array<{ id: string; full_name: string; photo_url?: string | null; status: string; created_at: string; purpose?: string; host_name?: string; host_department?: string }>>([])
   const [pendingDocuments, setPendingDocuments] = useState<Array<{ id: string; visitor_name: string; organization: string; document_type: string; document_number: string; created_at: string; photo_url: string | null }>>([])
 
@@ -143,7 +135,10 @@ export default function DashboardPage() {
         const res = await fetch('/api/security/stats', {
           headers: await getAuthHeaders(),
         })
+        console.log('Security Stats Status:', res.status)
         if (!res.ok) {
+          const text = await res.text()
+          console.log('Security Stats Error Body:', text)
           throw new Error(`Request failed: ${res.status}`)
         }
         const json = await res.json()
@@ -215,26 +210,6 @@ export default function DashboardPage() {
   }, [authReady])
 
   useEffect(() => {
-    const fetchPropertyStats = async () => {
-      try {
-        const res = await fetch('/api/assets/stats', {
-          headers: await getAuthHeaders(),
-        })
-        if (!res.ok) {
-          throw new Error(`Request failed: ${res.status}`)
-        }
-        const json = await res.json()
-        if (json.success) {
-          setPropertyStats(json.data)
-        }
-      } catch (err) {
-        console.error('Failed to fetch property stats:', err)
-      }
-    }
-    fetchPropertyStats()
-  }, [])
-
-  useEffect(() => {
     const fetchRecentVisitors = async () => {
       try {
         const { data } = await supabase
@@ -294,23 +269,6 @@ export default function DashboardPage() {
       }
     }
     checkAuth()
-  }, [])
-
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const user = await getCurrentUser()
-        if (!user) return
-        const { data: userRoleData } = await supabase.from('user_roles').select('role').eq('user_id', user.id).single()
-        let query = supabase.from('notifications').select('*').order('created_at', { ascending: false }).limit(5)
-        if (userRoleData?.role) query = query.or(`user_id.eq.${user.id},recipient_role.eq.${userRoleData.role}`)
-        const { data } = await query
-        if (data) setRecentNotifications(data)
-      } catch {
-        // ignore notification fetch errors
-      }
-    }
-    fetchNotifications()
   }, [])
 
   const handleExportDashboard = async (format: 'pdf' | 'excel' | 'csv') => {
@@ -598,7 +556,7 @@ export default function DashboardPage() {
 
             <SystemStatus />
 
-            {recentNotifications.length > 0 && (
+            {notifications.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -610,7 +568,7 @@ export default function DashboardPage() {
                       <Bell className="h-5 w-5 text-primary" />
                       Recent Notifications
                     </h2>
-                    <p className="text-sm text-gray-500 mt-0.5">{recentNotifications.length} recent notification{recentNotifications.length !== 1 ? 's' : ''}</p>
+                    <p className="text-sm text-gray-500 mt-0.5">{notifications.length} recent notification{notifications.length !== 1 ? 's' : ''}</p>
                   </div>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -623,7 +581,7 @@ export default function DashboardPage() {
                   </motion.button>
                 </div>
                 <div className="divide-y divide-gray-100">
-                  {recentNotifications.slice(0, 5).map((notification) => (
+                  {notifications.map((notification) => (
                     <div key={notification.id} className="p-4 hover:bg-gray-50/80 transition-colors">
                       <div className="flex items-start gap-3">
                         <div className="p-2 rounded-xl bg-gray-50 flex-shrink-0">
@@ -820,18 +778,6 @@ export default function DashboardPage() {
                     </PieChart>
                   </ResponsiveContainer>
                 </ChartCard>
-              </div>
-            )}
-
-            {showAllSections && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900">Assets & Property Analytics</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <PremiumStatCard title="Items Inside" value={propertyStats.itemsInside.toString()} icon={ShieldCheck} color="green" onClick={() => router.push('/assets')} index={0} />
-                  <PremiumStatCard title="Confiscated" value={propertyStats.confiscatedItems.toString()} icon={AlertTriangle} color="red" onClick={() => router.push('/assets')} index={1} />
-                  <PremiumStatCard title="Pending Release" value={propertyStats.pendingRelease.toString()} icon={Clock} color="amber" onClick={() => router.push('/assets')} index={2} />
-                  <PremiumStatCard title="Released Today" value={propertyStats.releasedToday.toString()} icon={CheckCircle} color="blue" onClick={() => router.push('/assets')} index={3} />
-                </div>
               </div>
             )}
 

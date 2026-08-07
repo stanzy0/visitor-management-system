@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logAuditAction } from '@/lib/server/audit'
-import { createNotification } from '@/lib/server/notifications'
+import { createNotification } from '@/lib/server/notification-service'
 import type { Incident, IncidentFormData, IncidentTimelineEntry, IncidentFilters, IncidentStats, IncidentReport } from '@/lib/types/incident'
 
 export async function getIncidents(filters: IncidentFilters = {}): Promise<Incident[]> {

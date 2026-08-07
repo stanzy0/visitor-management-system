@@ -202,7 +202,7 @@ export default function KioskPage() {
           try {
             const parsed = JSON.parse(decodedText)
             if (parsed.qr_token) token = parsed.qr_token
-            else if (parsed.type === 'public-visitor' && parsed.visitId) token = parsed.visitId
+            else if (parsed.type === 'public-visitor' && parsed.registrationNumber) token = parsed.registrationNumber
           } catch {
             // Not JSON — check if it's a URL and extract the token from the path
             try {

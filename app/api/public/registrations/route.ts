@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth-helpers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/server/email'
-import { createHostEmployeeNotification, createSystemNotification } from '@/lib/server/notifications'
+import { createHostNotification, createSystemNotification, createAdminNotification, createReceptionistNotification, createSecurityNotification } from '@/lib/server/notification-service'
 import { logAuditAction } from '@/lib/server/audit'
 import { getSystemSetting } from '@/lib/server/settings'
 import { getPortalUrl } from '@/lib/utils/portal-url'
@@ -165,6 +165,22 @@ export async function POST(request: NextRequest) {
         'visit',
         visit_id
       )
+
+      await createReceptionistNotification(
+        'Registration Approved',
+        `Public registration ${visit.registration_number} for ${visitor?.full_name || 'visitor'} has been approved.`,
+        'success',
+        'visit',
+        visit_id
+      ).catch(() => {})
+
+      await createSecurityNotification(
+        'Registration Approved',
+        `Public registration ${visit.registration_number} for ${visitor?.full_name || 'visitor'} has been approved.`,
+        'success',
+        'visit',
+        visit_id
+      ).catch(() => {})
 
       await logAuditAction('Public Registration Approved', 'visit', visit_id, `Registration ${visit.registration_number} approved`)
 

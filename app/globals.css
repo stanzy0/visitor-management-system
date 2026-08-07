@@ -13,6 +13,13 @@
   --branding-primary: #0B3D91;
   --branding-secondary: #1F6FEB;
   --branding-accent: #D4AF37;
+  --afcsc-primary: #0B3D91;
+  --afcsc-primary-dark: #092E6D;
+  --afcsc-accent: #D4AF37;
+  --afcsc-accent-hover: #B8860B;
+  --afcsc-red: #C62828;
+  --afcsc-red-dark: #8B0000;
+  --afcsc-navy: #0A1628;
 }
 
 @theme inline {

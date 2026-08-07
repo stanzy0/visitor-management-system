@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
+import { getAuthHeaders } from '@/lib/client/api'
 import { generateVisitQRCode } from '@/lib/qrcode'
 import { Loader2, Edit, ArrowLeft, X, Upload, Trash2 } from 'lucide-react'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
@@ -318,13 +319,18 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
   async function handleDelete() {
     if (!visitorId) return
     setDeleting(true)
-    const { error } = await supabase.from('visitors').delete().eq('id', visitorId)
-    if (error) {
-      console.error('Error deleting visitor:', error)
-    } else {
-      logAuditAction('Visitor Deleted', 'visitor', visitorId, `Visitor ${visitor?.full_name} deleted`)
-      window.location.href = '/visitors'
+    const authHeaders = await getAuthHeaders()
+    const res = await fetch(`/api/visitors/${visitorId}?id=${visitorId}`, {
+      method: 'DELETE',
+      headers: { ...authHeaders },
+    })
+    const result = await res.json().catch(() => ({ success: false }))
+    if (!res.ok || !result.success) {
+      setDeleting(false)
+      alert(result.error || 'Failed to delete visitor')
+      return
     }
+    window.location.href = '/visitors'
     setDeleting(false)
   }
 

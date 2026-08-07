@@ -12,5 +12,28 @@ export const createClient = () => {
 
   return createBrowserClient(supabaseUrl, supabaseAnonKey, {
     db: { timeout: 30000 },
+    cookies: {
+      getAll() {
+        if (typeof document === 'undefined') return []
+        return document.cookie.split(';').map(c => {
+          const [name, ...rest] = c.split('=').map(s => s.trim())
+          return { name, value: decodeURIComponent(rest.join('=')) }
+        })
+      },
+      setAll(cookiesToSet) {
+        if (typeof document === 'undefined') return
+        cookiesToSet.forEach(({ name, value, options }) => {
+          let cookie = `${name}=${encodeURIComponent(value)}`
+          if (options?.path) cookie += `; Path=${options.path}`
+          if (options?.maxAge) cookie += `; Max-Age=${options.maxAge}`
+          if (options?.expires) cookie += `; Expires=${options.expires}`
+          if (options?.domain) cookie += `; Domain=${options.domain}`
+          if (options?.sameSite) cookie += `; SameSite=${options.sameSite}`
+          if (options?.secure) cookie += `; Secure`
+          if (options?.httpOnly) cookie += `; HttpOnly`
+          document.cookie = cookie
+        })
+      },
+    },
   })
 }

@@ -132,6 +132,7 @@ export default function LoginPage() {
           alt={collegeName}
           fill
           priority
+          sizes="(max-width:768px) 100vw, 50vw"
           className="object-cover transition-transform duration-[20s] ease-in-out group-hover:scale-105"
         />
         <div className="absolute bottom-8 left-8 z-20 max-w-md">

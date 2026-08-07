@@ -1,9 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
-import { logAuditAction } from '@/lib/client/audit'
-import { createAdminNotification, createReceptionistNotification, createHostEmployeeNotification } from '@/lib/notifications'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { Loader2, ArrowLeft } from 'lucide-react'
 import type { AppointmentFormData } from '@/lib/types/appointment'
@@ -47,10 +44,6 @@ export default function NewAppointmentPage() {
       }
 
       const appointment = result.data
-      logAuditAction('Appointment Created', 'appointment', appointment.id, `Appointment ${appointment.appointment_number} created`)
-      createAdminNotification('Appointment Created', `Appointment scheduled for ${appointment.visitor?.full_name} with ${appointment.employee?.full_name}.`, 'appointment', 'appointment', appointment.id).catch(() => {})
-      createReceptionistNotification('Appointment Created', `Appointment scheduled for ${appointment.visitor?.full_name} with ${appointment.employee?.full_name}.`, 'appointment', 'appointment', appointment.id).catch(() => {})
-      createHostEmployeeNotification(appointment.employee_id, 'Appointment Created', `Appointment scheduled for ${appointment.visitor?.full_name}.`, 'appointment', 'appointment', appointment.id).catch(() => {})
 
       window.location.href = '/appointments'
     } catch (err) {

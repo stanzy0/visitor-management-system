@@ -21,7 +21,7 @@ export default async function RegisterPage({ params }: PageProps) {
         <div className="max-w-md w-full rounded-xl border border-gray-200 bg-white shadow-sm p-8 text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Invalid Invitation</h1>
           <p className="text-gray-600 mb-6">{error.error || 'This invitation link is invalid or has expired.'}</p>
-          <Link href="/" className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+          <Link href="/" className="inline-flex items-center rounded-lg bg-[#0B3D91] px-4 py-2 text-sm font-medium text-white hover:bg-[#4DA6FF] transition-colors">
             Go to Home
           </Link>
         </div>
@@ -37,9 +37,10 @@ export default async function RegisterPage({ params }: PageProps) {
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-gray-900">Visitor Registration</h1>
           <p className="text-gray-600 mt-2">Complete your registration for your upcoming visit</p>
+          <p className="text-sm text-gray-500 mt-1">Armed Forces Command and Staff College · Kaduna, Nigeria</p>
         </div>
 
-        <Suspense fallback={<div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" /></div>}>
+        <Suspense fallback={<div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0B3D91] border-t-transparent" /></div>}>
           <PublicRegistrationForm invitation={invitation} />
         </Suspense>
       </div>

@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logAuditAction } from '@/lib/server/audit'
-import { createHostEmployeeNotification, createSystemNotification } from '@/lib/server/notifications'
+import { createHostNotification, createSystemNotification } from '@/lib/server/notification-service'
+import { sendEmail } from '@/lib/server/email'
 import type { HostDashboardStats, HostReport, EmployeeProfile } from '@/lib/types/host'
 
 export async function getHostDashboardStats(employeeId: string): Promise<HostDashboardStats> {
@@ -59,7 +60,7 @@ export async function approveVisitor(visitId: string, employeeId: string): Promi
 
   const { data: visit, error: fetchError } = await supabaseAdmin
     .from('visits')
-    .select('*, visitor:visitors(*)')
+    .select('*, visitor:visitors(*), employee:employees(*)')
     .eq('id', visitId)
     .eq('employee_id', employeeId)
     .single()
@@ -69,6 +70,7 @@ export async function approveVisitor(visitId: string, employeeId: string): Promi
   }
 
   const visitor = Array.isArray(visit.visitor) ? visit.visitor[0] : visit.visitor
+  const employee = Array.isArray(visit.employee) ? visit.employee[0] : visit.employee
 
   const { data: updated, error: updateError } = await supabaseAdmin
     .from('visits')
@@ -81,13 +83,34 @@ export async function approveVisitor(visitId: string, employeeId: string): Promi
     throw new Error(updateError?.message || 'Failed to approve visitor')
   }
 
-  await createSystemNotification(
-    'Visitor Approved',
-    `Your visitor ${visitor?.full_name || 'Unknown'} has been approved by the host.`,
-    'success',
-    'visit',
-    visitId
-  )
+  await sendEmail({
+    to: visitor?.email || '',
+    recipientName: visitor?.full_name || 'Visitor',
+    subject: `Registration Approved - ${visit.registration_number || visitId}`,
+    template: 'invitation_approved',
+    data: {
+      visitorName: visitor?.full_name || 'Visitor',
+      registrationNumber: visit.registration_number || visitId,
+      date: visit.visit_date || new Date().toISOString().split('T')[0],
+      time: visit.arrival_time || 'TBD',
+      purpose: visit.purpose || 'Business',
+      hostName: employee?.full_name || 'Host',
+      badgeNumber: 'Print badge upon arrival',
+    },
+    relatedType: 'visit',
+    relatedId: visitId,
+  })
+
+  if (employeeId) {
+    await createHostNotification(
+      employeeId,
+      'Visitor Approved',
+      `${visitor?.full_name || 'A visitor'}'s registration has been approved for ${visit.visit_date || 'today'}.`,
+      'success',
+      'visit',
+      visitId
+    )
+  }
 
   await logAuditAction('Visitor Approved by Host', 'visit', visitId, `Host approved visit ${visitId}`)
 
@@ -99,7 +122,7 @@ export async function rejectVisitor(visitId: string, employeeId: string, reason:
 
   const { data: visit, error: fetchError } = await supabaseAdmin
     .from('visits')
-    .select('*, visitor:visitors(*)')
+    .select('*, visitor:visitors(*), employee:employees(*)')
     .eq('id', visitId)
     .eq('employee_id', employeeId)
     .single()
@@ -109,6 +132,7 @@ export async function rejectVisitor(visitId: string, employeeId: string, reason:
   }
 
   const visitor = Array.isArray(visit.visitor) ? visit.visitor[0] : visit.visitor
+  const employee = Array.isArray(visit.employee) ? visit.employee[0] : visit.employee
 
   const { data: updated, error: updateError } = await supabaseAdmin
     .from('visits')
@@ -121,13 +145,32 @@ export async function rejectVisitor(visitId: string, employeeId: string, reason:
     throw new Error(updateError?.message || 'Failed to reject visitor')
   }
 
-  await createSystemNotification(
-    'Visitor Rejected',
-    `Your visitor ${visitor?.full_name || 'Unknown'} has been rejected by the host. Reason: ${reason}`,
-    'error',
-    'visit',
-    visitId
-  )
+  await sendEmail({
+    to: visitor?.email || '',
+    recipientName: visitor?.full_name || 'Visitor',
+    subject: `Registration Rejected - ${visit.registration_number || visitId}`,
+    template: 'registration_rejected',
+    data: {
+      visitorName: visitor?.full_name || 'Visitor',
+      registrationNumber: visit.registration_number || visitId,
+      date: visit.visit_date || new Date().toISOString().split('T')[0],
+      hostName: employee?.full_name || 'Host',
+      reason: reason || 'No reason provided',
+    },
+    relatedType: 'visit',
+    relatedId: visitId,
+  })
+
+  if (employeeId) {
+    await createHostNotification(
+      employeeId,
+      'Visitor Rejected',
+      `${visitor?.full_name || 'A visitor'}'s invitation was rejected for ${visit.visit_date || 'today'}. Reason: ${reason}.`,
+      'error',
+      'visit',
+      visitId
+    )
+  }
 
   await logAuditAction('Visitor Rejected by Host', 'visit', visitId, `Host rejected visit ${visitId}. Reason: ${reason}`)
 

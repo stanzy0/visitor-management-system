@@ -709,39 +709,41 @@ const isStepInvalid = () => {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="mx-auto max-w-2xl px-4 lg:px-6">
-          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-8 text-center">
-            <div className="mx-auto h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mb-6">
-              <CheckCircle2 className="h-8 w-8 text-green-600" />
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-lg p-8 text-center">
+            <div className="mx-auto h-16 w-16 rounded-full bg-[#0B3D91]/10 flex items-center justify-center mb-6">
+              <CheckCircle2 className="h-8 w-8 text-[#0B3D91]" />
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Submitted Successfully</h2>
             <p className="text-gray-600 mb-6">Your registration has been submitted and is pending approval.</p>
 
             <div className="rounded-xl border border-gray-200 p-6 mb-6">
               <p className="text-sm text-gray-500 mb-1">Registration Number</p>
-              <p className="text-2xl font-mono font-bold text-gray-900 mb-4">{registrationNumber}</p>
+              <p className="text-2xl font-mono font-bold text-[#0B3D91] mb-4">{registrationNumber}</p>
 
               {qrCodeUrl && (
                 <div className="flex flex-col items-center">
-                  <img src={qrCodeUrl} alt="QR Code" className="h-48 w-48 mb-2" />
-                  <p className="text-sm text-gray-500">Present this QR code at the gate</p>
+                  <div className="rounded-xl border-2 border-[#0B3D91] p-3 bg-white">
+                    <img src={qrCodeUrl} alt="QR Code" className="h-48 w-48" />
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">Present this QR code at the gate</p>
                 </div>
               )}
             </div>
 
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 mb-6">
-              <p className="text-sm text-blue-800">
+            <div className="rounded-xl border border-[#0B3D91]/20 bg-[#0B3D91]/5 p-4 mb-6">
+              <p className="text-sm text-[#0B3D91]">
                 <strong>Status:</strong> Pending Approval
               </p>
-              <p className="text-sm text-blue-700 mt-1">
+              <p className="text-sm text-[#0B3D91]/80 mt-1">
                 You will receive an email confirmation once your registration is approved.
               </p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/register/status" className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 min-h-[52px]">
+              <Link href="/register/status" className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0B3D91] px-6 py-3 text-sm font-medium text-white hover:bg-[#4DA6FF] transition-colors min-h-[52px]">
                 Check Status
               </Link>
-              <Link href="/register" className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 min-h-[52px]">
+              <Link href="/register" className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 min-h-[52px] transition-colors">
                 New Registration
               </Link>
             </div>
@@ -752,27 +754,37 @@ const isStepInvalid = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="mx-auto max-w-3xl px-4 lg:px-6">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Visitor Registration</h1>
-          <p className="text-gray-600 mt-2">Step {step} of {totalSteps}</p>
-          <div className="mt-3 h-2 w-full rounded-full bg-gray-200">
-            <div className="h-2 rounded-full bg-blue-600 transition-all" style={{ width: `${(step / totalSteps) * 100}%` }} />
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-[#0B3D91] text-white">
+        <div className="mx-auto max-w-4xl px-4 lg:px-6 py-8">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold">Visitor Registration</h1>
+            <p className="text-white/80 mt-1">Armed Forces Command and Staff College · Kaduna, Nigeria</p>
+            <p className="text-sm text-white/60 mt-1">Step {step} of {totalSteps}</p>
+            <div className="mt-4 h-2 w-full rounded-full bg-white/20">
+              <div className="h-2 rounded-full bg-[#4DA6FF] transition-all duration-500" style={{ width: `${(step / totalSteps) * 100}%` }} />
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 md:p-8">
-          {error && (
-            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          )}
+      <div className="mx-auto max-w-4xl px-4 lg:px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 md:p-8">
+              {error && (
+                <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              )}
 
           {step === 1 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900">Visitor Type</h2>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Visitor Type</h2>
+                <p className="text-sm text-gray-500 mt-1">Select the type of visitor</p>
+              </div>
               {validationErrors.visitor_type && <p className="text-sm text-red-600">{validationErrors.visitor_type}</p>}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {VISITOR_TYPES.map((type) => (
@@ -780,7 +792,7 @@ const isStepInvalid = () => {
                     key={type}
                     onClick={() => setVisitorType(type)}
                     className={`rounded-xl border-2 p-4 text-center transition-all min-h-[52px] ${
-                      visitorType === type ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
+                      visitorType === type ? 'border-[#0B3D91] bg-[#0B3D91]/5' : 'border-gray-200 bg-white hover:border-[#4DA6FF]'
                     } ${touched.has('visitorType') && validationErrors.visitor_type ? 'border-red-500' : ''}`}
                   >
                     <p className="text-sm font-semibold text-gray-900">{type}</p>
@@ -794,7 +806,10 @@ const isStepInvalid = () => {
 
           {step === 2 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900">Personal Information</h2>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Personal Information</h2>
+                <p className="text-sm text-gray-500 mt-1">Provide your personal details</p>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
@@ -898,7 +913,10 @@ const isStepInvalid = () => {
 
           {step === 3 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900">Identification</h2>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Identification</h2>
+                <p className="text-sm text-gray-500 mt-1">Upload your identification documents</p>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ID Type *</label>
@@ -1006,7 +1024,10 @@ const isStepInvalid = () => {
 
           {step === 4 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900">Visit Details</h2>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Visit Details</h2>
+                <p className="text-sm text-gray-500 mt-1">Provide information about your visit</p>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Host Employee *</label>
@@ -1112,13 +1133,13 @@ const isStepInvalid = () => {
                         Checking availability...
                       </div>
                     ) : availabilityStatus === 'Available' ? (
-                      <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3">
-                        <p className="text-sm font-medium text-green-800">🟢 Host Available</p>
-                        <p className="text-xs text-green-700 mt-1">{availabilityMessage}</p>
+                      <div className="rounded-lg border border-[#0B3D91]/20 bg-[#0B3D91]/5 px-4 py-3">
+                        <p className="text-sm font-medium text-[#0B3D91]">Host Available</p>
+                        <p className="text-xs text-[#0B3D91]/80 mt-1">{availabilityMessage}</p>
                       </div>
                     ) : availabilityStatus === 'Busy' ? (
                       <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-3">
-                        <p className="text-sm font-medium text-orange-800">🟠 Host Busy</p>
+                        <p className="text-sm font-medium text-orange-800">Host Busy</p>
                         <p className="text-xs text-orange-700 mt-1">{availabilityMessage}</p>
                         {nextAvailableAt && (
                           <p className="text-xs text-orange-700 mt-1">Available again at: {nextAvailableAt}</p>
@@ -1143,7 +1164,7 @@ const isStepInvalid = () => {
                       </div>
                     ) : availabilityStatus === 'In Meeting' ? (
                       <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3">
-                        <p className="text-sm font-medium text-yellow-800">🟡 Host In Meeting</p>
+                        <p className="text-sm font-medium text-yellow-800">Host In Meeting</p>
                         <p className="text-xs text-yellow-700 mt-1">{availabilityMessage}</p>
                         {availabilityAlternatives.length > 0 && (
                           <div className="mt-2">
@@ -1166,7 +1187,7 @@ const isStepInvalid = () => {
                     ) : availabilityStatus === 'On Leave' || availabilityStatus === 'Training' || availabilityStatus === 'Restricted' || availabilityStatus === 'Unavailable' || availabilityStatus === 'Off Duty' ? (
                       <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
                         <p className="text-sm font-medium text-red-800">
-                          {availabilityStatus === 'On Leave' ? '🔴 Host On Leave' : availabilityStatus === 'Restricted' ? '🔴 Restricted' : '⚪ Host Off Duty'}
+                          {availabilityStatus === 'On Leave' ? 'Host On Leave' : availabilityStatus === 'Restricted' ? 'Restricted' : 'Host Off Duty'}
                         </p>
                         <p className="text-xs text-red-700 mt-1">{availabilityMessage}</p>
                       </div>
@@ -1218,7 +1239,10 @@ const isStepInvalid = () => {
 
           {step === 5 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900">Vehicle Information (Optional)</h2>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Vehicle Information</h2>
+                <p className="text-sm text-gray-500 mt-1">Optional vehicle details for gate access</p>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2 flex items-center gap-2">
                   <input type="checkbox" id="has_vehicle" checked={formData.has_vehicle} onChange={(e) => updateField('has_vehicle', e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
@@ -1254,7 +1278,10 @@ const isStepInvalid = () => {
 
           {step === 6 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900">Emergency Contact</h2>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Emergency Contact</h2>
+                <p className="text-sm text-gray-500 mt-1">Provide emergency contact information</p>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
@@ -1274,7 +1301,10 @@ const isStepInvalid = () => {
 
           {step === 7 && (
             <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-gray-900">Review & Submit</h2>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Review & Submit</h2>
+                <p className="text-sm text-gray-500 mt-1">Verify your information before submitting</p>
+              </div>
               <div className="rounded-xl border border-gray-200 p-4 space-y-3">
                 <ReviewRow label="Visitor Type" value={visitorType} />
                 <ReviewRow label="Full Name" value={formData.full_name} />
@@ -1304,7 +1334,7 @@ const isStepInvalid = () => {
             <button
               onClick={back}
               disabled={step === 1}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 min-h-[52px]"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 min-h-[52px] transition-colors"
             >
               <ChevronLeft className="h-4 w-4" />
               Back
@@ -1313,7 +1343,7 @@ const isStepInvalid = () => {
               <button
                 onClick={next}
                 disabled={isStepInvalid()}
-                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 min-h-[52px]"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#0B3D91] px-6 py-3 text-sm font-medium text-white hover:bg-[#4DA6FF] disabled:opacity-50 min-h-[52px] transition-colors"
               >
                 Next
                 <ChevronRight className="h-4 w-4" />
@@ -1322,7 +1352,7 @@ const isStepInvalid = () => {
               <button
                 onClick={handleSubmit}
                 disabled={submitting || submitted || !formData.accept_terms}
-                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-6 py-3 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 min-h-[52px]"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#C62828] px-6 py-3 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 min-h-[52px] transition-colors"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 Submit Registration
@@ -1332,6 +1362,8 @@ const isStepInvalid = () => {
         </div>
       </div>
     </div>
+  </div>
+</div>
   )
 }
 

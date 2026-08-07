@@ -1,78 +1,83 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { RefreshCcw } from 'lucide-react'
-import { getAuthHeaders } from '@/lib/client/api'
+import { useState, useEffect, useMemo } from 'react'
+import { RefreshCcw, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Notification, NotificationFilters } from '@/lib/types/notification'
 import NotificationCard from '@/components/notifications/NotificationCard'
 import NotificationFiltersComponent from '@/components/notifications/NotificationFilters'
+import { useNotifications } from '@/contexts/NotificationContext'
+
+const ITEMS_PER_PAGE = 20
 
 export default function NotificationsClient() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(true)
+  const { notifications, loading, refresh, markAsRead, markAllAsRead, deleteNotification, clearRead } = useNotifications()
+  const [page, setPage] = useState(1)
   const [filters, setFilters] = useState<NotificationFilters>({
     search: '',
     type: 'all',
     read: 'all',
     dateFrom: '',
     dateTo: '',
+    page: 1,
+    limit: ITEMS_PER_PAGE,
+    sortOrder: 'newest',
   })
 
-  const fetchNotifications = useCallback(async () => {
-    try {
-      setLoading(true)
-      const params = new URLSearchParams()
-      if (filters.search) params.set('search', filters.search)
-      if (filters.type !== 'all') params.set('type', filters.type)
-      if (filters.read !== 'all') params.set('read', filters.read)
-      if (filters.dateFrom) params.set('dateFrom', filters.dateFrom)
-      if (filters.dateTo) params.set('dateTo', filters.dateTo)
+  const filtered = useMemo(() => {
+    let result = [...notifications]
 
-      const res = await fetch(`/api/notifications?${params.toString()}`)
-      if (!res.ok) {
-        throw new Error(`Request failed: ${res.status}`)
-      }
-      const json = await res.json()
-      if (res.ok) {
-        setNotifications(json.data || [])
-      }
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error)
-    } finally {
-      setLoading(false)
+    if (filters.search) {
+      const q = filters.search.toLowerCase()
+      result = result.filter(n => n.title.toLowerCase().includes(q) || n.message.toLowerCase().includes(q))
     }
-  }, [filters])
+
+    if (filters.type !== 'all') {
+      result = result.filter(n => n.type === filters.type)
+    }
+
+    if (filters.read !== 'all') {
+      result = result.filter(n => n.is_read === (filters.read === 'read'))
+    }
+
+    if (filters.dateFrom) {
+      result = result.filter(n => n.created_at >= filters.dateFrom)
+    }
+
+    if (filters.dateTo) {
+      result = result.filter(n => n.created_at <= filters.dateTo)
+    }
+
+    result.sort((a, b) => {
+      const da = new Date(a.created_at).getTime()
+      const db = new Date(b.created_at).getTime()
+      return filters.sortOrder === 'oldest' ? da - db : db - da
+    })
+
+    return result
+  }, [notifications, filters])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / (filters.limit || ITEMS_PER_PAGE)))
+  const paginated = filtered.slice(((filters.page || 1) - 1) * (filters.limit || ITEMS_PER_PAGE), (filters.page || 1) * (filters.limit || ITEMS_PER_PAGE))
+  const total = filtered.length
 
   useEffect(() => {
-    setTimeout(() => fetchNotifications(), 0)
-  }, [fetchNotifications])
+    setPage(1)
+  }, [filters.search, filters.type, filters.read, filters.dateFrom, filters.dateTo, filters.sortOrder])
 
   const handleMarkAsRead = async (id: string) => {
-    await fetch(`/api/notifications/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'mark_read' }),
-    })
-    fetchNotifications()
+    await markAsRead(id)
   }
 
   const handleMarkAllAsRead = async () => {
-    await fetch('/api/notifications', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-      body: JSON.stringify({ action: 'mark_all_read' }),
-    })
-    fetchNotifications()
+    await markAllAsRead()
   }
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/notifications?id=${id}`, { method: 'DELETE', headers: await getAuthHeaders() })
-    fetchNotifications()
+    await deleteNotification(id)
   }
 
   const handleClearRead = async () => {
-    await fetch('/api/notifications?clear_read=true', { method: 'DELETE', headers: await getAuthHeaders() })
-    fetchNotifications()
+    await clearRead()
   }
 
   return (
@@ -84,7 +89,7 @@ export default function NotificationsClient() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={fetchNotifications}
+            onClick={refresh}
             className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 min-h-[52px]"
           >
             <RefreshCcw className="h-4 w-4" />
@@ -111,22 +116,53 @@ export default function NotificationsClient() {
         <div className="flex items-center justify-center p-8">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
         </div>
-      ) : notifications.length === 0 ? (
+      ) : paginated.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-8 text-center text-gray-500">
           <p className="text-lg">No notifications found</p>
           <p className="text-sm mt-1">Try adjusting your filters</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {notifications.map((notification) => (
-            <NotificationCard
-              key={notification.id}
-              notification={notification}
-              onMarkAsRead={handleMarkAsRead}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
+        <>
+          <div className="space-y-3">
+            {paginated.map((notification) => (
+              <NotificationCard
+                key={notification.id}
+                notification={notification}
+                onMarkAsRead={handleMarkAsRead}
+                onDelete={handleDelete}
+              />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+              <p className="text-sm text-gray-600">
+                Showing {((page - 1) * (filters.limit || ITEMS_PER_PAGE)) + 1} to {Math.min(page * (filters.limit || ITEMS_PER_PAGE), total)} of {total} notifications
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPage(Math.max(1, page - 1))}
+                  disabled={page <= 1}
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </button>
+                <span className="text-sm text-gray-600">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage(Math.min(totalPages, page + 1))}
+                  disabled={page >= totalPages}
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

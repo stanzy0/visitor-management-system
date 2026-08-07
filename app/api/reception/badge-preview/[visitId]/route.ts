@@ -6,7 +6,7 @@ import { logAuditAction } from '@/lib/server/audit'
 import { getPortalUrl } from '@/lib/utils/portal-url'
 import QRCode from 'qrcode'
 import { sendEmail } from '@/lib/server/email'
-import { createHostEmployeeNotification, createSystemNotification } from '@/lib/server/notifications'
+import { createHostNotification, createSystemNotification, createReceptionistNotification, createSecurityNotification } from '@/lib/server/notification-service'
 import { getDocumentVerifications } from '@/lib/server/document-verification'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ visitId: string }> }) {
@@ -131,8 +131,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       })
 
       if (employee?.user_id) {
-        await createHostEmployeeNotification(
-          employee.id,
+        await createHostNotification(
+          employee.user_id,
           'Visitor Registration Approved',
           `${visitor?.full_name || 'A visitor'}'s registration has been approved for ${visit.visit_date || 'today'}.`,
           'visitor',
@@ -148,6 +148,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         'visit',
         visitId
       )
+
+      await createReceptionistNotification(
+        'Registration Approved',
+        `Public registration ${visit.registration_number} for ${visitor?.full_name || 'visitor'} has been approved.`,
+        'success',
+        'visit',
+        visitId
+      ).catch(() => {})
+
+      await createSecurityNotification(
+        'Registration Approved',
+        `Public registration ${visit.registration_number} for ${visitor?.full_name || 'visitor'} has been approved.`,
+        'success',
+        'visit',
+        visitId
+      ).catch(() => {})
 
       await logAuditAction('Badge Approved', 'visit', visitId, `Registration ${visit.registration_number} approved and badge ${badge.badge_number} generated`)
       await logAuditAction('Badge Generated', 'badge', badge.id, `Badge ${badge.badge_number} generated for ${visitor?.full_name || 'visitor'}`)

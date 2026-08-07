@@ -107,24 +107,24 @@ export default function BadgePage({ params }: { params: Promise<{ id: string }> 
           <div className="mt-6 print:hidden flex justify-center">
               <button
                 onClick={async () => {
-                  if (!approvedVisit?.id) return
+                   if (!approvedVisit?.id) return
 
-                  try {
-                    const { data: badgeData } = await supabase
-                      .from('visitor_badges')
-                      .select('id')
-                      .eq('visit_id', approvedVisit.id)
-                      .single()
+                   try {
+                     const { data: badgeData } = await supabase
+                       .from('visitor_badges')
+                       .select('id')
+                       .eq('visit_id', approvedVisit.id)
+                       .maybeSingle()
 
-                    if (badgeData?.id) {
-                      const { printBadgeWindow } = await import('@/lib/badge/badge-print')
-                      await printBadgeWindow(badgeData.id)
-                    } else {
-                      alert('No badge has been issued for this visit yet.')
-                    }
-                  } catch {
-                    // popup blocked
-                  }
+                     if (badgeData?.id) {
+                       const { printBadgeWindow } = await import('@/lib/badge/badge-print')
+                       await printBadgeWindow(badgeData.id)
+                     } else {
+                       alert('No badge has been issued for this visit yet.')
+                     }
+                   } catch {
+                     // popup blocked
+                   }
                 }}
                 className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700"
               >

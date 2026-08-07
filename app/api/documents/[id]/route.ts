@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { logAuditAction } from '@/lib/server/audit'
 import { VisitorDocument, ALLOWED_MIME_TYPES, MAX_FILE_SIZE } from '@/lib/types/document'
 import { approveDocument, rejectDocument, requestReplacement, markReplacementUploaded } from '@/lib/server/document-verification'
-import { createAdminNotification, createReceptionistNotification, createHostNotification, createSystemNotification } from '@/lib/server/notifications'
+import { createAdminNotification, createReceptionistNotification, createHostNotification, createSystemNotification } from '@/lib/server/notification-service'
 
 function mapToDocumentVerification(doc: VisitorDocument) {
   return {

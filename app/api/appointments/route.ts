@@ -9,7 +9,8 @@ import {
   deleteAppointment,
   getAppointmentStats,
 } from '@/lib/server/appointments'
-import { logAuditAction } from '@/lib/client/audit'
+import { logAuditAction } from '@/lib/server/audit'
+import { createAppointmentNotification, getEmployeeUserId } from '@/lib/server/notifications'
 
 export async function GET(request: NextRequest) {
   const authResult = await requireAdmin()
@@ -71,6 +72,12 @@ export async function POST(request: NextRequest) {
 
     await logAuditAction('Appointment Created', 'appointment', appointment.id, `Appointment ${appointment.appointment_number} created`)
 
+    const visitorName = appointment.visitor?.full_name || 'Unknown Visitor'
+    const hostName = appointment.employee?.full_name || 'Unknown Host'
+    const hostUserId = await getEmployeeUserId(appointment.employee_id)
+
+    await createAppointmentNotification('created', appointment.id, appointment.appointment_number, visitorName, hostName, hostUserId)
+
     return NextResponse.json({ success: true, data: appointment }, { status: 201 })
   } catch (err) {
     console.error('Create appointment error:', err)
@@ -101,6 +108,17 @@ export async function POST(request: NextRequest) {
 
     await logAuditAction('Appointment Updated', 'appointment', id, `Appointment ${appointment.appointment_number} updated`)
 
+    if (status) {
+      const visitorName = appointment?.visitor?.full_name || 'Unknown Visitor'
+      const hostName = appointment?.employee?.full_name || 'Unknown Host'
+      const hostUserId = await getEmployeeUserId(appointment.employee_id)
+
+      let action: 'updated' | 'cancelled' = 'updated'
+      if (status === 'Cancelled') action = 'cancelled'
+
+      await createAppointmentNotification(action, appointment.id, appointment.appointment_number, visitorName, hostName, hostUserId)
+    }
+
     return NextResponse.json({ success: true, data: appointment })
   } catch (err) {
     console.error('Update appointment error:', err)
@@ -129,6 +147,12 @@ export async function POST(request: NextRequest) {
 
     await deleteAppointment(id)
     await logAuditAction('Appointment Cancelled', 'appointment', id, `Appointment ${appointment.appointment_number} cancelled`)
+
+    const visitorName = appointment?.visitor?.full_name || 'Unknown Visitor'
+    const hostName = appointment?.employee?.full_name || 'Unknown Host'
+    const hostUserId = await getEmployeeUserId(appointment.employee_id)
+
+    await createAppointmentNotification('cancelled', id, appointment.appointment_number, visitorName, hostName, hostUserId)
 
     return NextResponse.json({ success: true })
   } catch (err) {

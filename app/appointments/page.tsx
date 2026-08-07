@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
-import { createAdminNotification, createReceptionistNotification, createSecurityNotification, createHostEmployeeNotification } from '@/lib/notifications'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth-client'
 import { Search, Plus, X, Loader2, Calendar, Clock, UserCheck, CheckCircle2, XCircle, Trash2, LogIn, LogOut, QrCode, ChevronDown } from 'lucide-react'
 import { generateAppointmentQR, appointmentCheckInUrl } from '@/lib/qr/appointment-qr'
@@ -175,27 +174,24 @@ export default function AppointmentsPage() {
       return
     }
 
-    const { data, error } = await supabase
-      .from('appointments')
-      .insert([{ ...form, status: 'Scheduled' }])
-      .select('*, visitor:visitors(full_name, visitor_organization), employee:employees(full_name, department, office_location)')
-      .single()
-
-    if (error || !data) {
-      showNotification('error', error?.message || 'Failed to create appointment')
+    const response = await fetch('/api/appointments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+    const result = await response.json()
+    if (!response.ok || !result.success) {
+      showNotification('error', result.error || 'Failed to create appointment')
       setSubmitting(false)
       return
     }
+    const data = result.data
 
     setAppointments((prev) => {
       const exists = prev.some((a) => a.id === data.id)
       return exists ? prev : [data, ...prev]
     })
-    logAuditAction('Appointment Created', 'appointment', data.id, `Appointment ${data.appointment_number} created`)
     showNotification('success', 'Appointment created successfully')
-    createAdminNotification('Appointment Created', `Appointment scheduled for ${data.visitor?.full_name} with ${data.employee?.full_name}.`, 'appointment', 'appointment', data.id).catch(() => {})
-    createReceptionistNotification('Appointment Created', `Appointment scheduled for ${data.visitor?.full_name} with ${data.employee?.full_name}.`, 'appointment', 'appointment', data.id).catch(() => {})
-    createHostEmployeeNotification(data.employee_id, 'Appointment Created', `Appointment scheduled for ${data.visitor?.full_name}.`, 'appointment', 'appointment', data.id).catch(() => {})
     setModalOpen(false)
     setForm({ visitor_id: '', employee_id: '', office_location: '', appointment_date: '', appointment_time: '', expected_duration: 30, purpose: '', notes: '' })
     setSubmitting(false)
@@ -213,17 +209,20 @@ export default function AppointmentsPage() {
       return
     }
 
-    const { data, error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', appointment.id).select('*, visitor:visitors(full_name, visitor_organization), employee:employees(full_name, department, office_location)').single()
-    if (error || !data) {
-      showNotification('error', error?.message || 'Failed to update status')
+    const response = await fetch(`/api/appointments`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: appointment.id, status: newStatus }),
+    })
+    const result = await response.json()
+    if (!response.ok || !result.success) {
+      showNotification('error', result.error || 'Failed to update status')
       return
     }
+    const data = result.data
 
     setAppointments((prev) => prev.map((a) => (a.id === appointment.id ? data : a)))
-    logAuditAction(`Appointment ${newStatus}`, 'appointment', appointment.id, `Appointment ${appointment.appointment_number} marked as ${newStatus}`)
     showNotification('success', `Appointment marked as ${newStatus}`)
-    createAdminNotification(`Appointment ${newStatus}`, `Appointment for ${appointment.visitor?.full_name} marked as ${newStatus}.`, 'appointment', 'appointment', appointment.id).then(() => {}).catch(() => {})
-    createHostEmployeeNotification(appointment.employee_id, `Appointment ${newStatus}`, `Your appointment with ${appointment.visitor?.full_name} is ${newStatus}.`, 'appointment', 'appointment', appointment.id).then(() => {}).catch(() => {})
 
     if (newStatus === 'Arrived') {
       await supabase.from('visits').insert({ visitor_id: appointment.visitor_id, employee_id: appointment.employee_id, purpose: appointment.purpose, status: 'approved' }).then(({ error }) => { if (error) console.error(error) })

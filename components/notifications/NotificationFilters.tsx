@@ -9,7 +9,7 @@ interface NotificationFiltersProps {
 }
 
 export default function NotificationFilters({ filters, onFilterChange }: NotificationFiltersProps) {
-  const updateFilter = (key: keyof NotificationFilters, value: string) => {
+  const updateFilter = (key: keyof NotificationFilters, value: string | number) => {
     onFilterChange({ ...filters, [key]: value })
   }
 
@@ -29,7 +29,7 @@ export default function NotificationFilters({ filters, onFilterChange }: Notific
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
           <select
@@ -63,6 +63,32 @@ export default function NotificationFilters({ filters, onFilterChange }: Notific
             <option value="all">All</option>
             <option value="unread">Unread</option>
             <option value="read">Read</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Sort Order</label>
+          <select
+            value={filters.sortOrder || 'newest'}
+            onChange={(e) => updateFilter('sortOrder', e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Per Page</label>
+          <select
+            value={filters.limit || 20}
+            onChange={(e) => updateFilter('limit', parseInt(e.target.value, 10))}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
           </select>
         </div>
 

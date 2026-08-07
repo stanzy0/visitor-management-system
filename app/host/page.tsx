@@ -326,23 +326,26 @@ export default function HostPortalPage() {
   }
 
   const handleRequestAssistance = async (visit: Visit) => {
-    const { error } = await supabase.from('notifications').insert([
-      {
-        user_id: null,
-        title: 'Host Requested Assistance',
-        message: `${employee?.full_name || 'Host'} needs assistance with visitor ${visit.visitor?.full_name || 'Unknown'}`,
-        type: 'system',
-        recipient_role: 'Receptionist',
-        is_read: false,
-        related_type: 'visit',
-        related_id: visit.id,
-      },
-    ])
-    if (error) {
-      showNotification('error', error.message)
-    } else {
-      logAuditAction('Host Requested Assistance', 'visit', visit.id, `Assistance requested for ${visit.visitor?.full_name}`)
-      showNotification('success', 'Reception has been notified')
+    try {
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch('/api/host/assistance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({
+          visitId: visit.id,
+          hostName: employee?.full_name || 'Host',
+          visitorName: visit.visitor?.full_name || 'Unknown',
+        }),
+      })
+      const result = await res.json().catch(() => ({ success: false }))
+      if (!res.ok || !result.success) {
+        showNotification('error', result.error || 'Failed to send notification')
+      } else {
+        logAuditAction('Host Requested Assistance', 'visit', visit.id, `Assistance requested for ${visit.visitor?.full_name}`)
+        showNotification('success', 'Reception has been notified')
+      }
+    } catch {
+      showNotification('error', 'Failed to send notification')
     }
   }
 

@@ -7,6 +7,7 @@ export interface Notification {
   title: string
   message: string
   type: string
+  icon?: string | null
   related_type: string | null
   related_id: string | null
   is_read: boolean
@@ -19,6 +20,9 @@ export interface NotificationFilters {
   read: string
   dateFrom: string
   dateTo: string
+  page: number
+  limit: number
+  sortOrder: 'newest' | 'oldest'
 }
 
 export interface NotificationPreferences {

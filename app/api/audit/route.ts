@@ -1,11 +1,19 @@
-import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth-helpers'
+import { NextRequest, NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
-export async function POST(request: Request) {
-  const authResult = await requireAdmin()
-  if (!authResult.authorized) {
-    return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
+export async function POST(request: NextRequest) {
+  const user = await getCurrentUser()
+
+  if (!user) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Authentication required',
+        error: 'Unauthorized'
+      },
+      { status: 401 }
+    )
   }
 
   if (!supabaseAdmin) {
@@ -20,7 +28,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
-    const userEmail = authResult.userEmail || 'anonymous'
+    const userEmail = user.email || 'anonymous'
 
     const { error } = await supabaseAdmin
       .from('audit_logs')

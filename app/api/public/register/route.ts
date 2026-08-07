@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail } from '@/lib/server/email'
 import type { EmailTemplate } from '@/lib/email/types'
-import { createAdminNotification, createHostEmployeeNotification } from '@/lib/server/notifications'
+import { createAdminNotification, createHostNotification } from '@/lib/server/notification-service'
 import { logAuditAction } from '@/lib/server/audit'
 import QRCode from 'qrcode'
 import { checkRateLimit, rateLimitResponse } from '@/lib/server/rate-limit'
@@ -315,8 +315,8 @@ const { error: docError } = await supabaseAdmin.from('visitor_documents').insert
       hostEmailSent = hostResult.success
 
       if (hostEmailSent) {
-        await createHostEmployeeNotification(
-          employee.id,
+        await createHostNotification(
+          employee.user_id,
           'Visitor Registration Received',
           `${full_name} has submitted a visitor registration (${regNumber}) for ${visit_date}.`,
           'visitor',

@@ -1,80 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { X, Check, Trash2, CheckCheck } from 'lucide-react'
-import { getAuthHeaders } from '@/lib/client/api'
 import type { Notification } from '@/lib/types/notification'
+import { useNotifications } from '@/contexts/NotificationContext'
 
 interface NotificationPanelProps {
   onClose: () => void
-  onUpdate: () => void
 }
 
-export default function NotificationPanel({ onClose, onUpdate }: NotificationPanelProps) {
+export default function NotificationPanel({ onClose }: NotificationPanelProps) {
   const router = useRouter()
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(true)
+  const { notifications, loading, markAsRead, markAllAsRead, deleteNotification, clearRead } = useNotifications()
   const [showAll, setShowAll] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
 
-  const fetchNotifications = async () => {
-    try {
-      setLoading(true)
-      const res = await fetch('/api/notifications', {
-        headers: await getAuthHeaders(),
-      })
-      if (!res.ok) {
-        throw new Error(`Request failed: ${res.status}`)
-      }
-      const json = await res.json()
-      if (res.ok) {
-        setNotifications(json.data || [])
-      }
-    } catch (error) {
-      console.error('Failed to fetch notifications:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    setTimeout(() => fetchNotifications(), 0)
-  }, [showAll])
-
-  const handleMarkAsRead = async (id: string) => {
-    await fetch(`/api/notifications/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-      body: JSON.stringify({ action: 'mark_read' }),
-    })
-    fetchNotifications()
-    onUpdate()
-  }
-
-  const handleMarkAllAsRead = async () => {
-    await fetch('/api/notifications', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
-      body: JSON.stringify({ action: 'mark_all_read' }),
-    })
-    fetchNotifications()
-    onUpdate()
-  }
-
-  const handleDelete = async (id: string) => {
-    await fetch(`/api/notifications/${id}`, { method: 'DELETE', headers: await getAuthHeaders() })
-    fetchNotifications()
-    onUpdate()
-  }
-
-  const handleClearRead = async () => {
-    await fetch('/api/notifications?clear_read=true', { method: 'DELETE', headers: await getAuthHeaders() })
-    fetchNotifications()
-    onUpdate()
-  }
-
-  const displayedNotifications = showAll ? notifications : (notifications || []).slice(0, 20)
-  const unreadCount = (notifications || []).filter(n => !n.is_read).length
+  const displayedNotifications = showAll ? notifications : notifications.filter(n => !n.is_read)
+  const unreadCount = notifications.filter(n => !n.is_read).length
 
   const formatTime = (dateStr: string | null | undefined) => {
     if (!dateStr) return '—'
@@ -93,6 +36,30 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
     return date.toLocaleDateString()
   }
 
+  const handleMarkAsRead = async (id: string) => {
+    setActionLoading(true)
+    await markAsRead(id)
+    setActionLoading(false)
+  }
+
+  const handleMarkAllAsRead = async () => {
+    setActionLoading(true)
+    await markAllAsRead()
+    setActionLoading(false)
+  }
+
+  const handleDelete = async (id: string) => {
+    setActionLoading(true)
+    await deleteNotification(id)
+    setActionLoading(false)
+  }
+
+  const handleClearRead = async () => {
+    setActionLoading(true)
+    await clearRead()
+    setActionLoading(false)
+  }
+
   return (
     <div className="fixed inset-0 z-50">
       <div className="absolute inset-0 bg-black/20" onClick={onClose} />
@@ -103,7 +70,8 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 min-h-[36px]"
+                disabled={actionLoading}
+                className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 min-h-[36px] disabled:opacity-50"
               >
                 <CheckCheck className="h-3 w-3" />
                 Mark All Read
@@ -135,7 +103,8 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
           </div>
           <button
             onClick={handleClearRead}
-            className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 min-h-[36px]"
+            disabled={actionLoading}
+            className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 min-h-[36px] disabled:opacity-50"
           >
             <Trash2 className="h-3 w-3" />
             Clear Read
@@ -187,7 +156,8 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
                         {!notification.is_read && (
                           <button
                             onClick={() => handleMarkAsRead(notification.id)}
-                            className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 min-h-[32px]"
+                            disabled={actionLoading}
+                            className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 min-h-[32px] disabled:opacity-50"
                           >
                             <Check className="h-3 w-3" />
                             Mark Read
@@ -195,7 +165,8 @@ export default function NotificationPanel({ onClose, onUpdate }: NotificationPan
                         )}
                         <button
                           onClick={() => handleDelete(notification.id)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-red-300 bg-white px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 min-h-[32px]"
+                          disabled={actionLoading}
+                          className="inline-flex items-center gap-1 rounded-lg border border-red-300 bg-white px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 min-h-[32px] disabled:opacity-50"
                         >
                           <Trash2 className="h-3 w-3" />
                           Delete

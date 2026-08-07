@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
+import { getAuthHeaders } from '@/lib/client/api'
 import { Search, Plus, Edit, Trash2, X, Loader2 } from 'lucide-react'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
-import { createAdminNotification } from '@/lib/notifications'
 
 interface OfficeLocation {
   id: string
@@ -111,46 +111,35 @@ export default function OfficeLocationsPage() {
     setSubmitting(true)
 
     if (editingLocation) {
-      const { error } = await supabase
-        .from('office_locations')
-        .update({
-          name: formData.name,
-          building: formData.building || null,
-          department: formData.department || null,
-        })
-        .eq('id', editingLocation.id)
-
-      if (error) {
-        showNotification('error', error.message)
-        setSubmitting(false)
-        return
-      }
-      
-      setOfficeLocations(prev => prev.map(l => l.id === editingLocation.id ? { ...l, name: formData.name, building: formData.building || null, department: formData.department || null } : l))
-      logAuditAction('Office Location Updated', 'office_location', editingLocation.id, `${formData.name} updated`)
-      showNotification('success', 'Office location updated successfully')
-      createAdminNotification('Office Location Updated', `Office location ${formData.name} has been updated.`, 'system', 'office_location', editingLocation.id).catch(() => {})
-    } else {
-      const { error, data: insertData } = await supabase.from('office_locations').insert([{
-        name: formData.name,
-        building: formData.building || null,
-        department: formData.department || null,
-      }]).select()
-
-      if (error) {
-        showNotification('error', error.message)
-        setSubmitting(false)
-        return
-      }
-      
-      const newLocation = insertData?.[0]
-      setOfficeLocations(prev => {
-        const exists = prev.some(l => l.id === newLocation?.id)
-        return exists ? prev : [...prev, newLocation as OfficeLocation]
+      const res = await fetch(`/api/office-locations?id=${editingLocation.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
+        body: JSON.stringify({ name: formData.name, building: formData.building, department: formData.department }),
       })
-      logAuditAction('Office Location Created', 'office_location', insertData?.[0]?.id || null, `${formData.name} added`)
+      const result = await res.json().catch(() => ({ success: false }))
+      if (!res.ok || !result.success) {
+        showNotification('error', result.error || 'Failed to update office location')
+        setSubmitting(false)
+        return
+      }
+      const newLocation = result.data
+      setOfficeLocations(prev => prev.map(l => l.id === editingLocation.id ? { ...l, name: newLocation.name, building: newLocation.building, department: newLocation.department } : l))
+      showNotification('success', 'Office location updated successfully')
+    } else {
+      const res = await fetch('/api/office-locations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
+        body: JSON.stringify({ name: formData.name, building: formData.building, department: formData.department }),
+      })
+      const result = await res.json().catch(() => ({ success: false }))
+      if (!res.ok || !result.success) {
+        showNotification('error', result.error || 'Failed to add office location')
+        setSubmitting(false)
+        return
+      }
+      const newLocation = result.data
+      setOfficeLocations(prev => [...prev, newLocation as OfficeLocation])
       showNotification('success', 'Office location added successfully')
-      createAdminNotification('Office Location Added', `Office location ${formData.name} has been added.`, 'system', 'office_location', insertData?.[0]?.id).catch(() => {})
     }
 
     setSubmitting(false)
@@ -183,7 +172,6 @@ export default function OfficeLocationsPage() {
     } else {
       logAuditAction('Office Location Deleted', 'office_location', id, `${locationToDelete?.name || id} deleted`)
       showNotification('success', 'Office location deleted successfully')
-      createAdminNotification('Office Location Deleted', `Office location ${locationToDelete?.name || id} has been deleted.`, 'system', 'office_location', id).catch(() => {})
     }
   }
 

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
+import { getAuthHeaders } from '@/lib/client/api'
 import { Search, Plus, Loader2, Upload, X, Camera, RefreshCw, Trash2, ShieldAlert } from 'lucide-react'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth-client'
 import NotificationBell from '@/components/notifications/NotificationBell'
@@ -432,12 +433,15 @@ export default function VisitorsPage() {
     if (!confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) return
 
     setDeletingId(id)
-    const { error } = await supabase.from('visitors').delete().eq('id', id)
-
-    if (error) {
-      showNotification('error', error.message)
+    const authHeaders = await getAuthHeaders()
+    const res = await fetch(`/api/visitors/${id}?id=${id}`, {
+      method: 'DELETE',
+      headers: { ...authHeaders },
+    })
+    const result = await res.json().catch(() => ({ success: false }))
+    if (!res.ok || !result.success) {
+      showNotification('error', result.error || 'Failed to delete visitor')
     } else {
-      logAuditAction('Visitor Deleted', 'visitor', id, `Visitor ${name} deleted`)
       showNotification('success', 'Visitor deleted successfully')
       setVisitors(prev => prev.filter(v => v.id !== id))
     }
@@ -698,15 +702,20 @@ export default function VisitorsPage() {
     const user = await getCurrentUser()
     if (!user) return
 
-    await supabase.from('notifications').insert([
-      {
-        user_id: user.id,
-        title: 'Watchlist Override Approved',
-        message: `${pendingRegistration.full_name} was registered despite being on the watchlist.`,
-        type: 'watchlist_override',
-        is_read: false,
-      },
-    ])
+    try {
+      const authHeaders = await getAuthHeaders()
+      const res = await fetch('/api/watchlist/override', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        body: JSON.stringify({ visitorName: pendingRegistration.full_name }),
+      })
+      const result = await res.json().catch(() => ({ success: false }))
+      if (!res.ok || !result.success) {
+        showNotification('error', result.error || 'Failed to notify admins of override')
+      }
+    } catch {
+      // ignore notification errors
+    }
 
     logAuditAction('Override Approved', 'watchlist', watchlistMatch?.id ?? null, `Watchlist override approved for ${pendingRegistration.full_name}`)
 

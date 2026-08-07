@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { getNotificationPreferences, updateNotificationPreferences } from '@/lib/server/notifications'
+import { getNotificationPreferences, updateNotificationPreferences } from '@/lib/server/notification-service'
 
 export async function GET() {
   try {

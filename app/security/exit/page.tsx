@@ -266,12 +266,53 @@ export default function ExitControlPage() {
       await qrScannerRef.current.start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText: string) => {
-          setSearchTerm(decodedText)
-          setSearchMethod('qr')
+        async (decodedText: string) => {
           setScanningQr(false)
           qrScannerRef.current?.stop()
-          handleSearch()
+
+          try {
+            let lookupValue = decodedText
+            try {
+              const parsed = JSON.parse(decodedText)
+              if (parsed.qr_token) lookupValue = parsed.qr_token
+              else if (parsed.type === 'public-visitor' && parsed.registrationNumber) lookupValue = parsed.registrationNumber
+              else if (parsed.visitId) lookupValue = parsed.visitId
+            } catch {
+              try {
+                const url = new URL(decodedText)
+                const pathParts = url.pathname.split('/').filter(Boolean)
+                const visitIndex = pathParts.indexOf('visit')
+                if (visitIndex !== -1 && visitIndex + 1 < pathParts.length) {
+                  lookupValue = decodeURIComponent(pathParts[visitIndex + 1])
+                } else if (pathParts.length > 0) {
+                  lookupValue = decodeURIComponent(pathParts[pathParts.length - 1])
+                }
+              } catch {
+                // use raw text as-is
+              }
+            }
+
+            const { data, error } = await supabase
+              .from('visits')
+              .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*), appointment:appointments(*)')
+              .eq('status', 'checked_in')
+              .or(`badge.qr_token.eq.${lookupValue},registration_number.eq.${lookupValue},id.eq.${lookupValue}`)
+              .limit(1)
+              .maybeSingle()
+
+            if (error || !data) {
+              showNotification('error', 'No matching checked-in visitor found')
+              return
+            }
+
+            setSelectedVisit(data as Visit)
+            await loadProperties(data.id)
+            await loadSecurityAlerts(data.id)
+            calculateOverstay(data as Visit)
+            showNotification('success', 'Visitor found')
+          } catch {
+            showNotification('error', 'Failed to process QR code')
+          }
         },
         () => {}
       )

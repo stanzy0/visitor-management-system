@@ -190,6 +190,48 @@ export default function QrScanner() {
         }
 
         setScanned(true)
+      } else if (payload.type === 'public-visitor' || payload.registrationNumber) {
+        const regNumber = payload.registrationNumber
+        if (!regNumber) {
+          setError('Invalid Public Visitor QR Code')
+          return
+        }
+
+        const { data, error } = await supabase
+          .from('visits')
+          .select('*, visitor:visitors(full_name, visitor_organization, photo_url), employee:employees(full_name, department), badge:visitor_badges(*)')
+          .eq('registration_number', regNumber)
+          .eq('source', 'public')
+          .single()
+
+        if (error || !data) {
+          setError('Visit not found')
+          return
+        }
+
+        const visitData = data as VisitData
+        const normalizedBadge = Array.isArray((visitData as any).badge)
+          ? ((visitData as any).badge[0] ?? null)
+          : (visitData as any).badge ?? null
+        setScanResult({ ...visitData, badge: normalizedBadge })
+        await stopScanner()
+
+        logAuditAction('QR Code Scanned', 'visit', visitData.id, `QR scanned for visitor ${visitData.visitor?.full_name}`)
+
+        if (visitData.status === 'approved') {
+          const { error: updateError } = await supabase
+            .from('visits')
+            .update({ status: 'checked_in', check_in_time: new Date().toISOString() })
+            .eq('id', visitData.id)
+
+          if (!updateError) {
+            logAuditAction('Visitor Checked In', 'visit', visitData.id, `${visitData.visitor?.full_name} checked in`)
+            setScanResult({ ...visitData, status: 'checked_in', check_in_time: new Date().toISOString() })
+            setNotification({ type: 'success', message: 'Visitor Checked In Successfully' })
+          }
+        }
+
+        setScanned(true)
       } else {
         setError('Invalid QR Code')
       }

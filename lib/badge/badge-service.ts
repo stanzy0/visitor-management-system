@@ -22,7 +22,7 @@ export async function getBadgeByVisit(visitId: string): Promise<VisitorBadge | n
     .from('visitor_badges')
     .select('*, visit:visits(*, visitor:visitors(full_name, visitor_organization, photo_url), employee:employees(full_name, department))')
     .eq('visit_id', visitId)
-    .single()
+    .maybeSingle()
 
   if (error || !data) return null
   return data as VisitorBadge

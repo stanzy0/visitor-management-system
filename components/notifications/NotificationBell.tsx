@@ -1,33 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Bell } from 'lucide-react'
 import NotificationPanel from './NotificationPanel'
-import { getAuthHeaders } from '@/lib/client/api'
+import { useNotifications } from '@/contexts/NotificationContext'
 
 export default function NotificationBell() {
-  const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
-
-  const fetchUnreadCount = async () => {
-    try {
-      const res = await fetch('/api/notifications', {
-        headers: await getAuthHeaders(),
-      })
-      const json = await res.json()
-      if (res.ok) {
-        setUnreadCount(json.unreadCount || 0)
-      }
-    } catch (error) {
-      console.error('Failed to fetch unread count:', error)
-    }
-  }
-
-  useEffect(() => {
-    setTimeout(() => fetchUnreadCount(), 0)
-    const interval = setInterval(() => setTimeout(() => fetchUnreadCount(), 0), 30000)
-    return () => clearInterval(interval)
-  }, [])
+  const { unreadCount } = useNotifications()
 
   return (
     <>
@@ -45,7 +25,7 @@ export default function NotificationBell() {
       </button>
 
       {isOpen && (
-        <NotificationPanel onClose={() => setIsOpen(false)} onUpdate={fetchUnreadCount} />
+        <NotificationPanel onClose={() => setIsOpen(false)} />
       )}
     </>
   )

@@ -297,7 +297,7 @@ export default function PhotoCapture({ value, onChange, error, required = true }
           <button
             type="button"
             onClick={triggerFileInput}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 min-h-[52px]"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 min-h-[52px] transition-colors"
           >
             <Upload className="h-5 w-5" aria-hidden="true" />
             Upload Photo
@@ -334,7 +334,7 @@ export default function PhotoCapture({ value, onChange, error, required = true }
             type="button"
             onClick={capturePhoto}
             disabled={!cameraReady}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 min-h-[52px]"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0B3D91] px-6 py-3 text-sm font-medium text-white hover:bg-[#4DA6FF] disabled:opacity-50 min-h-[52px] transition-colors"
           >
             <Camera className="h-5 w-5" aria-hidden="true" />
             Capture
@@ -342,7 +342,7 @@ export default function PhotoCapture({ value, onChange, error, required = true }
           <button
             type="button"
             onClick={stopCamera}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 min-h-[52px]"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 min-h-[52px] transition-colors"
           >
             <X className="h-5 w-5" aria-hidden="true" />
             Cancel
@@ -367,7 +367,7 @@ export default function PhotoCapture({ value, onChange, error, required = true }
           <button
             type="button"
             onClick={retakePhoto}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 min-h-[52px]"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 min-h-[52px] transition-colors"
           >
             <RotateCcw className="h-5 w-5" aria-hidden="true" />
             Retake Photo
@@ -375,7 +375,7 @@ export default function PhotoCapture({ value, onChange, error, required = true }
           <button
             type="button"
             onClick={replacePhoto}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 min-h-[52px]"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 min-h-[52px] transition-colors"
           >
             <Upload className="h-5 w-5" aria-hidden="true" />
             Replace Photo
@@ -383,7 +383,7 @@ export default function PhotoCapture({ value, onChange, error, required = true }
           <button
             type="button"
             onClick={removePhoto}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-6 py-3 text-sm font-medium text-red-700 hover:bg-red-50 min-h-[52px]"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-300 bg-white px-6 py-3 text-sm font-medium text-red-700 hover:bg-red-50 min-h-[52px] transition-colors"
           >
             <X className="h-5 w-5" aria-hidden="true" />
             Remove Photo
@@ -408,7 +408,7 @@ export default function PhotoCapture({ value, onChange, error, required = true }
         <button
           type="button"
           onClick={startCamera}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 min-h-[52px]"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#0B3D91] px-6 py-3 text-sm font-medium text-white hover:bg-[#4DA6FF] min-h-[52px] transition-colors"
         >
           <Camera className="h-5 w-5" aria-hidden="true" />
           Take Photo
@@ -416,21 +416,22 @@ export default function PhotoCapture({ value, onChange, error, required = true }
         <button
           type="button"
           onClick={triggerFileInput}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-900 hover:bg-gray-50 min-h-[52px]"
+          className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 hover:border-[#0B3D91] hover:text-[#0B3D91] min-h-[52px] transition-colors"
         >
           <Upload className="h-5 w-5" aria-hidden="true" />
-          Upload Photo
+          Upload Passport Photograph
         </button>
       </div>
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/jpg,image/png,image/heic,image/heif"
+        accept="image/jpeg,image/jpg,image/png"
         onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
         className="hidden"
         aria-hidden="true"
         tabIndex={-1}
       />
+      <p className="text-xs text-gray-500">Supported formats: JPG, PNG. Maximum size: 5MB.</p>
       {cameraError && !cameraSupported && (
         <p className="text-sm text-amber-600" role="alert">{cameraError}</p>
       )}

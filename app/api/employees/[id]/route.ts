@@ -132,13 +132,25 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
-    const { error } = await supabaseAdmin
+    const { data: employee } = await supabaseAdmin
       .from('employees')
-      .delete()
+      .select('user_id, email')
       .eq('id', id)
+      .single()
 
-    if (error) {
-      return NextResponse.json({ success: false, message: error.message, error: error.message }, { status: 400 })
+    if (!employee) {
+      return NextResponse.json({ success: false, message: 'Employee not found', error: 'Not found' }, { status: 404 })
+    }
+
+    await supabaseAdmin.from('appointments').delete().eq('employee_id', id)
+    await supabaseAdmin.from('visits').delete().eq('employee_id', id)
+    await supabaseAdmin.from('visitor_invitations').delete().eq('host_employee_id', id)
+    await supabaseAdmin.from('property_items').delete().eq('employee_id', id)
+    await supabaseAdmin.from('visitors').update({ host_employee_id: null }).eq('host_employee_id', id)
+    await supabaseAdmin.from('employees').delete().eq('id', id)
+
+    if (employee.user_id) {
+      await supabaseAdmin.auth.admin.deleteUser(employee.user_id)
     }
 
     return NextResponse.json({ success: true })

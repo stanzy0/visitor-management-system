@@ -3,14 +3,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
+import { getAuthHeaders } from '@/lib/client/api'
 import { Search, Loader2, CheckCircle, XCircle, LogIn, LogOut, QrCode, Eye, Printer, RefreshCw, X } from 'lucide-react'
-import { generateVisitQRCode } from '@/lib/qrcode'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import VisitorBadge from '@/components/VisitorBadge'
 import { createBadge } from '@/lib/client/badges'
 import { printBadgeWindow } from '@/lib/badge/badge-print'
 import type { VisitorBadge as VisitorBadgeType } from '@/lib/badge/badge-types'
-import { createHostNotification, createSecurityNotification, createSystemNotification } from '@/lib/notifications'
 import NotificationBell from '@/components/notifications/NotificationBell'
 
 type Badge = VisitorBadgeType
@@ -215,75 +214,28 @@ export default function VisitsPage() {
 
   const handleStatusChange = async (visitId: string, newStatus: string) => {
     setActionLoading(visitId)
-    const updates: Record<string, unknown> = { status: newStatus }
-    if (newStatus === 'checked_in') updates.check_in_time = new Date().toISOString()
-    if (newStatus === 'checked_out') updates.check_out_time = new Date().toISOString()
-
-    const { data: updatedVisit, error } = await supabase
-      .from('visits')
-      .update(updates)
-      .eq('id', visitId)
-      .select(`
-        *,
-        visitor:visitors(full_name),
-        employee:employees(full_name)
-      `)
-
-    if (error) {
-      setNotification({ type: 'error', message: error.message })
-    } else {
-      setNotification({ type: 'success', message: `Visit ${newStatus.replace('_', ' ')} successfully` })
-      const visitorName = updatedVisit?.[0]?.visitor?.full_name || 'Unknown Visitor'
-      const hostName = updatedVisit?.[0]?.employee?.full_name || 'Unknown Host'
-      const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
-      if (updatedVisit && updatedVisit.length > 0) {
-        setVisits(prev => prev.map(v => v.id === visitId ? { ...updatedVisit[0], badge: prev.find(p => p.id === visitId)?.badge } : v))
+    try {
+      const res = await fetch(`/api/visits/${visitId}/status?id=${visitId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await getAuthHeaders()) },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      const result = await res.json().catch(() => ({}))
+      if (!res.ok || !result.success) {
+        setNotification({ type: 'error', message: result.message || 'Failed to update visit status' })
+      } else {
+        setNotification({ type: 'success', message: `Visit ${newStatus.replace('_', ' ')} successfully` })
+        const updatedVisit = result.data
+        if (updatedVisit) {
+          setVisits(prev => prev.map(v => v.id === visitId ? { ...updatedVisit, badge: prev.find(p => p.id === visitId)?.badge } : v))
+        }
+        if (newStatus === 'approved') {
+          await handleGenerateBadge(visitId)
+        }
+        fetchVisits()
       }
-
-      if (newStatus === 'approved') {
-        logAuditAction('Visit Approved', 'visit', visitId, `${visitorName}'s visit to ${hostName} approved`)
-        const qrCodeDataUrl = await generateVisitQRCode(visitId)
-        await supabase.from('visits').update({ qr_code: qrCodeDataUrl }).eq('id', visitId)
-        logAuditAction('QR Code Generated', 'visit', visitId, `QR code generated for visitor ${visitorName}`)
-        await handleGenerateBadge(visitId)
-        const visit = visits.find(v => v.id === visitId)
-        if (visit?.employee?.full_name) {
-          const { data: employee } = await supabase.from('employees').select('user_id, email').eq('full_name', visit.employee.full_name).single()
-          if (employee?.email) {
-            await createHostNotification(employee.user_id, 'Visitor Approved', `${visitorName}'s visit has been approved.`, 'visitor', 'visit', visitId)
-          }
-        }
-      } else if (newStatus === 'rejected') {
-        logAuditAction('Visit Rejected', 'visit', visitId, `${visitorName}'s visit to ${hostName} rejected`)
-        const visit = visits.find(v => v.id === visitId)
-        if (visit?.employee?.full_name) {
-          const { data: employee } = await supabase.from('employees').select('user_id, email').eq('full_name', visit.employee.full_name).single()
-          if (employee?.email) {
-            await createHostNotification(employee.user_id, 'Visitor Rejected', `${visitorName}'s visit has been rejected.`, 'visitor', 'visit', visitId)
-          }
-        }
-      } else if (newStatus === 'checked_in') {
-        logAuditAction('Visitor Checked In', 'visit', visitId, `${visitorName} checked in at ${currentTime}`)
-        const visit = visits.find(v => v.id === visitId)
-        if (visit?.employee?.full_name) {
-          const { data: employee } = await supabase.from('employees').select('user_id, email').eq('full_name', visit.employee.full_name).single()
-          if (employee?.email) {
-            await createHostNotification(employee.user_id, 'Visitor Arrived', `${visitorName} has checked in at ${currentTime}.`, 'visitor', 'visit', visitId)
-          }
-        }
-      } else if (newStatus === 'checked_out') {
-        logAuditAction('Visitor Checked Out', 'visit', visitId, `${visitorName} checked out at ${currentTime}`)
-        const visit = visits.find(v => v.id === visitId)
-        if (visit?.employee?.full_name) {
-          const { data: employee } = await supabase.from('employees').select('user_id, email').eq('full_name', visit.employee.full_name).single()
-          if (employee?.email) {
-            await createHostNotification(employee.user_id, 'Visitor Checked Out', `${visitorName} has checked out at ${currentTime}.`, 'visitor', 'visit', visitId)
-          }
-        }
-      }
-
-      fetchVisits()
+    } catch (err) {
+      setNotification({ type: 'error', message: 'Failed to update visit status' })
     }
     setActionLoading(null)
   }
@@ -339,13 +291,13 @@ export default function VisitsPage() {
     }
   }
 
-  const statusStyles: Record<string, string> = {
-    pending: 'bg-amber-50 text-amber-700 border-amber-200',
-    approved: 'bg-blue-50 text-blue-700 border-blue-200',
-    rejected: 'bg-red-50 text-red-700 border-red-200',
-    checked_in: 'bg-green-50 text-green-700 border-green-200',
-    checked_out: 'bg-gray-50 text-gray-700 border-gray-200',
-  }
+const statusStyles: Record<string, string> = {
+  pending: 'bg-amber-50 text-amber-700 border-amber-200',
+  approved: 'bg-blue-50 text-blue-700 border-blue-200',
+  rejected: 'bg-red-50 text-red-700 border-red-200',
+  checked_in: 'bg-green-50 text-green-700 border-green-200',
+  checked_out: 'bg-gray-50 text-gray-700 border-gray-200',
+}
 
   const filteredVisits = visits.filter((v) => {
     const matchesSearch =

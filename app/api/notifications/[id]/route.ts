@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { markNotificationAsRead, markAllNotificationsAsRead, deleteNotification } from '@/lib/server/notifications'
+import { markAsRead, markAllAsRead, deleteNotification } from '@/lib/server/notification-service'
 import { getCurrentUser } from '@/lib/auth'
 
 export async function PUT(
@@ -17,12 +17,12 @@ export async function PUT(
     const { id } = await params
 
     if (action === 'mark_all_read') {
-      const success = await markAllNotificationsAsRead(user.id, user.role)
+      const success = await markAllAsRead(user.id, user.role)
       return NextResponse.json({ success })
     }
 
     if (action === 'mark_read') {
-      const success = await markNotificationAsRead(id)
+      const success = await markAsRead(id)
       return NextResponse.json({ success })
     }
 

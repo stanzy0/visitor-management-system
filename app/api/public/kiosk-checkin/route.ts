@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logAuditAction } from '@/lib/server/audit'
-import { createHostEmployeeNotification, createSystemNotification } from '@/lib/server/notifications'
+import { createHostNotification, createSystemNotification } from '@/lib/server/notification-service'
 import { sendEmail } from '@/lib/server/email'
 import { checkRateLimit, rateLimitResponse } from '@/lib/server/rate-limit'
 
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     await logAuditAction('Visitor Checked In via Kiosk', 'visit', visit_id, `${visitor?.full_name || 'Visitor'} checked in via kiosk`)
 
     if (employee) {
-      await createHostEmployeeNotification(employee.id, 'Visitor Checked In', `${visitor?.full_name || 'Visitor'} has checked in at the kiosk.`, 'info', 'visit', visit_id)
+      await createHostNotification(employee.user_id, 'Visitor Checked In', `${visitor?.full_name || 'Visitor'} has checked in at the kiosk.`, 'info', 'visit', visit_id)
     }
 
     await createSystemNotification('Visitor Checked In', `${visitor?.full_name || 'Visitor'} checked in via kiosk for ${employee?.full_name || 'host'}`, 'info', 'visit', visit_id)
