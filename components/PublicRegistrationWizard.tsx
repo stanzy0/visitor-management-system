@@ -61,6 +61,84 @@ const PURPOSE_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'Other', label: 'Other' },
 ]
 
+const VEHICLE_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'Sedan', label: 'Sedan' },
+  { value: 'Saloon', label: 'Saloon' },
+  { value: 'Hatchback', label: 'Hatchback' },
+  { value: 'SUV', label: 'SUV' },
+  { value: 'Pickup Truck', label: 'Pickup Truck' },
+  { value: 'Van', label: 'Van' },
+  { value: 'Minibus', label: 'Minibus' },
+  { value: 'Bus', label: 'Bus' },
+  { value: 'Motorcycle', label: 'Motorcycle' },
+  { value: 'Tricycle (Keke)', label: 'Tricycle (Keke)' },
+  { value: 'Truck', label: 'Truck' },
+  { value: 'Lorry', label: 'Lorry' },
+  { value: 'Trailer', label: 'Trailer' },
+  { value: 'Staff Vehicle', label: 'Staff Vehicle' },
+  { value: 'Military Vehicle', label: 'Military Vehicle' },
+  { value: 'Government Vehicle', label: 'Government Vehicle' },
+  { value: 'Official Convoy Vehicle', label: 'Official Convoy Vehicle' },
+  { value: 'Ambulance', label: 'Ambulance' },
+  { value: 'Fire Service Vehicle', label: 'Fire Service Vehicle' },
+  { value: 'Taxi', label: 'Taxi' },
+  { value: 'Ride-Hailing Vehicle (Uber/Bolt)', label: 'Ride-Hailing Vehicle (Uber/Bolt)' },
+  { value: 'Other', label: 'Other' },
+]
+
+const VEHICLE_COLOR_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'White', label: 'White' },
+  { value: 'Black', label: 'Black' },
+  { value: 'Silver', label: 'Silver' },
+  { value: 'Gray', label: 'Gray' },
+  { value: 'Blue', label: 'Blue' },
+  { value: 'Navy Blue', label: 'Navy Blue' },
+  { value: 'Red', label: 'Red' },
+  { value: 'Maroon', label: 'Maroon' },
+  { value: 'Green', label: 'Green' },
+  { value: 'Dark Green', label: 'Dark Green' },
+  { value: 'Yellow', label: 'Yellow' },
+  { value: 'Gold', label: 'Gold' },
+  { value: 'Brown', label: 'Brown' },
+  { value: 'Beige', label: 'Beige' },
+  { value: 'Orange', label: 'Orange' },
+  { value: 'Purple', label: 'Purple' },
+  { value: 'Pink', label: 'Pink' },
+  { value: 'Cream', label: 'Cream' },
+  { value: 'Ivory', label: 'Ivory' },
+  { value: 'Burgundy', label: 'Burgundy' },
+  { value: 'Sky Blue', label: 'Sky Blue' },
+  { value: 'Dark Blue', label: 'Dark Blue' },
+  { value: 'Champagne', label: 'Champagne' },
+  { value: 'Multi-colour', label: 'Multi-colour' },
+  { value: 'Other', label: 'Other' },
+]
+
+const RELATIONSHIP_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'Father', label: 'Father' },
+  { value: 'Mother', label: 'Mother' },
+  { value: 'Brother', label: 'Brother' },
+  { value: 'Sister', label: 'Sister' },
+  { value: 'Husband', label: 'Husband' },
+  { value: 'Wife', label: 'Wife' },
+  { value: 'Son', label: 'Son' },
+  { value: 'Daughter', label: 'Daughter' },
+  { value: 'Uncle', label: 'Uncle' },
+  { value: 'Aunt', label: 'Aunt' },
+  { value: 'Cousin', label: 'Cousin' },
+  { value: 'Grandfather', label: 'Grandfather' },
+  { value: 'Grandmother', label: 'Grandmother' },
+  { value: 'Nephew', label: 'Nephew' },
+  { value: 'Niece', label: 'Niece' },
+  { value: 'Guardian', label: 'Guardian' },
+  { value: 'Friend', label: 'Friend' },
+  { value: 'Colleague', label: 'Colleague' },
+  { value: 'Supervisor', label: 'Supervisor' },
+  { value: 'Military Commander', label: 'Military Commander' },
+  { value: 'Next of Kin', label: 'Next of Kin' },
+  { value: 'Other', label: 'Other' },
+]
+
 const REQUIRED_DOCUMENT_TYPES = ['National ID', 'Passport', 'Driver License']
 
 const NATIONALITIES = [
@@ -499,22 +577,28 @@ export default function PublicRegistrationWizard() {
   const back = () => setStep((s) => Math.max(s - 1, 1))
 
    const handleDocUpload = async (file: File, side: 'front' | 'back') => {
-     setDocUploadError(null)
+      setDocUploadError(null)
 
-     const storagePath = `public-reg/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+      if (file.size > 5 * 1024 * 1024) {
+        setDocUploadError('File is too large. Please upload an image or PDF under 5 MB.')
+        return
+      }
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('visitor-documents')
-      .upload(storagePath, file, {
-        contentType: file.type,
-        upsert: false,
-       })
+      const storagePath = `public-reg/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+
+     const { data: uploadData, error: uploadError } = await supabase.storage
+       .from('visitor-documents')
+       .upload(storagePath, file, {
+         contentType: file.type,
+         upsert: false,
+        })
 
      if (uploadError) {
-      console.error('[handleDocUpload] Upload failed:', uploadError)
-      setDocUploadError(uploadError.message)
-      return
-    }
+       console.error('[handleDocUpload] Upload failed:', uploadError)
+       const message = uploadError.message || 'Upload failed'
+       setDocUploadError(message.includes('maximum allowed size') ? 'File exceeds the maximum upload size. Please use a smaller file.' : message)
+       return
+     }
 
     const {
        data: { publicUrl },
@@ -563,6 +647,7 @@ export default function PublicRegistrationWizard() {
         has_vehicle: formData.has_vehicle,
         registration_number: formData.registration_number,
         vehicle_type: formData.vehicle_type,
+        vehicle_color: formData.vehicle_color,
         vehicle_make: formData.vehicle_make,
       }),
       ...validateStep6({
@@ -691,12 +776,13 @@ const isStepInvalid = () => {
        arrival_time: formData.arrival_time,
        expected_duration: formData.expected_duration,
      }))
-     if (step === 5) return hasValidationErrors(validateStep5({
-       has_vehicle: formData.has_vehicle,
-       registration_number: formData.registration_number,
-       vehicle_type: formData.vehicle_type,
-       vehicle_make: formData.vehicle_make,
-     }))
+      if (step === 5) return hasValidationErrors(validateStep5({
+        has_vehicle: formData.has_vehicle,
+        registration_number: formData.registration_number,
+        vehicle_type: formData.vehicle_type,
+        vehicle_color: formData.vehicle_color,
+        vehicle_make: formData.vehicle_make,
+      }))
      if (step === 6) return hasValidationErrors(validateStep6({
       emergency_contact: formData.emergency_name,
       emergency_relationship: formData.emergency_relationship,
@@ -708,8 +794,8 @@ const isStepInvalid = () => {
   if (submitted && registrationNumber) {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
-        <div className="mx-auto max-w-2xl px-4 lg:px-6">
-          <div className="rounded-2xl border border-gray-200 bg-white shadow-lg p-8 text-center">
+        <div className="mx-auto max-w-5xl px-4 lg:px-6">
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 md:p-8 text-center">
             <div className="mx-auto h-16 w-16 rounded-full bg-[#0B3D91]/10 flex items-center justify-center mb-6">
               <CheckCircle2 className="h-8 w-8 text-[#0B3D91]" />
             </div>
@@ -756,19 +842,23 @@ const isStepInvalid = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-[#0B3D91] text-white">
-        <div className="mx-auto max-w-4xl px-4 lg:px-6 py-8">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold">Visitor Registration</h1>
-            <p className="text-white/80 mt-1">Armed Forces Command and Staff College · Kaduna, Nigeria</p>
-            <p className="text-sm text-white/60 mt-1">Step {step} of {totalSteps}</p>
-            <div className="mt-4 h-2 w-full rounded-full bg-white/20">
-              <div className="h-2 rounded-full bg-[#4DA6FF] transition-all duration-500" style={{ width: `${(step / totalSteps) * 100}%` }} />
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold">Visitor Registration</h1>
+              <p className="text-xs sm:text-sm text-white/70 mt-0.5">Armed Forces Command and Staff College · Kaduna, Nigeria</p>
+            </div>
+            <div className="text-left sm:text-right">
+              <p className="text-sm font-medium text-white/90">Step {step} of {totalSteps}</p>
+              <div className="mt-1.5 h-1.5 w-40 sm:w-48 rounded-full bg-white/20">
+                <div className="h-1.5 rounded-full bg-[#4DA6FF] transition-all duration-500" style={{ width: `${(step / totalSteps) * 100}%` }} />
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-4xl px-4 lg:px-6 py-8">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6 md:p-8">
@@ -1255,20 +1345,30 @@ const isStepInvalid = () => {
                       <input type="text" value={formData.registration_number} onChange={(e) => updateField('registration_number', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
-                      <select value={formData.vehicle_type} onChange={(e) => updateField('vehicle_type', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2">
-                        <option value="">Select</option>
-                        <option value="Sedan">Sedan</option>
-                        <option value="SUV">SUV</option>
-                        <option value="Van">Van</option>
-                        <option value="Truck">Truck</option>
-                        <option value="Motorcycle">Motorcycle</option>
-                        <option value="Other">Other</option>
-                      </select>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type *</label>
+                      <SearchableCombobox
+                        options={VEHICLE_TYPE_OPTIONS}
+                        value={formData.vehicle_type}
+                        onChange={(val) => updateField('vehicle_type', val)}
+                        placeholder="Select vehicle type..."
+                        searchPlaceholder="Search vehicle type..."
+                        noResultsText="No matching vehicle type"
+                        required
+                      />
+                      {touched.has('vehicle_type') && validationErrors.vehicle_type && <p className="text-sm text-red-600 mt-1">{validationErrors.vehicle_type}</p>}
                     </div>
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Colour</label>
-                      <input type="text" value={formData.vehicle_color} onChange={(e) => updateField('vehicle_color', e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Colour *</label>
+                      <SearchableCombobox
+                        options={VEHICLE_COLOR_OPTIONS}
+                        value={formData.vehicle_color}
+                        onChange={(val) => updateField('vehicle_color', val)}
+                        placeholder="Select vehicle colour..."
+                        searchPlaceholder="Search colour..."
+                        noResultsText="No matching colour"
+                        required
+                      />
+                      {touched.has('vehicle_color') && validationErrors.vehicle_color && <p className="text-sm text-red-600 mt-1">{validationErrors.vehicle_color}</p>}
                     </div>
                   </>
                 )}
@@ -1289,7 +1389,16 @@ const isStepInvalid = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Relationship *</label>
-                  <input type="text" value={formData.emergency_relationship} onChange={(e) => updateField('emergency_relationship', e.target.value)} required className="w-full rounded-lg border border-gray-300 px-3 py-2" />
+                  <SearchableCombobox
+                    options={RELATIONSHIP_OPTIONS}
+                    value={formData.emergency_relationship}
+                    onChange={(val) => updateField('emergency_relationship', val)}
+                    placeholder="Select relationship..."
+                    searchPlaceholder="Search relationship..."
+                    noResultsText="No matching relationship"
+                    required
+                  />
+                  {touched.has('emergency_relationship') && validationErrors.emergency_relationship && <p className="text-sm text-red-600 mt-1">{validationErrors.emergency_relationship}</p>}
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
@@ -1330,7 +1439,7 @@ const isStepInvalid = () => {
             </div>
           )}
 
-          <div className="mt-8 flex items-center justify-between">
+          <div className="mt-6 flex items-center justify-between">
             <button
               onClick={back}
               disabled={step === 1}

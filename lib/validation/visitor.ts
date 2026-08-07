@@ -128,6 +128,7 @@ export function validateStep5(data: {
   has_vehicle?: boolean
   registration_number?: string
   vehicle_type?: string
+  vehicle_color?: string
   vehicle_make?: string
 }): Record<string, string | null> {
   const errors: Record<string, string | null> = {}
@@ -138,6 +139,9 @@ export function validateStep5(data: {
 
     const typeErr = validateRequired(data.vehicle_type, 'Vehicle Type')
     if (typeErr) errors.vehicle_type = typeErr
+
+    const colorErr = validateRequired(data.vehicle_color, 'Vehicle Colour')
+    if (colorErr) errors.vehicle_color = colorErr
 
     const makeErr = validateRequired(data.vehicle_make, 'Vehicle Make')
     if (makeErr) errors.vehicle_make = makeErr

@@ -1,3 +1,5 @@
+import ImageWithFallback from '@/components/ui/ImageWithFallback'
+import MobileMenu from '@/components/ui/MobileMenu'
 import Link from 'next/link'
 import {
   ShieldCheck,
@@ -19,8 +21,6 @@ import {
   Menu,
   X,
 } from 'lucide-react'
-import ImageWithFallback from '@/components/ui/ImageWithFallback'
-import MobileMenu from '@/components/ui/MobileMenu'
 
 export default function PublicLandingPage() {
   return (
@@ -71,11 +71,18 @@ export default function PublicLandingPage() {
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#D4AF37] rounded-full blur-3xl"></div>
             <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-[#C62828] rounded-full blur-3xl"></div>
           </div>
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 md:py-32 relative">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-8 md:pt-10 pb-24 md:pb-32 relative">
             <div className="text-center">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 mb-8">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 mb-4">
                 <span className="h-2 w-2 rounded-full bg-[#D4AF37] animate-pulse"></span>
                 <span className="text-sm font-medium text-white/90">Welcome to AFCSC</span>
+              </div>
+              <div className="flex justify-center mb-5">
+                <ImageWithFallback
+                  src="/images/afcsc-logo.png"
+                  alt="AFCSC Logo"
+                  className="h-[110px] w-[110px] sm:h-[145px] sm:w-[145px] md:h-[170px] md:w-[170px] object-contain transition-transform duration-300 hover:scale-105"
+                />
               </div>
               <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
                 Armed Forces Command and Staff College
