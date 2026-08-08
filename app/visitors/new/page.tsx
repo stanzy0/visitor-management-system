@@ -1,14 +1,35 @@
+'use client'
+
 import VisitorRegistrationWizard from '@/components/wizard/VisitorRegistrationWizard'
-import { getCurrentUser } from '@/lib/auth'
-import { redirect } from 'next/navigation'
+import { getCurrentUser } from '@/lib/auth-client'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export default function NewVisitorPage() {
+  const router = useRouter()
+  const [checking, setChecking] = useState(true)
+  const [user, setUser] = useState<Awaited<ReturnType<typeof getCurrentUser>> | null>(null)
 
-export default async function NewVisitorPage() {
-  const user = await getCurrentUser()
+  useEffect(() => {
+    getCurrentUser().then(u => {
+      setUser(u)
+      setChecking(false)
+      if (!u) {
+        router.replace('/login')
+      }
+    })
+  }, [router])
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      </div>
+    )
+  }
+
   if (!user) {
-    redirect('/login')
+    return null
   }
 
   return (
