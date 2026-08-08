@@ -1,5 +1,5 @@
 import VisitorRegistrationWizard from '@/components/wizard/VisitorRegistrationWizard'
-import { getCurrentUser } from '@/lib/auth-client'
+import { getCurrentUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 
 export default async function NewVisitorPage() {
