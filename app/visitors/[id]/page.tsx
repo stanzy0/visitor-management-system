@@ -95,7 +95,7 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
       .from('visits')
       .select(`
         *,
-        employee:employees(full_name, department)
+        employee:employees(full_name, department, office_location)
       `)
       .eq('visitor_id', visitorId)
       .order('created_at', { ascending: false })
@@ -121,7 +121,7 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
         visit:visits(
           id,
           visitor:visitors(full_name, visitor_organization, photo_url),
-          employee:employees(full_name, department),
+          employee:employees(full_name, department, office_location),
           purpose,
           check_in_time,
           check_out_time
