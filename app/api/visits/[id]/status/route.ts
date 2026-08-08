@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { generateVisitQRCode } from '@/lib/qrcode'
 import { createVisitStatusNotification, getVisitDetails } from '@/lib/server/notifications'
 import { logAuditAction } from '@/lib/server/audit'
+import { sendEmail } from '@/lib/server/email'
 import type { Visit } from '@/lib/types/visit'
 
 export async function POST(request: NextRequest) {
@@ -38,8 +39,8 @@ export async function POST(request: NextRequest) {
       .eq('id', id)
       .select(`
         *,
-        visitor:visitors!inner(full_name, visitor_organization),
-        employee:employees(full_name, user_id)
+        visitor:visitors!inner(full_name, email, visitor_organization),
+        employee:employees(full_name, user_id, office_location)
       `)
       .single()
 
@@ -60,6 +61,39 @@ export async function POST(request: NextRequest) {
     if (newStatus === 'approved') {
       const qrCodeDataUrl = await generateVisitQRCode(id)
       await supabaseAdmin.from('visits').update({ qr_code: qrCodeDataUrl }).eq('id', id)
+
+      const visitorEmail = updatedVisit.visitor?.email || ''
+      if (visitorEmail) {
+        try {
+          console.log('Approval email started')
+          console.log('Recipient:', visitorEmail)
+
+          await sendEmail({
+            to: visitorEmail,
+            recipientName: visitorName,
+            subject: `Registration Approved - ${updatedVisit.registration_number || id}`,
+            template: 'registration_approved',
+            data: {
+              visitorName: visitorName,
+              registrationNumber: updatedVisit.registration_number || '',
+              date: (updatedVisit.visit_date as string | undefined) || new Date().toISOString().split('T')[0],
+              arrivalTime: (updatedVisit.arrival_time as string | undefined) || 'TBD',
+              hostName: hostName,
+              location: (updatedVisit.employee?.office_location as string | undefined) || 'Reception',
+              badgeNumber: 'N/A',
+              qrCodeUrl: qrCodeDataUrl,
+            },
+            relatedType: 'visit',
+            relatedId: id,
+          })
+
+          console.log('Approval email success')
+        } catch (error) {
+          console.error('Approval email failed:', error)
+        }
+      } else {
+        console.warn('Approval email skipped: visitor email missing', { visitId: id, visitorName })
+      }
     }
 
     const displayTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
