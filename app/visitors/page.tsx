@@ -179,6 +179,8 @@ export default function VisitorsPage() {
   const [visitors, setVisitors] = useState<Visitor[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [authChecking, setAuthChecking] = useState(true)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
   const [formData, setFormData] = useState<VisitorFormData>(initialFormData)
@@ -371,43 +373,60 @@ export default function VisitorsPage() {
   }
 
   async function fetchVisitors() {
-    let query = supabase
-      .from('visitors')
-      .select('*')
-      .order('created_at', { ascending: false })
+    setLoading(true)
+    setError(null)
 
-    if (dateFilter === 'today' || dateFilter === 'week' || dateFilter === 'month') {
-      const startDate = getVisitStartDate(dateFilter)
-      const { data: visitData } = await supabase
-        .from('visits')
-        .select('visitor_id')
-        .gte('created_at', startDate)
-      const visitorIds = [...new Set((visitData || []).map((v) => v.visitor_id).filter(Boolean))]
-      if (visitorIds.length > 0) {
-        query = query.in('id', visitorIds)
-      } else {
-        setVisitors([])
-        if (missingDocumentsFilter) {
-          setVisitors([])
+    try {
+      let query = supabase
+        .from('visitors')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (dateFilter === 'today' || dateFilter === 'week' || dateFilter === 'month') {
+        const startDate = getVisitStartDate(dateFilter)
+        const { data: visitData, error: visitError } = await supabase
+          .from('visits')
+          .select('visitor_id')
+          .gte('created_at', startDate)
+
+        if (visitError) {
+          console.error('Failed to load visits for filter:', visitError)
         }
+
+        const visitorIds = [...new Set((visitData || []).map((v) => v.visitor_id).filter(Boolean))]
+        if (visitorIds.length > 0) {
+          query = query.in('id', visitorIds)
+        } else {
+          setVisitors([])
+          setLoading(false)
+          return
+        }
+      }
+
+      const { data, error } = await query
+      if (error) {
+        console.error('Failed to load visitors:', error)
+        setError(error.message)
+        setLoading(false)
         return
       }
-    }
 
-    const { data, error } = await query
-    if (error) {
-      showNotification('error', error.message)
-    } else {
       setVisitors(data || [])
-    }
 
-    if (missingDocumentsFilter) {
-      const { data: allDocs } = await supabase
-        .from('visitor_documents')
-        .select('visitor_id')
-      const docVisitors = new Set((allDocs || []).map(d => d.visitor_id).filter(Boolean))
-      const missing = (data || []).filter(v => !docVisitors.has(v.id))
-      setVisitors(missing)
+      if (missingDocumentsFilter) {
+        const { data: allDocs } = await supabase
+          .from('visitor_documents')
+          .select('visitor_id')
+        const docVisitors = new Set((allDocs || []).map(d => d.visitor_id).filter(Boolean))
+        const missing = (data || []).filter(v => !docVisitors.has(v.id))
+        setVisitors(missing)
+      }
+
+      setLoading(false)
+    } catch (err) {
+      console.error('Failed to load visitors:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load visitors')
+      setLoading(false)
     }
   }
 
@@ -593,50 +612,79 @@ export default function VisitorsPage() {
   async function createVisitor(data: VisitorFormData, photoUrl: string | null, photoSourceType: 'upload' | 'camera') {
     setSubmitting(true)
 
-    const { data: visitorData, error: visitorError } = await supabase
-      .from('visitors')
-      .insert([
+    try {
+      const hostEmployee = employees.find((e) => e.id === data.host_employee_id)
+
+      let docFrontUrl: string | null = data.doc_front_url
+      let docBackUrl: string | null = data.doc_back_url
+
+      if (docFrontFile) {
+        docFrontUrl = await uploadDocumentImage(docFrontFile, 'doc-front')
+        if (!docFrontUrl) {
+          showNotification('error', 'Failed to upload front document')
+          setSubmitting(false)
+          return
+        }
+      }
+
+      if (docBackFile) {
+        docBackUrl = await uploadDocumentImage(docBackFile, 'doc-back')
+      }
+
+      const { data: visitorData, error: visitorError } = await supabase
+        .from('visitors')
+        .insert([
+          {
+            full_name: data.full_name,
+            email: data.email,
+            phone: data.phone,
+            visitor_organization: data.visitor_organization,
+            photo_url: photoUrl || null,
+            doc_type: data.id_verification ? data.doc_type : null,
+            doc_number: data.id_verification ? data.doc_number : null,
+            doc_front_url: docFrontUrl || null,
+            doc_back_url: docBackUrl || null,
+            issuing_country: data.id_verification ? data.issuing_country : null,
+            expiry_date: data.id_verification ? data.expiry_date : null,
+          },
+        ])
+        .select()
+        .single()
+
+      if (visitorError || !visitorData) {
+        showNotification('error', visitorError?.message || 'Failed to create visitor')
+        setSubmitting(false)
+        return
+      }
+
+      if (photoUrl) {
+        if (photoSourceType === 'camera') {
+          logAuditAction('Visitor Photo Captured', 'visitor', visitorData.id, 'Visitor photo captured using device camera')
+        } else {
+          logAuditAction('Visitor Photo Uploaded', 'visitor', visitorData.id, `${data.full_name}'s photo uploaded`)
+        }
+      }
+
+      const { error: visitError } = await supabase.from('visits').insert([
         {
-          full_name: data.full_name,
-          email: data.email,
-          phone: data.phone,
-          visitor_organization: data.visitor_organization,
-          photo_url: photoUrl || null,
+          visitor_id: visitorData.id,
+          employee_id: data.host_employee_id,
+          purpose: data.purpose,
+          status: 'pending',
+          office_location: hostEmployee?.office_location || null,
         },
       ])
-      .select()
 
-    if (visitorError) {
-      showNotification('error', visitorError.message)
-      setSubmitting(false)
-      return
-    }
-
-    const hostEmployee = employees.find((e) => e.id === data.host_employee_id)?.full_name || 'Unknown'
-    if (photoUrl) {
-      if (photoSourceType === 'camera') {
-        logAuditAction('Visitor Photo Captured', 'visitor', visitorData![0].id, 'Visitor photo captured using device camera')
-      } else {
-        logAuditAction('Visitor Photo Uploaded', 'visitor', visitorData![0].id, `${data.full_name}'s photo uploaded`)
+      if (visitError) {
+        showNotification('error', visitError.message)
+        setSubmitting(false)
+        return
       }
-    }
 
-    const { error: visitError } = await supabase.from('visits').insert([
-      {
-        visitor_id: visitorData![0].id,
-        employee_id: data.host_employee_id,
-        purpose: data.purpose,
-        status: 'pending',
-      },
-    ])
-
-    if (visitError) {
-      showNotification('error', visitError.message)
-    } else {
       if (data.has_vehicle && data.registration_number) {
         await supabase.from('vehicles').insert([
           {
-            visitor_id: visitorData![0].id,
+            visitor_id: visitorData.id,
             registration_number: data.registration_number,
             vehicle_type: data.vehicle_type,
             vehicle_make: data.vehicle_make || null,
@@ -650,37 +698,21 @@ export default function VisitorsPage() {
         ])
       }
 
-      logAuditAction('Visitor Registered', 'visitor', visitorData![0].id, `${data.full_name} registered to meet ${hostEmployee} for ${data.purpose}`)
+      logAuditAction('Visitor Registered', 'visitor', visitorData.id, `${data.full_name} registered to meet ${hostEmployee?.full_name || 'Unknown'} for ${data.purpose}`)
 
-      if (data.id_verification && data.doc_number && docFrontFile) {
-        const docFrontUrl = await uploadDocumentImage(docFrontFile, 'doc-front')
-        if (!docFrontUrl) {
-          showNotification('error', 'Failed to upload front document')
-          setSubmitting(false)
-          return
-        }
-
-        const docPayload: Record<string, unknown> = {
-          visitor_id: visitorData![0].id,
+      if (docFrontUrl) {
+        await supabase.from('visitor_documents').insert({
+          visitor_id: visitorData.id,
           document_type: data.doc_type,
           document_number: data.doc_number,
           issuing_country: data.issuing_country || null,
           expiry_date: data.expiry_date || null,
-          verification_notes: data.doc_notes || null,
           front_image_url: docFrontUrl,
           file_url: docFrontUrl,
-          file_name: docFrontFile.name,
-          mime_type: docFrontFile.type,
+          back_image_url: docBackUrl || null,
           verified: false,
           verification_status: 'Pending',
-        }
-
-        if (docBackFile) {
-          const backUrl = await uploadDocumentImage(docBackFile, 'doc-back')
-          if (backUrl) docPayload.back_image_url = backUrl
-        }
-
-        await supabase.from('visitor_documents').insert([docPayload])
+        })
         logAuditAction('Document Added', 'visitor_document', null, `Document added for ${data.full_name}`)
       }
 
@@ -692,8 +724,12 @@ export default function VisitorsPage() {
       setCameraActive(false)
       setDocFrontFile(null)
       setDocBackFile(null)
+    } catch (err) {
+      console.error('Failed to create visitor:', err)
+      showNotification('error', err instanceof Error ? err.message : 'Failed to create visitor')
+    } finally {
+      setSubmitting(false)
     }
-    setSubmitting(false)
   }
 
   async function handleWatchlistOverride() {
@@ -797,6 +833,21 @@ export default function VisitorsPage() {
           </div>
         )}
 
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+            <p className="text-sm font-medium text-red-800">Unable to load visitors.</p>
+            <p className="text-xs text-red-600 mt-1">{error}</p>
+            <button
+              onClick={fetchVisitors}
+              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {!error && (
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -858,6 +909,7 @@ export default function VisitorsPage() {
             </table>
           </div>
         </div>
+        )}
 
         {modalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

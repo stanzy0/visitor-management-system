@@ -23,8 +23,8 @@ interface Visit {
   check_in_time: string | null
   check_out_time: string | null
   created_at: string
-  visitor: { full_name: string; visitor_organization: string; photo_url?: string | null } | null
-  employee: { full_name: string } | null
+  visitor: { full_name: string; visitor_organization: string; photo_url?: string | null; doc_type?: string | null; doc_number?: string | null; doc_front_url?: string | null } | null
+  employee: { full_name: string; department?: string | null; office_location?: string | null } | null
   badge?: Badge | null
 }
 
@@ -35,6 +35,7 @@ export default function VisitsPage() {
   const [visits, setVisits] = useState<Visit[]>([])
   const [loading, setLoading] = useState(true)
   const [authChecking, setAuthChecking] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -81,23 +82,39 @@ export default function VisitsPage() {
 
   async function fetchVisits() {
     setLoading(true)
+    setError(null)
 
-    const { data, error } = await supabase
-      .from('visits')
-      .select(`
-        *,
-        visitor:visitors(full_name, visitor_organization, photo_url),
-        employee:employees(full_name)
-      `)
-      .order('created_at', { ascending: false })
+    try {
+      const { data, error } = await supabase
+        .from('visits')
+        .select(`
+          *,
+          visitor:visitors(
+            full_name,
+            visitor_organization,
+            photo_url,
+            doc_type,
+            doc_number,
+            doc_front_url,
+            doc_back_url
+          ),
+          employee:employees(full_name, department, office_location)
+        `)
+        .order('created_at', { ascending: false })
 
-    if (error) {
-      showNotification('error', error.message)
-      setLoading(false)
-      return
-    }
+      if (error) {
+        console.error('Failed to load visits:', error)
+        setError(error.message)
+        setLoading(false)
+        return
+      }
 
-    if (data) {
+      if (!data || data.length === 0) {
+        setVisits([])
+        setLoading(false)
+        return
+      }
+
       const visitIds = data.map(v => v.id)
       let badges: Array<{
         id: string
@@ -123,58 +140,64 @@ export default function VisitsPage() {
       }> = []
 
       if (visitIds.length > 0) {
-        const result = await supabase
-          .from('visitor_badges')
-          .select(`
-            id,
-            visit_id,
-            badge_number,
-            badge_status,
-            qr_token,
-            issued_at,
-            expires_at,
-            printed_at,
-            printed_by,
-            reprint_count,
-            created_at,
-            updated_at,
-            visit:visits(
+        try {
+          const result = await supabase
+            .from('visitor_badges')
+            .select(`
               id,
-              visitor:visitors(full_name, visitor_organization, photo_url),
-              employee:employees(full_name, department),
-              purpose,
-              check_in_time,
-              check_out_time
-            )
-          `)
-          .in('visit_id', visitIds)
+              visit_id,
+              badge_number,
+              badge_status,
+              qr_token,
+              issued_at,
+              expires_at,
+              printed_at,
+              printed_by,
+              reprint_count,
+              created_at,
+              updated_at,
+              visit:visits(
+                id,
+                visitor:visitors(full_name, visitor_organization, photo_url),
+                employee:employees(full_name, department),
+                purpose,
+                check_in_time,
+                check_out_time
+              )
+            `)
+            .in('visit_id', visitIds)
 
-        const rawBadges = result.data || []
-        badges = rawBadges.map((b: Record<string, unknown>) => ({
-          ...b,
-          visit: Array.isArray(b.visit) ? b.visit[0] : b.visit,
-        })) as Array<{
-          id: string
-          visit_id: string
-          badge_number: string
-          badge_status: string
-          qr_token: string
-          issued_at: string
-          expires_at: string
-          printed_at: string | null
-          printed_by: string | null
-          reprint_count: number
-          created_at: string
-          updated_at: string
-          visit: {
-            id: string
-            visitor: { full_name: string; visitor_organization: string; photo_url?: string | null } | null
-            employee: { full_name: string; department: string } | null
-            purpose: string
-            check_in_time: string | null
-            check_out_time: string | null
-          } | null
-        }>
+          if (result.data) {
+            const rawBadges = result.data || []
+            badges = rawBadges.map((b: Record<string, unknown>) => ({
+              ...b,
+              visit: Array.isArray(b.visit) ? b.visit[0] : b.visit,
+            })) as Array<{
+              id: string
+              visit_id: string
+              badge_number: string
+              badge_status: string
+              qr_token: string
+              issued_at: string
+              expires_at: string
+              printed_at: string | null
+              printed_by: string | null
+              reprint_count: number
+              created_at: string
+              updated_at: string
+              visit: {
+                id: string
+                visitor: { full_name: string; visitor_organization: string; photo_url?: string | null } | null
+                employee: { full_name: string; department: string } | null
+                purpose: string
+                check_in_time: string | null
+                check_out_time: string | null
+              } | null
+            }>
+          }
+        } catch (badgeError) {
+          console.error('Failed to load badges:', badgeError)
+        }
       }
 
       const badgesByVisitId = new Map(badges.map(b => [b.visit_id, b]))
@@ -184,8 +207,12 @@ export default function VisitsPage() {
       }))
 
       setVisits(visitsWithBadges)
+      setLoading(false)
+    } catch (err) {
+      console.error('Failed to load visits:', err)
+      setError(err instanceof Error ? err.message : 'Failed to load visits')
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   useEffect(() => {
@@ -358,6 +385,21 @@ const statusStyles: Record<string, string> = {
           <div className={`rounded-lg p-4 text-sm ${notification.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{notification.message}</div>
         )}
 
+        {error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+            <p className="text-sm font-medium text-red-800">Unable to load visits.</p>
+            <p className="text-xs text-red-600 mt-1">{error}</p>
+            <button
+              onClick={fetchVisits}
+              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {!error && (
         <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
             {loading ? (
@@ -535,12 +577,13 @@ const statusStyles: Record<string, string> = {
             )}
           </div>
 
-          {!loading && filteredVisits.length === 0 && (
+          {!error && !loading && filteredVisits.length === 0 && (
             <div className="py-12 text-center">
               <p className="text-gray-500">No visits found</p>
             </div>
           )}
         </div>
+        )}
       </div>
 
       {selectedBadge && (
