@@ -5,10 +5,6 @@ import {
   ShieldCheck,
   Scan,
   UserCheck,
-  Clock,
-  FileText,
-  Car,
-  Bell,
   CheckCircle,
   MapPin,
   Phone,
@@ -16,7 +12,6 @@ import {
   Calendar,
   Users,
   Activity,
-  AlertCircle,
   ArrowRight,
   Menu,
   X,
@@ -111,57 +106,6 @@ export default function PublicLandingPage() {
             <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
               <path d="M0 60L60 50C120 40 240 20 360 15C480 10 600 20 720 25C840 30 960 30 1080 25C1200 20 1320 10 1380 5L1440 0H0V60Z" fill="white" />
             </svg>
-          </div>
-        </section>
-
-        <section className="py-16 bg-white">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <div className="rounded-2xl bg-gradient-to-br from-[#0B3D91] to-[#0B3D91] p-6 text-white shadow-lg shadow-[#0B3D91]/20 hover:shadow-xl hover:shadow-[#0B3D91]/30 transition-shadow">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center">
-                    <Users className="h-6 w-6 text-[#D4AF37]" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">2,450+</p>
-                    <p className="text-sm text-white/70">Employees</p>
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-2xl bg-gradient-to-br from-[#C62828] to-[#7B0000] p-6 text-white shadow-lg shadow-[#C62828]/20 hover:shadow-xl hover:shadow-[#C62828]/30 transition-shadow">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-white/10 flex items-center justify-center">
-                    <Activity className="h-6 w-6 text-[#D4AF37]" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">187</p>
-                    <p className="text-sm text-white/70">Visitors Today</p>
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#F0D060] p-6 text-[#0A1628] shadow-lg shadow-yellow-500/20 hover:shadow-xl hover:shadow-yellow-500/30 transition-shadow">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
-                    <Clock className="h-6 w-6 text-[#0A1628]" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">42</p>
-                    <p className="text-sm text-[#0A1628]/70">Active Visits</p>
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-2xl bg-gradient-to-br from-[#0A1628] to-[#1a2a4a] p-6 text-white shadow-lg shadow-gray-900/20 hover:shadow-xl hover:shadow-gray-900/30 transition-shadow">
-                <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-xl bg-[#D4AF37]/20 flex items-center justify-center">
-                    <AlertCircle className="h-6 w-6 text-[#D4AF37]" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">8</p>
-                    <p className="text-sm text-white/70">Pending Approvals</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
