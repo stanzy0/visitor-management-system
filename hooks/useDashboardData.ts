@@ -140,8 +140,10 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true)
+  const fetchAll = useCallback(async (silent = false) => {
+    if (!silent) {
+      setLoading(true)
+    }
     setError(null)
     try {
       getStartEnd(filters.range, filters.customFrom, filters.customTo)
@@ -379,14 +381,27 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard data')
     } finally {
-      setLoading(false)
+      if (!silent) {
+        setLoading(false)
+      }
     }
   }, [filters])
 
   const fetchAllRef = useRef(fetchAll)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => {
     fetchAllRef.current = fetchAll
-  })
+  }, [fetchAll])
+
+  const silentRefresh = useCallback(async () => {
+    setError(null)
+    try {
+      await fetchAllRef.current(true)
+    } catch {
+      // ignore realtime refresh errors
+    }
+  }, [])
 
   useEffect(() => {
     if (!enabled) return
@@ -394,22 +409,36 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
   }, [filters, enabled])
 
   useEffect(() => {
+    if (!enabled) return
+
+    const debouncedRefresh = () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+      debounceRef.current = setTimeout(() => {
+        silentRefresh()
+      }, 300)
+    }
+
     const channel = supabase
       .channel('dashboard-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => fetchAllRef.current())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_badges' }, () => fetchAllRef.current())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, () => fetchAllRef.current())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_logs' }, () => fetchAllRef.current())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => fetchAllRef.current())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'lifecycle_events' }, () => fetchAllRef.current())
-       .on('postgres_changes', { event: '*', schema: 'public', table: 'security_alerts' }, () => fetchAllRef.current())
-       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_documents' }, () => fetchAllRef.current())
-        .subscribe()
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors' }, debouncedRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, debouncedRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, debouncedRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, debouncedRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_badges' }, debouncedRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_documents' }, debouncedRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_logs' }, debouncedRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, debouncedRefresh)
+      .subscribe()
 
-     return () => {
-       supabase.removeChannel(channel)
-     }
-   }, [fetchAll])
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current)
+      }
+      supabase.removeChannel(channel)
+    }
+  }, [enabled, silentRefresh])
 
   const trendLabel = useMemo(() => {
     if (stats.visitorsTrend > 0) return `+${(stats.visitorsTrend * 100).toFixed(0)}%`
