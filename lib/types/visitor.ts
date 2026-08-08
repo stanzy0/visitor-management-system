@@ -12,6 +12,12 @@ export interface Visitor {
   emergency_contact: string | null
   photo_url: string | null
   created_at: string
+  doc_type?: string | null
+  doc_number?: string | null
+  issuing_country?: string | null
+  expiry_date?: string | null
+  doc_front_url?: string | null
+  doc_back_url?: string | null
 }
 
 export interface Visit {

@@ -509,7 +509,39 @@ export default function VisitorDetailsPage({ params }: { params: Promise<{ id: s
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
-            <VisitorProfileCard visitor={visitor} loading={loading} />
+            <VisitorProfileCard
+              visitor={visitor}
+              loading={loading}
+              hasDocument={!!visitor.doc_front_url}
+              onViewDocument={() => {
+                if (visitor.doc_front_url) {
+                  setPreviewDoc({
+                    id: visitor.id,
+                    visitor_id: visitor.id,
+                    document_type: (visitor.doc_type as VisitorDocument['document_type']) || 'Other',
+                    document_number: visitor.doc_number || '',
+                    issuing_country: visitor.issuing_country || null,
+                    expiry_date: visitor.expiry_date || null,
+                    front_image_url: visitor.doc_front_url,
+                    back_image_url: visitor.doc_back_url || null,
+                    file_url: visitor.doc_front_url,
+                    file_name: visitor.doc_type || 'ID Document',
+                    mime_type: visitor.doc_front_url.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg',
+                    file_size: 0,
+                    verification_status: 'Pending',
+                    verification_notes: null,
+                    verified: false,
+                    verified_by: null,
+                    verified_at: null,
+                    replacement_requested: false,
+                    replacement_uploaded: false,
+                    uploaded_by: null,
+                    created_at: visitor.created_at,
+                    updated_at: visitor.created_at,
+                  })
+                }
+              }}
+            />
             <VisitorBadgeCard badges={badges} onPrint={(badge) => handlePrintBadge(badge.visit_id)} onReprint={(badge) => handleReprintBadge(badge.visit_id)} loading={loading} />
           </div>
           <div className="lg:col-span-2 space-y-6">

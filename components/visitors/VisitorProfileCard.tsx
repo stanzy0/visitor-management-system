@@ -1,15 +1,17 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { User, Phone, Mail, MapPin, Car, Shield, Users, Calendar } from 'lucide-react'
+import { User, Phone, Mail, MapPin, Car, Shield, Users, Calendar, Eye } from 'lucide-react'
 import type { Visitor } from '@/lib/types/visitor'
 
 interface VisitorProfileCardProps {
   visitor: Visitor
   loading?: boolean
+  onViewDocument?: () => void
+  hasDocument?: boolean
 }
 
-export default function VisitorProfileCard({ visitor, loading }: VisitorProfileCardProps) {
+export default function VisitorProfileCard({ visitor, loading, onViewDocument, hasDocument }: VisitorProfileCardProps) {
   if (loading) {
     return (
       <div className="rounded-[20px] border border-gray-200/60 bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
@@ -34,8 +36,8 @@ export default function VisitorProfileCard({ visitor, loading }: VisitorProfileC
     { label: 'Address', value: visitor.visitor_address, icon: MapPin },
     { label: 'Nationality', value: visitor.nationality, icon: MapPin },
     { label: 'Gender', value: visitor.gender, icon: User },
-    { label: 'ID Type', value: null, icon: Shield },
-    { label: 'ID Number', value: null, icon: Shield },
+    { label: 'ID Type', value: visitor.doc_type, icon: Shield },
+    { label: 'ID Number', value: visitor.doc_number, icon: Shield },
     { label: 'Vehicle Plate', value: visitor.vehicle_plate, icon: Car },
     { label: 'Vehicle Type', value: visitor.vehicle_type, icon: Car },
     { label: 'Emergency Contact', value: visitor.emergency_contact, icon: Shield },
@@ -61,6 +63,19 @@ export default function VisitorProfileCard({ visitor, loading }: VisitorProfileC
             </div>
           </div>
         ))}
+        <div className="pt-2">
+          {hasDocument ? (
+            <button
+              onClick={onViewDocument}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              <Eye className="h-4 w-4" />
+              View ID Document
+            </button>
+          ) : (
+            <p className="text-sm text-gray-400 italic">No document uploaded</p>
+          )}
+        </div>
       </div>
     </motion.div>
   )

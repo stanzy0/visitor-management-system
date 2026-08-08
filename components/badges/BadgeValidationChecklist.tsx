@@ -19,7 +19,7 @@ export default function BadgeValidationChecklist({ visit }: BadgeValidationCheck
     },
     {
       label: 'Office location assigned',
-      passed: !!visit.office_location,
+      passed: !!(visit.office_location || visit.employee?.office_location),
     },
     {
       label: 'Identification type provided',

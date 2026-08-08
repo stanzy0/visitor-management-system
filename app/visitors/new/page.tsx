@@ -34,7 +34,7 @@ export default function NewVisitorPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <VisitorRegistrationWizard onComplete={() => {}} />
+      <VisitorRegistrationWizard onComplete={() => router.push('/dashboard')} />
     </div>
   )
 }

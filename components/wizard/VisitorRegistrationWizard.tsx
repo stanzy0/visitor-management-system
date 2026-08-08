@@ -62,7 +62,7 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
 
   const totalSteps = 7
 
-  const updateField = (field: keyof VisitorFormData, value: string | boolean | number) => {
+  const updateField = (field: keyof VisitorFormData, value: string | boolean | number | File | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -191,7 +191,56 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
         return
       }
 
-      const payload = {
+      let docFrontUrl = formData.doc_front_url
+      let docBackUrl = formData.doc_back_url
+
+      if (formData.doc_front_image) {
+        const frontPath = `staff-reg/${Date.now()}-${formData.doc_front_image.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+        const { error: frontUploadError } = await supabase.storage
+          .from('visitor-documents')
+          .upload(frontPath, formData.doc_front_image, { contentType: formData.doc_front_image.type })
+
+        if (frontUploadError) {
+          setError('Failed to upload front identification document')
+          setSubmitting(false)
+          return
+        }
+
+        const { data: frontPublic } = supabase.storage
+          .from('visitor-documents')
+          .getPublicUrl(frontPath)
+
+        docFrontUrl = frontPublic.publicUrl
+      }
+
+      if (formData.doc_back_image) {
+        const backPath = `staff-reg/${Date.now()}-${formData.doc_back_image.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+        const { error: backUploadError } = await supabase.storage
+          .from('visitor-documents')
+          .upload(backPath, formData.doc_back_image, { contentType: formData.doc_back_image.type })
+
+        if (backUploadError) {
+          setError('Failed to upload back identification document')
+          setSubmitting(false)
+          return
+        }
+
+        const { data: backPublic } = supabase.storage
+          .from('visitor-documents')
+          .getPublicUrl(backPath)
+
+        docBackUrl = backPublic.publicUrl
+      }
+
+      const { data: employeeData } = await supabase
+        .from('employees')
+        .select('office_location')
+        .eq('id', formData.host_employee_id)
+        .single()
+
+      const officeLocation = employeeData?.office_location || null
+
+      const visitorPayload: Record<string, unknown> = {
         full_name: formData.full_name,
         email: formData.email,
         phone: formData.phone,
@@ -199,21 +248,76 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
         visitor_address: formData.visitor_address,
         nationality: formData.nationality,
         gender: formData.gender,
+        photo_url: formData.photo_url || null,
+        emergency_contact: formData.emergency_contact,
         vehicle_plate: formData.registration_number,
         vehicle_type: formData.vehicle_type,
-        emergency_contact: formData.emergency_contact,
         host_employee_id: formData.host_employee_id,
         purpose: formData.purpose === 'Other' ? formData.custom_purpose : formData.purpose,
         expected_duration: formData.expected_duration || 0,
         created_by: user.id,
         visitor_type: visitorType,
+        doc_type: formData.doc_type,
+        doc_number: formData.doc_number,
+        issuing_country: formData.issuing_country || null,
+        expiry_date: formData.expiry_date || null,
+        doc_front_url: docFrontUrl,
+        doc_back_url: docBackUrl,
+        doc_notes: formData.doc_notes || null,
       }
 
-      const { data, error } = await supabase.from('visitors').insert(payload).select().single()
+      const { data: visitor, error: visitorError } = await supabase
+        .from('visitors')
+        .insert(visitorPayload)
+        .select()
+        .single()
 
-      if (error) {
-        setError(error.message)
+      if (visitorError || !visitor) {
+        setError(visitorError?.message || 'Failed to create visitor')
+        setSubmitting(false)
         return
+      }
+
+      const regNumber = `REG-${Date.now().toString(36).toUpperCase()}`
+
+      const { data: visit, error: visitError } = await supabase
+        .from('visits')
+        .insert({
+          visitor_id: visitor.id,
+          employee_id: formData.host_employee_id,
+          purpose: formData.purpose === 'Other' ? formData.custom_purpose : formData.purpose,
+          status: 'pending',
+          source: 'internal',
+          registration_number: regNumber,
+          visitor_type: visitorType,
+          visit_date: formData.visit_date,
+          arrival_time: formData.arrival_time || null,
+          expected_duration: formData.expected_duration || 0,
+          office_location: officeLocation,
+          notes: formData.notes || null,
+        })
+        .select()
+        .single()
+
+      if (visitError || !visit) {
+        setError(visitError?.message || 'Failed to create visit')
+        setSubmitting(false)
+        return
+      }
+
+      if (docFrontUrl) {
+        await supabase.from('visitor_documents').insert({
+          visitor_id: visitor.id,
+          document_type: formData.doc_type,
+          document_number: formData.doc_number,
+          issuing_country: formData.issuing_country || null,
+          expiry_date: formData.expiry_date || null,
+          front_image_url: docFrontUrl,
+          file_url: docFrontUrl,
+          back_image_url: docBackUrl || null,
+          verified: false,
+          verification_status: 'Pending',
+        })
       }
 
       onComplete?.()

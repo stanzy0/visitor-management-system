@@ -1,21 +1,39 @@
 'use client'
 
 import type { VisitorFormData } from '@/lib/types/visitor'
+import { useState } from 'react'
 
 interface Step3Props {
-  data: Pick<VisitorFormData, 'doc_type' | 'doc_number' | 'expiry_date' | 'doc_front_url' | 'doc_back_url' | 'issuing_country'>
-  onChange: (field: keyof VisitorFormData, value: string) => void
+  data: Pick<VisitorFormData, 'doc_type' | 'doc_number' | 'expiry_date' | 'doc_front_url' | 'doc_back_url' | 'issuing_country' | 'doc_front_image' | 'doc_back_image'>
+  onChange: (field: keyof VisitorFormData, value: string | File | null) => void
   errors?: Record<string, string | null>
   touched?: Set<string>
   onBlur?: (field: string) => void
 }
 
 export default function Step3Identification({ data, onChange, errors = {}, touched = new Set(), onBlur }: Step3Props) {
-  const { doc_type, doc_number, expiry_date, doc_front_url, doc_back_url } = data
+  const { doc_type, doc_number, expiry_date, doc_front_url, doc_back_url, issuing_country, doc_front_image, doc_back_image } = data
+  const [docError, setDocError] = useState<string | null>(null)
+
   const inputClasses = (field: string) => {
     const base = 'w-full rounded-lg border px-3 py-2'
     const touchedAndError = touched.has(field) && errors[field]
     return `${base} ${touchedAndError ? 'border-red-500 text-red-600' : 'border-gray-300'}`
+  }
+
+  const handleFileChange = (side: 'front' | 'back') => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) {
+      setDocError('File is too large. Please upload an image or PDF under 5 MB.')
+      return
+    }
+    setDocError(null)
+    if (side === 'front') {
+      onChange('doc_front_image', file)
+    } else {
+      onChange('doc_back_image', file)
+    }
   }
 
   return (
@@ -48,12 +66,45 @@ export default function Step3Identification({ data, onChange, errors = {}, touch
         </div>
         <div className="md:col-span-2">
           <p className="text-sm text-gray-500 mb-2">Upload scanned documents.</p>
+          {docError && <p className="text-sm text-red-600 mb-2">{docError}</p>}
           <div className="grid grid-cols-2 gap-4">
             <div className={`rounded-lg border-2 border-dashed p-4 text-center text-sm ${touched.has('doc_front_url') && errors.doc_front_url ? 'border-red-500 text-red-600' : 'border-gray-300 text-gray-500'}`}>
-              {doc_front_url ? <img src={doc_front_url} alt="Front" className="mx-auto h-32 object-cover rounded" /> : 'Front upload'}
+              <input
+                id="doc-front-upload"
+                type="file"
+                accept="image/*,.pdf"
+                onChange={handleFileChange('front')}
+                className="hidden"
+              />
+              <label htmlFor="doc-front-upload" className="cursor-pointer">
+                {doc_front_image ? (
+                  <img src={URL.createObjectURL(doc_front_image)} alt="Front preview" className="mx-auto h-32 object-cover rounded" />
+                ) : doc_front_url ? (
+                  <img src={doc_front_url} alt="Front" className="mx-auto h-32 object-cover rounded" />
+                ) : (
+                  'Front upload'
+                )}
+              </label>
+              <p className="text-xs text-gray-400 mt-1">Click to upload front</p>
             </div>
             <div className={`rounded-lg border-2 border-dashed p-4 text-center text-sm ${(doc_type === 'National ID' || doc_type === 'Driver License') && touched.has('doc_back_url') && errors.doc_back_url ? 'border-red-500 text-red-600' : 'border-gray-300 text-gray-500'}`}>
-              {doc_back_url ? <img src={doc_back_url} alt="Back" className="mx-auto h-32 object-cover rounded" /> : 'Back upload'}
+              <input
+                id="doc-back-upload"
+                type="file"
+                accept="image/*,.pdf"
+                onChange={handleFileChange('back')}
+                className="hidden"
+              />
+              <label htmlFor="doc-back-upload" className="cursor-pointer">
+                {doc_back_image ? (
+                  <img src={URL.createObjectURL(doc_back_image)} alt="Back preview" className="mx-auto h-32 object-cover rounded" />
+                ) : doc_back_url ? (
+                  <img src={doc_back_url} alt="Back" className="mx-auto h-32 object-cover rounded" />
+                ) : (
+                  'Back upload'
+                )}
+              </label>
+              <p className="text-xs text-gray-400 mt-1">Click to upload back</p>
             </div>
           </div>
           {touched.has('doc_front_url') && errors.doc_front_url && <p className="text-sm text-red-600 mt-1">{errors.doc_front_url}</p>}
