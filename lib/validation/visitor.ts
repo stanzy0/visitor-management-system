@@ -1,3 +1,5 @@
+import { COUNTRIES } from '@/lib/data/countries'
+
 export function validateEmail(email: string): string | null {
   if (!email.trim()) return 'Email is required.'
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -49,8 +51,12 @@ export function validateStep2(data: {
   const orgErr = validateRequired(data.visitor_organization, 'Organization / Company')
   if (orgErr) errors.visitor_organization = orgErr
 
-  const nationalityErr = validateRequired(data.nationality, 'Nationality')
-  if (nationalityErr) errors.nationality = nationalityErr
+  const nationality = data.nationality?.trim()
+  if (!nationality) {
+    errors.nationality = 'Nationality is required.'
+  } else if (!COUNTRIES.some(c => c.name === nationality)) {
+    errors.nationality = 'Please select a valid nationality from the list.'
+  }
 
   const genderErr = validateRequired(data.gender, 'Gender')
   if (genderErr) errors.gender = genderErr
@@ -58,7 +64,10 @@ export function validateStep2(data: {
   return errors
 }
 
+const ID_TYPES_REQUIRING_EXPIRY = new Set(['Passport', 'National ID', 'Driver License'])
+
 export function validateStep3(data: {
+  id_verification?: boolean
   doc_type?: string
   doc_number?: string
   issuing_country?: string
@@ -66,6 +75,10 @@ export function validateStep3(data: {
   doc_front_url?: string | null
   doc_back_url?: string | null
 }): Record<string, string | null> {
+  if (data.id_verification) {
+    return {}
+  }
+
   const errors: Record<string, string | null> = {}
 
   const docTypeErr = validateRequired(data.doc_type, 'ID Type')
@@ -77,15 +90,9 @@ export function validateStep3(data: {
   const issuingCountryErr = validateRequired(data.issuing_country, 'Issuing Country')
   if (issuingCountryErr) errors.issuing_country = issuingCountryErr
 
-  const expiryDateErr = validateRequired(data.expiry_date, 'Expiry Date')
-  if (expiryDateErr) errors.expiry_date = expiryDateErr
-
-  const frontErr = validateRequired(data.doc_front_url, 'Front ID Upload')
-  if (frontErr) errors.doc_front_url = frontErr
-
-  if (data.doc_type === 'National ID' || data.doc_type === 'Driver License') {
-    const backErr = validateRequired(data.doc_back_url, 'Back ID Upload')
-    if (backErr) errors.doc_back_url = backErr
+  if (data.doc_type && ID_TYPES_REQUIRING_EXPIRY.has(data.doc_type)) {
+    const expiryDateErr = validateRequired(data.expiry_date, 'Expiry Date')
+    if (expiryDateErr) errors.expiry_date = expiryDateErr
   }
 
   return errors

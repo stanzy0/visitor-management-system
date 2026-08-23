@@ -1,7 +1,7 @@
 import { createAdminNotification, createReceptionistNotification, createSecurityNotification, createHostNotification } from '@/lib/server/notification-service'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
-export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'visitor' | 'appointment' | 'employee' | 'system' | 'watchlist_match' | 'watchlist_added' | 'watchlist_updated' | 'watchlist_override'
+export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'visitor' | 'employee' | 'system' | 'watchlist_match' | 'watchlist_added' | 'watchlist_updated' | 'watchlist_override'
 
 export async function createVisitStatusNotification(
   status: string,
@@ -144,90 +144,6 @@ export async function createVisitStatusNotification(
         'visitor',
         'visit',
         visitId
-      )
-    )
-  }
-
-  await Promise.all(promises)
-}
-
-export async function createAppointmentNotification(
-  action: 'created' | 'updated' | 'cancelled',
-  appointmentId: string,
-  appointmentNumber: string,
-  visitorName: string,
-  hostName: string,
-  hostUserId?: string | null
-) {
-  const promises: Promise<unknown>[] = []
-
-  if (action === 'created') {
-    promises.push(
-      createAdminNotification(
-        'Appointment Created',
-        `Appointment scheduled for ${visitorName} with ${hostName}.`,
-        'appointment',
-        'appointment',
-        appointmentId
-      )
-    )
-    promises.push(
-      createReceptionistNotification(
-        'Appointment Created',
-        `Appointment scheduled for ${visitorName} with ${hostName}.`,
-        'appointment',
-        'appointment',
-        appointmentId
-      )
-    )
-    if (hostUserId) {
-      promises.push(
-        createHostNotification(
-          hostUserId,
-          'Appointment Created',
-          `Appointment scheduled for ${visitorName}.`,
-          'appointment',
-          'appointment',
-          appointmentId
-        )
-      )
-    }
-  } else if (action === 'updated') {
-    promises.push(
-      createAdminNotification(
-        'Appointment Updated',
-        `Appointment ${appointmentNumber} has been updated.`,
-        'appointment',
-        'appointment',
-        appointmentId
-      )
-    )
-    promises.push(
-      createReceptionistNotification(
-        'Appointment Updated',
-        `Appointment ${appointmentNumber} has been updated.`,
-        'appointment',
-        'appointment',
-        appointmentId
-      )
-    )
-  } else if (action === 'cancelled') {
-    promises.push(
-      createAdminNotification(
-        'Appointment Cancelled',
-        `Appointment ${appointmentNumber} for ${visitorName} has been cancelled.`,
-        'appointment',
-        'appointment',
-        appointmentId
-      )
-    )
-    promises.push(
-      createReceptionistNotification(
-        'Appointment Cancelled',
-        `Appointment ${appointmentNumber} for ${visitorName} has been cancelled.`,
-        'appointment',
-        'appointment',
-        appointmentId
       )
     )
   }

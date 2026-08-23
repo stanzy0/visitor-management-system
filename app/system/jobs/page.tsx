@@ -82,7 +82,7 @@ export default function BackgroundJobsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )
@@ -90,20 +90,20 @@ export default function BackgroundJobsPage() {
 
   const statusColors: Record<string, string> = {
     running: 'bg-green-100 text-green-800',
-    idle: 'bg-gray-100 text-gray-800',
+    idle: 'bg-gray-100 text-[#F5F5DC]',
     failed: 'bg-red-100 text-red-800',
     success: 'bg-blue-100 text-blue-800',
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Background Jobs</h1>
-            <p className="text-sm text-gray-500">Monitor and manage scheduled tasks</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Background Jobs</h1>
+            <p className="text-sm text-[#9A9F87]">Monitor and manage scheduled tasks</p>
           </div>
-          <button onClick={fetchJobs} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <button onClick={fetchJobs} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
             <RefreshCw className="h-4 w-4" />
             Refresh
           </button>
@@ -111,33 +111,33 @@ export default function BackgroundJobsPage() {
 
         <div className="grid grid-cols-1 gap-4">
           {jobs.map((job) => (
-            <div key={job.id} className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
+            <div key={job.id} className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <Cog className="h-5 w-5 text-gray-400" />
-                    <h3 className="text-sm font-semibold text-gray-900">{job.job_name}</h3>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[job.status] || 'bg-gray-100 text-gray-800'}`}>
+                    <h3 className="text-sm font-semibold text-[#F5F5DC]">{job.job_name}</h3>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[job.status] || 'bg-gray-100 text-[#F5F5DC]'}`}>
                       {job.status}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Type: {job.job_type}</p>
+                  <p className="text-xs text-[#9A9F87] mt-1">Type: {job.job_type}</p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-3">
                     <div>
-                      <p className="text-xs text-gray-500">Last Run</p>
-                      <p className="text-sm font-medium text-gray-900">{job.last_run ? new Date(job.last_run).toLocaleString() : 'Never'}</p>
+                      <p className="text-xs text-[#9A9F87]">Last Run</p>
+                      <p className="text-sm font-medium text-[#F5F5DC]">{job.last_run ? new Date(job.last_run).toLocaleString() : 'Never'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Duration</p>
-                      <p className="text-sm font-medium text-gray-900">{job.last_duration_ms ? `${job.last_duration_ms}ms` : 'N/A'}</p>
+                      <p className="text-xs text-[#9A9F87]">Duration</p>
+                      <p className="text-sm font-medium text-[#F5F5DC]">{job.last_duration_ms ? `${job.last_duration_ms}ms` : 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Next Run</p>
-                      <p className="text-sm font-medium text-gray-900">{job.next_run ? new Date(job.next_run).toLocaleString() : 'N/A'}</p>
+                      <p className="text-xs text-[#9A9F87]">Next Run</p>
+                      <p className="text-sm font-medium text-[#F5F5DC]">{job.next_run ? new Date(job.next_run).toLocaleString() : 'N/A'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Records Processed</p>
-                      <p className="text-sm font-medium text-gray-900">{job.records_processed || 0}</p>
+                      <p className="text-xs text-[#9A9F87]">Records Processed</p>
+                      <p className="text-sm font-medium text-[#F5F5DC]">{job.records_processed || 0}</p>
                     </div>
                   </div>
                   {job.error_message && (
@@ -161,3 +161,5 @@ export default function BackgroundJobsPage() {
     </div>
   )
 }
+
+

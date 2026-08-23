@@ -23,7 +23,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; icon: any; label
   approved: { bg: 'bg-[#0B3D91]/10', text: 'text-[#0B3D91]', icon: CheckCircle2, label: 'Approved' },
   rejected: { bg: 'bg-red-50', text: 'text-red-700', icon: XCircle, label: 'Rejected' },
   checked_in: { bg: 'bg-[#4DA6FF]/10', text: 'text-[#4DA6FF]', icon: UserCheck, label: 'Checked In' },
-  checked_out: { bg: 'bg-gray-50', text: 'text-gray-700', icon: ShieldCheck, label: 'Checked Out' },
+  checked_out: { bg: 'bg-gray-50', text: 'text-[#9A9F87]', icon: ShieldCheck, label: 'Checked Out' },
 }
 
 const TIMELINE_STEPS = [
@@ -78,14 +78,14 @@ export default function RegisterStatusPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <header className="bg-[#0B3D91] text-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex-shrink-0">
               <Image
                 src="/images/afcsc-logo.png"
-                alt="AFCSC Logo"
+                 alt="Department of Land Warfare Logo"
                 width={80}
                 height={80}
                 className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 object-contain"
@@ -100,7 +100,7 @@ export default function RegisterStatusPage() {
             <div className="flex-shrink-0">
               <Image
                 src="/images/afcsc-logo.png"
-                alt="AFCSC Logo"
+                 alt="Department of Land Warfare Logo"
                 width={80}
                 height={80}
                 className="h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 object-contain"
@@ -112,7 +112,7 @@ export default function RegisterStatusPage() {
       </header>
 
       <div className="mx-auto max-w-3xl px-4 lg:px-6 py-8">
-        <form onSubmit={handleSearch} className="rounded-2xl border border-gray-200 bg-white shadow-lg p-6 md:p-8 mb-8">
+        <form onSubmit={handleSearch} className="rounded-2xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-lg p-6 md:p-8 mb-8">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -139,21 +139,21 @@ export default function RegisterStatusPage() {
         {error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
             <XCircle className="h-12 w-12 text-red-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Not Found</h3>
-            <p className="text-gray-600">{error}</p>
+            <h3 className="text-lg font-semibold text-[#F5F5DC] mb-2">Not Found</h3>
+            <p className="text-[#9A9F87]">{error}</p>
           </div>
         )}
 
         {result && (
           <div className="space-y-6">
-            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+            <div className="rounded-2xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm overflow-hidden">
               <div className="bg-[#0B3D91] px-6 py-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-white/70">Registration Number</p>
                     <p className="text-xl font-mono font-bold text-white">{result.registration_number}</p>
                   </div>
-                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${STATUS_STYLES[result.status]?.bg || 'bg-gray-50'} ${STATUS_STYLES[result.status]?.text || 'text-gray-700'}`}>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${STATUS_STYLES[result.status]?.bg || 'bg-gray-50'} ${STATUS_STYLES[result.status]?.text || 'text-[#9A9F87]'}`}>
                     {(() => { const Icon = STATUS_STYLES[result.status]?.icon; return Icon ? <Icon className="h-4 w-4" /> : null })()}
                     {STATUS_STYLES[result.status]?.label || result.status.replace('_', ' ').toUpperCase()}
                   </span>
@@ -163,51 +163,51 @@ export default function RegisterStatusPage() {
               <div className="p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-500">Visitor Name</p>
-                    <p className="text-sm font-medium text-gray-900">{result.visitor_name}</p>
+                    <p className="text-sm text-[#9A9F87]">Visitor Name</p>
+                    <p className="text-sm font-medium text-[#F5F5DC]">{result.visitor_name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Visit Date</p>
-                    <p className="text-sm font-medium text-gray-900">{result.visit_date}</p>
+                    <p className="text-sm text-[#9A9F87]">Visit Date</p>
+                    <p className="text-sm font-medium text-[#F5F5DC]">{result.visit_date}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Host</p>
-                    <p className="text-sm font-medium text-gray-900">{result.host_name}</p>
+                    <p className="text-sm text-[#9A9F87]">Host</p>
+                    <p className="text-sm font-medium text-[#F5F5DC]">{result.host_name}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Department</p>
-                    <p className="text-sm font-medium text-gray-900">{result.department}</p>
+                    <p className="text-sm text-[#9A9F87]">Department</p>
+                    <p className="text-sm font-medium text-[#F5F5DC]">{result.department}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Office Location</p>
-                    <p className="text-sm font-medium text-gray-900">{result.office_location}</p>
+                    <p className="text-sm text-[#9A9F87]">Office Location</p>
+                    <p className="text-sm font-medium text-[#F5F5DC]">{result.office_location}</p>
                   </div>
                   {result.badge_number && (
                     <div>
-                      <p className="text-sm text-gray-500">Badge Number</p>
-                      <p className="text-sm font-medium text-gray-900">{result.badge_number}</p>
+                      <p className="text-sm text-[#9A9F87]">Badge Number</p>
+                      <p className="text-sm font-medium text-[#F5F5DC]">{result.badge_number}</p>
                     </div>
                   )}
                   {result.check_in_time && (
                     <div>
-                      <p className="text-sm text-gray-500">Check-In Time</p>
-                      <p className="text-sm font-medium text-gray-900">{new Date(result.check_in_time).toLocaleString()}</p>
+                      <p className="text-sm text-[#9A9F87]">Check-In Time</p>
+                      <p className="text-sm font-medium text-[#F5F5DC]">{new Date(result.check_in_time).toLocaleString()}</p>
                     </div>
                   )}
                   {result.check_out_time && (
                     <div>
-                      <p className="text-sm text-gray-500">Check-Out Time</p>
-                      <p className="text-sm font-medium text-gray-900">{new Date(result.check_out_time).toLocaleString()}</p>
+                      <p className="text-sm text-[#9A9F87]">Check-Out Time</p>
+                      <p className="text-sm font-medium text-[#F5F5DC]">{new Date(result.check_out_time).toLocaleString()}</p>
                     </div>
                   )}
                 </div>
 
                 {result.qr_token && (
-                  <div className="flex flex-col items-center pt-6 border-t border-gray-200 mt-6">
-                    <div className="rounded-xl border-2 border-[#0B3D91] p-4 bg-white">
+                  <div className="flex flex-col items-center pt-6 border-t border-[rgba(85,107,47,0.35)] mt-6">
+                    <div className="rounded-xl border-2 border-[#0B3D91] p-4 bg-[#10150D]">
                       <img src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${process.env.NEXT_PUBLIC_APP_URL}/portal/${encodeURIComponent(result.qr_token)}`)}`} alt="QR Code" className="h-40 w-40" />
                     </div>
-                    <p className="text-sm text-gray-500 mt-2">Present this QR code at the gate</p>
+                    <p className="text-sm text-[#9A9F87] mt-2">Present this QR code at the gate</p>
                   </div>
                 )}
 
@@ -229,8 +229,8 @@ export default function RegisterStatusPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Status Timeline</h3>
+            <div className="rounded-2xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-[#F5F5DC] mb-6">Status Timeline</h3>
               <div className="space-y-0">
                 {TIMELINE_STEPS.map((step, index) => {
                   const currentStep = getCurrentStepIndex(result.status)
@@ -249,8 +249,8 @@ export default function RegisterStatusPage() {
                         )}
                       </div>
                       <div className="pb-8">
-                        <p className={`text-sm font-medium ${isCompleted ? 'text-[#0B3D91]' : 'text-gray-500'}`}>{step.label}</p>
-                        {isCurrent && <p className="text-xs text-gray-500 mt-0.5">Current stage</p>}
+                        <p className={`text-sm font-medium ${isCompleted ? 'text-[#0B3D91]' : 'text-[#9A9F87]'}`}>{step.label}</p>
+                        {isCurrent && <p className="text-xs text-[#9A9F87] mt-0.5">Current stage</p>}
                       </div>
                     </div>
                   )
@@ -261,7 +261,7 @@ export default function RegisterStatusPage() {
         )}
 
         <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[#9A9F87]">
             Need help? Contact reception at <a href="mailto:reception@afcsc.edu.ng" className="text-[#0B3D91] hover:underline">reception@afcsc.edu.ng</a> or call +234 803 000 0000
           </p>
         </div>

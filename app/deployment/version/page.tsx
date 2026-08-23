@@ -84,7 +84,7 @@ export default function VersionManagementPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )
@@ -93,14 +93,14 @@ export default function VersionManagementPage() {
   const latestDeployment = deployments[0]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Version Management</h1>
-            <p className="text-sm text-gray-500">Track and manage application versions</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Version Management</h1>
+            <p className="text-sm text-[#9A9F87]">Track and manage application versions</p>
           </div>
-          <button onClick={fetchDeployments} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <button onClick={fetchDeployments} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
             <RefreshCw className="h-4 w-4" />
             Refresh
           </button>
@@ -108,24 +108,24 @@ export default function VersionManagementPage() {
 
         {/* Current Version */}
         {latestDeployment && (
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Deployment</h2>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-6">
+            <h2 className="text-lg font-semibold text-[#F5F5DC] mb-4">Current Deployment</h2>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
-                <p className="text-xs text-gray-500">Version</p>
-                <p className="text-sm font-semibold text-gray-900">{latestDeployment.version}</p>
+                <p className="text-xs text-[#9A9F87]">Version</p>
+                <p className="text-sm font-semibold text-[#F5F5DC]">{latestDeployment.version}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Commit</p>
-                <p className="text-sm font-mono text-gray-900">{latestDeployment.commit_hash ? latestDeployment.commit_hash.slice(0, 8) : 'N/A'}</p>
+                <p className="text-xs text-[#9A9F87]">Commit</p>
+                <p className="text-sm font-mono text-[#F5F5DC]">{latestDeployment.commit_hash ? latestDeployment.commit_hash.slice(0, 8) : 'N/A'}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Build Number</p>
-                <p className="text-sm font-semibold text-gray-900">{latestDeployment.build_number || 'N/A'}</p>
+                <p className="text-xs text-[#9A9F87]">Build Number</p>
+                <p className="text-sm font-semibold text-[#F5F5DC]">{latestDeployment.build_number || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500">Environment</p>
-                <p className="text-sm font-semibold text-gray-900 capitalize">{latestDeployment.environment}</p>
+                <p className="text-xs text-[#9A9F87]">Environment</p>
+                <p className="text-sm font-semibold text-[#F5F5DC] capitalize">{latestDeployment.environment}</p>
               </div>
             </div>
           </div>
@@ -140,34 +140,34 @@ export default function VersionManagementPage() {
         </div>
 
         {/* Deployment History */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Deployment History</h2>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+            <h2 className="text-lg font-semibold text-[#F5F5DC]">Deployment History</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Version</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Commit</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Build</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Environment</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Date</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Actions</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Version</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Commit</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Build</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Environment</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Date</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {deployments.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">No deployments found</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-8 text-center text-[#9A9F87]">No deployments found</td></tr>
                 )}
                 {deployments.map((deployment) => (
-                  <tr key={deployment.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-900 font-medium">{deployment.version}</td>
-                    <td className="px-4 py-3 text-gray-600 font-mono text-xs">{deployment.commit_hash ? deployment.commit_hash.slice(0, 8) : 'N/A'}</td>
-                    <td className="px-4 py-3 text-gray-600">{deployment.build_number || 'N/A'}</td>
-                    <td className="px-4 py-3 text-gray-600 capitalize">{deployment.environment}</td>
-                    <td className="px-4 py-3 text-gray-600">{deployment.deployed_at ? new Date(deployment.deployed_at).toLocaleString() : '—'}</td>
+                  <tr key={deployment.id} className="hover:bg-[#4B5320]/10">
+                    <td className="px-4 py-3 text-[#F5F5DC] font-medium">{deployment.version}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] font-mono text-xs">{deployment.commit_hash ? deployment.commit_hash.slice(0, 8) : 'N/A'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{deployment.build_number || 'N/A'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] capitalize">{deployment.environment}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{deployment.deployed_at ? new Date(deployment.deployed_at).toLocaleString() : '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${deployment.rolled_back ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
                         {deployment.rolled_back ? 'Rolled Back' : 'Active'}
@@ -196,12 +196,14 @@ export default function VersionManagementPage() {
 
 function VersionInfoCard({ label, value, icon: Icon }: { label: string; value: string; icon: React.ComponentType<{ className?: string }> }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
       <div className="flex items-center gap-2 mb-2">
         <Icon className="h-4 w-4 text-gray-400" />
-        <p className="text-xs font-medium text-gray-500">{label}</p>
+        <p className="text-xs font-medium text-[#9A9F87]">{label}</p>
       </div>
-      <p className="text-sm font-semibold text-gray-900">{value}</p>
+      <p className="text-sm font-semibold text-[#F5F5DC]">{value}</p>
     </div>
   )
 }
+
+

@@ -15,7 +15,6 @@ export interface VisitorInvitation {
   status: 'Pending' | 'Completed' | 'Expired' | 'Cancelled' | 'Approved' | 'Rejected'
   expires_at: string
   registration_completed_at?: string
-  appointment_id?: string
   badge_id?: string
   created_by?: string
   created_at: string

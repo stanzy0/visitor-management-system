@@ -104,7 +104,7 @@ export default function AdminSystemHealthPage() {
   const offlineCount = health.filter((h) => h.status === 'offline').length
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/admin" className="text-sm text-blue-600 hover:underline">
@@ -114,8 +114,8 @@ export default function AdminSystemHealthPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">System Health</h1>
-            <p className="text-sm text-gray-500">Real-time monitoring of all system services</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">System Health</h1>
+            <p className="text-sm text-[#9A9F87]">Real-time monitoring of all system services</p>
           </div>
           <button
             onClick={handleRefresh}
@@ -140,16 +140,16 @@ export default function AdminSystemHealthPage() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-                <p className="text-sm text-gray-500 mb-1">Operational</p>
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+                <p className="text-sm text-[#9A9F87] mb-1">Operational</p>
                 <p className="text-3xl font-bold text-green-700">{operationalCount}</p>
               </div>
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-                <p className="text-sm text-gray-500 mb-1">Warnings</p>
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+                <p className="text-sm text-[#9A9F87] mb-1">Warnings</p>
                 <p className="text-3xl font-bold text-amber-700">{warningCount}</p>
               </div>
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-                <p className="text-sm text-gray-500 mb-1">Offline</p>
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+                <p className="text-sm text-[#9A9F87] mb-1">Offline</p>
                 <p className="text-3xl font-bold text-red-700">{offlineCount}</p>
               </div>
             </div>
@@ -157,7 +157,7 @@ export default function AdminSystemHealthPage() {
             {health.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12">
                 <RefreshCw className="h-12 w-12 text-gray-300 mb-3" />
-                <p className="text-gray-500">No health data available</p>
+                <p className="text-[#9A9F87]">No health data available</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -168,14 +168,14 @@ export default function AdminSystemHealthPage() {
                   return (
                     <div
                       key={item.service}
-                      className="rounded-xl border border-gray-200 bg-white shadow-sm"
+                      className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm"
                     >
                       <div className="p-4 flex items-start gap-3">
                         <div className="rounded-lg bg-gray-50 p-2">
-                          <IconComponent className="h-5 w-5 text-gray-700" />
+                          <IconComponent className="h-5 w-5 text-[#9A9F87]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-semibold text-gray-900 truncate">{item.service}</h3>
+                          <h3 className="text-sm font-semibold text-[#F5F5DC] truncate">{item.service}</h3>
                           <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1 ${statusConfig.className}`}>
                             {statusConfig.label}
                           </span>
@@ -183,11 +183,11 @@ export default function AdminSystemHealthPage() {
                       </div>
                       <div className="px-4 pb-4 space-y-1">
                         {item.latency && (
-                          <p className="text-xs text-gray-500">Latency: {item.latency}</p>
+                          <p className="text-xs text-[#9A9F87]">Latency: {item.latency}</p>
                         )}
-                        <p className="text-xs text-gray-500">Last checked: {formatTimestamp(item.last_checked)}</p>
+                        <p className="text-xs text-[#9A9F87]">Last checked: {formatTimestamp(item.last_checked)}</p>
                         {item.details && (
-                          <p className="text-xs text-gray-600 mt-2">{item.details}</p>
+                          <p className="text-xs text-[#9A9F87] mt-2">{item.details}</p>
                         )}
                       </div>
                     </div>
@@ -201,3 +201,5 @@ export default function AdminSystemHealthPage() {
     </div>
   )
 }
+
+

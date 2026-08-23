@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { ensureUserInDatabase } from '@/lib/auth-client'
 import { logAuditAction } from '@/lib/client/audit'
-import { Shield, BadgeCheck, UserCheck, Activity, ArrowLeft } from 'lucide-react'
+import ImageWithFallback from '@/components/ui/ImageWithFallback'
 import Link from 'next/link'
+import { ShieldCheck, ArrowLeft } from 'lucide-react'
 
 const MAX_FAILED_ATTEMPTS = 6
 
@@ -20,6 +20,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [branding, setBranding] = useState<{
     logo_url: string | null
+    department_logo_url: string | null
     login_background_url: string | null
     primary_color: string
     secondary_color: string
@@ -48,16 +49,17 @@ export default function LoginPage() {
         if (res.ok) {
           const { data } = await res.json()
           const root = document.documentElement
-          root.style.setProperty('--branding-primary', data.primary_color || '#0B3D91')
-          root.style.setProperty('--branding-secondary', data.secondary_color || '#1F6FEB')
-          root.style.setProperty('--branding-accent', data.accent_color || '#D4AF37')
+          root.style.setProperty('--branding-primary', data.primary_color || '#4B5320')
+          root.style.setProperty('--branding-secondary', data.secondary_color || '#556B2F')
+          root.style.setProperty('--branding-accent', data.accent_color || '#C8A646')
           setBranding({
             logo_url: data.logo_url,
+            department_logo_url: data.department_logo_url,
             login_background_url: data.login_background_url,
-            primary_color: data.primary_color || '#0B3D91',
-            secondary_color: data.secondary_color || '#1F6FEB',
-            accent_color: data.accent_color || '#D4AF37',
-            college_name: data.college_name || 'AFCSC Visitor Management',
+            primary_color: data.primary_color || '#4B5320',
+            secondary_color: data.secondary_color || '#556B2F',
+            accent_color: data.accent_color || '#C8A646',
+             college_name: data.college_name || 'Department of Land Warfare',
           })
         }
       } catch {
@@ -74,9 +76,11 @@ export default function LoginPage() {
 
     try {
       const supabase = createClient()
+      const normalizedEmail = email.trim().toLowerCase()
+      const loginPassword = password.trim()
       const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: normalizedEmail,
+        password: loginPassword,
       })
 
       if (authError || !data.user) {
@@ -101,6 +105,24 @@ export default function LoginPage() {
 
       if (data.user.user_metadata?.must_change_password) {
         window.location.href = '/change-password'
+        return
+      }
+
+      const { data: userRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', data.user.id)
+        .single()
+
+      const role = userRole?.role
+      if (role === 'PA_TO_CI') {
+        window.location.href = '/pa-ci'
+      } else if (role === 'PA_TO_DIRECTOR') {
+        window.location.href = '/pa-director'
+      } else if (role === 'Security') {
+        window.location.href = '/security'
+      } else if (role === 'Host Employee') {
+        window.location.href = '/host'
       } else {
         window.location.href = '/dashboard'
       }
@@ -111,109 +133,87 @@ export default function LoginPage() {
     }
   }
 
-  const primaryColor = branding?.primary_color || '#0B3D91'
-  const secondaryColor = branding?.secondary_color || '#1F6FEB'
-  const accentColor = branding?.accent_color || '#D4AF37'
+  const primaryColor = branding?.primary_color || '#4B5320'
+  const secondaryColor = branding?.secondary_color || '#556B2F'
+  const accentColor = branding?.accent_color || '#C8A646'
   const loginBg = branding?.login_background_url || '/images/afcsc-login.jpg'
-  const logoSrc = branding?.logo_url || '/images/afcsc-logo.png'
-  const collegeName = branding?.college_name || 'AFCSC Visitor Management'
+  const collegeName = branding?.college_name || 'Department of Land Warfare'
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen w-screen overflow-hidden">
-      <div className="relative w-full lg:w-1/2 h-[35vh] lg:h-full flex-shrink-0 group">
+    <div className="flex flex-col lg:flex-row h-screen w-screen overflow-hidden bg-[#0B0F08]">
+      <div className="relative w-full lg:w-1/2 h-[40vh] lg:h-full flex-shrink-0 group">
         <div
           className="absolute inset-0 z-10"
           style={{
-            background: 'linear-gradient(180deg, rgba(0,0,0,0.20) 0%, rgba(0,0,0,0.45) 55%, rgba(0,0,0,0.75) 100%)',
+            background: 'linear-gradient(180deg, rgba(11,15,8,0.25) 0%, rgba(11,15,8,0.65) 55%, rgba(11,15,8,0.92) 100%)',
           }}
         />
-        <Image
+        <img
           src={loginBg}
           alt={collegeName}
-          fill
-          priority
-          sizes="(max-width:768px) 100vw, 50vw"
-          className="object-cover transition-transform duration-[20s] ease-in-out group-hover:scale-105"
+          className="absolute inset-0 object-cover transition-transform duration-[20s] ease-in-out group-hover:scale-105"
         />
+        <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+          <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C8A646]/40 to-transparent animate-vms-scan-line" />
+        </div>
         <div className="absolute bottom-8 left-8 z-20 max-w-md hidden lg:block">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 drop-shadow-lg tracking-tight">
-            Visitor Management System
-          </h2>
-          <p className="text-lg text-white/90 drop-shadow-md">
-            {collegeName}
-          </p>
-          <p className="mt-4 text-sm text-white/80 leading-relaxed drop-shadow-md">
-            Secure visitor registration, approval,
-            badge issuance and access management.
-          </p>
-
-          <div className="mt-8 space-y-6">
-            <div className="flex items-center gap-3 text-white/90 text-lg">
-              <Shield className="w-5 h-5" style={{ color: accentColor }} />
-              <span>Secure Visitor Registration</span>
-            </div>
-            <div className="flex items-center gap-3 text-white/90 text-lg">
-              <BadgeCheck className="w-5 h-5" style={{ color: accentColor }} />
-              <span>Badge Management</span>
-            </div>
-            <div className="flex items-center gap-3 text-white/90 text-lg">
-              <UserCheck className="w-5 h-5" style={{ color: accentColor }} />
-              <span>Real-Time Check-In</span>
-            </div>
-            <div className="flex items-center gap-3 text-white/90 text-lg">
-              <Activity className="w-5 h-5" style={{ color: accentColor }} />
-              <span>Professional Visitor Tracking</span>
-            </div>
+          <div className="flex items-center gap-3 mb-2">
+            <ImageWithFallback
+              src={branding?.logo_url || '/images/afcsc-logo.png'}
+              alt="Armed Forces Command and Staff College Logo"
+              className="h-10 w-10 object-contain"
+            />
+            <ImageWithFallback
+              src="/images/army logo.png"
+              alt="Army Logo"
+              className="h-10 w-10 object-contain"
+            />
           </div>
+          <h2 className="text-2xl font-bold text-white mb-1 drop-shadow-lg tracking-tight">
+            Visitors Management System
+          </h2>
+          <p className="text-sm text-white/80 leading-relaxed drop-shadow-md">
+            Secure Visitor Registration &amp; Access Management
+          </p>
         </div>
       </div>
 
       <div
-        className="relative w-full lg:w-1/2 flex-1 lg:h-full flex flex-col justify-start lg:justify-center px-5 lg:px-16 xl:px-24 overflow-y-auto"
-        style={{
-          background: 'rgba(255,255,255,.75)',
-          backdropFilter: 'blur(18px)',
-          borderLeft: '1px solid rgba(255,255,255,.35)',
-        }}
+        className="relative w-full lg:w-1/2 flex-1 lg:h-full flex flex-col justify-start lg:justify-center px-6 lg:px-10 xl:px-12 overflow-y-auto bg-[#0B0F08]"
       >
         <Link
           href="/"
           aria-label="Back to Home"
-          className="absolute top-6 left-6 z-50 flex items-center gap-2 h-11 px-4 rounded-xl bg-white border border-gray-300 text-gray-700 text-sm font-medium transition-colors duration-200 hover:bg-gray-50 hover:border-gray-400"
+          className="absolute top-6 left-6 z-50 flex items-center gap-2 h-10 px-4 rounded-xl border border-[rgba(85,107,47,0.5)] bg-[#10150D] text-[#9A9F87] text-sm font-medium transition-colors duration-200 hover:bg-[#4B5320]/10 hover:border-[#C8A646]/40 hover:text-[#F5F5DC]"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Home
         </Link>
 
-        <div className="mx-auto w-full max-w-[460px]">
-          <div className="text-center mb-8 lg:mb-12">
-            <Image
-              src={logoSrc}
-              alt={collegeName}
-              width={115}
-              height={115}
-              priority
-              className="mx-auto object-contain mt-8 lg:mt-14"
-            />
-            <h1 className="text-3xl lg:text-4xl font-bold mt-2 mb-3" style={{ color: primaryColor }}>
-              Welcome Back
+        <div className="mx-auto w-full max-w-[420px]">
+          <div className="text-center mb-6">
+            <h1 className="text-2xl lg:text-3xl font-bold mt-2 mb-1 text-[#F5F5DC]">
+              VMS
             </h1>
-            <p className="text-gray-600 text-base lg:text-lg">
-              Sign in to the Visitor Management System
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#C8A646]">
+                Visitors Management System
+              </p>
+            <p className="text-[#9A9F87] text-sm mt-2">
+              Sign in to continue
             </p>
           </div>
 
-          <div className="h-px w-full bg-gray-300/40 my-6 lg:my-8" />
+          <div className="h-px w-full bg-[rgba(85,107,47,0.35)] my-4" />
 
           {error && (
-            <div className="mb-6 lg:mb-8 rounded-xl bg-red-50 border border-red-100 p-4 text-sm text-red-700" role="alert">
+            <div className="mb-4 rounded-xl border border-[#8B3A3A]/40 bg-[#8B3A3A]/10 p-4 text-sm text-[#F5F5DC]" role="alert">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="w-full space-y-6 lg:space-y-8">
+          <form onSubmit={handleLogin} className="w-full space-y-4 lg:space-y-5">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-3">
+              <label htmlFor="email" className="block text-sm font-medium text-[#9A9F87] mb-2">
                 Email Address
               </label>
               <input
@@ -225,16 +225,15 @@ export default function LoginPage() {
                 autoComplete="email"
                 aria-label="Email address"
                 placeholder="Enter your email"
-                className="w-full h-14 rounded-xl border border-gray-300 bg-white px-4 text-black placeholder:text-gray-400 transition-all duration-200 hover:border-gray-400 focus:outline-none focus:ring-2 text-base"
+                className="w-full h-12 rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] px-4 text-[#F5F5DC] placeholder:text-[#6B705A] transition-all duration-200 hover:border-[#C8A646]/40 focus:outline-none focus:ring-2 text-base"
                 style={{
-                  borderColor: undefined,
                   '--tw-ring-color': `${secondaryColor}33`,
                 } as React.CSSProperties}
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-3">
+              <label htmlFor="password" className="block text-sm font-medium text-[#9A9F87] mb-2">
                 Password
               </label>
               <div className="relative">
@@ -247,7 +246,7 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   aria-label="Password"
                   placeholder="Enter your password"
-                  className="w-full h-14 rounded-xl border border-gray-300 bg-white px-4 pr-12 text-black placeholder:text-gray-400 transition-all duration-200 hover:border-gray-400 focus:outline-none focus:ring-2 text-base"
+                  className="w-full h-12 rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] px-4 pr-12 text-[#F5F5DC] placeholder:text-[#6B705A] transition-all duration-200 hover:border-[#C8A646]/40 focus:outline-none focus:ring-2 text-base"
                   style={{
                     '--tw-ring-color': `${secondaryColor}33`,
                   } as React.CSSProperties}
@@ -257,7 +256,7 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   tabIndex={-1}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9A9F87] hover:text-[#F5F5DC] transition-colors duration-200">
                   {showPassword ? (
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M17.94 17.94A10.45 10.45 0 0 1 12 20c-3.35 0-6.37-1.3-8.7-3.56a17.2 17.2 0 0 1-2.59-2.46 1 1 0 0 1 0-1.28 17.2 17.2 0 0 1 2.59-2.46A10.45 10.45 0 0 1 12 4c1.5 0 2.9.4 4.06 1.07" />
@@ -274,24 +273,24 @@ export default function LoginPage() {
               </div>
 
               <div className="mt-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <input
                     id="rememberDevice"
                     type="checkbox"
                     checked={rememberDevice}
                     onChange={(e) => setRememberDevice(e.target.checked)}
-                    className="h-5 w-5 rounded border-gray-300 focus:ring-2 transition-colors duration-200"
+                    className="h-5 w-5 rounded border-[rgba(85,107,47,0.35)] focus:ring-2 transition-colors duration-200 bg-[#10150D]"
                     style={{ color: primaryColor, accentColor: primaryColor }}
                     aria-label="Remember this device"
                   />
-                  <label htmlFor="rememberDevice" className="text-sm text-gray-700">
+                  <label htmlFor="rememberDevice" className="text-sm text-[#9A9F87]">
                     Remember Me
                   </label>
                 </div>
                 <a
                   href="/forgot-password"
                   className="text-sm hover:underline transition-colors duration-200"
-                  style={{ color: primaryColor }}
+                  style={{ color: accentColor }}
                   aria-label="Forgot password"
                 >
                   Forgot Password?
@@ -299,12 +298,12 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="mt-8">
+            <div className="mt-6">
               <button
                 type="submit"
                 disabled={loading}
                 aria-label="Sign in"
-                className="group flex w-full justify-center items-center gap-2 h-14 rounded-xl px-4 text-sm font-medium text-white transition-all duration-200 hover:brightness-105 hover:translate-y-[-2px] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                className="group flex w-full justify-center items-center gap-2 h-12 rounded-xl px-4 text-sm font-medium text-[#0B0F08] transition-all duration-200 hover:brightness-110 hover:translate-y-[-2px] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                 style={{
                   background: `linear-gradient(to bottom, ${secondaryColor}, ${primaryColor})`,
                   boxShadow: `0 10px 25px ${primaryColor}33`,
@@ -327,25 +326,37 @@ export default function LoginPage() {
             </div>
           </form>
 
-          <div className="my-6 lg:my-8 flex items-center">
-            <div className="flex-1 border-t border-gray-300"></div>
-            <span className="px-4 text-xs text-gray-500">Or</span>
-            <div className="flex-1 border-t border-gray-300"></div>
+          <div className="my-4 flex items-center">
+            <div className="flex-1 border-t border-[rgba(85,107,47,0.35)]" />
+            <span className="px-4 text-xs text-[#9A9F87]">Or</span>
+            <div className="flex-1 border-t border-[rgba(85,107,47,0.35)]" />
           </div>
 
-          <div className="text-center text-sm text-gray-600">
+          <div className="text-center text-sm text-[#9A9F87]">
             <p>Need help?</p>
             <a
               href="mailto:it-support@afcsc.edu.ng"
               className="hover:underline transition-colors duration-200"
-              style={{ color: primaryColor }}
+              style={{ color: accentColor }}
               aria-label="Contact system administrator"
             >
               Contact the System Administrator
             </a>
+          </div>
+
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-[#C8A646]" />
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9A9F87]">
+              Secure Access Only
+            </span>
+            <span className="relative flex h-2 w-2">
+              <span className="animate-vms-subtle-pulse absolute inline-flex h-full w-full rounded-full bg-[#4B5320] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6B8E23]" />
+            </span>
           </div>
         </div>
       </div>
     </div>
   )
 }
+

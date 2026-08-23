@@ -1,7 +1,7 @@
 import type { Notification } from '@/lib/types/notification'
 import { getAuthHeaders } from '@/lib/client/api'
 
-export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'visitor' | 'appointment' | 'employee' | 'system' | 'watchlist_match' | 'watchlist_added' | 'watchlist_updated' | 'watchlist_override'
+export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'visitor' | 'employee' | 'system' | 'watchlist_match' | 'watchlist_added' | 'watchlist_updated' | 'watchlist_override'
 
 export type { Notification }
 

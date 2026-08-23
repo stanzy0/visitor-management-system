@@ -102,19 +102,19 @@ export default function ErrorCenterPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Error Center</h1>
-            <p className="text-sm text-gray-500">Track and resolve system errors</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Error Center</h1>
+            <p className="text-sm text-[#9A9F87]">Track and resolve system errors</p>
           </div>
           <div className="flex items-center gap-3">
             <select
@@ -126,7 +126,7 @@ export default function ErrorCenterPage() {
               <option value="unresolved">Unresolved</option>
               <option value="resolved">Resolved</option>
             </select>
-            <button onClick={fetchErrors} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <button onClick={fetchErrors} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
               <RefreshCw className="h-4 w-4" />
               Refresh
             </button>
@@ -135,29 +135,29 @@ export default function ErrorCenterPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-medium text-gray-500">Total Errors</p>
-            <p className="mt-2 text-2xl font-bold text-gray-900">{errors.length}</p>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
+            <p className="text-sm font-medium text-[#9A9F87]">Total Errors</p>
+            <p className="mt-2 text-2xl font-bold text-[#F5F5DC]">{errors.length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-medium text-gray-500">Unresolved</p>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
+            <p className="text-sm font-medium text-[#9A9F87]">Unresolved</p>
             <p className="mt-2 text-2xl font-bold text-red-600">{errors.filter(e => !e.resolved).length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-medium text-gray-500">Critical</p>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
+            <p className="text-sm font-medium text-[#9A9F87]">Critical</p>
             <p className="mt-2 text-2xl font-bold text-red-600">{errors.filter(e => e.severity === 'critical').length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-            <p className="text-sm font-medium text-gray-500">Modules Affected</p>
-            <p className="mt-2 text-2xl font-bold text-gray-900">{Object.keys(moduleCounts).length}</p>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
+            <p className="text-sm font-medium text-[#9A9F87]">Modules Affected</p>
+            <p className="mt-2 text-2xl font-bold text-[#F5F5DC]">{Object.keys(moduleCounts).length}</p>
           </div>
         </div>
 
         {/* Errors by Module Chart */}
         {Object.keys(moduleCounts).length > 0 && (
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Errors by Module</h3>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+            <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+              <h3 className="text-lg font-semibold text-[#F5F5DC]">Errors by Module</h3>
             </div>
             <div className="p-4">
               <ResponsiveContainer width="100%" height={250}>
@@ -174,33 +174,33 @@ export default function ErrorCenterPage() {
         )}
 
         {/* Errors List */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Error List</h3>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+            <h3 className="text-lg font-semibold text-[#F5F5DC]">Error List</h3>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-[rgba(85,107,47,0.25)]">
             {errors.length === 0 && (
-              <div className="p-8 text-center text-gray-500">No errors found</div>
+              <div className="p-8 text-center text-[#9A9F87]">No errors found</div>
             )}
             {errors.map((error) => (
-              <div key={error.id} className="p-4 hover:bg-gray-50">
+              <div key={error.id} className="p-4 hover:bg-[#4B5320]/10">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${severityColors[error.severity] || 'bg-gray-100 text-gray-800'}`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${severityColors[error.severity] || 'bg-gray-100 text-[#F5F5DC]'}`}>
                         {error.severity}
                       </span>
-                      <span className="text-sm font-medium text-gray-900">{error.module}</span>
-                      <span className="text-xs text-gray-500">{error.error_type}</span>
+                      <span className="text-sm font-medium text-[#F5F5DC]">{error.module}</span>
+                      <span className="text-xs text-[#9A9F87]">{error.error_type}</span>
                     </div>
-                    <p className="text-sm text-gray-700 mt-1">{error.message}</p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-sm text-[#9A9F87] mt-1">{error.message}</p>
+                    <p className="text-xs text-[#9A9F87] mt-1">
                       {new Date(error.created_at).toLocaleString()}
                       {error.user_email && ` | ${error.user_email}`}
                     </p>
                     {error.stack_trace && (
                       <details className="mt-2">
-                        <summary className="text-xs text-gray-500 cursor-pointer">Stack Trace</summary>
+                        <summary className="text-xs text-[#9A9F87] cursor-pointer">Stack Trace</summary>
                         <pre className="mt-1 text-xs bg-gray-100 p-2 rounded overflow-x-auto">{error.stack_trace}</pre>
                       </details>
                     )}
@@ -223,3 +223,5 @@ export default function ErrorCenterPage() {
     </div>
   )
 }
+
+

@@ -152,19 +152,19 @@ export default function SystemLogsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">System Logs</h1>
-            <p className="text-sm text-gray-500">Searchable system activity logs</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">System Logs</h1>
+            <p className="text-sm text-[#9A9F87]">Searchable system activity logs</p>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={exportPDF} disabled={exporting} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
@@ -175,7 +175,7 @@ export default function SystemLogsPage() {
               <Download className="h-4 w-4" />
               CSV
             </button>
-            <button onClick={fetchLogs} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <button onClick={fetchLogs} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
               <RefreshCw className="h-4 w-4" />
               Refresh
             </button>
@@ -183,10 +183,10 @@ export default function SystemLogsPage() {
         </div>
 
         {/* Filters */}
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Module</label>
+              <label className="block text-sm font-medium text-[#9A9F87] mb-1">Module</label>
               <input
                 type="text"
                 value={filters.module}
@@ -196,7 +196,7 @@ export default function SystemLogsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+              <label className="block text-sm font-medium text-[#9A9F87] mb-1">Severity</label>
               <select
                 value={filters.severity}
                 onChange={(e) => setFilters({ ...filters, severity: e.target.value })}
@@ -210,7 +210,7 @@ export default function SystemLogsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">User</label>
+              <label className="block text-sm font-medium text-[#9A9F87] mb-1">User</label>
               <input
                 type="text"
                 value={filters.user_email}
@@ -220,7 +220,7 @@ export default function SystemLogsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date From</label>
+              <label className="block text-sm font-medium text-[#9A9F87] mb-1">Date From</label>
               <input
                 type="date"
                 value={filters.date_from}
@@ -229,7 +229,7 @@ export default function SystemLogsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date To</label>
+              <label className="block text-sm font-medium text-[#9A9F87] mb-1">Date To</label>
               <input
                 type="date"
                 value={filters.date_to}
@@ -238,7 +238,7 @@ export default function SystemLogsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Action</label>
+              <label className="block text-sm font-medium text-[#9A9F87] mb-1">Action</label>
               <input
                 type="text"
                 value={filters.action}
@@ -251,38 +251,38 @@ export default function SystemLogsPage() {
         </div>
 
         {/* Logs Table */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Logs ({logs.length})</h3>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+            <h3 className="text-lg font-semibold text-[#F5F5DC]">Logs ({logs.length})</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Time</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Module</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Severity</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Action</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Description</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">User</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Time</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Module</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Severity</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Action</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Description</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">User</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {logs.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">No logs found</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-[#9A9F87]">No logs found</td></tr>
                 )}
                 {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{log.created_at ? new Date(log.created_at).toLocaleString() : '—'}</td>
-                    <td className="px-4 py-3 text-gray-900 font-medium">{log.module}</td>
+                  <tr key={log.id} className="hover:bg-[#4B5320]/10">
+                    <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">{log.created_at ? new Date(log.created_at).toLocaleString() : '—'}</td>
+                    <td className="px-4 py-3 text-[#F5F5DC] font-medium">{log.module}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${severityColors[log.severity] || 'bg-gray-100 text-gray-800'}`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${severityColors[log.severity] || 'bg-gray-100 text-[#F5F5DC]'}`}>
                         {log.severity}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{log.action}</td>
-                    <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{log.description}</td>
-                    <td className="px-4 py-3 text-gray-600">{log.user_email || 'N/A'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{log.action}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] max-w-xs truncate">{log.description}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{log.user_email || 'N/A'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -293,3 +293,5 @@ export default function SystemLogsPage() {
     </div>
   )
 }
+
+

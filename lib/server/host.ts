@@ -10,11 +10,10 @@ export async function getHostDashboardStats(employeeId: string): Promise<HostDas
   const today = new Date().toISOString().split('T')[0]
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
 
-  const [visitorsToday, pendingApprovals, currentVisitors, upcomingAppointments, monthlyVisitors, invitationsSent] = await Promise.all([
+  const [visitorsToday, pendingApprovals, currentVisitors, monthlyVisitors, invitationsSent] = await Promise.all([
     supabaseAdmin.from('visits').select('id', { count: 'exact', head: true }).eq('employee_id', employeeId).gte('created_at', today),
     supabaseAdmin.from('visits').select('id', { count: 'exact', head: true }).eq('employee_id', employeeId).eq('status', 'pending'),
     supabaseAdmin.from('visits').select('id', { count: 'exact', head: true }).eq('employee_id', employeeId).eq('status', 'checked_in'),
-    supabaseAdmin.from('appointments').select('id', { count: 'exact', head: true }).eq('employee_id', employeeId).gte('appointment_date', today).eq('status', 'Scheduled'),
     supabaseAdmin.from('visits').select('id', { count: 'exact', head: true }).eq('employee_id', employeeId).gte('created_at', monthStart),
     supabaseAdmin.from('invitations').select('id', { count: 'exact', head: true }).eq('employee_id', employeeId).gte('created_at', monthStart),
   ])
@@ -23,7 +22,6 @@ export async function getHostDashboardStats(employeeId: string): Promise<HostDas
     visitorsExpectedToday: visitorsToday.count ?? 0,
     pendingApprovals: pendingApprovals.count ?? 0,
     currentVisitors: currentVisitors.count ?? 0,
-    upcomingAppointments: upcomingAppointments.count ?? 0,
     monthlyVisitors: monthlyVisitors.count ?? 0,
     invitationsSent: invitationsSent.count ?? 0,
   }
@@ -175,105 +173,6 @@ export async function rejectVisitor(visitId: string, employeeId: string, reason:
   await logAuditAction('Visitor Rejected by Host', 'visit', visitId, `Host rejected visit ${visitId}. Reason: ${reason}`)
 
   return updated
-}
-
-export async function getHostAppointments(employeeId: string): Promise<Record<string, unknown>[]> {
-  if (!supabaseAdmin) throw new Error('Service role key not configured')
-
-  const { data, error } = await supabaseAdmin
-    .from('appointments')
-    .select('*, visitor:visitors(*)')
-    .eq('employee_id', employeeId)
-    .order('appointment_date', { ascending: true })
-    .order('appointment_time', { ascending: true })
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  return data || []
-}
-
-export async function createHostAppointment(employeeId: string, data: Record<string, unknown>): Promise<Record<string, unknown>> {
-  if (!supabaseAdmin) throw new Error('Service role key not configured')
-
-  const appointmentNumber = `APT-${Date.now().toString(36).toUpperCase()}`
-
-  const { data: appointment, error } = await supabaseAdmin
-    .from('appointments')
-    .insert({
-      ...data,
-      employee_id: employeeId,
-      appointment_number: appointmentNumber,
-      status: 'Scheduled',
-      created_by: employeeId,
-    })
-    .select()
-    .single()
-
-  if (error || !appointment) {
-    throw new Error(error?.message || 'Failed to create appointment')
-  }
-
-  await logAuditAction('Appointment Created by Host', 'appointment', appointment.id, `Host created appointment ${appointment.appointment_number}`)
-
-  return appointment
-}
-
-export async function updateHostAppointment(id: string, employeeId: string, updates: Record<string, unknown>): Promise<Record<string, unknown>> {
-  if (!supabaseAdmin) throw new Error('Service role key not configured')
-
-  const { data: appointment, error: fetchError } = await supabaseAdmin
-    .from('appointments')
-    .select('id')
-    .eq('id', id)
-    .eq('employee_id', employeeId)
-    .single()
-
-  if (fetchError || !appointment) {
-    throw new Error('Appointment not found or access denied')
-  }
-
-  const { data: updated, error: updateError } = await supabaseAdmin
-    .from('appointments')
-    .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single()
-
-  if (updateError || !updated) {
-    throw new Error(updateError?.message || 'Failed to update appointment')
-  }
-
-  await logAuditAction('Appointment Updated by Host', 'appointment', id, `Host updated appointment ${id}`)
-
-  return updated
-}
-
-export async function deleteHostAppointment(id: string, employeeId: string): Promise<void> {
-  if (!supabaseAdmin) throw new Error('Service role key not configured')
-
-  const { error: fetchError } = await supabaseAdmin
-    .from('appointments')
-    .select('id')
-    .eq('id', id)
-    .eq('employee_id', employeeId)
-    .single()
-
-  if (fetchError) {
-    throw new Error('Appointment not found or access denied')
-  }
-
-  const { error } = await supabaseAdmin
-    .from('appointments')
-    .delete()
-    .eq('id', id)
-
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  await logAuditAction('Appointment Cancelled by Host', 'appointment', id, `Host cancelled appointment ${id}`)
 }
 
 export async function getHostInvitations(employeeId: string): Promise<Record<string, unknown>[]> {

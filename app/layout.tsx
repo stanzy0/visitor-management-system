@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VMS Admin - Visitor Management System",
+  title: "VMS Admin - Visitors Management System",
   description: "Admin dashboard for visitor management system",
 };
 

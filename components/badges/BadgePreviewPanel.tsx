@@ -251,18 +251,6 @@ export default function BadgePreviewPanel({
                   <p className="text-xs text-gray-500">Arrival Time</p>
                   <p className="text-sm font-medium text-gray-900">{visit.arrival_time || '—'}</p>
                 </div>
-                {visit.appointment && (
-                  <>
-                    <div>
-                      <p className="text-xs text-gray-500">Appointment Date</p>
-                      <p className="text-sm font-medium text-gray-900">{visit.appointment.appointment_date || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500">Appointment Time</p>
-                      <p className="text-sm font-medium text-gray-900">{visit.appointment.appointment_time || '—'}</p>
-                    </div>
-                  </>
-                )}
               </div>
             </div>
 

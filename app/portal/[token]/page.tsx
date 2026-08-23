@@ -370,17 +370,6 @@ export default function PortalDashboardPage() {
           </div>
         )}
 
-        {visit.appointment && (
-          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Appointment</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><p className="text-sm text-gray-500">Date</p><p className="text-sm font-medium text-gray-900">{visit.appointment.appointment_date}</p></div>
-              <div><p className="text-sm text-gray-500">Time</p><p className="text-sm font-medium text-gray-900">{visit.appointment.appointment_time || 'TBD'}</p></div>
-              <div><p className="text-sm text-gray-500">Expected Duration</p><p className="text-sm font-medium text-gray-900">{visit.appointment.expected_arrival || 'N/A'}</p></div>
-              <div><p className="text-sm text-gray-500">Purpose</p><p className="text-sm font-medium text-gray-900">{visit.appointment.purpose || 'N/A'}</p></div>
-            </div>
-          </div>
-        )}
 
         {visit.employee && (
           <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-6">

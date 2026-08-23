@@ -142,7 +142,6 @@ export async function DELETE(
       return NextResponse.json({ success: false, message: 'Employee not found', error: 'Not found' }, { status: 404 })
     }
 
-    await supabaseAdmin.from('appointments').delete().eq('employee_id', id)
     await supabaseAdmin.from('visits').delete().eq('employee_id', id)
     await supabaseAdmin.from('visitor_invitations').delete().eq('host_employee_id', id)
     await supabaseAdmin.from('property_items').delete().eq('employee_id', id)

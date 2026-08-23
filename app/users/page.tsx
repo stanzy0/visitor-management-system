@@ -1,14 +1,18 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { supabase } from '@/lib/supabase'
-import { getCurrentUser, UserWithRole, UserRole } from '@/lib/auth-client'
-import { logAuditAction } from '@/lib/client/audit'
-import { Search, Plus, Edit, Trash2, X, Loader2, Users } from 'lucide-react'
+  import { useState, useEffect, useRef } from 'react'
+  import { supabase } from '@/lib/supabase'
+  import { getCurrentUser, UserWithRole, UserRole } from '@/lib/auth-client'
+  import { logAuditAction } from '@/lib/client/audit'
+  import { getAuthHeaders } from '@/lib/client/api'
+  import { getCiEmployees, getDirectors } from '@/lib/client/employees'
+  import type { Employee } from '@/lib/types/employee'
+  import SearchableCombobox from '@/components/ui/SearchableCombobox'
+  import { Search, Plus, Edit, Trash2, X, Loader2, Users } from 'lucide-react'
 
-const inputClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
-const selectClasses = "rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+const inputClasses = "w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-[#10150D] text-black placeholder:text-[#9A9F87] focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+const selectClasses = "rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
 
 export default function UsersPage() {
   const [users, setUsers] = useState<Array<UserWithRole & { user_id: string }>>([])
@@ -19,13 +23,30 @@ export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState('all')
   const [modalOpen, setModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<(UserWithRole & { user_id: string }) | null>(null)
-  const [formData, setFormData] = useState({ email: '', full_name: '', role: 'Receptionist' as UserRole })
+  const [formData, setFormData] = useState({ email: '', full_name: '', role: 'Receptionist' as UserRole, assigned_host_id: '' as string, assigned_director_id: '' as string })
+  const [mustChangePassword, setMustChangePassword] = useState(true)
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-  const [tempPassword, setTempPassword] = useState<string | null>(null)
-  const [tempPasswordEmail, setTempPasswordEmail] = useState<string | null>(null)
-  const [resetPasswordUserId, setResetPasswordUserId] = useState<string | null>(null)
+  const [credentials, setCredentials] = useState<{ name: string; email: string; role: string; tempPassword: string; assignedHost?: string } | null>(null)
+  const [ciEmployees, setCiEmployees] = useState<Employee[]>([])
+  const [ciEmployeesLoading, setCiEmployeesLoading] = useState(false)
+  const [directors, setDirectors] = useState<Employee[]>([])
+  const [directorsLoading, setDirectorsLoading] = useState(false)
+  const [hostAssignments, setHostAssignments] = useState<Record<string, { full_name: string | null; position: string | null; department: string | null }>>({})
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
+
+  const ciEmployeeOptions = ciEmployees.map(emp => ({
+    value: emp.id,
+    label: emp.full_name || 'Unnamed Employee',
+    description: emp.position ? `${emp.position}${emp.department ? ' | ' + emp.department : ''}` : emp.department || undefined,
+  }))
+
+  const directorOptions = directors.map(emp => ({
+    value: emp.id,
+    label: emp.full_name || 'Unnamed Employee',
+    description: emp.position ? `${emp.position}${emp.department ? ' | ' + emp.department : ''}` : emp.department || undefined,
+  }))
 
   function showNotification(type: 'success' | 'error', message: string) {
     setNotification({ type, message })
@@ -66,12 +87,46 @@ export default function UsersPage() {
       showNotification('error', error.message)
     } else {
       setUsers(data || [])
+      fetchHostAssignments((data || []).map(u => u.user_id))
     }
     setLoading(false)
   }
 
+  function validateForm(): boolean {
+    const errors: Record<string, string> = {}
+
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required'
+    }
+
+    if (!formData.full_name.trim()) {
+      errors.full_name = 'Full Name is required'
+    }
+
+    if (!formData.role) {
+      errors.role = 'Role is required'
+    }
+
+    if (formData.role === 'PA_TO_CI' && !formData.assigned_host_id) {
+      errors.assigned_host_id = 'Please assign a CI for this PA user'
+    }
+
+    if (formData.role === 'PA_TO_DIRECTOR' && !formData.assigned_director_id) {
+      errors.assigned_director_id = 'Please assign a Director for this PA user'
+    }
+
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setCredentials(null)
+
+    if (!validateForm()) {
+      return
+    }
+
     setSubmitting(true)
 
     try {
@@ -84,6 +139,8 @@ export default function UsersPage() {
             email: formData.email,
             full_name: formData.full_name,
             role: formData.role,
+            assigned_host_id: formData.role === 'PA_TO_CI' ? formData.assigned_host_id || undefined : undefined,
+            assigned_director_id: formData.role === 'PA_TO_DIRECTOR' ? formData.assigned_director_id || undefined : undefined,
           }),
         })
 
@@ -92,11 +149,11 @@ export default function UsersPage() {
         if (!res.ok) {
           showNotification('error', data.error || 'Failed to update user')
         } else {
-          logAuditAction('Role Changed', 'user', editingUser.user_id, `${formData.email} assigned ${formData.role} role`)
+          logAuditAction('User Updated', 'user', editingUser.user_id, `${formData.email} updated with ${formData.role} role`)
           showNotification('success', 'User updated successfully')
           setModalOpen(false)
           setEditingUser(null)
-          setFormData({ email: '', full_name: '', role: 'Receptionist' })
+          resetForm()
           fetchUsers()
         }
       } else {
@@ -107,6 +164,9 @@ export default function UsersPage() {
             email: formData.email,
             full_name: formData.full_name,
             role: formData.role,
+            must_change_password: mustChangePassword,
+            assigned_host_id: formData.role === 'PA_TO_CI' ? formData.assigned_host_id || undefined : undefined,
+            assigned_director_id: formData.role === 'PA_TO_DIRECTOR' ? formData.assigned_director_id || undefined : undefined,
           }),
         })
 
@@ -115,14 +175,21 @@ export default function UsersPage() {
         if (!res.ok) {
           showNotification('error', data.error || 'Failed to create user')
         } else {
-          logAuditAction('Role Assigned', 'user', data.user?.user_id || null, `${formData.email} assigned ${formData.role} role`)
-          showNotification('success', `User added successfully`)
-          setTempPassword(data.tempPassword)
-          setTempPasswordEmail(formData.email)
-          setResetPasswordUserId(data.user?.user_id)
-          setModalOpen(false)
-          setEditingUser(null)
-          setFormData({ email: '', full_name: '', role: 'Receptionist' })
+          const assignedHost = formData.role === 'PA_TO_CI'
+            ? ciEmployees.find(e => e.id === formData.assigned_host_id)?.full_name
+            : formData.role === 'PA_TO_DIRECTOR'
+              ? directors.find(e => e.id === formData.assigned_director_id)?.full_name
+              : undefined
+
+          setCredentials({
+            name: formData.full_name,
+            email: formData.email,
+            role: formData.role,
+            tempPassword: data.temporary_password,
+            assignedHost,
+          })
+          logAuditAction('User Created', 'user', data.user?.user_id || null, `Created user ${formData.email} with ${formData.role} role`)
+          showNotification('success', 'User created successfully')
           fetchUsers()
         }
       }
@@ -133,9 +200,53 @@ export default function UsersPage() {
     }
   }
 
+  function resetForm() {
+    setFormData({ email: '', full_name: '', role: 'Receptionist', assigned_host_id: '', assigned_director_id: '' })
+    setMustChangePassword(true)
+    setValidationErrors({})
+    setCredentials(null)
+  }
+
   function handleEdit(user: UserWithRole & { user_id: string }) {
     setEditingUser(user)
-    setFormData({ email: user.email, full_name: user.full_name || '', role: user.role })
+    fetchCiEmployees()
+    fetchDirectors()
+
+    const loadAssignment = async () => {
+      try {
+        const { data: assignment } = await supabase
+          .from('user_host_assignments')
+          .select('employee_id')
+          .eq('user_id', user.user_id)
+          .single()
+
+        const assignedEmployeeId = assignment?.employee_id || ''
+
+        if (user.role === 'PA_TO_CI') {
+          setFormData({
+            email: user.email,
+            full_name: user.full_name || '',
+            role: user.role,
+            assigned_host_id: assignedEmployeeId,
+            assigned_director_id: '',
+          })
+        } else if (user.role === 'PA_TO_DIRECTOR') {
+          setFormData({
+            email: user.email,
+            full_name: user.full_name || '',
+            role: user.role,
+            assigned_host_id: '',
+            assigned_director_id: assignedEmployeeId,
+          })
+        } else {
+          setFormData({ email: user.email, full_name: user.full_name || '', role: user.role, assigned_host_id: '', assigned_director_id: '' })
+        }
+      } catch {
+        setFormData({ email: user.email, full_name: user.full_name || '', role: user.role, assigned_host_id: '', assigned_director_id: '' })
+      }
+    }
+
+    loadAssignment()
     setModalOpen(true)
   }
 
@@ -166,16 +277,46 @@ export default function UsersPage() {
     }
   }
 
-  async function fetchEmailStatus() {
+  async function fetchCiEmployees() {
+    setCiEmployeesLoading(true)
     try {
-      const res = await fetch('/api/admin/email-status')
-      const data = await res.json()
-      if (data.configured) {
-        setTempPassword(data.temporaryPassword || null)
-        setResetPasswordUserId(data.userId || null)
-      }
-    } catch {
-      console.error('Failed to fetch email status')
+      const employees = await getCiEmployees()
+      setCiEmployees(employees)
+    } catch (err) {
+      console.error('Failed to fetch CI employees:', err)
+    } finally {
+      setCiEmployeesLoading(false)
+    }
+  }
+
+  async function fetchDirectors() {
+    setDirectorsLoading(true)
+    try {
+      const directorList = await getDirectors()
+      setDirectors(directorList)
+    } catch (err) {
+      console.error('Failed to fetch Director employees:', err)
+    } finally {
+      setDirectorsLoading(false)
+    }
+  }
+
+  async function fetchHostAssignments(userIds: string[]) {
+    if (userIds.length === 0) return
+
+    try {
+      const { data: assignments } = await supabase
+        .from('user_host_assignments')
+        .select('user_id, employee:employees(full_name, position, department)')
+        .in('user_id', userIds)
+
+      const map: Record<string, { full_name: string | null; position: string | null; department: string | null }> = {}
+      ;(assignments || []).forEach((a: any) => {
+        map[a.user_id] = a.employee || { full_name: null, position: null, department: null }
+      })
+      setHostAssignments(map)
+    } catch (err) {
+      console.error('Failed to fetch host assignments:', err)
     }
   }
 
@@ -198,7 +339,6 @@ export default function UsersPage() {
       setUserRole(user.role)
       fetchUsers()
       setupRealtime()
-      fetchEmailStatus()
     }
     checkAuth()
 
@@ -218,19 +358,19 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <a href="/dashboard" className="text-sm text-blue-600 hover:underline">
               ← Back to Dashboard
             </a>
-            <h1 className="text-2xl font-bold text-gray-900 mt-2">User Management</h1>
+            <h1 className="text-2xl font-bold text-[#F5F5DC] mt-2">User Management</h1>
           </div>
           <button
             onClick={() => {
               setEditingUser(null)
-              setFormData({ email: '', full_name: '', role: 'Receptionist' })
+              resetForm()
               setModalOpen(true)
             }}
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
@@ -251,17 +391,19 @@ export default function UsersPage() {
               className={searchInputClasses}
             />
           </div>
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className={selectClasses}
-          >
-            <option value="all">All Roles</option>
-            <option value="Admin">Admin</option>
-            <option value="Receptionist">Receptionist</option>
-            <option value="Security">Security</option>
-            <option value="Host Employee">Host Employee</option>
-          </select>
+                    <select
+                      value={roleFilter}
+                      onChange={(e) => setRoleFilter(e.target.value)}
+                      className={selectClasses}
+                    >
+                      <option value="all">All Roles</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Receptionist">Receptionist</option>
+                      <option value="Security">Security</option>
+                      <option value="Host Employee">Host Employee</option>
+                      <option value="PA_TO_DIRECTOR">PA to Director</option>
+                      <option value="PA_TO_CI">PA to CI</option>
+                    </select>
         </div>
 
         {notification && (
@@ -274,104 +416,91 @@ export default function UsersPage() {
           </div>
         )}
 
-        {tempPassword && (
-          <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
-            <h3 className="text-sm font-semibold text-yellow-800">Temporary Credentials</h3>
-            <p className="mt-1 text-sm text-yellow-700">
-              Email: <span className="font-mono">{tempPasswordEmail}</span>
-            </p>
-            <p className="mt-1 text-sm text-yellow-700">
-              Temporary Password: <span className="font-mono font-bold">{tempPassword}</span>
-            </p>
-            <p className="mt-2 text-xs text-yellow-600">
-              Share this password securely with the user. They must change it on first login.
-            </p>
-            <button
-              onClick={() => { setTempPassword(null); setTempPasswordEmail(null); setResetPasswordUserId(null) }}
-              className="mt-3 rounded-lg bg-yellow-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-yellow-700"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
           <div className="overflow-x-auto">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
               </div>
             ) : (
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 font-semibold text-gray-700">Name</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Email</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Role</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Created</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700 w-24">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {filteredUsers.map((user) => (
-                    <tr key={user.user_id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 font-medium text-gray-900">
-                        {user.full_name || (
-                          <span className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-gray-400" />
-                            <span>No name set</span>
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">{user.email}</td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleEdit(user)}
-                            className="p-1 rounded-md hover:bg-gray-100 transition-colors"
-                            aria-label="Edit user"
-                          >
-                            <Edit className="h-4 w-4 text-gray-600" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(user.user_id)}
-                            className="p-1 rounded-md hover:bg-red-50 transition-colors"
-                            aria-label="Delete user"
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                   <table className="w-full text-left text-sm">
+                   <thead>
+                     <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                       <th className="px-4 py-3 font-semibold text-[#9A9F87]">Name</th>
+                       <th className="px-4 py-3 font-semibold text-[#9A9F87]">Email</th>
+                       <th className="px-4 py-3 font-semibold text-[#9A9F87]">Role</th>
+                       <th className="px-4 py-3 font-semibold text-[#9A9F87]">Assigned Host</th>
+                       <th className="px-4 py-3 font-semibold text-[#9A9F87]">Created</th>
+                       <th className="px-4 py-3 font-semibold text-[#9A9F87] w-24">Actions</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
+                     {filteredUsers.map((user) => {
+                       const hostAssignment = hostAssignments[user.user_id]
+                       const hostLabel = hostAssignment?.full_name
+                         ? `${hostAssignment.full_name}${hostAssignment.position ? ` — ${hostAssignment.position}` : ''}`
+                         : '—'
+                       return (
+                         <tr key={user.user_id} className="hover:bg-[#4B5320]/10 transition-colors">
+                           <td className="px-4 py-3 font-medium text-[#F5F5DC]">
+                             {user.full_name || (
+                               <span className="flex items-center gap-2">
+                                 <Users className="h-4 w-4 text-gray-400" />
+                                 <span>No name set</span>
+                               </span>
+                             )}
+                           </td>
+                           <td className="px-4 py-3 text-[#9A9F87]">{user.email}</td>
+                           <td className="px-4 py-3">
+                             <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700">
+                               {user.role === 'PA_TO_CI' ? 'PA to CI' : user.role === 'PA_TO_DIRECTOR' ? 'PA to Director' : user.role}
+                             </span>
+                           </td>
+                           <td className="px-4 py-3 text-[#9A9F87]">{hostLabel}</td>
+                           <td className="px-4 py-3 text-[#9A9F87]">
+                             {user.created_at ? new Date(user.created_at).toLocaleDateString() : '—'}
+                           </td>
+                           <td className="px-4 py-3">
+                             <div className="flex items-center gap-2">
+                               <button
+                                 onClick={() => handleEdit(user)}
+                                 className="p-1 rounded-md hover:bg-gray-100 transition-colors"
+                                 aria-label="Edit user"
+                               >
+                                 <Edit className="h-4 w-4 text-[#9A9F87]" />
+                               </button>
+                               <button
+                                 onClick={() => handleDelete(user.user_id)}
+                                 className="p-1 rounded-md hover:bg-red-50 transition-colors"
+                                 aria-label="Delete user"
+                               >
+                                 <Trash2 className="h-4 w-4 text-red-600" />
+                               </button>
+                             </div>
+                           </td>
+                         </tr>
+                        )
+                      })}
+                    </tbody>
+               </table>
             )}
           </div>
           {!loading && filteredUsers.length === 0 && (
             <div className="py-12 text-center">
-              <p className="text-gray-500">No users found</p>
+              <p className="text-[#9A9F87]">No users found</p>
             </div>
           )}
         </div>
 
         {modalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
-              <div className="flex items-center justify-between border-b border-gray-200 p-4">
-                <h2 className="text-lg font-semibold text-gray-900">
+            <div className="w-full max-w-md rounded-xl bg-[#10150D] shadow-xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-[rgba(85,107,47,0.35)] p-4">
+                <h2 className="text-lg font-semibold text-[#F5F5DC]">
                   {editingUser ? 'Edit User' : 'Add User'}
                 </h2>
                 <button
-                  onClick={() => setModalOpen(false)}
+                  onClick={() => { setModalOpen(false); setCredentials(null) }}
                   className="p-1 rounded-md hover:bg-gray-100"
                   aria-label="Close modal"
                 >
@@ -379,60 +508,184 @@ export default function UsersPage() {
                 </button>
               </div>
               <form onSubmit={handleSubmit}>
-                <div className="p-4 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      required
-                      placeholder="Enter email"
-                      disabled={!!editingUser}
-                      className={inputClasses}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                    <input
-                      type="text"
-                      value={formData.full_name}
-                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                      placeholder="Enter full name (optional)"
-                      className={inputClasses}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                    <select
-                      value={formData.role}
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
-                      className={selectClasses}
+                <div className="p-4 space-y-5">
+                  {credentials ? (
+                    <div className="rounded-lg bg-green-50 p-4 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-5 w-5 rounded-full bg-green-100 flex items-center justify-center">
+                          <svg className="h-3 w-3 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        </div>
+                        <p className="text-sm font-medium text-green-800">User Account Created</p>
+                      </div>
+                      <div className="ml-7 text-xs text-green-700 space-y-1">
+                        <p>Name: {credentials.name}</p>
+                        <p>Email: {credentials.email}</p>
+                        <p>Role: {credentials.role === 'PA_TO_CI' ? 'PA to CI' : credentials.role === 'PA_TO_DIRECTOR' ? 'PA to Director' : credentials.role}</p>
+                        {credentials.assignedHost && <p>Assigned Host: {credentials.assignedHost}</p>}
+                        <div className="mt-2 pt-2 border-t border-green-200">
+                          <p className="font-medium text-green-800">Temporary Password:</p>
+                          <p className="font-mono font-bold text-green-900 mt-1">{credentials.tempPassword}</p>
+                        </div>
+                        <p className="mt-2 text-green-600">Give these temporary credentials to the user. They must change the password on first login.</p>
+                      </div>
+                      <div className="ml-7 flex gap-2 mt-3">
+                        <button
+                          type="button"
+                          onClick={() => { navigator.clipboard.writeText(credentials.tempPassword); showNotification('success', 'Password copied to clipboard') }}
+                          className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700"
+                        >
+                          Copy Temporary Password
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setModalOpen(false); setCredentials(null) }}
+                          className="rounded-lg border border-green-300 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100"
+                        >
+                          Done
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <h3 className="text-xs font-semibold text-[#9A9F87] uppercase tracking-wider mb-3">Account Information</h3>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-sm font-medium text-[#9A9F87] mb-1">Email <span className="text-red-500">*</span></label>
+                            <input
+                              type="email"
+                              value={formData.email}
+                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                              required
+                              placeholder="Enter email"
+                              disabled={!!editingUser}
+                              className={validationErrors.email ? 'border-red-300 ' + inputClasses : inputClasses}
+                            />
+                            {validationErrors.email && <p className="mt-1 text-xs text-red-600">{validationErrors.email}</p>}
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-[#9A9F87] mb-1">Full Name <span className="text-red-500">*</span></label>
+                            <input
+                              type="text"
+                              value={formData.full_name}
+                              onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                              required
+                              placeholder="Enter full name"
+                              className={validationErrors.full_name ? 'border-red-300 ' + inputClasses : inputClasses}
+                            />
+                            {validationErrors.full_name && <p className="mt-1 text-xs text-red-600">{validationErrors.full_name}</p>}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h3 className="text-xs font-semibold text-[#9A9F87] uppercase tracking-wider mb-3">Role</h3>
+                        <select
+                          value={formData.role}
+                          onChange={(e) => {
+                            const newRole = e.target.value as UserRole
+                            setFormData({ ...formData, role: newRole, assigned_host_id: '', assigned_director_id: '' })
+                            if (newRole === 'PA_TO_CI' && ciEmployees.length === 0) {
+                              fetchCiEmployees()
+                            }
+                            if (newRole === 'PA_TO_DIRECTOR' && directors.length === 0) {
+                              fetchDirectors()
+                            }
+                          }}
+                          className={validationErrors.role ? 'border-red-300 ' + selectClasses : selectClasses}
+                        >
+                          <option value="Admin">Admin</option>
+                          <option value="Receptionist">Receptionist</option>
+                          <option value="Security">Security</option>
+                          <option value="Host Employee">Host Employee</option>
+                          <option value="PA_TO_DIRECTOR">PA to Director</option>
+                          <option value="PA_TO_CI">PA to CI</option>
+                        </select>
+                        {validationErrors.role && <p className="mt-1 text-xs text-red-600">{validationErrors.role}</p>}
+                      </div>
+
+                      {(formData.role === 'PA_TO_CI' || formData.role === 'PA_TO_DIRECTOR') && (
+                        <div>
+                          <h3 className="text-xs font-semibold text-[#9A9F87] uppercase tracking-wider mb-3">Host Assignment</h3>
+                          {formData.role === 'PA_TO_CI' && (
+                            <div>
+                              <label className="block text-sm font-medium text-[#9A9F87] mb-1">Assigned CI <span className="text-red-500">*</span></label>
+                              <SearchableCombobox
+                                options={ciEmployeeOptions}
+                                value={formData.assigned_host_id}
+                                onChange={(val) => setFormData({ ...formData, assigned_host_id: val })}
+                                placeholder="Search and select a CI..."
+                                searchPlaceholder="Search CIs..."
+                                noResultsText="No CI found"
+                                loading={ciEmployeesLoading}
+                                required
+                                className="w-full"
+                              />
+                              {validationErrors.assigned_host_id && <p className="mt-1 text-xs text-red-600">{validationErrors.assigned_host_id}</p>}
+                            </div>
+                          )}
+                          {formData.role === 'PA_TO_DIRECTOR' && (
+                            <div>
+                              <label className="block text-sm font-medium text-[#9A9F87] mb-1">Assigned Director <span className="text-red-500">*</span></label>
+                              <SearchableCombobox
+                                options={directorOptions}
+                                value={formData.assigned_director_id}
+                                onChange={(val) => setFormData({ ...formData, assigned_director_id: val })}
+                                placeholder="Search and select a Director..."
+                                searchPlaceholder="Search Directors..."
+                                noResultsText="No Director found"
+                                loading={directorsLoading}
+                                required
+                                className="w-full"
+                              />
+                              {validationErrors.assigned_director_id && <p className="mt-1 text-xs text-red-600">{validationErrors.assigned_director_id}</p>}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {!editingUser && (
+                        <div>
+                          <h3 className="text-xs font-semibold text-[#9A9F87] uppercase tracking-wider mb-3">Account Password</h3>
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <input
+                                id="mustChangePassword"
+                                type="checkbox"
+                                checked={mustChangePassword}
+                                onChange={(e) => setMustChangePassword(e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                              <label htmlFor="mustChangePassword" className="text-sm text-[#9A9F87]">
+                                Require user to change password on first login
+                              </label>
+                            </div>
+                            <p className="text-xs text-[#9A9F87]">A secure temporary password will be generated automatically.</p>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+                {!credentials && (
+                  <div className="flex justify-end gap-3 p-4 border-t border-[rgba(85,107,47,0.35)]">
+                    <button
+                      type="button"
+                      onClick={() => { setModalOpen(false); setCredentials(null) }}
+                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors"
                     >
-                      <option value="Admin">Admin</option>
-                      <option value="Receptionist">Receptionist</option>
-                      <option value="Security">Security</option>
-                      <option value="Host Employee">Host Employee</option>
-                    </select>
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    >
+                      {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                      {editingUser ? 'Update User' : 'Create User'}
+                    </button>
                   </div>
-                </div>
-                <div className="flex justify-end gap-3 p-4 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => setModalOpen(false)}
-                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                  >
-                    {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {editingUser ? 'Update' : 'Add'}
-                  </button>
-                </div>
+                )}
               </form>
             </div>
           </div>
@@ -441,3 +694,5 @@ export default function UsersPage() {
     </div>
   )
 }
+
+

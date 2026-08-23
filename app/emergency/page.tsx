@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth-client'
 import { logAuditAction } from '@/lib/client/audit'
+import ImageWithFallback from '@/components/ui/ImageWithFallback'
 import { Search, Users, UserCheck, Building2, Loader2, AlertTriangle, CheckCircle2, XCircle, Heart, UserX, Play, Square } from 'lucide-react'
 
 interface Visit {
@@ -449,7 +450,7 @@ export default function EmergencyPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/dashboard" className="text-sm text-blue-600 hover:underline">
@@ -459,8 +460,18 @@ export default function EmergencyPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
+            <ImageWithFallback
+              src="/images/afcsc-logo.png"
+              alt="Armed Forces Command and Staff College Logo"
+              className="h-8 w-8 object-contain"
+            />
             <AlertTriangle className="h-8 w-8 text-red-600" />
-            <h1 className="text-2xl font-bold text-gray-900">
+            <ImageWithFallback
+              src="/images/army logo.png"
+              alt="Army Logo"
+              className="h-8 w-8 object-contain"
+            />
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">
               {emergencyMode ? 'Emergency Roll Call — Active' : 'Emergency Occupancy Dashboard'}
             </h1>
           </div>
@@ -470,7 +481,7 @@ export default function EmergencyPage() {
                 ACTIVE EMERGENCY
               </span>
             )}
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-[#9A9F87]">
               {emergencyMode ? 'Roll call in progress' : 'Live updates via Supabase Realtime'}
             </div>
           </div>
@@ -481,8 +492,8 @@ export default function EmergencyPage() {
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Initiate Emergency Roll Call</h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <h3 className="text-lg font-semibold text-[#F5F5DC]">Initiate Emergency Roll Call</h3>
+                <p className="text-sm text-[#9A9F87] mt-1">
                   This will capture a snapshot of all visitors currently on site and freeze the list for roll call tracking.
                 </p>
               </div>
@@ -499,11 +510,11 @@ export default function EmergencyPage() {
         )}
 
         {emergencyMode && userRole === 'Admin' && (
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Control Emergency</h3>
-                <p className="text-sm text-gray-600 mt-1">
+                <h3 className="text-lg font-semibold text-[#F5F5DC]">Control Emergency</h3>
+                <p className="text-sm text-[#9A9F87] mt-1">
                   Session started: {session ? new Date(session.started_at).toLocaleString() : '—'}
                 </p>
               </div>
@@ -522,15 +533,15 @@ export default function EmergencyPage() {
         {/* End Emergency Confirmation Dialog */}
         {showEndConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-xl bg-white shadow-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">End Emergency?</h3>
-              <p className="text-sm text-gray-600 mb-6">
+            <div className="w-full max-w-md rounded-xl bg-[#10150D] shadow-xl p-6">
+              <h3 className="text-lg font-semibold text-[#F5F5DC] mb-2">End Emergency?</h3>
+              <p className="text-sm text-[#9A9F87] mb-6">
                 This will close the current emergency and archive the roll call.
               </p>
               <div className="flex justify-end gap-3">
                 <button
                   onClick={() => setShowEndConfirm(false)}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors"
                 >
                   Cancel
                 </button>
@@ -550,12 +561,12 @@ export default function EmergencyPage() {
         {/* Phase 2: Roll Call Summary */}
         {emergencyMode && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-500">Total Visitors</p>
-                <Users className="h-5 w-5 text-gray-600" />
+                <p className="text-sm font-medium text-[#9A9F87]">Total Visitors</p>
+                <Users className="h-5 w-5 text-[#9A9F87]" />
               </div>
-              <p className="mt-2 text-3xl font-bold text-gray-900">{rollCallSummary.total}</p>
+              <p className="mt-2 text-3xl font-bold text-[#F5F5DC]">{rollCallSummary.total}</p>
             </div>
             <div className="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm">
               <div className="flex items-center justify-between">
@@ -591,42 +602,42 @@ export default function EmergencyPage() {
         {/* Phase 1: Occupancy Summary Cards */}
         {!emergencyMode && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-500">Visitors On Site</p>
+                <p className="text-sm font-medium text-[#9A9F87]">Visitors On Site</p>
                 <Users className="h-5 w-5 text-blue-600" />
               </div>
-              <p className="mt-2 text-3xl font-bold text-gray-900">{loading ? '...' : summary.visitorsOnSite}</p>
+              <p className="mt-2 text-3xl font-bold text-[#F5F5DC]">{loading ? '...' : summary.visitorsOnSite}</p>
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-500">Hosts Present</p>
+                <p className="text-sm font-medium text-[#9A9F87]">Hosts Present</p>
                 <UserCheck className="h-5 w-5 text-green-600" />
               </div>
-              <p className="mt-2 text-3xl font-bold text-gray-900">{loading ? '...' : summary.hosts}</p>
+              <p className="mt-2 text-3xl font-bold text-[#F5F5DC]">{loading ? '...' : summary.hosts}</p>
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-500">Departments</p>
+                <p className="text-sm font-medium text-[#9A9F87]">Departments</p>
                 <Building2 className="h-5 w-5 text-purple-600" />
               </div>
-              <p className="mt-2 text-3xl font-bold text-gray-900">{loading ? '...' : summary.departments}</p>
+              <p className="mt-2 text-3xl font-bold text-[#F5F5DC]">{loading ? '...' : summary.departments}</p>
             </div>
-            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-500">Buildings</p>
+                <p className="text-sm font-medium text-[#9A9F87]">Buildings</p>
                 <Building2 className="h-5 w-5 text-amber-600" />
               </div>
-              <p className="mt-2 text-3xl font-bold text-gray-900">{loading ? '...' : summary.buildings}</p>
+              <p className="mt-2 text-3xl font-bold text-[#F5F5DC]">{loading ? '...' : summary.buildings}</p>
             </div>
           </div>
         )}
 
         {/* Phase 1: Normal Occupancy Table */}
         {!emergencyMode && (
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <h2 className="text-lg font-semibold text-gray-900">Current Occupancy</h2>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+            <div className="p-4 border-b border-[rgba(85,107,47,0.35)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <h2 className="text-lg font-semibold text-[#F5F5DC]">Current Occupancy</h2>
               <div className="flex flex-col sm:flex-row gap-3">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -635,13 +646,13 @@ export default function EmergencyPage() {
                     placeholder="Search visitors..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+                    className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-[#10150D] text-black placeholder:text-[#9A9F87] focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
                   />
                 </div>
                 <select
                   value={departmentFilter}
                   onChange={(e) => setDepartmentFilter(e.target.value)}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">All Departments</option>
                   {departments.map(dept => (
@@ -651,7 +662,7 @@ export default function EmergencyPage() {
                 <select
                   value={buildingFilter}
                   onChange={(e) => setBuildingFilter(e.target.value)}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">All Buildings</option>
                   {buildings.map(building => (
@@ -668,21 +679,21 @@ export default function EmergencyPage() {
               ) : (
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Organization</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Department</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Office Location</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Purpose</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Check In Time</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Time On Site</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
+                    <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Visitor</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Organization</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Host</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Department</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Office Location</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Purpose</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Check In Time</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Time On Site</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                     {filteredVisits.map((visit) => (
-                      <tr key={visit.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={visit.id} className="hover:bg-[#4B5320]/10 transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             {visit.visitor?.photo_url ? (
@@ -693,23 +704,23 @@ export default function EmergencyPage() {
                               />
                             ) : (
                               <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-[#9A9F87]">
                                   {(visit.visitor?.full_name || '').charAt(0).toUpperCase()}
                                 </span>
                               </div>
                             )}
-                            <span className="font-medium text-gray-900">{visit.visitor?.full_name || '—'}</span>
+                            <span className="font-medium text-[#F5F5DC]">{visit.visitor?.full_name || '—'}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-gray-600">{visit.visitor?.visitor_organization || '—'}</td>
-                        <td className="px-4 py-3 text-gray-600">{visit.employee?.full_name || '—'}</td>
-                        <td className="px-4 py-3 text-gray-600">{visit.employee?.department || '—'}</td>
-                        <td className="px-4 py-3 text-gray-600">{visit.employee?.office_location || '—'}</td>
-                        <td className="px-4 py-3 text-gray-600">{visit.purpose || '—'}</td>
-                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                        <td className="px-4 py-3 text-[#9A9F87]">{visit.visitor?.visitor_organization || '—'}</td>
+                        <td className="px-4 py-3 text-[#9A9F87]">{visit.employee?.full_name || '—'}</td>
+                        <td className="px-4 py-3 text-[#9A9F87]">{visit.employee?.department || '—'}</td>
+                        <td className="px-4 py-3 text-[#9A9F87]">{visit.employee?.office_location || '—'}</td>
+                        <td className="px-4 py-3 text-[#9A9F87]">{visit.purpose || '—'}</td>
+                        <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">
                           {visit.check_in_time ? new Date(visit.check_in_time).toLocaleTimeString() : '—'}
                         </td>
-                        <td className="px-4 py-3 text-gray-600 font-mono">
+                        <td className="px-4 py-3 text-[#9A9F87] font-mono">
                           {getTimeOnSite(visit.check_in_time)}
                         </td>
                         <td className="px-4 py-3">
@@ -725,7 +736,7 @@ export default function EmergencyPage() {
 
               {!loading && filteredVisits.length === 0 && (
                 <div className="py-12 text-center">
-                  <p className="text-gray-500">No visitors currently on site</p>
+                  <p className="text-[#9A9F87]">No visitors currently on site</p>
                 </div>
               )}
             </div>
@@ -734,10 +745,10 @@ export default function EmergencyPage() {
 
         {/* Phase 2: Roll Call Table */}
         {emergencyMode && (
-          <div className="rounded-xl border border-red-200 bg-white shadow-sm">
-            <div className="p-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Roll Call — Snapshot</h2>
-              <p className="text-xs text-gray-500 mt-1">
+          <div className="rounded-xl border border-red-200 bg-[#10150D] shadow-sm">
+            <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+              <h2 className="text-lg font-semibold text-[#F5F5DC]">Roll Call — Snapshot</h2>
+              <p className="text-xs text-[#9A9F87] mt-1">
                 This list is frozen. Visitors who check out will remain visible until the emergency ends.
               </p>
             </div>
@@ -749,26 +760,26 @@ export default function EmergencyPage() {
               ) : (
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Organization</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Department</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Office Location</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Purpose</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Check In Time</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Time On Site</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
+                    <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Visitor</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Organization</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Host</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Department</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Office Location</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Purpose</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Check In Time</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Time On Site</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                     {rollCallEntries.map((entry) => {
                       const v = entry.visit
                       const currentStatus = statusOptions.find(s => s.value === entry.status) || statusOptions[0]
                       const StatusIcon = currentStatus.icon
 
                       return (
-                        <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                        <tr key={entry.id} className="hover:bg-[#4B5320]/10 transition-colors">
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-3">
                               {v.visitor?.photo_url ? (
@@ -779,23 +790,23 @@ export default function EmergencyPage() {
                                 />
                               ) : (
                                 <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                                  <span className="text-xs text-gray-500">
+                                  <span className="text-xs text-[#9A9F87]">
                                     {(v.visitor?.full_name || '').charAt(0).toUpperCase()}
                                   </span>
                                 </div>
                               )}
-                              <span className="font-medium text-gray-900">{v.visitor?.full_name || '—'}</span>
+                              <span className="font-medium text-[#F5F5DC]">{v.visitor?.full_name || '—'}</span>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-gray-600">{v.visitor?.visitor_organization || '—'}</td>
-                          <td className="px-4 py-3 text-gray-600">{v.employee?.full_name || '—'}</td>
-                          <td className="px-4 py-3 text-gray-600">{v.employee?.department || '—'}</td>
-                          <td className="px-4 py-3 text-gray-600">{v.employee?.office_location || '—'}</td>
-                          <td className="px-4 py-3 text-gray-600">{v.purpose || '—'}</td>
-                          <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                          <td className="px-4 py-3 text-[#9A9F87]">{v.visitor?.visitor_organization || '—'}</td>
+                          <td className="px-4 py-3 text-[#9A9F87]">{v.employee?.full_name || '—'}</td>
+                          <td className="px-4 py-3 text-[#9A9F87]">{v.employee?.department || '—'}</td>
+                          <td className="px-4 py-3 text-[#9A9F87]">{v.employee?.office_location || '—'}</td>
+                          <td className="px-4 py-3 text-[#9A9F87]">{v.purpose || '—'}</td>
+                          <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">
                             {v.check_in_time ? new Date(v.check_in_time).toLocaleTimeString() : '—'}
                           </td>
-                          <td className="px-4 py-3 text-gray-600 font-mono">
+                          <td className="px-4 py-3 text-[#9A9F87] font-mono">
                             {getTimeOnSite(v.check_in_time)}
                           </td>
                           <td className="px-4 py-3">
@@ -806,7 +817,7 @@ export default function EmergencyPage() {
                                 className={`rounded-lg border px-2 py-1 text-xs font-medium ${currentStatus.color} border-current focus:outline-none focus:ring-2 focus:ring-blue-500`}
                               >
                                 {statusOptions.map(opt => (
-                                  <option key={opt.value} value={opt.value} className="bg-white text-gray-900">
+                                  <option key={opt.value} value={opt.value} className="bg-[#10150D] text-[#F5F5DC]">
                                     {opt.label}
                                   </option>
                                 ))}
@@ -831,3 +842,4 @@ export default function EmergencyPage() {
     </div>
   )
 }
+

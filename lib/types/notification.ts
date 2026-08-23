@@ -1,4 +1,4 @@
-export type NotificationCategory = 'Visitor' | 'Appointment' | 'Badge' | 'Security' | 'System' | 'Asset' | 'Approval' | 'Employee' | 'Watchlist' | 'Document'
+export type NotificationCategory = 'Visitor' | 'Badge' | 'Security' | 'System' | 'Asset' | 'Approval' | 'Employee' | 'Watchlist' | 'Document'
 
 export interface Notification {
   id: string
@@ -30,7 +30,6 @@ export interface NotificationPreferences {
   browser: boolean
   sms: boolean
   system: boolean
-  appointmentReminders: boolean
   securityAlerts: boolean
   hostNotifications: boolean
   visitorNotifications: boolean

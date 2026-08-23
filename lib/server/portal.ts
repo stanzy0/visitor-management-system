@@ -20,7 +20,6 @@ export async function getPortalVisitByRegistrationNumber(registrationNumber: str
       purpose,
       visitor:visitors(*),
       employee:employees(*),
-      appointment:appointments(*),
       badge:visitor_badges(*)
     `)
     .eq('source', 'public')
@@ -62,7 +61,6 @@ export async function getPortalVisitByQRToken(qrToken: string): Promise<PortalVi
       purpose,
       visitor:visitors(*),
       employee:employees(*),
-      appointment:appointments(*),
       badge:visitor_badges(*)
     `)
     .eq('id', badge.visit_id)
@@ -225,7 +223,6 @@ interface RawVisit {
   created_at: string
   visitor: RawVisitor | RawVisitor[] | null
   employee: RawEmployee | RawEmployee[] | null
-  appointment: RawAppointment | RawAppointment[] | null
   badge: RawBadge | RawBadge[] | null
 }
 
@@ -249,15 +246,6 @@ interface RawEmployee {
   email: string | null
 }
 
-interface RawAppointment {
-  id: string
-  appointment_date: string
-  appointment_time: string | null
-  expected_arrival: string | null
-  status: string
-  purpose: string
-}
-
 interface RawBadge {
   id: string
   badge_number: string
@@ -270,7 +258,6 @@ interface RawBadge {
 function transformVisit(data: RawVisit): PortalVisit {
   const visitor = Array.isArray(data.visitor) ? data.visitor[0] : data.visitor
   const employee = Array.isArray(data.employee) ? data.employee[0] : data.employee
-  const appointment = Array.isArray(data.appointment) ? data.appointment[0] : data.appointment
   const badge = Array.isArray(data.badge) ? data.badge[0] : data.badge
 
   return {
@@ -286,7 +273,6 @@ function transformVisit(data: RawVisit): PortalVisit {
     purpose: data.purpose,
     visitor: (visitor || null) as PortalVisit['visitor'],
     employee: employee || null,
-    appointment: appointment || null,
     badge: badge || null,
   }
 }

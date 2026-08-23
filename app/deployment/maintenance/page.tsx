@@ -78,21 +78,21 @@ export default function MaintenanceModePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Maintenance Mode</h1>
-            <p className="text-sm text-gray-500">Control system availability</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Maintenance Mode</h1>
+            <p className="text-sm text-[#9A9F87]">Control system availability</p>
           </div>
-          <button onClick={fetchMaintenance} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <button onClick={fetchMaintenance} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
             <RefreshCw className="h-4 w-4" />
             Refresh
           </button>
@@ -108,10 +108,10 @@ export default function MaintenanceModePage() {
                 <CheckCircle className="h-6 w-6 text-green-600 mt-1" />
               )}
               <div>
-                <h2 className="text-lg font-semibold text-gray-900">
+                <h2 className="text-lg font-semibold text-[#F5F5DC]">
                   {maintenance?.enabled ? 'Maintenance Mode Active' : 'System Operational'}
                 </h2>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-[#9A9F87] mt-1">
                   {maintenance?.enabled
                     ? `Started: ${maintenance.started_at ? new Date(maintenance.started_at).toLocaleString() : 'Unknown'}`
                     : 'All systems are operational'}
@@ -125,11 +125,11 @@ export default function MaintenanceModePage() {
         </div>
 
         {/* Configuration */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Configuration</h2>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-[#F5F5DC] mb-4">Configuration</h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Maintenance Message</label>
+              <label className="block text-sm font-medium text-[#9A9F87] mb-2">Maintenance Message</label>
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -160,42 +160,42 @@ export default function MaintenanceModePage() {
         </div>
 
         {/* Effects */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Effects When Enabled</h2>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-[#F5F5DC] mb-4">Effects When Enabled</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-start gap-2">
               <XCircle className="h-5 w-5 text-red-500 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Public Registration</p>
-                <p className="text-xs text-gray-500">Unavailable</p>
+                <p className="text-sm font-medium text-[#F5F5DC]">Public Registration</p>
+                <p className="text-xs text-[#9A9F87]">Unavailable</p>
               </div>
             </div>
             <div className="flex items-start gap-2">
               <XCircle className="h-5 w-5 text-red-500 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Visitor Portal</p>
-                <p className="text-xs text-gray-500">Unavailable</p>
+                <p className="text-sm font-medium text-[#F5F5DC]">Visitor Portal</p>
+                <p className="text-xs text-[#9A9F87]">Unavailable</p>
               </div>
             </div>
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Host Portal</p>
-                <p className="text-xs text-gray-500">Read-only</p>
+                <p className="text-sm font-medium text-[#F5F5DC]">Host Portal</p>
+                <p className="text-xs text-[#9A9F87]">Read-only</p>
               </div>
             </div>
             <div className="flex items-start gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Reception</p>
-                <p className="text-xs text-gray-500">Warning displayed</p>
+                <p className="text-sm font-medium text-[#F5F5DC]">Reception</p>
+                <p className="text-xs text-[#9A9F87]">Warning displayed</p>
               </div>
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Security</p>
-                <p className="text-xs text-gray-500">Unaffected</p>
+                <p className="text-sm font-medium text-[#F5F5DC]">Security</p>
+                <p className="text-xs text-[#9A9F87]">Unaffected</p>
               </div>
             </div>
           </div>
@@ -204,3 +204,5 @@ export default function MaintenanceModePage() {
     </div>
   )
 }
+
+

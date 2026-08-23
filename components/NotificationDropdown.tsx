@@ -12,7 +12,6 @@ const typeIcons: Record<string, string> = {
   warning: '⚠️',
   error: '❌',
   visitor: '👤',
-  appointment: '📅',
   employee: '👔',
   system: '⚙️',
 }

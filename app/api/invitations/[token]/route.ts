@@ -129,30 +129,11 @@ export async function POST(
           }
         }
 
-        const { data: appointment, error: appointmentError } = await supabaseAdmin
-          .from('appointments')
-          .insert({
-            visitor_id: visitorId,
-            employee_id: invitation.host_employee_id,
-            appointment_date: invitation.expected_date,
-            expected_arrival: invitation.expected_time || '09:00',
-            expected_departure: invitation.expected_time || '17:00',
-            purpose: invitation.purpose,
-            notes: invitation.notes || '',
-            status: 'Scheduled',
-          })
-          .select()
-          .single()
-
-        if (appointmentError || !appointment) {
-          return NextResponse.json({ success: false, message: appointmentError?.message || 'Failed to create appointment', error: appointmentError?.message || 'Failed to create appointment' }, { status: 400 })
-        }
-
         await updateInvitationStatus(token, 'Completed')
 
         await logAuditAction('Registration Submitted', 'invitation', invitation.id, `Visitor ${full_name} completed registration for invitation ${token}`)
 
-        return NextResponse.json({ data: { visitor_id: visitorId, appointment_id: appointment.id, invitation_token: token } }, { status: 201 })
+        return NextResponse.json({ data: { visitor_id: visitorId, invitation_token: token } }, { status: 201 })
       }
 
       case 'approve': {
@@ -172,7 +153,7 @@ export async function POST(
         const { data: badge } = await supabaseAdmin
           .from('visitor_badges')
           .select('id, badge_number, qr_token')
-          .eq('visit_id', invitation.appointment_id)
+          .eq('id', invitation.badge_id)
           .single()
 
         if (badge) {
@@ -207,7 +188,7 @@ export async function POST(
             user_id: invitation.host_employee_id,
             title: 'Registration Approved',
             message: `Registration for ${invitation.visitor_name} has been approved`,
-            type: 'appointment_approved',
+            type: 'invitation_approved',
           })
 
         return NextResponse.json({ data: invitation })
@@ -227,7 +208,7 @@ export async function POST(
             user_id: invitation.host_employee_id,
             title: 'Registration Rejected',
             message: `Registration for ${invitation.visitor_name} has been rejected`,
-            type: 'appointment_rejected',
+            type: 'registration_rejected',
           })
 
         return NextResponse.json({ data: invitation })

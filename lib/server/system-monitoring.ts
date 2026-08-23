@@ -7,7 +7,6 @@ export interface SystemKpis {
   authStatus: string
   storageUsage: string
   activeVisitors: number
-  activeAppointments: number
   activeBadges: number
   activeNotifications: number
   pendingDocumentReviews: number
@@ -103,7 +102,6 @@ export async function getSystemKpis(): Promise<SystemKpis> {
       authStatus: 'unknown',
       storageUsage: 'unknown',
       activeVisitors: 0,
-      activeAppointments: 0,
       activeBadges: 0,
       activeNotifications: 0,
       pendingDocumentReviews: 0,
@@ -115,7 +113,6 @@ export async function getSystemKpis(): Promise<SystemKpis> {
 
   const [
     activeVisitorsRes,
-    activeAppointmentsRes,
     activeBadgesRes,
     activeNotificationsRes,
     pendingDocRes,
@@ -124,7 +121,6 @@ export async function getSystemKpis(): Promise<SystemKpis> {
     jobsRes,
   ] = await Promise.all([
     supabaseAdmin.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'checked_in'),
-    supabaseAdmin.from('appointments').select('id', { count: 'exact', head: true }).eq('status', 'Scheduled'),
     supabaseAdmin.from('visitor_badges').select('id', { count: 'exact', head: true }).eq('badge_status', 'Active'),
     supabaseAdmin.from('notifications').select('id', { count: 'exact', head: true }).eq('is_read', false),
     supabaseAdmin.from('visitor_documents').select('id', { count: 'exact', head: true }).eq('verification_status', 'Pending'),
@@ -139,7 +135,6 @@ export async function getSystemKpis(): Promise<SystemKpis> {
     authStatus: 'healthy',
     storageUsage: '0 MB',
     activeVisitors: activeVisitorsRes.count || 0,
-    activeAppointments: activeAppointmentsRes.count || 0,
     activeBadges: activeBadgesRes.count || 0,
     activeNotifications: activeNotificationsRes.count || 0,
     pendingDocumentReviews: pendingDocRes.count || 0,

@@ -9,8 +9,7 @@ export async function getVisitForBadgePreview(visitId: string): Promise<BadgePre
     .select(`
       *,
       visitor:visitors(*),
-      employee:employees(*),
-      appointment:appointments(*)
+      employee:employees(*)
     `)
     .eq('id', visitId)
     .single()
@@ -135,7 +134,6 @@ export async function getDefaultTemplates(): Promise<BadgeTemplateOption[]> {
 function transformVisit(data: Record<string, unknown>): BadgePreviewVisit {
   const visitor = Array.isArray(data.visitor) ? data.visitor[0] : data.visitor
   const employee = Array.isArray(data.employee) ? data.employee[0] : data.employee
-  const appointment = Array.isArray(data.appointment) ? data.appointment[0] : data.appointment
 
   const getString = (val: unknown, fallback: string | null = null): string | null => typeof val === 'string' ? val : fallback
   const getNumber = (val: unknown, fallback: number = 0): number => typeof val === 'number' ? val : fallback
@@ -157,6 +155,5 @@ function transformVisit(data: Record<string, unknown>): BadgePreviewVisit {
     rejection_reason: getString(data.rejection_reason),
     visitor: visitor || null,
     employee: employee || null,
-    appointment: appointment || null,
   }
 }

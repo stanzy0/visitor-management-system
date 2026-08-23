@@ -42,9 +42,6 @@ export interface DashboardStats {
   visitorsWaitingBadge: number
   visitorsWaitingSecurity: number
   visitorsOverstayed: number
-  appointmentsToday: number
-  completedAppointments: number
-  cancelledAppointments: number
 }
 
 export interface ActivityItem {
@@ -123,9 +120,6 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
     visitorsWaitingBadge: 0,
     visitorsWaitingSecurity: 0,
     visitorsOverstayed: 0,
-    appointmentsToday: 0,
-    completedAppointments: 0,
-    cancelledAppointments: 0,
   })
   const [activity, setActivity] = useState<ActivityItem[]>([])
   const [securityAlerts, setSecurityAlerts] = useState<SecurityAlert[]>([])
@@ -191,9 +185,6 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
         visitorsWaitingBadgeRes,
         visitorsWaitingSecurityRes,
         visitorsOverstayedRes,
-        appointmentsTodayRes,
-        completedAppointmentsRes,
-        cancelledAppointmentsRes,
       ] = await Promise.all([
         supabase.from('visits').select('id', { count: 'exact', head: true }).gte('created_at', todayStr),
         supabase.from('visits').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo),
@@ -238,9 +229,6 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
         })(),
         supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'badge_issued'),
         supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'overstayed'),
-        supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('appointment_date', todayStr),
-        supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('appointment_date', todayStr).eq('status', 'Completed'),
-        supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('appointment_date', todayStr).eq('status', 'Cancelled'),
       ])
 
       const missingDocsRes = await (async () => {
@@ -299,9 +287,6 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
         visitorsWaitingBadge: visitorsWaitingBadgeRes.count ?? 0,
         visitorsWaitingSecurity: visitorsWaitingSecurityRes.count ?? 0,
         visitorsOverstayed: visitorsOverstayedRes.count ?? 0,
-        appointmentsToday: appointmentsTodayRes.count ?? 0,
-        completedAppointments: completedAppointmentsRes.count ?? 0,
-        cancelledAppointments: cancelledAppointmentsRes.count ?? 0,
       })
 
         const processByDay = (data: { created_at: string | null | undefined }[] | undefined) => {
@@ -424,7 +409,6 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
       .channel('dashboard-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitors' }, debouncedRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, debouncedRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, debouncedRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'employees' }, debouncedRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_badges' }, debouncedRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_documents' }, debouncedRefresh)

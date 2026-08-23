@@ -105,7 +105,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/dashboard" className="text-sm text-blue-600 hover:underline">
@@ -115,12 +115,12 @@ export default function AdminDashboardPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-sm text-gray-500">System administration and monitoring</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Admin Dashboard</h1>
+            <p className="text-sm text-[#9A9F87]">System administration and monitoring</p>
           </div>
           <button
             onClick={fetchData}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-[#10150D] px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
           >
             <RefreshCw className="h-4 w-4" />
             Refresh
@@ -160,10 +160,10 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* System Health */}
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">System Health</h3>
-                <span className="text-sm text-gray-500">Last checked: {new Date().toLocaleTimeString()}</span>
+            <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+              <div className="p-4 border-b border-[rgba(85,107,47,0.35)] flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-[#F5F5DC]">System Health</h3>
+                <span className="text-sm text-[#9A9F87]">Last checked: {new Date().toLocaleTimeString()}</span>
               </div>
               <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {data.health.services?.map((service: { service: string; status: string; latency?: string | null; details?: string | null }) => (
@@ -203,14 +203,14 @@ function StatCard({ title, value, icon: Icon, color }: { title: string; value: s
     red: 'bg-red-50 text-red-600',
   }
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-gray-500">{title}</p>
-        <div className={`p-2 rounded-lg ${colorClasses[color] || 'bg-gray-50 text-gray-600'}`}>
+        <p className="text-sm font-medium text-[#9A9F87]">{title}</p>
+        <div className={`p-2 rounded-lg ${colorClasses[color] || 'bg-gray-50 text-[#9A9F87]'}`}>
           <Icon className="h-4 w-4" />
         </div>
       </div>
-      <p className="mt-2 text-3xl font-bold text-gray-900">{value}</p>
+      <p className="mt-2 text-3xl font-bold text-[#F5F5DC]">{value}</p>
     </div>
   )
 }
@@ -229,7 +229,7 @@ function HealthCard({ title, status, icon: Icon, details }: { title: string; sta
       case 'warning':
         return 'bg-amber-50 text-amber-700'
       default:
-        return 'bg-gray-50 text-gray-700'
+        return 'bg-gray-50 text-[#9A9F87]'
     }
   }
 
@@ -255,13 +255,13 @@ function HealthCard({ title, status, icon: Icon, details }: { title: string; sta
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-gray-500">{title}</p>
+        <p className="text-sm font-medium text-[#9A9F87]">{title}</p>
         <Icon className="h-4 w-4 text-gray-400" />
       </div>
       <p className={`mt-2 text-sm font-medium ${getHealthColor(status)}`}>{getHealthLabel(status)}</p>
-      {details && <p className="mt-1 text-xs text-gray-500">{details}</p>}
+      {details && <p className="mt-1 text-xs text-[#9A9F87]">{details}</p>}
     </div>
   )
 }
@@ -291,12 +291,14 @@ function QuickLink({ href, label, icon: Icon }: { href: string; label: string; i
   return (
     <a
       href={href}
-      className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:bg-gray-50 transition-colors"
+      className="flex items-center gap-3 rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm hover:bg-[#4B5320]/10 transition-colors"
     >
-      <div className="p-2 rounded-lg bg-gray-50 text-gray-600">
+      <div className="p-2 rounded-lg bg-gray-50 text-[#9A9F87]">
         <Icon className="h-4 w-4" />
       </div>
-      <span className="text-sm font-medium text-gray-900">{label}</span>
+      <span className="text-sm font-medium text-[#F5F5DC]">{label}</span>
     </a>
   )
 }
+
+

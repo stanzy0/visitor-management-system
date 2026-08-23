@@ -1,4 +1,4 @@
-export type UserRole = 'Admin' | 'Commandant' | 'Director' | 'Receptionist' | 'Security' | 'Host Employee'
+export type UserRole = 'Admin' | 'Commandant' | 'Director' | 'Receptionist' | 'Security' | 'Host Employee' | 'PA_TO_DIRECTOR' | 'PA_TO_CI'
 
 export interface UserWithRole {
   id: string
@@ -21,7 +21,6 @@ export const PERMISSIONS: Record<UserRole, string[]> = {
     'settings',
     'users',
     'delete-records',
-    'appointments',
     'export-reports',
     'emergency',
     'vehicles',
@@ -41,7 +40,6 @@ export const PERMISSIONS: Record<UserRole, string[]> = {
     'audit-logs',
     'visitors',
     'visits',
-    'appointments',
     'badges',
     'documents',
     'security',
@@ -56,7 +54,6 @@ export const PERMISSIONS: Record<UserRole, string[]> = {
     'audit-logs',
     'visitors',
     'visits',
-    'appointments',
     'badges',
     'documents',
     'security',
@@ -71,7 +68,6 @@ export const PERMISSIONS: Record<UserRole, string[]> = {
     'scanner',
     'check-in',
     'check-out',
-    'appointments',
     'vehicles',
     'watchlist',
     'documents',
@@ -99,7 +95,26 @@ export const PERMISSIONS: Record<UserRole, string[]> = {
     'badges',
     'view-today-visits',
     'view-visit-history',
-    'appointments',
     'invitations',
+  ],
+  PA_TO_DIRECTOR: [
+    'dashboard',
+    'visitors',
+    'visits',
+    'badges',
+    'check-in',
+    'check-out',
+    'documents',
+    'host',
+  ],
+  PA_TO_CI: [
+    'dashboard',
+    'visitors',
+    'visits',
+    'badges',
+    'check-in',
+    'check-out',
+    'documents',
+    'host',
   ],
 }

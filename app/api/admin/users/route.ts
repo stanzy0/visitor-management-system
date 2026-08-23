@@ -26,21 +26,22 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { email, full_name, role, password } = body
+    const { email, full_name, role, must_change_password, assigned_host_id, assigned_director_id } = body
 
-    if (!email || !full_name || !role || !password) {
-      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
+    if (!email || !full_name || !role) {
+      return NextResponse.json({ success: false, message: 'Email, full name, and role are required', error: '' }, { status: 400 })
     }
 
     if (!supabaseAdmin) {
       return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
     }
 
-    const user = await createUser({ email, full_name, role, password })
+    const user = await createUser({ email, full_name, role, must_change_password, assigned_host_id, assigned_director_id })
     return NextResponse.json({ success: true, data: user }, { status: 201 })
   } catch (err) {
     console.error('Create user error:', err)
-    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
+    const errorMessage = err instanceof Error ? err.message : 'Something went wrong. Please try again.'
+    return NextResponse.json({ success: false, message: errorMessage, error: errorMessage }, { status: 500 })
   }
 }
 
@@ -52,13 +53,13 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { user_id, full_name, email, role } = body
+    const { user_id, full_name, email, role, assigned_host_id, assigned_director_id, must_change_password } = body
 
     if (!user_id) {
       return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
     }
 
-    await updateUser(user_id, { full_name, email, role })
+    await updateUser(user_id, { full_name, email, role, assigned_host_id, assigned_director_id, must_change_password })
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Update user error:', err)

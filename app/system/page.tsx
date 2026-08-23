@@ -8,7 +8,7 @@ import {
   PieChart, Pie, Cell, LineChart, Line, Legend, AreaChart, Area,
 } from 'recharts'
 import {
-  Database, Activity, Mail, HardDrive, Users, Calendar, Clock, FileText,
+  Database, Activity, Mail, HardDrive, Users, Clock, FileText,
   ShieldAlert, Loader2, RefreshCw, Download, Printer, AlertTriangle,
   CheckCircle, XCircle, Server, Globe, Smartphone, Monitor,
   Trash2, Play, Eye, Search, Filter, ChevronDown, Bell,
@@ -26,7 +26,6 @@ interface SystemKpis {
   authStatus: string
   storageUsage: string
   activeVisitors: number
-  activeAppointments: number
   activeBadges: number
   activeNotifications: number
   pendingDocumentReviews: number
@@ -88,7 +87,7 @@ export default function SystemDashboardPage() {
     realtimeChannel.current = supabase
       .channel('system-monitoring')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => fetchData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => fetchData())
+
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => fetchData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_badges' }, () => fetchData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'security_alerts' }, () => fetchData())
@@ -143,7 +142,6 @@ export default function SystemDashboardPage() {
           ['Auth Status', kpis.authStatus],
           ['Storage Usage', kpis.storageUsage],
           ['Active Visitors', kpis.activeVisitors.toString()],
-          ['Active Appointments', kpis.activeAppointments.toString()],
           ['Active Badges', kpis.activeBadges.toString()],
           ['Active Notifications', kpis.activeNotifications.toString()],
           ['Pending Document Reviews', kpis.pendingDocumentReviews.toString()],
@@ -171,7 +169,7 @@ export default function SystemDashboardPage() {
 
   if (loading || !kpis || !healthScore) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )
@@ -179,7 +177,6 @@ export default function SystemDashboardPage() {
 
   const kpiCards = [
     { title: 'Active Visitors', value: kpis.activeVisitors, icon: Users, color: 'blue' },
-    { title: 'Active Appointments', value: kpis.activeAppointments, icon: Calendar, color: 'purple' },
     { title: 'Active Badges', value: kpis.activeBadges, icon: ShieldAlert, color: 'amber' },
     { title: 'Active Notifications', value: kpis.activeNotifications, icon: Bell, color: 'red' },
     { title: 'Pending Doc Reviews', value: kpis.pendingDocumentReviews, icon: FileText, color: 'orange' },
@@ -192,15 +189,15 @@ export default function SystemDashboardPage() {
   const HealthIcon = healthStatus.icon
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">System Monitoring & Maintenance Center</h1>
-            <p className="text-sm text-gray-500">Real-time system health and operational visibility</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">System Monitoring & Maintenance Center</h1>
+            <p className="text-sm text-[#9A9F87]">Real-time system health and operational visibility</p>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={fetchData} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <button onClick={fetchData} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
               <RefreshCw className="h-4 w-4" />
               Refresh
             </button>
@@ -225,7 +222,7 @@ export default function SystemDashboardPage() {
           </div>
           <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {Object.entries(healthScore.components).map(([key, value]) => (
-              <div key={key} className="bg-white/50 rounded-lg p-3">
+              <div key={key} className="bg-[#10150D]/50 rounded-lg p-3">
                 <p className="text-xs opacity-80 capitalize">{key.replace(/([A-Z])/g, ' $1')}</p>
                 <p className="text-lg font-bold">{value}%</p>
               </div>
@@ -235,33 +232,33 @@ export default function SystemDashboardPage() {
 
         {/* System Status Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Database Status</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Database Status</p>
               <Database className="h-4 w-4 text-gray-400" />
             </div>
             <p className="mt-2 text-sm font-medium text-green-600 capitalize">{kpis.databaseStatus}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Supabase Connection</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Supabase Connection</p>
               <Globe className="h-4 w-4 text-gray-400" />
             </div>
             <p className="mt-2 text-sm font-medium text-green-600 capitalize">{kpis.supabaseConnection}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Auth Status</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Auth Status</p>
               <Lock className="h-4 w-4 text-gray-400" />
             </div>
             <p className="mt-2 text-sm font-medium text-green-600 capitalize">{kpis.authStatus}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Storage Usage</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Storage Usage</p>
               <HardDrive className="h-4 w-4 text-gray-400" />
             </div>
-            <p className="mt-2 text-sm font-medium text-gray-900">{kpis.storageUsage}</p>
+            <p className="mt-2 text-sm font-medium text-[#F5F5DC]">{kpis.storageUsage}</p>
           </div>
         </div>
 
@@ -279,14 +276,14 @@ export default function SystemDashboardPage() {
               indigo: 'bg-indigo-50 text-indigo-600',
             }
             return (
-              <div key={i} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div key={i} className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-gray-500">{kpi.title}</p>
-                  <div className={`p-2 rounded-lg ${colorClasses[kpi.color] || 'bg-gray-50 text-gray-600'}`}>
+                  <p className="text-xs font-medium text-[#9A9F87]">{kpi.title}</p>
+                  <div className={`p-2 rounded-lg ${colorClasses[kpi.color] || 'bg-gray-50 text-[#9A9F87]'}`}>
                     <Icon className="h-4 w-4" />
                   </div>
                 </div>
-                <p className="mt-2 text-2xl font-bold text-gray-900">{kpi.value}</p>
+                <p className="mt-2 text-2xl font-bold text-[#F5F5DC]">{kpi.value}</p>
               </div>
             )
           })}
@@ -310,12 +307,14 @@ function QuickLink({ href, label, icon: Icon }: { href: string; label: string; i
   return (
     <a
       href={href}
-      className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:bg-gray-50 transition-colors"
+      className="flex items-center gap-3 rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm hover:bg-[#4B5320]/10 transition-colors"
     >
-      <div className="p-2 rounded-lg bg-gray-50 text-gray-600">
+      <div className="p-2 rounded-lg bg-gray-50 text-[#9A9F87]">
         <Icon className="h-4 w-4" />
       </div>
-      <span className="text-sm font-medium text-gray-900">{label}</span>
+      <span className="text-sm font-medium text-[#F5F5DC]">{label}</span>
     </a>
   )
 }
+
+

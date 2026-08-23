@@ -151,26 +151,26 @@ export default function BackupsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Backups</h1>
-            <p className="text-sm text-gray-500">Manage system backups</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Backups</h1>
+            <p className="text-sm text-[#9A9F87]">Manage system backups</p>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={exportBackupList} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <button onClick={exportBackupList} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
               <Download className="h-4 w-4" />
               Export PDF
             </button>
-            <button onClick={fetchBackups} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <button onClick={fetchBackups} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
               <RefreshCw className="h-4 w-4" />
               Refresh
             </button>
@@ -178,17 +178,17 @@ export default function BackupsPage() {
         </div>
 
         {/* Create Backup */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Create New Backup</h2>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-[#F5F5DC] mb-4">Create New Backup</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             {BACKUP_TYPES.map((type) => (
               <button
                 key={type.value}
                 onClick={() => setSelectedType(type.value)}
-                className={`rounded-xl border-2 p-4 text-left transition-colors ${selectedType === type.value ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}
+                className={`rounded-xl border-2 p-4 text-left transition-colors ${selectedType === type.value ? 'border-blue-500 bg-blue-50' : 'border-[rgba(85,107,47,0.35)] hover:bg-[#4B5320]/10'}`}
               >
-                <h3 className="text-sm font-semibold text-gray-900">{type.label}</h3>
-                <p className="text-xs text-gray-500 mt-1">{type.description}</p>
+                <h3 className="text-sm font-semibold text-[#F5F5DC]">{type.label}</h3>
+                <p className="text-xs text-[#9A9F87] mt-1">{type.description}</p>
               </button>
             ))}
           </div>
@@ -203,38 +203,38 @@ export default function BackupsPage() {
         </div>
 
         {/* Backup History */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Backup History</h2>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+            <h2 className="text-lg font-semibold text-[#F5F5DC]">Backup History</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">ID</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Type</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Size</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Date</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Actions</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">ID</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Type</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Size</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Date</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {backups.length === 0 && (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">No backups found</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-8 text-center text-[#9A9F87]">No backups found</td></tr>
                 )}
                 {backups.map((backup) => (
-                  <tr key={backup.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-900 font-mono text-xs">{backup.id.slice(0, 8)}</td>
-                    <td className="px-4 py-3 text-gray-600 capitalize">{backup.backup_type}</td>
-                    <td className="px-4 py-3 text-gray-600">{formatBytes(backup.backup_size_bytes)}</td>
+                  <tr key={backup.id} className="hover:bg-[#4B5320]/10">
+                    <td className="px-4 py-3 text-[#F5F5DC] font-mono text-xs">{backup.id.slice(0, 8)}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] capitalize">{backup.backup_type}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{formatBytes(backup.backup_size_bytes)}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${backup.status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
                         {backup.status === 'completed' ? <CheckCircle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
                         {backup.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{backup.created_at ? new Date(backup.created_at).toLocaleString() : '—'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{backup.created_at ? new Date(backup.created_at).toLocaleString() : '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <button className="p-1 text-gray-400 hover:text-blue-600" title="Download">
@@ -255,3 +255,5 @@ export default function BackupsPage() {
     </div>
   )
 }
+
+

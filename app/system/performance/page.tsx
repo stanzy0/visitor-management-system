@@ -6,7 +6,7 @@ import { getCurrentUser } from '@/lib/auth-client'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
-import { Loader2, RefreshCw, TrendingUp, Clock, Zap, Activity, Timer, Database, Users, Printer, FileText, Calendar } from 'lucide-react'
+import { Loader2, RefreshCw, TrendingUp, Clock, Zap, Activity, Timer, Database, Users, Printer, FileText } from 'lucide-react'
 
 interface PerformanceMetric {
   id: string
@@ -25,7 +25,6 @@ const METRIC_CONFIG: Record<string, { label: string; color: string; icon: React.
   registration_time: { label: 'Registration Time', color: '#ec4899', icon: Users },
   badge_generation_time: { label: 'Badge Generation Time', color: '#14b8a6', icon: Printer },
   document_verification_time: { label: 'Document Verification Time', color: '#f97316', icon: FileText },
-  appointment_processing_time: { label: 'Appointment Processing Time', color: '#6366f1', icon: Calendar },
 }
 
 export default function PerformancePage() {
@@ -85,19 +84,19 @@ export default function PerformancePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Performance Monitoring</h1>
-            <p className="text-sm text-gray-500">Track system performance metrics</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Performance Monitoring</h1>
+            <p className="text-sm text-[#9A9F87]">Track system performance metrics</p>
           </div>
           <div className="flex items-center gap-3">
             <select
@@ -110,7 +109,7 @@ export default function PerformancePage() {
                 <option key={key} value={key}>{config.label}</option>
               ))}
             </select>
-            <button onClick={fetchMetrics} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <button onClick={fetchMetrics} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
               <RefreshCw className="h-4 w-4" />
               Refresh
             </button>
@@ -126,28 +125,28 @@ export default function PerformancePage() {
                 <button
                   key={key}
                   onClick={() => setSelectedMetric(key)}
-                  className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:bg-gray-50 text-left"
+                  className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm hover:bg-[#4B5320]/10 text-left"
                 >
                   <div className="flex items-center gap-2">
                     <Icon className="h-4 w-4 text-gray-400" />
-                    <p className="text-xs font-medium text-gray-500">{config.label}</p>
+                    <p className="text-xs font-medium text-[#9A9F87]">{config.label}</p>
                   </div>
-                  <p className="mt-2 text-2xl font-bold text-gray-900">{latest ? `${latest.value_ms}ms` : 'N/A'}</p>
+                  <p className="mt-2 text-2xl font-bold text-[#F5F5DC]">{latest ? `${latest.value_ms}ms` : 'N/A'}</p>
                 </button>
               )
             })}
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+            <h3 className="text-lg font-semibold text-[#F5F5DC]">
               {selectedMetric === 'all' ? 'All Metrics' : METRIC_CONFIG[selectedMetric]?.label || 'Performance'}
             </h3>
           </div>
           <div className="p-4">
             {chartData.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-8">No performance data available</p>
+              <p className="text-sm text-[#9A9F87] text-center py-8">No performance data available</p>
             ) : (
               <ResponsiveContainer width="100%" height={400}>
                 <LineChart data={chartData}>
@@ -185,3 +184,5 @@ export default function PerformancePage() {
     </div>
   )
 }
+
+

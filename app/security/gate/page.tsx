@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { Loader2, Search, CheckCircle2, XCircle, Clock, AlertTriangle, UserCheck, QrCode, Badge } from 'lucide-react'
-import { generateAppointmentQR } from '@/lib/qr/appointment-qr'
+import { generateVisitQRCode } from '@/lib/qrcode'
 import type { Visit } from '@/lib/types/visit'
 
 export default function GateCheckInPage() {
@@ -100,7 +100,7 @@ export default function GateCheckInPage() {
         await checkWatchlistOnCheckIn(selectedVisit.visitor_id, selectedVisit.id)
       }
 
-      const qr = await generateAppointmentQR(selectedVisit.id)
+      const qr = await generateVisitQRCode(selectedVisit.id)
 
       await supabase.from('visits').update({ status: 'checked_in', check_in_time: new Date().toISOString() }).eq('id', selectedVisit.id)
 
@@ -201,17 +201,17 @@ export default function GateCheckInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gate Check-In</h1>
-          <p className="text-sm text-gray-500">Scan QR code or badge to verify visitor entry</p>
+          <h1 className="text-2xl font-bold text-[#F5F5DC]">Gate Check-In</h1>
+          <p className="text-sm text-[#9A9F87]">Scan QR code or badge to verify visitor entry</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-4">
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Scan QR / Badge / Search</label>
+            <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+              <label className="block text-sm font-medium text-[#9A9F87] mb-2">Scan QR / Badge / Search</label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
@@ -223,7 +223,7 @@ export default function GateCheckInPage() {
                 />
               </div>
               <div className="mt-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Verification Method</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Verification Method</label>
                 <select value={verificationMethod} onChange={(e) => setVerificationMethod(e.target.value as any)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                   <option value="qr">QR Code</option>
                   <option value="badge">Badge Number</option>
@@ -232,23 +232,23 @@ export default function GateCheckInPage() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Waiting Visitors</h3>
+            <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+              <h3 className="text-sm font-semibold text-[#9A9F87] mb-3">Waiting Visitors</h3>
               <div className="space-y-2">
                 {visits.map((visit) => (
                   <button
                     key={visit.id}
                     onClick={() => setSelectedVisit(visit)}
-                    className={`w-full text-left rounded-lg border p-3 text-sm hover:bg-gray-50 ${
-                      selectedVisit?.id === visit.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    className={`w-full text-left rounded-lg border p-3 text-sm hover:bg-[#4B5320]/10 ${
+                      selectedVisit?.id === visit.id ? 'border-blue-500 bg-blue-50' : 'border-[rgba(85,107,47,0.35)]'
                     }`}
                   >
-                    <p className="font-medium text-gray-900">{visit.visitor?.full_name || '—'}</p>
-                    <p className="text-xs text-gray-500">{visit.visitor?.visitor_organization || ''}</p>
+                    <p className="font-medium text-[#F5F5DC]">{visit.visitor?.full_name || '—'}</p>
+                    <p className="text-xs text-[#9A9F87]">{visit.visitor?.visitor_organization || ''}</p>
                   </button>
                 ))}
                 {visits.length === 0 && (
-                  <p className="text-sm text-gray-500 text-center py-4">No visitors waiting</p>
+                  <p className="text-sm text-[#9A9F87] text-center py-4">No visitors waiting</p>
                 )}
               </div>
             </div>
@@ -256,35 +256,35 @@ export default function GateCheckInPage() {
 
           <div className="lg:col-span-2">
             {selectedVisit ? (
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6 space-y-6">
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-6 space-y-6">
                 <div className="flex flex-col items-center">
                   {selectedVisit.visitor?.photo_url ? (
                     <img src={selectedVisit.visitor.photo_url} alt={selectedVisit.visitor?.full_name || ''} className="h-40 w-40 rounded-full object-cover mb-4" />
                   ) : (
                     <div className="h-40 w-40 rounded-full bg-gray-200 flex items-center justify-center mb-4">
-                      <span className="text-4xl text-gray-500">{(selectedVisit.visitor?.full_name || '').charAt(0).toUpperCase()}</span>
+                      <span className="text-4xl text-[#9A9F87]">{(selectedVisit.visitor?.full_name || '').charAt(0).toUpperCase()}</span>
                     </div>
                   )}
-                  <h2 className="text-xl font-bold text-gray-900">{selectedVisit.visitor?.full_name || '—'}</h2>
-                  <p className="text-gray-600">{selectedVisit.visitor?.visitor_organization || '—'}</p>
+                  <h2 className="text-xl font-bold text-[#F5F5DC]">{selectedVisit.visitor?.full_name || '—'}</h2>
+                  <p className="text-[#9A9F87]">{selectedVisit.visitor?.visitor_organization || '—'}</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-gray-500 uppercase">Host Employee</p>
-                    <p className="text-sm font-medium text-gray-900">{selectedVisit.employee?.full_name || '—'}</p>
+                    <p className="text-xs text-[#9A9F87] uppercase">Host Employee</p>
+                    <p className="text-sm font-medium text-[#F5F5DC]">{selectedVisit.employee?.full_name || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase">Department</p>
-                    <p className="text-sm font-medium text-gray-900">{selectedVisit.employee?.department || '—'}</p>
+                    <p className="text-xs text-[#9A9F87] uppercase">Department</p>
+                    <p className="text-sm font-medium text-[#F5F5DC]">{selectedVisit.employee?.department || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase">Purpose</p>
-                    <p className="text-sm font-medium text-gray-900">{selectedVisit.purpose || '—'}</p>
+                    <p className="text-xs text-[#9A9F87] uppercase">Purpose</p>
+                    <p className="text-sm font-medium text-[#F5F5DC]">{selectedVisit.purpose || '—'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase">Badge Status</p>
-                    <p className="text-sm font-medium text-gray-900">{selectedVisit.badge?.badge_status || '—'}</p>
+                    <p className="text-xs text-[#9A9F87] uppercase">Badge Status</p>
+                    <p className="text-sm font-medium text-[#F5F5DC]">{selectedVisit.badge?.badge_status || '—'}</p>
                   </div>
                 </div>
 
@@ -304,9 +304,9 @@ export default function GateCheckInPage() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-12 text-center">
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-12 text-center">
                 <QrCode className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Select a visitor or scan a QR code to verify identity</p>
+                <p className="text-[#9A9F87]">Select a visitor or scan a QR code to verify identity</p>
               </div>
             )}
           </div>
@@ -314,25 +314,24 @@ export default function GateCheckInPage() {
 
         {showDenialModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-sm rounded-xl bg-white shadow-xl p-6">
+            <div className="w-full max-w-sm rounded-xl bg-[#10150D] shadow-xl p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 rounded-full bg-red-100">
                   <XCircle className="h-5 w-5 text-red-600" />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-900">Deny Entry</h2>
+                <h2 className="text-lg font-semibold text-[#F5F5DC]">Deny Entry</h2>
               </div>
-              <p className="text-sm text-gray-600 mb-4">Please select a reason for denial.</p>
+              <p className="text-sm text-[#9A9F87] mb-4">Please select a reason for denial.</p>
               <select value={denialReason || ''} onChange={(e) => setDenialReason(e.target.value)} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm mb-4">
                 <option value="">Select reason</option>
                 <option value="Invalid ID">Invalid ID</option>
                 <option value="Expired Badge">Expired Badge</option>
                 <option value="Watchlist Match">Watchlist Match</option>
                 <option value="Host Unavailable">Host Unavailable</option>
-                <option value="Appointment Cancelled">Appointment Cancelled</option>
                 <option value="Other">Other</option>
               </select>
               <div className="flex justify-end gap-3">
-                <button onClick={() => { setShowDenialModal(false); setDenialReason(null) }} disabled={processing} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 min-h-[44px]">
+                <button onClick={() => { setShowDenialModal(false); setDenialReason(null) }} disabled={processing} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 min-h-[44px]">
                   Back
                 </button>
                 <button onClick={handleDeny} disabled={processing || !denialReason} className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 min-h-[44px]">
@@ -347,3 +346,5 @@ export default function GateCheckInPage() {
     </div>
   )
 }
+
+

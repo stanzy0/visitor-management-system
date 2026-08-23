@@ -36,7 +36,6 @@ interface OperationsData {
     overstayedVisitors: number
     activeSecurityAlerts: number
     visitorsLeavingToday: number
-    appointmentsNow: number
   }
   visitors: {
     data: Array<{
@@ -52,7 +51,6 @@ interface OperationsData {
       visitor: { full_name: string; visitor_organization: string | null; photo_url: string | null } | null
       employee: { full_name: string; department: string | null; office_location: string | null } | null
       badge: { id: string; badge_number: string; badge_status: string; printed_at: string | null; expires_at: string } | null
-      appointment: { id: string; appointment_date: string; appointment_time: string; status: string } | null
     }>
     total: number
   }
@@ -92,7 +90,6 @@ interface OperationsData {
   }
   hosts: {
     available: Array<{ id: string; full_name: string; department: string | null }>
-    inAppointments: Array<{ id: string; full_name: string; department: string | null; appointment_time: string }>
     unavailable: Array<{ id: string; full_name: string; department: string | null; reason: string }>
     outsideOffice: Array<{ id: string; full_name: string; office_location: string | null }>
   }
@@ -185,7 +182,6 @@ export default function OperationsPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => fetchOperations())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'security_alerts' }, () => fetchOperations())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'lifecycle_events' }, () => fetchOperations())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => fetchOperations())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'property_items' }, () => fetchOperations())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_documents' }, () => fetchOperations())
       .subscribe()
@@ -358,7 +354,7 @@ export default function OperationsPage() {
 
   if (loading || !data) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )
@@ -376,11 +372,10 @@ export default function OperationsPage() {
     { title: 'Overstayed', value: data.kpis.overstayedVisitors, icon: Clock, color: 'red' },
     { title: 'Active Security Alerts', value: data.kpis.activeSecurityAlerts, icon: ShieldAlert, color: 'red' },
     { title: 'Leaving Today', value: data.kpis.visitorsLeavingToday, icon: LogOut, color: 'amber' },
-    { title: 'Appointments Now', value: data.kpis.appointmentsNow, icon: Calendar, color: 'blue' },
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       {data.emergency && (
         <div className="bg-red-600 text-white text-center py-3 font-bold text-lg animate-pulse">
           EMERGENCY MODE ACTIVE
@@ -390,8 +385,8 @@ export default function OperationsPage() {
       <div className="max-w-[1920px] mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Operations Control Center</h1>
-            <p className="text-sm text-gray-500">Live operational picture of everyone currently on base</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Operations Control Center</h1>
+            <p className="text-sm text-[#9A9F87]">Live operational picture of everyone currently on base</p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             {userRole === 'Admin' && (
@@ -417,7 +412,7 @@ export default function OperationsPage() {
                 )}
               </>
             )}
-            <button onClick={fetchOperations} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <button onClick={fetchOperations} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
               <RefreshCw className="h-4 w-4" />
               Refresh
             </button>
@@ -485,7 +480,7 @@ function KPICards({ kpis }: { kpis: Array<{ title: string; value: number; icon: 
   const colorClasses: Record<string, string> = {
     blue: 'bg-blue-50 text-blue-600', green: 'bg-green-50 text-green-600', purple: 'bg-purple-50 text-purple-600',
     indigo: 'bg-indigo-50 text-indigo-600', amber: 'bg-amber-50 text-amber-600', red: 'bg-red-50 text-red-600',
-    orange: 'bg-orange-50 text-orange-600', gray: 'bg-gray-50 text-gray-600',
+    orange: 'bg-orange-50 text-orange-600', gray: 'bg-gray-50 text-[#9A9F87]',
   }
 
   return (
@@ -493,14 +488,14 @@ function KPICards({ kpis }: { kpis: Array<{ title: string; value: number; icon: 
       {kpis.map((kpi, i) => {
         const Icon = kpi.icon
         return (
-          <div key={i} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div key={i} className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-medium text-gray-500">{kpi.title}</p>
-              <div className={`p-2 rounded-lg ${colorClasses[kpi.color] || 'bg-gray-50 text-gray-600'}`}>
+              <p className="text-xs font-medium text-[#9A9F87]">{kpi.title}</p>
+              <div className={`p-2 rounded-lg ${colorClasses[kpi.color] || 'bg-gray-50 text-[#9A9F87]'}`}>
                 <Icon className="h-4 w-4" />
               </div>
             </div>
-            <p className="mt-2 text-2xl font-bold text-gray-900">{kpi.value}</p>
+            <p className="mt-2 text-2xl font-bold text-[#F5F5DC]">{kpi.value}</p>
           </div>
         )
       })}
@@ -538,16 +533,16 @@ function LiveVisitorTable({
     pending: 'bg-yellow-100 text-yellow-800',
     approved: 'bg-blue-100 text-blue-800',
     checked_in: 'bg-green-100 text-green-800',
-    checked_out: 'bg-gray-100 text-gray-800',
+    checked_out: 'bg-gray-100 text-[#F5F5DC]',
     overstayed: 'bg-red-100 text-red-800',
     rejected: 'bg-red-100 text-red-800',
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="p-4 border-b border-gray-200">
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+      <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h3 className="text-lg font-semibold text-gray-900">Live Visitor Table</h3>
+          <h3 className="text-lg font-semibold text-[#F5F5DC]">Live Visitor Table</h3>
           <div className="flex items-center gap-2 flex-wrap">
             <div className="relative">
               <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -580,66 +575,66 @@ function LiveVisitorTable({
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="px-3 py-3 font-semibold text-gray-700">Photo</th>
-              <th className="px-3 py-3 font-semibold text-gray-700">Reg No.</th>
-              <th className="px-3 py-3 font-semibold text-gray-700">Visitor</th>
-              <th className="px-3 py-3 font-semibold text-gray-700">Company</th>
-              <th className="px-3 py-3 font-semibold text-gray-700">Type</th>
-              <th className="px-3 py-3 font-semibold text-gray-700">Host</th>
-              <th className="px-3 py-3 font-semibold text-gray-700">Dept</th>
-              <th className="px-3 py-3 font-semibold text-gray-700">Office</th>
-              <th className="px-3 py-3 font-semibold text-gray-700">Status</th>
-              <th className="px-3 py-3 font-semibold text-gray-700">Check-in</th>
-              <th className="px-3 py-3 font-semibold text-gray-700">Expected Out</th>
-              <th className="px-3 py-3 font-semibold text-gray-700">Badge</th>
-              <th className="px-3 py-3 font-semibold text-gray-700">Security</th>
-              <th className="px-3 py-3 font-semibold text-gray-700">Actions</th>
+            <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Photo</th>
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Reg No.</th>
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Visitor</th>
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Company</th>
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Type</th>
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Host</th>
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Dept</th>
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Office</th>
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Status</th>
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Check-in</th>
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Expected Out</th>
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Badge</th>
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Security</th>
+              <th className="px-3 py-3 font-semibold text-[#9A9F87]">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
             {visitors.map((v) => (
-              <tr key={v.id} className="hover:bg-gray-50">
+              <tr key={v.id} className="hover:bg-[#4B5320]/10">
                 <td className="px-3 py-3">
                   <img src={v.visitor?.photo_url || '/placeholder-avatar.png'} alt={v.visitor?.full_name || ''} className="h-10 w-10 rounded-full object-cover" />
                 </td>
-                <td className="px-3 py-3 text-gray-600 font-mono text-xs">{v.registration_number || 'N/A'}</td>
-                <td className="px-3 py-3 text-gray-900 font-medium">{v.visitor?.full_name || 'Unknown'}</td>
-                <td className="px-3 py-3 text-gray-600">{v.visitor?.visitor_organization || '-'}</td>
-                <td className="px-3 py-3 text-gray-600">{v.visitor_type}</td>
-                <td className="px-3 py-3 text-gray-600">{v.employee?.full_name || '-'}</td>
-                <td className="px-3 py-3 text-gray-600">{v.employee?.department || '-'}</td>
-                <td className="px-3 py-3 text-gray-600">{v.employee?.office_location || '-'}</td>
+                <td className="px-3 py-3 text-[#9A9F87] font-mono text-xs">{v.registration_number || 'N/A'}</td>
+                <td className="px-3 py-3 text-[#F5F5DC] font-medium">{v.visitor?.full_name || 'Unknown'}</td>
+                <td className="px-3 py-3 text-[#9A9F87]">{v.visitor?.visitor_organization || '-'}</td>
+                <td className="px-3 py-3 text-[#9A9F87]">{v.visitor_type}</td>
+                <td className="px-3 py-3 text-[#9A9F87]">{v.employee?.full_name || '-'}</td>
+                <td className="px-3 py-3 text-[#9A9F87]">{v.employee?.department || '-'}</td>
+                <td className="px-3 py-3 text-[#9A9F87]">{v.employee?.office_location || '-'}</td>
                 <td className="px-3 py-3">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[v.status] || 'bg-gray-100 text-gray-800'}`}>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[v.status] || 'bg-gray-100 text-[#F5F5DC]'}`}>
                     {v.status.replace('_', ' ')}
                   </span>
                 </td>
-                <td className="px-3 py-3 text-gray-600">{v.check_in_time ? new Date(v.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
-                <td className="px-3 py-3 text-gray-600">{v.expires_at ? new Date(v.expires_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
-                <td className="px-3 py-3 text-gray-600">{v.badge?.badge_number || '-'}</td>
-                <td className="px-3 py-3 text-gray-600">{v.badge?.badge_status || '-'}</td>
+                <td className="px-3 py-3 text-[#9A9F87]">{v.check_in_time ? new Date(v.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                <td className="px-3 py-3 text-[#9A9F87]">{v.expires_at ? new Date(v.expires_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                <td className="px-3 py-3 text-[#9A9F87]">{v.badge?.badge_number || '-'}</td>
+                <td className="px-3 py-3 text-[#9A9F87]">{v.badge?.badge_status || '-'}</td>
                 <td className="px-3 py-3">
                   <div className="flex items-center gap-1">
-                    <button onClick={() => {}} className="p-1 rounded hover:bg-gray-200" title="View"><Eye className="h-4 w-4 text-gray-500" /></button>
-                    <button onClick={() => {}} className="p-1 rounded hover:bg-gray-200" title="Locate"><MapPin className="h-4 w-4 text-gray-500" /></button>
-                    <button onClick={() => onNotifyHost(v.id)} className="p-1 rounded hover:bg-gray-200" title="Notify Host"><Bell className="h-4 w-4 text-gray-500" /></button>
-                    <button onClick={() => {}} className="p-1 rounded hover:bg-gray-200" title="Emergency Contact"><Phone className="h-4 w-4 text-gray-500" /></button>
+                    <button onClick={() => {}} className="p-1 rounded hover:bg-gray-200" title="View"><Eye className="h-4 w-4 text-[#9A9F87]" /></button>
+                    <button onClick={() => {}} className="p-1 rounded hover:bg-gray-200" title="Locate"><MapPin className="h-4 w-4 text-[#9A9F87]" /></button>
+                    <button onClick={() => onNotifyHost(v.id)} className="p-1 rounded hover:bg-gray-200" title="Notify Host"><Bell className="h-4 w-4 text-[#9A9F87]" /></button>
+                    <button onClick={() => {}} className="p-1 rounded hover:bg-gray-200" title="Emergency Contact"><Phone className="h-4 w-4 text-[#9A9F87]" /></button>
                     {v.status !== 'checked_out' && (
                       <button onClick={() => onForceCheckout(v.id)} disabled={actionLoading} className="p-1 rounded hover:bg-gray-200" title="Force Check-out"><LogOut className="h-4 w-4 text-red-500" /></button>
                     )}
-                    <button onClick={() => onReprintBadge(v.id)} className="p-1 rounded hover:bg-gray-200" title="Print Badge"><PrinterIcon className="h-4 w-4 text-gray-500" /></button>
+                    <button onClick={() => onReprintBadge(v.id)} className="p-1 rounded hover:bg-gray-200" title="Print Badge"><PrinterIcon className="h-4 w-4 text-[#9A9F87]" /></button>
                   </div>
                 </td>
               </tr>
             ))}
             {visitors.length === 0 && (
-              <tr><td colSpan={14} className="px-3 py-8 text-center text-gray-500">No visitors found</td></tr>
+              <tr><td colSpan={14} className="px-3 py-8 text-center text-[#9A9F87]">No visitors found</td></tr>
             )}
           </tbody>
         </table>
       </div>
-      <div className="p-4 border-t border-gray-200 text-sm text-gray-500">
+      <div className="p-4 border-t border-[rgba(85,107,47,0.35)] text-sm text-[#9A9F87]">
         Showing {visitors.length} of {total} visitors
       </div>
     </div>
@@ -648,30 +643,30 @@ function LiveVisitorTable({
 
 function ActivityFeedSection({ activities }: { activities: OperationsData['activity'] }) {
   const priorityColors: Record<string, string> = {
-    low: 'bg-gray-100 text-gray-700',
+    low: 'bg-gray-100 text-[#9A9F87]',
     medium: 'bg-blue-100 text-blue-700',
     high: 'bg-amber-100 text-amber-700',
     critical: 'bg-red-100 text-red-700',
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+      <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+        <h3 className="text-lg font-semibold text-[#F5F5DC] flex items-center gap-2">
           <Activity className="h-5 w-5 text-blue-600" />
           Live Activity Feed
         </h3>
       </div>
       <div className="p-4 space-y-3 max-h-[500px] overflow-y-auto">
-        {activities.length === 0 && <p className="text-sm text-gray-500 text-center py-4">No recent activity</p>}
+        {activities.length === 0 && <p className="text-sm text-[#9A9F87] text-center py-4">No recent activity</p>}
         {activities.map((activity) => (
           <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50">
             <div className={`p-2 rounded-lg ${priorityColors[activity.priority]}`}>
               <Activity className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-900 font-medium">{activity.message}</p>
-              <p className="text-xs text-gray-500">{activity.timestamp ? new Date(activity.timestamp).toLocaleString() : '—'}</p>
+              <p className="text-sm text-[#F5F5DC] font-medium">{activity.message}</p>
+              <p className="text-xs text-[#9A9F87]">{activity.timestamp ? new Date(activity.timestamp).toLocaleString() : '—'}</p>
             </div>
             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${priorityColors[activity.priority]}`}>
               {activity.priority}
@@ -685,9 +680,9 @@ function ActivityFeedSection({ activities }: { activities: OperationsData['activ
 
 function SecurityPanelSection({ security }: { security: OperationsData['security'] }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+      <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+        <h3 className="text-lg font-semibold text-[#F5F5DC] flex items-center gap-2">
           <ShieldAlert className="h-5 w-5 text-red-600" />
           Security Panel
         </h3>
@@ -701,15 +696,15 @@ function SecurityPanelSection({ security }: { security: OperationsData['security
         </div>
         {security.recentAlerts.length > 0 && (
           <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Recent Alerts</h4>
+            <h4 className="text-sm font-medium text-[#9A9F87] mb-2">Recent Alerts</h4>
             <div className="space-y-2">
               {security.recentAlerts.slice(0, 5).map((alert) => (
                 <div key={alert.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                   <div>
-                    <p className="text-sm text-gray-900 font-medium">{alert.title}</p>
-                    <p className="text-xs text-gray-500">{alert.alert_type} - {alert.severity}</p>
+                    <p className="text-sm text-[#F5F5DC] font-medium">{alert.title}</p>
+                    <p className="text-xs text-[#9A9F87]">{alert.alert_type} - {alert.severity}</p>
                   </div>
-                  <span className="text-xs text-gray-500">{alert.created_at ? new Date(alert.created_at).toLocaleTimeString() : '—'}</span>
+                  <span className="text-xs text-[#9A9F87]">{alert.created_at ? new Date(alert.created_at).toLocaleTimeString() : '—'}</span>
                 </div>
               ))}
             </div>
@@ -724,15 +719,15 @@ function KPIBadge({ title, value, icon: Icon, color }: { title: string; value: n
   const colorClasses: Record<string, string> = {
     blue: 'bg-blue-50 text-blue-600', green: 'bg-green-50 text-green-600', purple: 'bg-purple-50 text-purple-600',
     indigo: 'bg-indigo-50 text-indigo-600', amber: 'bg-amber-50 text-amber-600', red: 'bg-red-50 text-red-600',
-    orange: 'bg-orange-50 text-orange-600', gray: 'bg-gray-50 text-gray-600',
+    orange: 'bg-orange-50 text-orange-600', gray: 'bg-gray-50 text-[#9A9F87]',
   }
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+    <div className="rounded-lg border border-[rgba(85,107,47,0.35)] bg-gray-50 p-3">
       <div className="flex items-center gap-2">
-        <div className={`p-2 rounded-lg ${colorClasses[color] || 'bg-gray-50 text-gray-600'}`}><Icon className="h-4 w-4" /></div>
+        <div className={`p-2 rounded-lg ${colorClasses[color] || 'bg-gray-50 text-[#9A9F87]'}`}><Icon className="h-4 w-4" /></div>
         <div>
-          <p className="text-xs text-gray-500">{title}</p>
-          <p className="text-lg font-bold text-gray-900">{value}</p>
+          <p className="text-xs text-[#9A9F87]">{title}</p>
+          <p className="text-lg font-bold text-[#F5F5DC]">{value}</p>
         </div>
       </div>
     </div>
@@ -749,25 +744,25 @@ function WaitingQueuesSection({ queues }: { queues: OperationsData['queues'] }) 
   ]
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Waiting Queues</h3>
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+      <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+        <h3 className="text-lg font-semibold text-[#F5F5DC]">Waiting Queues</h3>
       </div>
       <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {queues_config.map((queue) => {
           const Icon = queue.icon
           return (
-            <div key={queue.title} className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <div key={queue.title} className="rounded-lg border border-[rgba(85,107,47,0.35)] bg-gray-50 p-4">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-medium text-gray-700">{queue.title}</h4>
-                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-xs font-bold text-gray-700">{queue.items.length}</span>
+                <h4 className="text-sm font-medium text-[#9A9F87]">{queue.title}</h4>
+                <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-200 text-xs font-bold text-[#9A9F87]">{queue.items.length}</span>
               </div>
               <div className="space-y-2 max-h-48 overflow-y-auto">
-                {queue.items.length === 0 && <p className="text-xs text-gray-500">No one waiting</p>}
+                {queue.items.length === 0 && <p className="text-xs text-[#9A9F87]">No one waiting</p>}
                 {queue.items.map((item) => (
-                  <div key={item.id} className="p-2 bg-white rounded border border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">{item.visitor_name}</p>
-                    <p className="text-xs text-gray-500">{item.host || 'No host'} - {item.department || 'No dept'}</p>
+                  <div key={item.id} className="p-2 bg-[#10150D] rounded border border-[rgba(85,107,47,0.25)]">
+                    <p className="text-sm font-medium text-[#F5F5DC]">{item.visitor_name}</p>
+                    <p className="text-xs text-[#9A9F87]">{item.host || 'No host'} - {item.department || 'No dept'}</p>
                     <p className="text-xs text-gray-400">{item.waiting_since ? new Date(item.waiting_since).toLocaleTimeString() : '—'}</p>
                   </div>
                 ))}
@@ -782,25 +777,25 @@ function WaitingQueuesSection({ queues }: { queues: OperationsData['queues'] }) 
 
 function OverstayPanel({ overstays, onForceCheckout, onNotifyHost, actionLoading }: { overstays: OperationsData['overstays']; onForceCheckout: (id: string) => void; onNotifyHost: (id: string) => void; actionLoading: boolean }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+      <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+        <h3 className="text-lg font-semibold text-[#F5F5DC] flex items-center gap-2">
           <Clock className="h-5 w-5 text-red-600" />
           Overstay Panel
         </h3>
       </div>
       <div className="p-4 space-y-3 max-h-[400px] overflow-y-auto">
-        {overstays.length === 0 && <p className="text-sm text-gray-500 text-center py-4">No overstayed visitors</p>}
+        {overstays.length === 0 && <p className="text-sm text-[#9A9F87] text-center py-4">No overstayed visitors</p>}
         {overstays.map((v) => (
           <div key={v.id} className="flex items-start gap-3 p-3 rounded-lg bg-red-50 border border-red-100">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900">{v.visitor_name}</p>
-              <p className="text-xs text-gray-500">Host: {v.host || 'N/A'} | Office: {v.office || 'N/A'}</p>
+              <p className="text-sm font-medium text-[#F5F5DC]">{v.visitor_name}</p>
+              <p className="text-xs text-[#9A9F87]">Host: {v.host || 'N/A'} | Office: {v.office || 'N/A'}</p>
               <p className="text-xs text-red-600 font-medium">{v.hours_overdue}h overdue</p>
               <p className="text-xs text-gray-400">Badge: {v.badge_number || 'N/A'}</p>
             </div>
             <div className="flex items-center gap-1">
-              <button onClick={() => onNotifyHost(v.id)} className="p-1.5 rounded hover:bg-red-100" title="Notify Host"><Bell className="h-4 w-4 text-gray-600" /></button>
+              <button onClick={() => onNotifyHost(v.id)} className="p-1.5 rounded hover:bg-red-100" title="Notify Host"><Bell className="h-4 w-4 text-[#9A9F87]" /></button>
               <button onClick={() => onForceCheckout(v.id)} disabled={actionLoading} className="p-1.5 rounded hover:bg-red-100" title="Force Check-out"><LogOut className="h-4 w-4 text-red-600" /></button>
             </div>
           </div>
@@ -812,9 +807,9 @@ function OverstayPanel({ overstays, onForceCheckout, onNotifyHost, actionLoading
 
 function HostAvailabilitySection({ hosts }: { hosts: OperationsData['hosts'] }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Host Availability</h3>
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+      <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+        <h3 className="text-lg font-semibold text-[#F5F5DC]">Host Availability</h3>
       </div>
       <div className="p-4 space-y-4">
         <div>
@@ -823,20 +818,8 @@ function HostAvailabilitySection({ hosts }: { hosts: OperationsData['hosts'] }) 
             {hosts.available.slice(0, 10).map((h) => (
               <div key={h.id} className="flex items-center gap-2 p-2 bg-green-50 rounded">
                 <User className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-gray-900">{h.full_name}</span>
-                <span className="text-xs text-gray-500">{h.department || ''}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div>
-          <h4 className="text-sm font-medium text-blue-700 mb-2">In Appointments ({hosts.inAppointments.length})</h4>
-          <div className="space-y-1">
-            {hosts.inAppointments.slice(0, 10).map((h) => (
-              <div key={h.id} className="flex items-center gap-2 p-2 bg-blue-50 rounded">
-                <Calendar className="h-4 w-4 text-blue-600" />
-                <span className="text-sm text-gray-900">{h.full_name}</span>
-                <span className="text-xs text-gray-500">{h.appointment_time}</span>
+                <span className="text-sm text-[#F5F5DC]">{h.full_name}</span>
+                <span className="text-xs text-[#9A9F87]">{h.department || ''}</span>
               </div>
             ))}
           </div>
@@ -847,8 +830,8 @@ function HostAvailabilitySection({ hosts }: { hosts: OperationsData['hosts'] }) 
             {hosts.unavailable.slice(0, 10).map((h) => (
               <div key={h.id} className="flex items-center gap-2 p-2 bg-red-50 rounded">
                 <User className="h-4 w-4 text-red-600" />
-                <span className="text-sm text-gray-900">{h.full_name}</span>
-                <span className="text-xs text-gray-500">{h.reason}</span>
+                <span className="text-sm text-[#F5F5DC]">{h.full_name}</span>
+                <span className="text-xs text-[#9A9F87]">{h.reason}</span>
               </div>
             ))}
           </div>
@@ -860,20 +843,20 @@ function HostAvailabilitySection({ hosts }: { hosts: OperationsData['hosts'] }) 
 
 function OfficeOccupancySection({ occupancy }: { occupancy: OperationsData['occupancy'] }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Office Occupancy</h3>
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+      <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+        <h3 className="text-lg font-semibold text-[#F5F5DC]">Office Occupancy</h3>
       </div>
       <div className="p-4">
         {occupancy.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-4">No occupancy data</p>
+          <p className="text-sm text-[#9A9F87] text-center py-4">No occupancy data</p>
         ) : (
           <div className="space-y-2 max-h-[300px] overflow-y-auto">
             {occupancy.map((o, i) => (
               <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{o.department}</p>
-                  <p className="text-xs text-gray-500">{o.office_location}</p>
+                  <p className="text-sm font-medium text-[#F5F5DC]">{o.department}</p>
+                  <p className="text-xs text-[#9A9F87]">{o.office_location}</p>
                 </div>
                 <span className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 text-blue-700 text-sm font-bold">{o.visitor_count}</span>
               </div>
@@ -887,33 +870,33 @@ function OfficeOccupancySection({ occupancy }: { occupancy: OperationsData['occu
 
 function ActiveBadgesSection({ badges, onReprintBadge }: { badges: OperationsData['badges']; onReprintBadge: (id: string) => void }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Active Badges</h3>
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+      <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+        <h3 className="text-lg font-semibold text-[#F5F5DC]">Active Badges</h3>
       </div>
       <div className="p-4 overflow-x-auto">
         {badges.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-4">No active badges</p>
+          <p className="text-sm text-[#9A9F87] text-center py-4">No active badges</p>
         ) : (
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-3 py-2 font-semibold text-gray-700">Badge</th>
-                <th className="px-3 py-2 font-semibold text-gray-700">Visitor</th>
-                <th className="px-3 py-2 font-semibold text-gray-700">Issued</th>
-                <th className="px-3 py-2 font-semibold text-gray-700">Expires</th>
-                <th className="px-3 py-2 font-semibold text-gray-700">Status</th>
-                <th className="px-3 py-2 font-semibold text-gray-700">Action</th>
+              <tr className="border-b border-[rgba(85,107,47,0.35)]">
+                <th className="px-3 py-2 font-semibold text-[#9A9F87]">Badge</th>
+                <th className="px-3 py-2 font-semibold text-[#9A9F87]">Visitor</th>
+                <th className="px-3 py-2 font-semibold text-[#9A9F87]">Issued</th>
+                <th className="px-3 py-2 font-semibold text-[#9A9F87]">Expires</th>
+                <th className="px-3 py-2 font-semibold text-[#9A9F87]">Status</th>
+                <th className="px-3 py-2 font-semibold text-[#9A9F87]">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
               {badges.slice(0, 20).map((b) => (
                 <tr key={b.id}>
-                  <td className="px-3 py-2 text-gray-900 font-medium">{b.badge_number}</td>
-                  <td className="px-3 py-2 text-gray-600">{b.visitor_name}</td>
-                  <td className="px-3 py-2 text-gray-600">{b.issued_at ? new Date(b.issued_at).toLocaleString() : '—'}</td>
-                  <td className="px-3 py-2 text-gray-600">{b.expires_at ? new Date(b.expires_at).toLocaleString() : '—'}</td>
-                  <td className="px-3 py-2 text-gray-600">{b.status}</td>
+                  <td className="px-3 py-2 text-[#F5F5DC] font-medium">{b.badge_number}</td>
+                  <td className="px-3 py-2 text-[#9A9F87]">{b.visitor_name}</td>
+                  <td className="px-3 py-2 text-[#9A9F87]">{b.issued_at ? new Date(b.issued_at).toLocaleString() : '—'}</td>
+                  <td className="px-3 py-2 text-[#9A9F87]">{b.expires_at ? new Date(b.expires_at).toLocaleString() : '—'}</td>
+                  <td className="px-3 py-2 text-[#9A9F87]">{b.status}</td>
                   <td className="px-3 py-2">
                     <button onClick={() => onReprintBadge(b.visit_id)} className="text-blue-600 hover:text-blue-800 text-xs font-medium">Reprint</button>
                   </td>
@@ -936,36 +919,36 @@ function ActivePropertySection({ property }: { property: OperationsData['propert
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Active Property Items</h3>
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+      <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+        <h3 className="text-lg font-semibold text-[#F5F5DC]">Active Property Items</h3>
       </div>
       <div className="p-4 overflow-x-auto">
         {property.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-4">No active property items</p>
+          <p className="text-sm text-[#9A9F87] text-center py-4">No active property items</p>
         ) : (
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-3 py-2 font-semibold text-gray-700">Visitor</th>
-                <th className="px-3 py-2 font-semibold text-gray-700">Type</th>
-                <th className="px-3 py-2 font-semibold text-gray-700">Description</th>
-                <th className="px-3 py-2 font-semibold text-gray-700">Status</th>
-                <th className="px-3 py-2 font-semibold text-gray-700">Registered</th>
+              <tr className="border-b border-[rgba(85,107,47,0.35)]">
+                <th className="px-3 py-2 font-semibold text-[#9A9F87]">Visitor</th>
+                <th className="px-3 py-2 font-semibold text-[#9A9F87]">Type</th>
+                <th className="px-3 py-2 font-semibold text-[#9A9F87]">Description</th>
+                <th className="px-3 py-2 font-semibold text-[#9A9F87]">Status</th>
+                <th className="px-3 py-2 font-semibold text-[#9A9F87]">Registered</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
               {property.slice(0, 20).map((p) => (
                 <tr key={p.id}>
-                  <td className="px-3 py-2 text-gray-900 font-medium">{p.visitor_name}</td>
-                  <td className="px-3 py-2 text-gray-600">{p.property_type}</td>
-                  <td className="px-3 py-2 text-gray-600">{p.description || '-'}</td>
+                  <td className="px-3 py-2 text-[#F5F5DC] font-medium">{p.visitor_name}</td>
+                  <td className="px-3 py-2 text-[#9A9F87]">{p.property_type}</td>
+                  <td className="px-3 py-2 text-[#9A9F87]">{p.description || '-'}</td>
                   <td className="px-3 py-2">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[p.status] || 'bg-gray-100 text-gray-800'}`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[p.status] || 'bg-gray-100 text-[#F5F5DC]'}`}>
                       {p.status}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-gray-600">{new Date(p.created_at).toLocaleString()}</td>
+                  <td className="px-3 py-2 text-[#9A9F87]">{new Date(p.created_at).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -975,3 +958,5 @@ function ActivePropertySection({ property }: { property: OperationsData['propert
     </div>
   )
 }
+
+

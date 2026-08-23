@@ -53,18 +53,6 @@ interface Visit {
   badge?: Badge | null
 }
 
-interface Appointment {
-  id: string
-  visitor_id: string
-  employee_id: string
-  appointment_date: string
-  appointment_time: string
-  purpose: string
-  status: string
-  visitor: Visitor
-  employee: Employee
-}
-
 interface SecurityAlert {
   id: string
   alert_type: string
@@ -88,7 +76,6 @@ const todayEnd = `${today()}T23:59:59.999`
 
 export default function ReceptionPage() {
   const [visitsToday, setVisitsToday] = useState<Visit[]>([])
-  const [appointmentsToday, setAppointmentsToday] = useState<Appointment[]>([])
   const [currentlyInside, setCurrentlyInside] = useState<Visit[]>([])
   const [pendingVisits, setPendingVisits] = useState<Visit[]>([])
   const [alerts, setAlerts] = useState<SecurityAlert[]>([])
@@ -117,7 +104,6 @@ export default function ReceptionPage() {
     try {
       const [
         visitsTodayRes,
-        appointmentsTodayRes,
         currentlyInsideRes,
         pendingVisitsRes,
         alertsRes,
@@ -131,11 +117,6 @@ export default function ReceptionPage() {
           .gte('created_at', todayStart)
           .lt('created_at', todayEnd)
           .order('created_at', { ascending: false }),
-        supabase
-          .from('appointments')
-          .select('*, visitor:visitors(*), employee:employees(*)')
-          .eq('appointment_date', today)
-          .order('appointment_time', { ascending: true }),
         supabase
           .from('visits')
           .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*)')
@@ -163,7 +144,6 @@ export default function ReceptionPage() {
       ])
 
       if (visitsTodayRes.data) setVisitsToday(visitsTodayRes.data as Visit[])
-      if (appointmentsTodayRes.data) setAppointmentsToday(appointmentsTodayRes.data as Appointment[])
       if (currentlyInsideRes.data) setCurrentlyInside(currentlyInsideRes.data as Visit[])
       if (pendingVisitsRes.data) setPendingVisits(pendingVisitsRes.data as Visit[])
       if (alertsRes.data) setAlerts(alertsRes.data as SecurityAlert[])
@@ -182,7 +162,7 @@ export default function ReceptionPage() {
         window.location.href = '/login'
         return
       }
-      const allowed = ['Admin', 'Receptionist', 'Security']
+      const allowed = ['Admin', 'Receptionist', 'Security', 'PA_TO_DIRECTOR', 'PA_TO_CI']
       if (!allowed.includes(user.role)) {
         window.location.href = '/unauthorized'
         return
@@ -193,7 +173,6 @@ export default function ReceptionPage() {
       realtimeChannel.current = supabase
         .channel('reception-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => fetchAllData())
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => fetchAllData())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'security_alerts' }, () => fetchAllData())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_badges' }, () => fetchAllData())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'incidents' }, () => fetchAllData())
@@ -331,16 +310,6 @@ export default function ReceptionPage() {
     return `${hours}h ${minutes}m`
   }
 
-  const isLate = (appointmentTime: string) => {
-    const [hours, minutes] = appointmentTime.split(':').map(Number)
-    const appointmentDate = new Date()
-    appointmentDate.setHours(hours, minutes, 0, 0)
-    const checkedIn = [...visitsToday, ...currentlyInside].some(v =>
-      v.visitor_id && appointmentsToday.find(a => a.visitor_id === v.visitor_id)?.appointment_time === appointmentTime
-    )
-    return new Date() > appointmentDate && !checkedIn
-  }
-
   const isVIP = (organization?: string) => {
     return organization?.toLowerCase().includes('vip') || organization?.toLowerCase().includes('government') || false
   }
@@ -351,7 +320,7 @@ export default function ReceptionPage() {
       case 'High': return 'bg-orange-50 text-orange-700 border-orange-200'
       case 'Medium': return 'bg-amber-50 text-amber-700 border-amber-200'
       case 'Low': return 'bg-blue-50 text-blue-700 border-blue-200'
-      default: return 'bg-gray-50 text-gray-700 border-gray-200'
+      default: return 'bg-gray-50 text-[#9A9F87] border-[rgba(85,107,47,0.35)]'
     }
   }
 
@@ -361,8 +330,8 @@ export default function ReceptionPage() {
       case 'approved': return 'bg-blue-50 text-blue-700 border-blue-200'
       case 'rejected': return 'bg-red-50 text-red-700 border-red-200'
       case 'checked_in': return 'bg-green-50 text-green-700 border-green-200'
-      case 'checked_out': return 'bg-gray-50 text-gray-700 border-gray-200'
-      default: return 'bg-gray-50 text-gray-700 border-gray-200'
+      case 'checked_out': return 'bg-gray-50 text-[#9A9F87] border-[rgba(85,107,47,0.35)]'
+      default: return 'bg-gray-50 text-[#9A9F87] border-[rgba(85,107,47,0.35)]'
     }
   }
 
@@ -387,25 +356,11 @@ export default function ReceptionPage() {
     { title: 'Currently Inside', value: currentlyInside.length.toString(), icon: UserCheck, color: 'green' },
     { title: 'Checked Out Today', value: visitsToday.filter(v => v.status === 'checked_out').length.toString(), icon: LogOut, color: 'blue' },
     { title: 'Waiting', value: pendingVisits.length.toString(), icon: Clock, color: 'amber' },
-    { title: 'Expected Today', value: appointmentsToday.length.toString(), icon: CalendarDays, color: 'purple' },
     { title: 'Overdue/Overstay', value: expiringBadges.length.toString(), icon: AlertTriangle, color: 'red' },
   ]
 
-  const morningAppointments = appointmentsToday.filter(a => {
-    const [h] = a.appointment_time.split(':').map(Number)
-    return h < 12
-  })
-  const afternoonAppointments = appointmentsToday.filter(a => {
-    const [h] = a.appointment_time.split(':').map(Number)
-    return h >= 12 && h < 17
-  })
-  const eveningAppointments = appointmentsToday.filter(a => {
-    const [h] = a.appointment_time.split(':').map(Number)
-    return h >= 17
-  })
-
   return (
-    <div className={`min-h-screen bg-gray-50 ${largeDisplayMode ? 'text-xl' : ''}`}>
+    <div className={`min-h-screen bg-[#0B0F08] ${largeDisplayMode ? 'text-xl' : ''}`}>
       <div className={`mx-auto ${largeDisplayMode ? 'max-w-7xl' : 'max-w-7xl'} p-4 lg:p-6 space-y-6`}>
         {notification && (
           <div className={`fixed top-4 right-4 z-50 rounded-lg p-4 shadow-lg text-sm ${notification.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
@@ -456,18 +411,18 @@ export default function ReceptionPage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setSearchFocused(true)}
                   onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-                  className="w-full rounded-lg bg-gray-800 border border-gray-700 pl-10 pr-4 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg bg-gray-800 border border-gray-700 pl-10 pr-4 py-2 text-white placeholder:text-[#9A9F87] focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               {searchFocused && searchResults.length > 0 && (
-                <div className="mt-2 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+                <div className="mt-2 bg-[#10150D] rounded-lg shadow-lg border border-[rgba(85,107,47,0.35)] overflow-hidden">
                   {searchResults.map((result, i) => (
                     <div
                       key={`${result.type}-${result.id}-${i}`}
-                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      className="px-4 py-3 hover:bg-[#4B5320]/10 cursor-pointer border-b border-[rgba(85,107,47,0.25)] last:border-b-0"
                     >
-                      <p className="text-sm font-medium text-gray-900">{result.label}</p>
-                      <p className="text-xs text-gray-500">{result.sub}</p>
+                      <p className="text-sm font-medium text-[#F5F5DC]">{result.label}</p>
+                      <p className="text-xs text-[#9A9F87]">{result.sub}</p>
                     </div>
                   ))}
                 </div>
@@ -505,18 +460,18 @@ export default function ReceptionPage() {
         {!largeDisplayMode && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {kpis.map((kpi) => (
-              <div key={kpi.title} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div key={kpi.title} className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-gray-500">{kpi.title}</p>
+                  <p className="text-sm font-medium text-[#9A9F87]">{kpi.title}</p>
                   <kpi.icon className={`h-4 w-4 ${
                     kpi.color === 'green' ? 'text-green-600' :
                     kpi.color === 'blue' ? 'text-blue-600' :
                     kpi.color === 'amber' ? 'text-amber-600' :
                     kpi.color === 'purple' ? 'text-purple-600' :
-                    kpi.color === 'red' ? 'text-red-600' : 'text-gray-600'
+                    kpi.color === 'red' ? 'text-red-600' : 'text-[#9A9F87]'
                   }`} />
                 </div>
-                <p className="mt-2 text-3xl font-bold text-gray-900">{kpi.value}</p>
+                <p className="mt-2 text-3xl font-bold text-[#F5F5DC]">{kpi.value}</p>
               </div>
             ))}
           </div>
@@ -525,9 +480,9 @@ export default function ReceptionPage() {
         {largeDisplayMode && (
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {kpis.map((kpi) => (
-              <div key={kpi.title} className="rounded-xl border-2 border-gray-300 bg-white p-6 shadow-lg">
-                <p className="text-lg font-medium text-gray-600">{kpi.title}</p>
-                <p className="mt-2 text-5xl font-bold text-gray-900">{kpi.value}</p>
+              <div key={kpi.title} className="rounded-xl border-2 border-gray-300 bg-[#10150D] p-6 shadow-lg">
+                <p className="text-lg font-medium text-[#9A9F87]">{kpi.title}</p>
+                <p className="mt-2 text-5xl font-bold text-[#F5F5DC]">{kpi.value}</p>
               </div>
             ))}
           </div>
@@ -535,24 +490,24 @@ export default function ReceptionPage() {
 
         {largeDisplayMode && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-              <div className="p-4 border-b border-gray-200">
-                <h3 className="text-xl font-semibold text-gray-900">Today&apos;s Visitors</h3>
+            <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+              <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+                <h3 className="text-xl font-semibold text-[#F5F5DC]">Today&apos;s Visitors</h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-base">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
-                      <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
+                    <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Visitor</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Host</th>
+                      <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                     {visitsToday.slice(0, 10).map((visit) => (
-                      <tr key={visit.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 font-medium text-gray-900">{visit.visitor.full_name}</td>
-                        <td className="px-4 py-3 text-gray-600">{visit.employee.full_name}</td>
+                      <tr key={visit.id} className="hover:bg-[#4B5320]/10">
+                        <td className="px-4 py-3 font-medium text-[#F5F5DC]">{visit.visitor.full_name}</td>
+                        <td className="px-4 py-3 text-[#9A9F87]">{visit.employee.full_name}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium ${getStatusColor(visit.status)}`}>
                             {visit.status.replace('_', ' ')}
@@ -565,33 +520,33 @@ export default function ReceptionPage() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-              <div className="p-4 border-b border-gray-200">
-                <h3 className="text-xl font-semibold text-gray-900">Currently Inside</h3>
+            <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+              <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+                <h3 className="text-xl font-semibold text-[#F5F5DC]">Currently Inside</h3>
               </div>
               <div className="p-4 space-y-3">
                 {currentlyInside.slice(0, 10).map((visit) => (
-                  <div key={visit.id} className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0">
+                  <div key={visit.id} className="flex items-center justify-between border-b border-[rgba(85,107,47,0.25)] pb-2 last:border-0">
                     <div>
-                      <p className="font-medium text-gray-900">{visit.visitor.full_name}</p>
-                      <p className="text-sm text-gray-500">Host: {visit.employee.full_name}</p>
+                      <p className="font-medium text-[#F5F5DC]">{visit.visitor.full_name}</p>
+                      <p className="text-sm text-[#9A9F87]">Host: {visit.employee.full_name}</p>
                     </div>
-                    <span className="text-sm font-medium text-gray-600">{getDuration(visit.check_in_time)}</span>
+                    <span className="text-sm font-medium text-[#9A9F87]">{getDuration(visit.check_in_time)}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white shadow-sm lg:col-span-2">
-              <div className="p-4 border-b border-gray-200">
-                <h3 className="text-xl font-semibold text-gray-900">Security Alerts</h3>
+            <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm lg:col-span-2">
+              <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+                <h3 className="text-xl font-semibold text-[#F5F5DC]">Security Alerts</h3>
               </div>
               <div className="p-4 space-y-2">
                 {alerts.slice(0, 5).map((alert) => (
-                  <div key={alert.id} className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-0">
+                  <div key={alert.id} className="flex items-center justify-between border-b border-[rgba(85,107,47,0.25)] pb-2 last:border-0">
                     <div>
-                      <p className="font-medium text-gray-900">{alert.message}</p>
-                      <p className="text-sm text-gray-500">{alert.alert_type}</p>
+                      <p className="font-medium text-[#F5F5DC]">{alert.message}</p>
+                      <p className="text-sm text-[#9A9F87]">{alert.alert_type}</p>
                     </div>
                     <span className={`inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium ${getSeverityColor(alert.severity)}`}>
                       {alert.severity}
@@ -606,9 +561,9 @@ export default function ReceptionPage() {
         {!largeDisplayMode && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-6">
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="p-4 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+                <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+                  <h3 className="text-lg font-semibold text-[#F5F5DC] flex items-center gap-2">
                     <CalendarDays className="h-5 w-5 text-blue-600" />
                     Today&apos;s Visitors
                   </h3>
@@ -617,35 +572,35 @@ export default function ReceptionPage() {
                   {visitsToday.length === 0 ? (
                     <div className="py-12 text-center">
                       <Users className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                      <p className="text-gray-500">No visitors today</p>
+                      <p className="text-[#9A9F87]">No visitors today</p>
                     </div>
                   ) : (
                     <table className="w-full text-left text-sm">
                       <thead>
-                        <tr className="border-b border-gray-200 bg-gray-50">
-                          <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
-                          <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
-                          <th className="px-4 py-3 font-semibold text-gray-700">Dept</th>
-                          <th className="px-4 py-3 font-semibold text-gray-700">Arrival</th>
-                          <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                          <th className="px-4 py-3 font-semibold text-gray-700">Badge</th>
-                          <th className="px-4 py-3 font-semibold text-gray-700 w-48">Actions</th>
+                        <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                          <th className="px-4 py-3 font-semibold text-[#9A9F87]">Visitor</th>
+                          <th className="px-4 py-3 font-semibold text-[#9A9F87]">Host</th>
+                          <th className="px-4 py-3 font-semibold text-[#9A9F87]">Dept</th>
+                          <th className="px-4 py-3 font-semibold text-[#9A9F87]">Arrival</th>
+                          <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                          <th className="px-4 py-3 font-semibold text-[#9A9F87]">Badge</th>
+                          <th className="px-4 py-3 font-semibold text-[#9A9F87] w-48">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                         {visitsToday.map((visit) => (
-                          <tr key={visit.id} className="hover:bg-gray-50 transition-colors">
+                          <tr key={visit.id} className="hover:bg-[#4B5320]/10 transition-colors">
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <div className="h-8 w-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-medium text-xs">
                                   {visit.visitor.full_name.charAt(0).toUpperCase()}
                                 </div>
-                                <span className="font-medium text-gray-900">{visit.visitor.full_name}</span>
+                                <span className="font-medium text-[#F5F5DC]">{visit.visitor.full_name}</span>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-gray-600">{visit.employee.full_name}</td>
-                            <td className="px-4 py-3 text-gray-600">{visit.employee.department || '—'}</td>
-                            <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                            <td className="px-4 py-3 text-[#9A9F87]">{visit.employee.full_name}</td>
+                            <td className="px-4 py-3 text-[#9A9F87]">{visit.employee.department || '—'}</td>
+                            <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">
                               {visit.created_at ? new Date(visit.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
                             </td>
                             <td className="px-4 py-3">
@@ -656,14 +611,14 @@ export default function ReceptionPage() {
                                 {visit.badge && (
                                   <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium w-fit ${
                                     visit.badge.badge_status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' :
-                                    'bg-gray-50 text-gray-700 border-gray-200'
+                                    'bg-gray-50 text-[#9A9F87] border-[rgba(85,107,47,0.35)]'
                                   }`}>
                                     {visit.badge.badge_status}
                                   </span>
                                 )}
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-gray-600 font-mono text-xs">{visit.badge?.badge_number || '—'}</td>
+                            <td className="px-4 py-3 text-[#9A9F87] font-mono text-xs">{visit.badge?.badge_number || '—'}</td>
                             <td className="px-4 py-3">
                               <div className="flex flex-wrap items-center gap-1.5">
                                 {visit.status === 'pending' && (
@@ -696,113 +651,9 @@ export default function ReceptionPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="p-4 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-purple-600" />
-                    Expected Arrivals
-                  </h3>
-                </div>
-                <div className="p-4 space-y-4">
-                  {morningAppointments.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-amber-400" /> Morning (Before 12pm)
-                      </h4>
-                      <div className="space-y-2">
-                        {morningAppointments.map((apt) => (
-                          <div key={apt.id} className={`flex items-center justify-between rounded-lg border p-3 ${isLate(apt.appointment_time) ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'}`}>
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-medium">
-                                {apt.visitor.full_name.charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900 flex items-center gap-2">
-                                  {apt.visitor.full_name}
-                                  {isVIP(apt.visitor.visitor_organization) && <BadgeCheck className="h-4 w-4 text-amber-500" />}
-                                </p>
-                                <p className="text-xs text-gray-500">{apt.visitor.visitor_organization} → {apt.employee.full_name}</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-medium text-gray-900">{apt.appointment_time}</p>
-                              {isLate(apt.appointment_time) && <p className="text-xs text-red-600 font-medium">Late</p>}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {afternoonAppointments.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-blue-400" /> Afternoon (12pm - 5pm)
-                      </h4>
-                      <div className="space-y-2">
-                        {afternoonAppointments.map((apt) => (
-                          <div key={apt.id} className={`flex items-center justify-between rounded-lg border p-3 ${isLate(apt.appointment_time) ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'}`}>
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-medium">
-                                {apt.visitor.full_name.charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900 flex items-center gap-2">
-                                  {apt.visitor.full_name}
-                                  {isVIP(apt.visitor.visitor_organization) && <BadgeCheck className="h-4 w-4 text-amber-500" />}
-                                </p>
-                                <p className="text-xs text-gray-500">{apt.visitor.visitor_organization} → {apt.employee.full_name}</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-medium text-gray-900">{apt.appointment_time}</p>
-                              {isLate(apt.appointment_time) && <p className="text-xs text-red-600 font-medium">Late</p>}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {eveningAppointments.length > 0 && (
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
-                        <div className="h-2 w-2 rounded-full bg-purple-400" /> Evening (After 5pm)
-                      </h4>
-                      <div className="space-y-2">
-                        {eveningAppointments.map((apt) => (
-                          <div key={apt.id} className={`flex items-center justify-between rounded-lg border p-3 ${isLate(apt.appointment_time) ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'}`}>
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-medium">
-                                {apt.visitor.full_name.charAt(0).toUpperCase()}
-                              </div>
-                              <div>
-                                <p className="font-medium text-gray-900 flex items-center gap-2">
-                                  {apt.visitor.full_name}
-                                  {isVIP(apt.visitor.visitor_organization) && <BadgeCheck className="h-4 w-4 text-amber-500" />}
-                                </p>
-                                <p className="text-xs text-gray-500">{apt.visitor.visitor_organization} → {apt.employee.full_name}</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-sm font-medium text-gray-900">{apt.appointment_time}</p>
-                              {isLate(apt.appointment_time) && <p className="text-xs text-red-600 font-medium">Late</p>}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {appointmentsToday.length === 0 && (
-                    <div className="py-8 text-center">
-                      <CalendarDays className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                      <p className="text-gray-500">No appointments scheduled for today</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="p-4 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+                <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+                  <h3 className="text-lg font-semibold text-[#F5F5DC] flex items-center gap-2">
                     <UserCheck className="h-5 w-5 text-green-600" />
                     Currently Inside
                   </h3>
@@ -811,26 +662,26 @@ export default function ReceptionPage() {
                   {currentlyInside.length === 0 ? (
                     <div className="py-8 text-center">
                       <UserCheck className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                      <p className="text-gray-500">No visitors currently inside</p>
+                      <p className="text-[#9A9F87]">No visitors currently inside</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
                       {currentlyInside.map((visit) => (
-                        <div key={visit.id} className="flex items-center justify-between rounded-lg border border-gray-200 p-4 hover:bg-gray-50 transition-colors">
+                        <div key={visit.id} className="flex items-center justify-between rounded-lg border border-[rgba(85,107,47,0.35)] p-4 hover:bg-[#4B5320]/10 transition-colors">
                           <div className="flex items-center gap-4">
                             <div className="h-12 w-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-medium text-lg">
                               {visit.visitor.full_name.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">{visit.visitor.full_name}</p>
-                              <p className="text-sm text-gray-500">Host: {visit.employee.full_name} {visit.employee.department ? `(${visit.employee.department})` : ''}</p>
+                              <p className="font-medium text-[#F5F5DC]">{visit.visitor.full_name}</p>
+                              <p className="text-sm text-[#9A9F87]">Host: {visit.employee.full_name} {visit.employee.department ? `(${visit.employee.department})` : ''}</p>
                               <p className="text-xs text-gray-400">Purpose: {visit.purpose || 'General'}</p>
                             </div>
                           </div>
                           <div className="text-right flex items-center gap-4">
                             <div>
-                              <p className="text-xs text-gray-500">Duration</p>
-                              <p className="text-sm font-medium text-gray-900 flex items-center gap-1">
+                              <p className="text-xs text-[#9A9F87]">Duration</p>
+                              <p className="text-sm font-medium text-[#F5F5DC] flex items-center gap-1">
                                 <Timer className="h-3 w-3" /> {getDuration(visit.check_in_time)}
                               </p>
                             </div>
@@ -845,9 +696,9 @@ export default function ReceptionPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+                <div className="p-4 border-b border-[rgba(85,107,47,0.35)] flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-[#F5F5DC] flex items-center gap-2">
                     <Clock className="h-5 w-5 text-amber-600" />
                     Waiting Queue
                   </h3>
@@ -859,7 +710,7 @@ export default function ReceptionPage() {
                   {pendingVisits.length === 0 ? (
                     <div className="py-8 text-center">
                       <Clock className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                      <p className="text-gray-500">No visitors waiting</p>
+                      <p className="text-[#9A9F87]">No visitors waiting</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -870,12 +721,12 @@ export default function ReceptionPage() {
                               {index + 1}
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">{visit.visitor.full_name}</p>
-                              <p className="text-xs text-gray-500">Host: {visit.employee.full_name} • {visit.visitor.visitor_organization || 'N/A'}</p>
+                              <p className="font-medium text-[#F5F5DC]">{visit.visitor.full_name}</p>
+                              <p className="text-xs text-[#9A9F87]">Host: {visit.employee.full_name} • {visit.visitor.visitor_organization || 'N/A'}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <button onClick={() => handleNotifyHost(visit.id)} className="inline-flex items-center gap-1 rounded-full bg-white text-blue-700 px-2.5 py-1 text-xs font-medium hover:bg-blue-50 border border-blue-200">
+                            <button onClick={() => handleNotifyHost(visit.id)} className="inline-flex items-center gap-1 rounded-full bg-[#10150D] text-blue-700 px-2.5 py-1 text-xs font-medium hover:bg-blue-50 border border-blue-200">
                               <Phone className="h-3 w-3" /> Notify Host
                             </button>
                             <button onClick={() => handleStatusChange(visit.id, 'approved')} className="inline-flex items-center gap-1 rounded-full bg-green-50 text-green-700 px-2.5 py-1 text-xs font-medium hover:bg-green-100 border border-green-200">
@@ -896,32 +747,32 @@ export default function ReceptionPage() {
             </div>
 
             <div className="space-y-6">
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="p-4 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+                <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+                  <h3 className="text-lg font-semibold text-[#F5F5DC] flex items-center gap-2">
                     <UserPlus className="h-5 w-5 text-blue-600" />
                     Quick Registration
                   </h3>
                 </div>
                 <form onSubmit={handleQuickRegister} className="p-4 space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Visitor Name *</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Visitor Name *</label>
                     <input name="visitorName" required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Full name" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Organization</label>
                     <input name="organization" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Company / Org" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Phone</label>
                     <input name="phone" type="tel" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Phone number" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Purpose</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Purpose</label>
                     <input name="purpose" className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Visit purpose" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Host *</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Host *</label>
                     <select name="host" required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
                       <option value="">Select host...</option>
                       {employees.map((emp) => (
@@ -935,9 +786,9 @@ export default function ReceptionPage() {
                 </form>
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="p-4 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+                <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+                  <h3 className="text-lg font-semibold text-[#F5F5DC] flex items-center gap-2">
                     <BadgeCheck className="h-5 w-5 text-indigo-600" />
                     Quick Badge Print
                   </h3>
@@ -947,9 +798,9 @@ export default function ReceptionPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <div className="p-4 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+                <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+                  <h3 className="text-lg font-semibold text-[#F5F5DC] flex items-center gap-2">
                     <ShieldAlert className="h-5 w-5 text-red-600" />
                     Security Alerts
                   </h3>
@@ -958,16 +809,16 @@ export default function ReceptionPage() {
                   {alerts.length === 0 ? (
                     <div className="py-8 text-center">
                       <ShieldAlert className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                      <p className="text-gray-500">No active alerts</p>
+                      <p className="text-[#9A9F87]">No active alerts</p>
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-96 overflow-y-auto">
                       {alerts.map((alert) => (
-                        <div key={alert.id} className="rounded-lg border border-gray-200 p-3 hover:bg-gray-50 transition-colors">
+                        <div key={alert.id} className="rounded-lg border border-[rgba(85,107,47,0.35)] p-3 hover:bg-[#4B5320]/10 transition-colors">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1">
-                              <p className="font-medium text-gray-900 text-sm">{alert.message}</p>
-                              <p className="text-xs text-gray-500 mt-1">{alert.alert_type}</p>
+                              <p className="font-medium text-[#F5F5DC] text-sm">{alert.message}</p>
+                              <p className="text-xs text-[#9A9F87] mt-1">{alert.alert_type}</p>
                             </div>
                             <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap ${getSeverityColor(alert.severity)}`}>
                               {alert.severity}
@@ -981,19 +832,19 @@ export default function ReceptionPage() {
               </div>
 
               {incidents.length > 0 && (
-                <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                  <div className="p-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+                  <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+                    <h3 className="text-lg font-semibold text-[#F5F5DC] flex items-center gap-2">
                       <AlertTriangle className="h-5 w-5 text-orange-600" />
                       Open Incidents
                     </h3>
                   </div>
                   <div className="p-4 space-y-2">
                     {incidents.map((incident) => (
-                      <div key={incident.id} className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                      <div key={incident.id} className="flex items-center justify-between rounded-lg border border-[rgba(85,107,47,0.35)] p-3">
                         <div>
-                          <p className="font-medium text-gray-900 text-sm">{incident.title}</p>
-                          <p className="text-xs text-gray-500">Priority: {incident.priority}</p>
+                          <p className="font-medium text-[#F5F5DC] text-sm">{incident.title}</p>
+                          <p className="text-xs text-[#9A9F87]">Priority: {incident.priority}</p>
                         </div>
                         <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium bg-orange-50 text-orange-700 border-orange-200">
                           {incident.status}
@@ -1036,17 +887,17 @@ function QuickBadgeSearch({ visits, onPrint, onReprint }: { visits: Visit[]; onP
       {filtered.length === 0 ? (
         <div className="py-6 text-center">
           <BadgeCheck className="mx-auto h-10 w-10 text-gray-400 mb-2" />
-          <p className="text-sm text-gray-500">No badges found</p>
+          <p className="text-sm text-[#9A9F87]">No badges found</p>
         </div>
       ) : (
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {filtered.map((badge) => {
             const visit = visits.find(v => v.badge?.id === badge.id)
             return (
-              <div key={badge.id} className="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-gray-50">
+              <div key={badge.id} className="flex items-center justify-between rounded-lg border border-[rgba(85,107,47,0.35)] p-3 hover:bg-[#4B5320]/10">
                 <div>
-                  <p className="font-medium text-gray-900 text-sm">{visit?.visitor.full_name || 'Unknown'}</p>
-                  <p className="text-xs text-gray-500 font-mono">Badge: {badge.badge_number}</p>
+                  <p className="font-medium text-[#F5F5DC] text-sm">{visit?.visitor.full_name || 'Unknown'}</p>
+                  <p className="text-xs text-[#9A9F87] font-mono">Badge: {badge.badge_number}</p>
                   <p className="text-xs text-gray-400">Expires: {badge.expires_at ? new Date(badge.expires_at).toLocaleString() : '—'}</p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1067,3 +918,5 @@ function QuickBadgeSearch({ visits, onPrint, onReprint }: { visits: Visit[]; onP
     </div>
   )
 }
+
+

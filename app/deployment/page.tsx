@@ -108,7 +108,7 @@ export default function DeploymentDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )
@@ -118,14 +118,14 @@ export default function DeploymentDashboardPage() {
   const latestDeployment = deployments[0]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Deployment & Recovery Center</h1>
-            <p className="text-sm text-gray-500">Backup, restore, and deployment management</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Deployment & Recovery Center</h1>
+            <p className="text-sm text-[#9A9F87]">Backup, restore, and deployment management</p>
           </div>
-          <button onClick={fetchData} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <button onClick={fetchData} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
             <RefreshCw className="h-4 w-4" />
             Refresh
           </button>
@@ -146,30 +146,30 @@ export default function DeploymentDashboardPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Total Backups</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Total Backups</p>
               <Database className="h-4 w-4 text-gray-400" />
             </div>
-            <p className="mt-2 text-2xl font-bold text-gray-900">{backups.length}</p>
+            <p className="mt-2 text-2xl font-bold text-[#F5F5DC]">{backups.length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Backup Storage</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Backup Storage</p>
               <HardDrive className="h-4 w-4 text-gray-400" />
             </div>
-            <p className="mt-2 text-sm font-medium text-gray-900">{(totalBackupSize / (1024 * 1024)).toFixed(2)} MB</p>
+            <p className="mt-2 text-sm font-medium text-[#F5F5DC]">{(totalBackupSize / (1024 * 1024)).toFixed(2)} MB</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Current Version</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Current Version</p>
               <GitBranch className="h-4 w-4 text-gray-400" />
             </div>
-            <p className="mt-2 text-sm font-medium text-gray-900">{latestDeployment?.version || 'N/A'}</p>
+            <p className="mt-2 text-sm font-medium text-[#F5F5DC]">{latestDeployment?.version || 'N/A'}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Maintenance</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Maintenance</p>
               <Settings className="h-4 w-4 text-gray-400" />
             </div>
             <p className={`mt-2 text-sm font-medium ${maintenance?.enabled ? 'text-red-600' : 'text-green-600'}`}>
@@ -180,9 +180,9 @@ export default function DeploymentDashboardPage() {
 
         {/* System Info */}
         {systemInfo && (
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">System Information</h3>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+            <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+              <h3 className="text-lg font-semibold text-[#F5F5DC]">System Information</h3>
             </div>
             <div className="p-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
               <InfoCard label="CPU Usage" value={systemInfo.cpu_usage_percent ? `${systemInfo.cpu_usage_percent.toFixed(1)}%` : 'N/A'} />
@@ -213,9 +213,9 @@ export default function DeploymentDashboardPage() {
 
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-gray-100 bg-gray-50 p-3">
-      <p className="text-xs text-gray-500">{label}</p>
-      <p className="text-sm font-semibold text-gray-900">{value}</p>
+    <div className="rounded-lg border border-[rgba(85,107,47,0.25)] bg-gray-50 p-3">
+      <p className="text-xs text-[#9A9F87]">{label}</p>
+      <p className="text-sm font-semibold text-[#F5F5DC]">{value}</p>
     </div>
   )
 }
@@ -224,12 +224,14 @@ function QuickLink({ href, label, icon: Icon }: { href: string; label: string; i
   return (
     <a
       href={href}
-      className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:bg-gray-50 transition-colors"
+      className="flex items-center gap-3 rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm hover:bg-[#4B5320]/10 transition-colors"
     >
-      <div className="p-2 rounded-lg bg-gray-50 text-gray-600">
+      <div className="p-2 rounded-lg bg-gray-50 text-[#9A9F87]">
         <Icon className="h-4 w-4" />
       </div>
-      <span className="text-sm font-medium text-gray-900">{label}</span>
+      <span className="text-sm font-medium text-[#F5F5DC]">{label}</span>
     </a>
   )
 }
+
+

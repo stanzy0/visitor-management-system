@@ -34,16 +34,17 @@ export default function PreviewBadgeRoute() {
 
   if (!badge) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
-        <div className="text-gray-500">Preparing badge for printing...</div>
+      <div className="flex items-center justify-center min-h-screen bg-[#10150D]">
+        <div className="text-[#9A9F87]">Preparing badge for printing...</div>
       </div>
     )
   }
 
   return <PrintableBadge badge={badge} branding={branding || {
     id: '00000000-0000-0000-0000-000000000000',
-    college_name: 'AFCSC Visitor Management',
+    college_name: 'Department of Land Warfare',
     logo_url: null,
+    department_logo_url: null,
     login_background_url: null,
     badge_template_url: null,
     signature_url: null,
@@ -57,3 +58,4 @@ export default function PreviewBadgeRoute() {
     updated_at: new Date().toISOString(),
   }} autoPrint={false} />
 }
+

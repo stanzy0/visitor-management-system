@@ -236,8 +236,8 @@ export default function BadgeReportsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <Link href="/reports" className="text-sm text-primary hover:underline mb-1 inline-block">← Back to Reports</Link>
-            <h1 className="text-2xl font-bold text-gray-900">Badge Reports</h1>
-            <p className="text-sm text-gray-500">Badge issuance and lifecycle analytics</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Badge Reports</h1>
+            <p className="text-sm text-[#9A9F87]">Badge issuance and lifecycle analytics</p>
           </div>
         </div>
 
@@ -343,3 +343,5 @@ export default function BadgeReportsPage() {
     </div>
   )
 }
+
+

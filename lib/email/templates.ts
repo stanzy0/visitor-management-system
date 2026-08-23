@@ -157,7 +157,7 @@ export function renderEmailTemplate(
   template: EmailTemplate,
   data: Record<string, string | number | boolean | undefined>
 ): string {
-  const orgName = String(data.orgName || 'Visitor Management System')
+  const orgName = String(data.orgName || 'Visitors Management System')
   const orgEmail = String(data.orgEmail || 'support@visitor-management.local')
   const orgPhone = String(data.orgPhone || '')
   const orgAddress = String(data.orgAddress || '')
@@ -190,8 +190,8 @@ export function renderEmailTemplate(
 
   const header = `
     <div class="header">
-      <h1>AFCSC Visitor Management System</h1>
-      <p style="color: #bfdbfe; margin: 4px 0 0 0; font-size: 14px;">Airport Fire Safety & Security Command</p>
+       <h1>Department of Land Warfare — Visitors Management System</h1>
+       <p style="color: #bfdbfe; margin: 4px 0 0 0; font-size: 14px;">Department of Land Warfare</p>
     </div>
   `
 

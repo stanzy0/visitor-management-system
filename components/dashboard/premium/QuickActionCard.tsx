@@ -27,6 +27,7 @@ interface QuickActionCardProps {
   description?: string
   color?: ActionColor
   index?: number
+  onClick?: () => void
 }
 
 export default function QuickActionCard({
@@ -36,6 +37,7 @@ export default function QuickActionCard({
   description,
   color = 'blue',
   index = 0,
+  onClick,
 }: QuickActionCardProps) {
   const router = useRouter()
   const colors = colorStyles[color] || colorStyles.blue
@@ -48,7 +50,7 @@ export default function QuickActionCard({
       animate="visible"
       whileHover={{ y: -4, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      onClick={() => router.push(href)}
+      onClick={onClick ? onClick : () => router.push(href)}
       className={`group relative flex flex-col items-start gap-3 sm:gap-4 rounded-[20px] border ${colors.border} bg-white p-4 sm:p-5 text-left transition-all duration-200 shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_14px_38px_rgba(0,0,0,0.12)] hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2`}
     >
       <div className={`p-4 rounded-xl ${colors.bg} ${colors.text} ${colors.hoverBg} transition-all duration-300 group-hover:scale-110`}>

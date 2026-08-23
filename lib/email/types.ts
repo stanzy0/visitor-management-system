@@ -1,9 +1,4 @@
 export type EmailTemplate =
-  | 'appointment_created'
-  | 'appointment_approved'
-  | 'appointment_rejected'
-  | 'appointment_cancelled'
-  | 'appointment_rescheduled'
   | 'visitor_checked_in'
   | 'visitor_checked_out'
   | 'visitor_arrival'

@@ -112,12 +112,12 @@ export default function AdminBadgeHistoryPage() {
       case 'generated':
         return 'bg-green-50 text-green-700'
       default:
-        return 'bg-gray-50 text-gray-700'
+        return 'bg-gray-50 text-[#9A9F87]'
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/admin/badges" className="text-sm text-blue-600 hover:underline">
@@ -127,8 +127,8 @@ export default function AdminBadgeHistoryPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Badge History</h1>
-            <p className="text-sm text-gray-500">Track all badge activities</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Badge History</h1>
+            <p className="text-sm text-[#9A9F87]">Track all badge activities</p>
           </div>
           <button
             onClick={handleExportCSV}
@@ -139,8 +139,8 @@ export default function AdminBadgeHistoryPage() {
           </button>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -149,13 +149,13 @@ export default function AdminBadgeHistoryPage() {
                   placeholder="Search history..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 bg-[#10150D] pl-9 pr-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <select
                 value={actionFilter}
                 onChange={(e) => setActionFilter(e.target.value)}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Actions</option>
                 <option value="printed">Printed</option>
@@ -169,28 +169,28 @@ export default function AdminBadgeHistoryPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Action</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Badge ID</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Printer</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Template</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Reason</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Performed At</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Action</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Badge ID</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Printer</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Template</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Reason</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Performed At</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {history.map((record) => (
-                  <tr key={record.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={record.id} className="hover:bg-[#4B5320]/10 transition-colors">
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getActionColor(record.action)}`}>
                         {record.action}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-gray-600">{record.badge_id}</td>
-                    <td className="px-4 py-3 text-gray-600">{record.printer_name || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600">{record.template_name || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{record.reason || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                    <td className="px-4 py-3 font-mono text-xs text-[#9A9F87]">{record.badge_id}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{record.printer_name || '—'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{record.template_name || '—'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] max-w-xs truncate">{record.reason || '—'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">
                       {record.created_at ? new Date(record.created_at).toLocaleString() : '—'}
                     </td>
                   </tr>
@@ -201,7 +201,7 @@ export default function AdminBadgeHistoryPage() {
           {history.length === 0 && !loading && (
             <div className="p-12 text-center">
               <Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No history found</p>
+              <p className="text-[#9A9F87]">No history found</p>
             </div>
           )}
           {loading && (
@@ -214,3 +214,5 @@ export default function AdminBadgeHistoryPage() {
     </div>
   )
 }
+
+

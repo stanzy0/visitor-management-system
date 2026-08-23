@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
           time: new Date().toLocaleTimeString(),
           location: employee.office_location || 'Reception',
           badgeNumber: visit.badge_number || 'N/A',
-          orgName: 'AFCSC Visitor Management',
+          orgName: 'Department of Land Warfare',
         },
         relatedType: 'visit',
         relatedId: visit_id,

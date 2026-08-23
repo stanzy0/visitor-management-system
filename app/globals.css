@@ -1,25 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --color-primary: #0B3D91;
-  --color-primary-hover: #092E6D;
-  --color-secondary: #1F6FEB;
-  --color-accent: #D4AF37;
-  --color-accent-hover: #B8860B;
-  --color-dashboard-bg: #F8FAFC;
-  --shadow-dashboard-card: 0 10px 30px rgba(0, 0, 0, 0.08);
-  --branding-primary: #0B3D91;
-  --branding-secondary: #1F6FEB;
-  --branding-accent: #D4AF37;
-  --afcsc-primary: #0B3D91;
-  --afcsc-primary-dark: #092E6D;
-  --afcsc-accent: #D4AF37;
-  --afcsc-accent-hover: #B8860B;
-  --afcsc-red: #C62828;
-  --afcsc-red-dark: #8B0000;
-  --afcsc-navy: #0A1628;
+  --background: #0B0F08;
+  --foreground: #F5F5DC;
+  --color-primary: #4B5320;
+  --color-primary-hover: #3E4419;
+  --color-secondary: #556B2F;
+  --color-accent: #C8A646;
+  --color-accent-hover: #B89635;
+  --color-dashboard-bg: #10150D;
+  --shadow-dashboard-card: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --branding-primary: #4B5320;
+  --branding-secondary: #556B2F;
+  --branding-accent: #C8A646;
+  --military-bg: #0B0F08;
+  --military-surface: #10150D;
+  --military-surface-alt: #141A10;
+  --military-border: rgba(85, 107, 47, 0.35);
+  --military-border-subtle: rgba(85, 107, 47, 0.18);
+  --military-text-primary: #F5F5DC;
+  --military-text-secondary: #9A9F87;
+  --military-text-muted: #6B705A;
+  --military-success: #3D5A1E;
+  --military-warning: #C8A646;
+  --military-danger: #8B3A3A;
 }
 
 @theme inline {
@@ -35,15 +39,15 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0B0F08;
+    --foreground: #F5F5DC;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
 /* Thin modern scrollbar */
@@ -56,17 +60,17 @@ body {
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #4B5320;
   border-radius: 3px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #556B2F;
 }
 
 .overflow-y-auto {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-color: #4B5320 transparent;
 }
 
 @media print {
@@ -94,25 +98,25 @@ body {
 input,
 textarea,
 select {
-  color: black;
-  background: white;
-  border: 1px solid #d1d5e7;
+  color: #F5F5DC;
+  background: #10150D;
+  border: 1px solid rgba(85, 107, 47, 0.35);
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #6b7280;
+  color: #6B705A;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: #3b82f6;
+  border-color: #C8A646;
   outline: none;
-  box-shadow: 0 0 0 2px #3b82f6;
+  box-shadow: 0 0 0 2px rgba(200, 166, 70, 0.25);
 }
 
-/* Autofill styling - text remains black */
+/* Autofill styling */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -122,9 +126,115 @@ textarea:-webkit-autofill:focus,
 select:-webkit-autofill,
 select:-webkit-autofill:hover,
 select:-webkit-autofill:focus {
-  -webkit-text-fill-color: #111827;
+  -webkit-text-fill-color: #F5F5DC;
   -webkit-background-clip: text;
   background-clip: text;
   transition: background-color 9999s ease-in-out 0s, border-color 9999s ease-in-out 0s;
-  border: 1px solid #d1d5e7;
+  border: 1px solid rgba(85, 107, 47, 0.35);
+}
+
+/* Military design tokens and animations */
+@keyframes vms-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes vms-fade-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes vms-fade-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes vms-accent-line {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes vms-subtle-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes vms-scan-line {
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+.animate-vms-fade-in-up {
+  animation: vms-fade-in-up 0.7s ease-out both;
+}
+
+.animate-vms-fade-in-left {
+  animation: vms-fade-in-left 0.7s ease-out both;
+}
+
+.animate-vms-fade-in-right {
+  animation: vms-fade-in-right 0.7s ease-out both;
+}
+
+.animate-vms-accent-line {
+  animation: vms-accent-line 0.9s ease-out both;
+  transform-origin: center;
+}
+
+.animate-vms-subtle-pulse {
+  animation: vms-subtle-pulse 2.4s ease-in-out infinite;
+}
+
+.animate-vms-scan-line {
+  animation: vms-scan-line 2.2s linear infinite;
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .animate-vms-fade-in-up,
+  .animate-vms-fade-in-left,
+  .animate-vms-fade-in-right,
+  .animate-vms-accent-line,
+  .animate-vms-subtle-pulse,
+  .animate-vms-scan-line {
+    animation: none !important;
+  }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/server/email'
 import type { EmailTemplate } from '@/lib/email/types'
 import { createAdminNotification, createHostNotification } from '@/lib/server/notification-service'
@@ -19,6 +20,25 @@ export async function POST(request: NextRequest) {
   const rateLimit = checkRateLimit(request)
   if (!rateLimit.allowed) {
     return rateLimitResponse(rateLimit.resetAt)
+  }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return NextResponse.json({ success: false, message: 'Visitor registration is handled at the Main Reception Desk.', error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { data: userRole } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!userRole || !['Admin', 'Receptionist'].includes(userRole.role)) {
+    return NextResponse.json({ success: false, message: 'Visitor registration is handled at the Main Reception Desk.', error: 'Forbidden' }, { status: 403 })
   }
 
   let regNumber = ''
@@ -157,7 +177,6 @@ export async function POST(request: NextRequest) {
         registration_number: regNumber,
         visitor_type: visitor_type || 'Visitor',
         notes: notes || null,
-        appointment_id: null,
       })
       .select()
       .single()
@@ -273,7 +292,7 @@ const { error: docError } = await supabaseAdmin.from('visitor_documents').insert
         arrivalTime: arrival_time || 'TBD',
         hostName: employee.full_name,
         location: employee.office_location || 'Reception',
-        orgName: 'AFCSC Visitor Management',
+        orgName: 'Department of Land Warfare',
       },
       relatedType: 'visit',
       relatedId: visit.id,

@@ -150,7 +150,7 @@ export default function AdminEmailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/admin" className="text-sm text-blue-600 hover:underline">
@@ -160,8 +160,8 @@ export default function AdminEmailPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Email Settings</h1>
-            <p className="text-sm text-gray-500">Configure email provider and notifications</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Email Settings</h1>
+            <p className="text-sm text-[#9A9F87]">Configure email provider and notifications</p>
           </div>
           <button
             onClick={handleSave}
@@ -180,57 +180,56 @@ export default function AdminEmailPage() {
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+            <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+              <h3 className="text-lg font-semibold text-[#F5F5DC] flex items-center gap-2">
                 <Mail className="h-5 w-5 text-blue-600" />
                 SMTP Configuration
               </h3>
             </div>
             <div className="p-4 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sender Name</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Sender Name</label>
                 <input
                   type="text"
                   value={String(settings.sender_name?.value || '')}
                   onChange={(e) => updateSetting('sender_name', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Sender Email</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Sender Email</label>
                 <input
                   type="email"
                   value={String(settings.sender_email?.value || '')}
                   onChange={(e) => updateSetting('sender_email', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reply-To Email</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Reply-To Email</label>
                 <input
                   type="email"
                   value={String(settings.reply_to_email?.value || '')}
                   onChange={(e) => updateSetting('reply_to_email', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Email Notifications</h3>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+            <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+              <h3 className="text-lg font-semibold text-[#F5F5DC]">Email Notifications</h3>
             </div>
             <div className="p-4 space-y-4">
               {[
                 { key: 'enable_emails', label: 'Enable All Emails' },
-                { key: 'enable_appointment_emails', label: 'Appointment Emails' },
                 { key: 'enable_reminder_emails', label: 'Reminder Emails' },
                 { key: 'enable_emergency_emails', label: 'Emergency Emails' },
               ].map((item) => (
                 <label key={item.key} className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">{item.label}</span>
+                  <span className="text-sm font-medium text-[#9A9F87]">{item.label}</span>
                   <input
                     type="checkbox"
                      checked={Boolean(settings[item.key]?.value)}
@@ -243,10 +242,10 @@ export default function AdminEmailPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Send Test Email</h3>
-            <p className="text-sm text-gray-500">Verify your email configuration</p>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+            <h3 className="text-lg font-semibold text-[#F5F5DC]">Send Test Email</h3>
+            <p className="text-sm text-[#9A9F87]">Verify your email configuration</p>
           </div>
           <div className="p-4 flex flex-col sm:flex-row gap-3">
             <input
@@ -254,7 +253,7 @@ export default function AdminEmailPage() {
               placeholder="Enter test email address"
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
-              className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
               onClick={handleTestEmail}
@@ -270,3 +269,5 @@ export default function AdminEmailPage() {
     </div>
   )
 }
+
+

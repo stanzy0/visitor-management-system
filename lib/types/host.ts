@@ -2,7 +2,6 @@ export interface HostDashboardStats {
   visitorsExpectedToday: number
   pendingApprovals: number
   currentVisitors: number
-  upcomingAppointments: number
   monthlyVisitors: number
   invitationsSent: number
 }

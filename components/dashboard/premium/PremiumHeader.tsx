@@ -16,6 +16,16 @@ interface PremiumHeaderProps {
   onExport: (format: 'pdf' | 'excel' | 'csv') => void
   exporting: boolean
   onMenuToggle?: () => void
+  title?: string
+  subtitle?: string
+  showExport?: boolean
+  showSettings?: boolean
+  showFilter?: boolean
+  searchValue?: string
+  onSearchChange?: (value: string) => void
+  assignedHostLabel?: string
+  assignedHostName?: string
+  roleLabel?: string
 }
 
 export default function PremiumHeader({
@@ -26,6 +36,16 @@ export default function PremiumHeader({
   onExport,
   exporting,
   onMenuToggle,
+  title,
+  subtitle,
+  showExport = true,
+  showSettings = true,
+  showFilter = true,
+  searchValue,
+  onSearchChange,
+  assignedHostLabel,
+  assignedHostName,
+  roleLabel,
 }: PremiumHeaderProps) {
   const router = useRouter()
   const [liveTime, setLiveTime] = useState(new Date())
@@ -87,7 +107,7 @@ export default function PremiumHeader({
             transition={{ delay: 0.1 }}
             className="text-xl font-bold text-gray-900 tracking-tight"
           >
-            {greeting},{' '}{userTitle}
+            {title ?? `${greeting}, ${userTitle}`}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -95,7 +115,7 @@ export default function PremiumHeader({
             transition={{ delay: 0.2 }}
             className="text-sm text-gray-500 font-mono"
           >
-            {currentDate}
+            {subtitle ?? currentDate}
           </motion.p>
         </div>
       </div>
@@ -113,6 +133,8 @@ export default function PremiumHeader({
               type="text"
               placeholder="Search visitors..."
               aria-label="Search visitors"
+              value={onSearchChange ? searchValue ?? '' : undefined}
+              onChange={onSearchChange ? (e) => onSearchChange(e.target.value) : undefined}
               className="w-56 rounded-xl border border-gray-200 bg-gray-50/80 pl-10 pr-4 py-2 text-sm text-gray-700 placeholder-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200"
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -131,7 +153,8 @@ export default function PremiumHeader({
 
           <div className="h-5 w-px bg-gray-200 hidden sm:block" />
 
-          <motion.div {...hoverScale} className="relative">
+          {showFilter && (
+            <motion.div {...hoverScale} className="relative">
             <select
               value={filters.range}
               onChange={(e) => onFilterChange({ range: e.target.value as DashboardFilters['range'] })}
@@ -143,9 +166,11 @@ export default function PremiumHeader({
               ))}
             </select>
             <Filter className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
-          </motion.div>
+            </motion.div>
+          )}
 
-          <div className="relative">
+          {showExport && (
+            <div className="relative">
             <motion.button
               {...hoverScale}
               onClick={() => setShowExportMenu(!showExportMenu)}
@@ -187,17 +212,22 @@ export default function PremiumHeader({
               )}
             </AnimatePresence>
           </div>
+          )}
 
-          <div className="h-5 w-px bg-gray-200 hidden sm:block" />
+          {showSettings && (
+            <>
+              <div className="h-5 w-px bg-gray-200 hidden sm:block" />
 
-          <motion.button
-            {...hoverScale}
-            onClick={() => router.push('/settings')}
-            aria-label="Settings"
-            className="p-2 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-primary transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
-          >
+              <motion.button
+                {...hoverScale}
+                onClick={() => router.push('/settings')}
+                aria-label="Settings"
+                className="p-2 rounded-xl text-gray-600 hover:bg-gray-100 hover:text-primary transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
             <Settings className="h-5 w-5" />
-          </motion.button>
+            </motion.button>
+            </>
+          )}
 
           <motion.div
             variants={fadeUp}
@@ -208,7 +238,10 @@ export default function PremiumHeader({
           >
             <div className="hidden sm:block text-right">
               <p className="text-sm font-semibold text-gray-900">{userEmail}</p>
-              <p className="text-xs text-gray-500 capitalize">{userRole}</p>
+              <p className="text-xs text-gray-500">{roleLabel ?? userRole}</p>
+              {assignedHostName && (
+                <p className="text-xs text-gray-400 mt-0.5">{assignedHostLabel}: {assignedHostName}</p>
+              )}
             </div>
             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white shadow-lg shadow-primary/30 ring-2 ring-white">
               <span className="text-sm font-bold">{(userRole || 'U').charAt(0).toUpperCase()}</span>

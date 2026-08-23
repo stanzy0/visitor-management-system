@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth-helpers'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { getCurrentUser } from '@/lib/auth'
 import { sendEmail } from '@/lib/server/email'
-import { createHostNotification, createSystemNotification, createAdminNotification, createReceptionistNotification, createSecurityNotification } from '@/lib/server/notification-service'
+import { createHostNotification, createSystemNotification, createAdminNotification, createReceptionistNotification, createSecurityNotification, createPANotification, createPADirectorNotification } from '@/lib/server/notification-service'
 import { logAuditAction } from '@/lib/server/audit'
 import { getSystemSetting } from '@/lib/server/settings'
 import { buildPortalQrUrl } from '@/lib/utils/portal-url'
@@ -128,7 +129,7 @@ export async function POST(request: NextRequest) {
           qrCodeUrl: qrDataUrl,
           portalUrl: portalUrl,
           badgeNumber: badge.badge_number,
-          orgName: 'AFCSC Visitor Management',
+          orgName: 'Department of Land Warfare',
         },
         relatedType: 'visit',
         relatedId: visit_id,
@@ -151,7 +152,7 @@ export async function POST(request: NextRequest) {
             company: visitor?.visitor_organization || 'N/A',
             badgeNumber: badge.badge_number,
             qrCodeUrl: qrDataUrl,
-            orgName: 'AFCSC Visitor Management',
+            orgName: 'Department of Land Warfare',
           },
           relatedType: 'visit',
           relatedId: visit_id,
@@ -176,6 +177,22 @@ export async function POST(request: NextRequest) {
 
       await createSecurityNotification(
         'Registration Approved',
+        `Public registration ${visit.registration_number} for ${visitor?.full_name || 'visitor'} has been approved.`,
+        'success',
+        'visit',
+        visit_id
+      ).catch(() => {})
+
+      await createPANotification(
+        'New Visitor Registration',
+        `Public registration ${visit.registration_number} for ${visitor?.full_name || 'visitor'} has been approved.`,
+        'success',
+        'visit',
+        visit_id
+      ).catch(() => {})
+
+      await createPADirectorNotification(
+        'New Visitor Registration',
         `Public registration ${visit.registration_number} for ${visitor?.full_name || 'visitor'} has been approved.`,
         'success',
         'visit',
@@ -208,7 +225,7 @@ export async function POST(request: NextRequest) {
           date: visit.visit_date || new Date().toISOString().split('T')[0],
           hostName: employee?.full_name || 'Host',
           reason: reason || 'Not specified',
-          orgName: 'AFCSC Visitor Management',
+          orgName: 'Department of Land Warfare',
         },
         relatedType: 'visit',
         relatedId: visit_id,
@@ -233,19 +250,46 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-     try {
-     if (!supabaseAdmin) {
-       return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
-     }
+  const user = await getCurrentUser()
+  if (!user) {
+    return NextResponse.json({ success: false, message: 'Unauthorized', error: '' }, { status: 401 })
+  }
 
-     const { data: visits, error: visitsError } = await supabaseAdmin
+  if (!supabaseAdmin) {
+    return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
+  }
+
+  const { data: userRole, error: roleError } = await supabaseAdmin
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .single()
+
+  if (roleError || !userRole || !['Admin', 'Receptionist', 'PA_TO_DIRECTOR', 'PA_TO_CI'].includes(userRole.role)) {
+    return NextResponse.json({ success: false, message: 'Access denied', error: '' }, { status: 403 })
+  }
+
+  try {
+    let hostEmployeeId: string | null = null
+    if (userRole.role === 'PA_TO_DIRECTOR' || userRole.role === 'PA_TO_CI') {
+      const { getHostEmployeeIdForPA } = await import('@/lib/server/pa-helpers')
+      hostEmployeeId = await getHostEmployeeIdForPA(user.id, userRole.role)
+    }
+
+    let query = supabaseAdmin
       .from('visits')
       .select('*')
       .eq('source', 'public')
       .eq('status', 'pending')
-       .order('created_at', { ascending: true })
+      .order('created_at', { ascending: true })
 
-     if (visitsError) {
+    if (hostEmployeeId) {
+      query = query.eq('employee_id', hostEmployeeId)
+    }
+
+    const { data: visits, error: visitsError } = await query
+
+    if (visitsError) {
       console.error('[Public Registrations API] Visits query error:', {
         message: visitsError.message,
         details: visitsError.details,
@@ -280,11 +324,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
-     if (!visits || visits.length === 0) {
-       return NextResponse.json({ success: true, data: [] })
-     }
+    if (!visits || visits.length === 0) {
+      return NextResponse.json({ success: true, data: [] })
+    }
 
-     const visitorIds = [...new Set(visits.map((v: any) => v.visitor_id).filter(Boolean))]
+    const visitorIds = [...new Set(visits.map((v: any) => v.visitor_id).filter(Boolean))]
     const employeeIds = [...new Set(visits.map((v: any) => v.employee_id).filter(Boolean))]
 
     const { data: visitors, error: visitorsError } = visitorIds.length
@@ -294,7 +338,7 @@ export async function GET(request: NextRequest) {
           .in('id', visitorIds)
        : { data: [], error: null }
 
-     if (visitorsError) {
+    if (visitorsError) {
       console.error('[Public Registrations API] Visitors query error:', {
         message: visitorsError.message,
         details: visitorsError.details,
@@ -327,16 +371,16 @@ export async function GET(request: NextRequest) {
         },
         { status: 500 }
        )
-     }
+    }
 
-     const { data: employees, error: employeesError } = employeeIds.length
+    const { data: employees, error: employeesError } = employeeIds.length
       ? await supabaseAdmin
           .from('employees')
           .select('id, full_name, department')
           .in('id', employeeIds)
        : { data: [], error: null }
 
-     if (employeesError) {
+    if (employeesError) {
       console.error('[Public Registrations API] Employees query error:', {
         message: employeesError.message,
         details: employeesError.details,

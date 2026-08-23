@@ -46,6 +46,8 @@ export interface VisitorFormData {
   emergency_phone?: string
   photo_url?: string | null
   host_employee_id?: string
+  host_department?: string | null
+  office_location?: string | null
   purpose?: string
   custom_purpose?: string
   expected_duration?: number

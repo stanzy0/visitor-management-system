@@ -28,6 +28,7 @@ export interface Employee {
   department: string
   position: string
   office_location: string
+  user_id?: string | null
   created_at: string
 }
 

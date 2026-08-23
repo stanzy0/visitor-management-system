@@ -111,21 +111,21 @@ export default function RestoreCenterPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Restore Center</h1>
-            <p className="text-sm text-gray-500">Restore system from backups</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Restore Center</h1>
+            <p className="text-sm text-[#9A9F87]">Restore system from backups</p>
           </div>
-          <button onClick={fetchBackups} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <button onClick={fetchBackups} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
             <RefreshCw className="h-4 w-4" />
             Refresh
           </button>
@@ -143,8 +143,8 @@ export default function RestoreCenterPage() {
         </div>
 
         {/* Restore Options */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Restore Options</h2>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-[#F5F5DC] mb-4">Restore Options</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
             {RESTORE_OPTIONS.map((option) => {
               const Icon = option.icon
@@ -152,10 +152,10 @@ export default function RestoreCenterPage() {
                 <button
                   key={option.value}
                   onClick={() => setRestoreType(option.value)}
-                  className={`rounded-xl border-2 p-4 text-center transition-colors ${restoreType === option.value ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}
+                  className={`rounded-xl border-2 p-4 text-center transition-colors ${restoreType === option.value ? 'border-blue-500 bg-blue-50' : 'border-[rgba(85,107,47,0.35)] hover:bg-[#4B5320]/10'}`}
                 >
                   <Icon className="h-6 w-6 mx-auto text-gray-400 mb-2" />
-                  <p className="text-xs font-medium text-gray-900">{option.label}</p>
+                  <p className="text-xs font-medium text-[#F5F5DC]">{option.label}</p>
                 </button>
               )
             })}
@@ -163,27 +163,27 @@ export default function RestoreCenterPage() {
         </div>
 
         {/* Available Backups */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Available Backups</h2>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+            <h2 className="text-lg font-semibold text-[#F5F5DC]">Available Backups</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Select</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">ID</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Type</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Size</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Date</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Select</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">ID</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Type</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Size</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Date</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {backups.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">No completed backups available</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-[#9A9F87]">No completed backups available</td></tr>
                 )}
                 {backups.map((backup) => (
-                  <tr key={backup.id} className="hover:bg-gray-50">
+                  <tr key={backup.id} className="hover:bg-[#4B5320]/10">
                     <td className="px-4 py-3">
                       <input
                         type="radio"
@@ -193,10 +193,10 @@ export default function RestoreCenterPage() {
                         className="h-4 w-4 text-blue-600"
                       />
                     </td>
-                    <td className="px-4 py-3 text-gray-900 font-mono text-xs">{backup.id.slice(0, 8)}</td>
-                    <td className="px-4 py-3 text-gray-600 capitalize">{backup.backup_type}</td>
-                    <td className="px-4 py-3 text-gray-600">{formatBytes(backup.backup_size_bytes)}</td>
-                    <td className="px-4 py-3 text-gray-600">{backup.created_at ? new Date(backup.created_at).toLocaleString() : '—'}</td>
+                    <td className="px-4 py-3 text-[#F5F5DC] font-mono text-xs">{backup.id.slice(0, 8)}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] capitalize">{backup.backup_type}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{formatBytes(backup.backup_size_bytes)}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{backup.created_at ? new Date(backup.created_at).toLocaleString() : '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -238,3 +238,5 @@ export default function RestoreCenterPage() {
     </div>
   )
 }
+
+

@@ -3,15 +3,6 @@ import { getCurrentUser, PERMISSIONS } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import type { Employee, EmployeeFormData } from '@/lib/types/employee'
 
-function generateTemporaryPassword(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*'
-  let password = ''
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  return password
-}
-
 export async function GET(request: NextRequest) {
   try {
     const user = await getCurrentUser()
@@ -100,21 +91,6 @@ export async function POST(request: NextRequest) {
       if (loc) insertData.office_location = loc.display_name || loc.name
     }
 
-    const tempPassword = generateTemporaryPassword()
-
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: body.email,
-      password: tempPassword,
-      email_confirm: true,
-      user_metadata: { must_change_password: true },
-    })
-
-    if (authError || !authData.user) {
-      return NextResponse.json({ success: false, message: authError?.message || 'Failed to create authentication account', error: authError?.message || 'Internal server error' }, { status: 400 })
-    }
-
-    insertData.user_id = authData.user.id
-
     const { data, error } = await supabaseAdmin
       .from('employees')
       .insert(insertData)
@@ -122,26 +98,10 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error || !data) {
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
       return NextResponse.json({ success: false, message: error?.message || 'Failed to create employee', error: error?.message || 'Internal server error' }, { status: 400 })
     }
 
-    const { error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .insert({
-        user_id: authData.user.id,
-        email: body.email,
-        full_name: body.full_name,
-        role: 'Host Employee',
-        must_change_password: true,
-      })
-
-    if (roleError) {
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
-      return NextResponse.json({ success: false, message: roleError.message, error: roleError.message }, { status: 400 })
-    }
-
-    return NextResponse.json({ data: data as Employee, tempPassword }, { status: 201 })
+    return NextResponse.json({ data: data as Employee }, { status: 201 })
   } catch {
     return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }

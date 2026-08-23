@@ -42,7 +42,7 @@ export function useBranding() {
           accent_color: data.accent_color || '#D4AF37',
           badge_header_text: data.badge_header_text || 'VISITOR',
           badge_footer_text: data.badge_footer_text || null,
-          college_name: data.college_name || 'AFCSC Visitor Management',
+          college_name: data.college_name || 'Department of Land Warfare',
         }
         setBranding(cachedBranding)
         setLoading(false)

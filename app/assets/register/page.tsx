@@ -82,13 +82,13 @@ export default function RegisterPropertyPage() {
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Register Property</h1>
-        <p className="text-gray-600 mt-1">Register a new property item for a visitor</p>
+        <h1 className="text-3xl font-bold text-[#F5F5DC]">Register Property</h1>
+        <p className="text-[#9A9F87] mt-1">Register a new property item for a visitor</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+      <form onSubmit={handleSubmit} className="bg-[#10150D] rounded-xl shadow-sm border border-[rgba(85,107,47,0.35)] p-6 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Select Visit *</label>
+          <label className="block text-sm font-medium text-[#9A9F87] mb-2">Select Visit *</label>
           <select
             value={formData.visit_id}
             onChange={(e) => {
@@ -114,7 +114,7 @@ export default function RegisterPropertyPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Item Name *</label>
+          <label className="block text-sm font-medium text-[#9A9F87] mb-2">Item Name *</label>
           <input
             type="text"
             value={formData.name}
@@ -125,7 +125,7 @@ export default function RegisterPropertyPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+          <label className="block text-sm font-medium text-[#9A9F87] mb-2">Category *</label>
           <select
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -140,7 +140,7 @@ export default function RegisterPropertyPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Brand</label>
+            <label className="block text-sm font-medium text-[#9A9F87] mb-2">Brand</label>
             <input
               type="text"
               value={formData.brand}
@@ -149,7 +149,7 @@ export default function RegisterPropertyPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
+            <label className="block text-sm font-medium text-[#9A9F87] mb-2">Model</label>
             <input
               type="text"
               value={formData.model}
@@ -161,7 +161,7 @@ export default function RegisterPropertyPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Serial Number</label>
+            <label className="block text-sm font-medium text-[#9A9F87] mb-2">Serial Number</label>
             <input
               type="text"
               value={formData.serial_number}
@@ -170,7 +170,7 @@ export default function RegisterPropertyPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+            <label className="block text-sm font-medium text-[#9A9F87] mb-2">Color</label>
             <input
               type="text"
               value={formData.color}
@@ -182,7 +182,7 @@ export default function RegisterPropertyPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Quantity *</label>
+            <label className="block text-sm font-medium text-[#9A9F87] mb-2">Quantity *</label>
             <input
               type="number"
               value={formData.quantity}
@@ -193,7 +193,7 @@ export default function RegisterPropertyPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Condition *</label>
+            <label className="block text-sm font-medium text-[#9A9F87] mb-2">Condition *</label>
             <select
               value={formData.condition}
               onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
@@ -208,7 +208,7 @@ export default function RegisterPropertyPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Photo URL</label>
+          <label className="block text-sm font-medium text-[#9A9F87] mb-2">Photo URL</label>
           <input
             type="url"
             value={formData.photo_url}
@@ -218,7 +218,7 @@ export default function RegisterPropertyPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
+          <label className="block text-sm font-medium text-[#9A9F87] mb-2">Remarks</label>
           <textarea
             value={formData.remarks}
             onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
@@ -232,7 +232,7 @@ export default function RegisterPropertyPage() {
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
             Register Property
           </button>
-          <button type="button" onClick={() => window.location.href = '/assets'} className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+          <button type="button" onClick={() => window.location.href = '/assets'} className="px-6 py-2 bg-gray-100 text-[#9A9F87] rounded-lg hover:bg-gray-200">
             Cancel
           </button>
         </div>
@@ -240,3 +240,4 @@ export default function RegisterPropertyPage() {
     </div>
   )
 }
+

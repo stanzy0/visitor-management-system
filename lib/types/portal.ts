@@ -38,14 +38,6 @@ export interface PortalVisit {
     office_location: string | null
     email: string | null
   } | null
-  appointment: {
-    id: string
-    appointment_date: string
-    appointment_time: string | null
-    expected_arrival: string | null
-    status: string
-    purpose: string
-  } | null
   badge: {
     id: string
     badge_number: string

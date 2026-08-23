@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getNotifications, getNotificationStats, getUnreadCount, markAsRead, markAllAsRead, deleteNotification, deleteReadNotifications } from '@/lib/server/notification-service'
+import { getNotifications, getNotificationStats, getUnreadCount, markAsRead, markAllAsRead, deleteNotification, deleteReadNotifications, createNotification } from '@/lib/server/notification-service'
 import { getCurrentUser } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
@@ -39,6 +39,41 @@ export async function GET(request: NextRequest) {
     })
   } catch (err) {
     console.error('Notifications fetch error:', err)
+    return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ success: false, message: 'Authentication required', error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { title, message, type, recipientRole, relatedType, relatedId } = body
+
+    if (!title || !message) {
+      return NextResponse.json({ success: false, message: 'Title and message are required', error: '' }, { status: 400 })
+    }
+
+    const notification = await createNotification(
+      title,
+      message,
+      type || 'info',
+      null,
+      recipientRole || null,
+      relatedType,
+      relatedId
+    )
+
+    if (!notification) {
+      return NextResponse.json({ success: false, message: 'Failed to create notification', error: '' }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, data: notification })
+  } catch (err) {
+    console.error('Notification creation error:', err)
     return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
   }
 }

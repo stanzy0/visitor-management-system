@@ -1,6 +1,6 @@
 import crypto from 'crypto'
 
-const ISSUER = 'Visitor Management System'
+const ISSUER = 'Visitors Management System'
 const MFA_SECRET_KEY = process.env.MFA_SECRET_KEY || 'default-dev-key-change-me'
 
 function getKey(): Buffer {

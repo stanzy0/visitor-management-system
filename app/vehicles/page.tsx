@@ -37,8 +37,8 @@ interface Vehicle {
 
 type VehicleType = 'Car' | 'SUV' | 'Truck' | 'Bus' | 'Motorcycle' | 'Military Vehicle' | 'Other'
 
-const inputClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-const selectClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+const inputClasses = "w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+const selectClasses = "w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
 
 export default function VehiclesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
@@ -334,19 +334,19 @@ export default function VehiclesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6 flex items-center justify-between">
           <a href="/dashboard" className="text-sm text-blue-600 hover:underline">
             ← Back to Dashboard
           </a>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-[#F5F5DC] flex items-center gap-2">
             <Car className="h-6 w-6 text-blue-600" />
             Vehicle Management
           </h1>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
@@ -354,7 +354,7 @@ export default function VehiclesPage() {
               placeholder="Search by reg number, driver, visitor, slot, gate pass..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+              className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-[#10150D] text-black placeholder:text-[#9A9F87] focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
             />
           </div>
 
@@ -380,8 +380,8 @@ export default function VehiclesPage() {
         </div>
 
         {showRegisterForm && (
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Register Vehicle</h3>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-6 shadow-sm">
+            <h3 className="text-lg font-bold text-[#F5F5DC] mb-4">Register Vehicle</h3>
             
             {vehicleBlacklisted && (
               <div className="mb-4 rounded-lg bg-red-50 p-3 border border-red-200">
@@ -393,7 +393,7 @@ export default function VehiclesPage() {
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Visitor *</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Visitor *</label>
                   <select
                     value={formData.visitor_id}
                     onChange={(e) => setFormData({ ...formData, visitor_id: e.target.value })}
@@ -405,7 +405,7 @@ export default function VehiclesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Registration Number *</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Registration Number *</label>
                   <input
                     type="text"
                     value={formData.registration_number}
@@ -419,7 +419,7 @@ export default function VehiclesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type *</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Vehicle Type *</label>
                   <select
                     value={formData.vehicle_type}
                     onChange={(e) => setFormData({ ...formData, vehicle_type: e.target.value as VehicleType })}
@@ -437,7 +437,7 @@ export default function VehiclesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Make</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Make</label>
                   <input
                     type="text"
                     value={formData.vehicle_make}
@@ -447,7 +447,7 @@ export default function VehiclesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Model</label>
                   <input
                     type="text"
                     value={formData.vehicle_model}
@@ -457,7 +457,7 @@ export default function VehiclesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Color</label>
                   <input
                     type="text"
                     value={formData.vehicle_color}
@@ -467,7 +467,7 @@ export default function VehiclesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Driver Name</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Driver Name</label>
                   <input
                     type="text"
                     value={formData.driver_name}
@@ -476,7 +476,7 @@ export default function VehiclesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Driver Phone</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Driver Phone</label>
                   <input
                     type="text"
                     value={formData.driver_phone}
@@ -485,7 +485,7 @@ export default function VehiclesPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Parking Slot</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Parking Slot</label>
                   <input
                     type="text"
                     value={formData.parking_slot}
@@ -495,7 +495,7 @@ export default function VehiclesPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Notes</label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
@@ -508,7 +508,7 @@ export default function VehiclesPage() {
                 <button
                   type="button"
                   onClick={() => setShowRegisterForm(false)}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
                 >
                   Cancel
                 </button>
@@ -530,43 +530,43 @@ export default function VehiclesPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-500">Vehicles On Site</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Vehicles On Site</p>
               <p className="mt-1 text-2xl font-bold">{loading ? '—' : vehiclesOnSite}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Vehicles Checked In Today</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Vehicles Checked In Today</p>
               <p className="mt-1 text-2xl font-bold">{loading ? '—' : checkedInToday}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Vehicles Checked Out Today</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Vehicles Checked Out Today</p>
               <p className="mt-1 text-2xl font-bold">{loading ? '—' : vehicles.filter(v => !v.parking_slot && v.created_at?.startsWith(today)).length}</p>
             </div>
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-x-auto">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-4 py-3 font-semibold text-gray-700">Reg #</th>
-                <th className="px-4 py-3 font-semibold text-gray-700">Vehicle</th>
-                <th className="px-4 py-3 font-semibold text-gray-700">Color</th>
-                <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
-                <th className="px-4 py-3 font-semibold text-gray-700">Organization</th>
-                <th className="px-4 py-3 font-semibold text-gray-700">Parking Slot</th>
-                <th className="px-4 py-3 font-semibold text-gray-700">Gate Pass</th>
-                <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                <th className="px-4 py-3 font-semibold text-gray-700">Actions</th>
+              <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                <th className="px-4 py-3 font-semibold text-[#9A9F87]">Reg #</th>
+                <th className="px-4 py-3 font-semibold text-[#9A9F87]">Vehicle</th>
+                <th className="px-4 py-3 font-semibold text-[#9A9F87]">Color</th>
+                <th className="px-4 py-3 font-semibold text-[#9A9F87]">Visitor</th>
+                <th className="px-4 py-3 font-semibold text-[#9A9F87]">Organization</th>
+                <th className="px-4 py-3 font-semibold text-[#9A9F87]">Parking Slot</th>
+                <th className="px-4 py-3 font-semibold text-[#9A9F87]">Gate Pass</th>
+                <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                <th className="px-4 py-3 font-semibold text-[#9A9F87]">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
               {loading ? (
                 <tr><td colSpan={9} className="p-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></td></tr>
               ) : filteredVehicles.length === 0 ? (
-                <tr><td colSpan={9} className="p-8 text-center text-gray-500">No vehicles found</td></tr>
+                <tr><td colSpan={9} className="p-8 text-center text-[#9A9F87]">No vehicles found</td></tr>
               ) : (
                 filteredVehicles.map(vehicle => (
                   <tr key={vehicle.id} className={`${getRowHighlight(vehicle)} transition-colors`}>
@@ -597,8 +597,8 @@ export default function VehiclesPage() {
                           <button onClick={() => handleCheckOut(vehicle.id)} className="p-1 rounded hover:bg-blue-50" title="Check Out">
                             <Minus className="h-4 w-4 text-blue-600" />
                           </button>
-                          <button onClick={() => handlePrintGatePass(vehicle)} className="p-1 rounded hover:bg-gray-50" title="Print Gate Pass">
-                            <Printer className="h-4 w-4 text-gray-600" />
+                          <button onClick={() => handlePrintGatePass(vehicle)} className="p-1 rounded hover:bg-[#4B5320]/10" title="Print Gate Pass">
+                            <Printer className="h-4 w-4 text-[#9A9F87]" />
                           </button>
                           {PERMISSIONS['Admin']?.includes('vehicles') && (
                             <button onClick={() => handleBlacklist(vehicle.id)} className="p-1 rounded hover:bg-red-50" title="Blacklist">
@@ -618,31 +618,31 @@ export default function VehiclesPage() {
 
       {showGatePass && selectedVehicle && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white shadow-xl p-6">
+          <div className="w-full max-w-md rounded-xl bg-[#10150D] shadow-xl p-6">
             <div className="text-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">Vehicle Gate Pass</h2>
+              <h2 className="text-xl font-bold text-[#F5F5DC]">Vehicle Gate Pass</h2>
             </div>
             
             <div className="border border-gray-300 rounded-lg p-4 mb-4">
               <div className="space-y-3 text-sm">
                 <div>
-                  <p className="text-gray-500">Gate Pass #</p>
+                  <p className="text-[#9A9F87]">Gate Pass #</p>
                   <p className="font-mono font-bold text-lg">{selectedVehicle.gate_pass_number}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Visitor</p>
+                  <p className="text-[#9A9F87]">Visitor</p>
                   <p className="font-medium">{selectedVehicle.visitor?.full_name || '—'}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Vehicle</p>
+                  <p className="text-[#9A9F87]">Vehicle</p>
                   <p className="font-medium">{selectedVehicle.vehicle_make || ''} {selectedVehicle.vehicle_model || ''} ({selectedVehicle.vehicle_type})</p>
                 </div>
 <div>
-                   <p className="text-gray-500">Registration Number</p>
+                   <p className="text-[#9A9F87]">Registration Number</p>
                    <p className="font-medium">{selectedVehicle.registration_number}</p>
                  </div>
                  <div>
-                   <p className="text-gray-500">Organization</p>
+                   <p className="text-[#9A9F87]">Organization</p>
                    <p className="font-medium">{selectedVehicle.visitor?.visitor_organization || '—'}</p>
                  </div>
                </div>
@@ -662,7 +662,7 @@ export default function VehiclesPage() {
             <div className="flex justify-end gap-2">
               <button
                 onClick={() => setShowGatePass(false)}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
               >
                 Close
               </button>
@@ -682,3 +682,5 @@ export default function VehiclesPage() {
     </div>
   )
 }
+
+

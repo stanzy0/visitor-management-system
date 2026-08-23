@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth-client'
-import { Loader2, Save, Shield, UserCheck, Calendar, Mail, Printer, QrCode, Globe, Palette, HardDrive } from 'lucide-react'
+import { Loader2, Save, Shield, UserCheck, Mail, Printer, QrCode, Globe, Palette, HardDrive } from 'lucide-react'
 
 interface SettingRow {
   id?: string
@@ -15,7 +15,7 @@ interface SettingRow {
 }
 
 const GENERAL_SETTINGS: SettingRow[] = [
-  { key: 'org_name', value: 'AFCSC', category: 'general', description: 'Institution display name' },
+  { key: 'org_name', value: 'Department of Land Warfare', category: 'general', description: 'Institution display name' },
   { key: 'org_logo', value: '', category: 'general', description: 'Logo URL' },
   { key: 'org_address', value: '', category: 'general', description: 'Address' },
   { key: 'org_phone', value: '', category: 'general', description: 'Phone number' },
@@ -39,12 +39,6 @@ const REGISTRATION_SETTINGS: SettingRow[] = [
   { key: 'auto_expire_visitors', value: true, category: 'registration', description: 'Auto expire visitors after hours' },
 ]
 
-const APPOINTMENT_SETTINGS: SettingRow[] = [
-  { key: 'working_hours_start', value: '08:00', category: 'appointment', description: 'Working hours start' },
-  { key: 'working_hours_end', value: '18:00', category: 'appointment', description: 'Working hours end' },
-  { key: 'appointment_duration', value: 30, category: 'appointment', description: 'Default appointment duration in minutes' },
-  { key: 'max_advance_booking', value: 30, category: 'appointment', description: 'Maximum advance booking in days' },
-]
 
 const EMAIL_NOTIFICATION_SETTINGS: SettingRow[] = [
   { key: 'email_notifications_enabled', value: true, category: 'email', description: 'Enable email notifications' },
@@ -88,7 +82,7 @@ const BACKUP_SETTINGS: SettingRow[] = [
   { key: 'backup_retention_days', value: 30, category: 'backup', description: 'Backup retention in days' },
 ]
 
-type SettingTab = 'general' | 'security' | 'registration' | 'appointment' | 'email' | 'badge' | 'qr' | 'portal' | 'appearance' | 'backup'
+type SettingTab = 'general' | 'security' | 'registration' | 'email' | 'badge' | 'qr' | 'portal' | 'appearance' | 'backup'
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<Record<string, SettingRow>>({})
@@ -114,7 +108,7 @@ export default function AdminSettingsPage() {
       }
 
       const map: Record<string, SettingRow> = {}
-      const allDefaults = [...GENERAL_SETTINGS, ...SECURITY_SETTINGS, ...REGISTRATION_SETTINGS, ...APPOINTMENT_SETTINGS, ...EMAIL_NOTIFICATION_SETTINGS, ...BADGE_SETTINGS, ...QR_SETTINGS, ...PORTAL_SETTINGS, ...APPEARANCE_SETTINGS, ...BACKUP_SETTINGS]
+      const allDefaults = [...GENERAL_SETTINGS, ...SECURITY_SETTINGS, ...REGISTRATION_SETTINGS, ...EMAIL_NOTIFICATION_SETTINGS, ...BADGE_SETTINGS, ...QR_SETTINGS, ...PORTAL_SETTINGS, ...APPEARANCE_SETTINGS, ...BACKUP_SETTINGS]
       allDefaults.forEach((def) => {
         const existing = result.data?.find((s: SettingRow) => s.key === def.key)
         map[def.key] = existing || { ...def }
@@ -191,7 +185,6 @@ export default function AdminSettingsPage() {
     { id: 'general' as SettingTab, label: 'General', icon: Shield },
     { id: 'security' as SettingTab, label: 'Security', icon: Shield },
     { id: 'registration' as SettingTab, label: 'Visitor Policies', icon: UserCheck },
-    { id: 'appointment' as SettingTab, label: 'Appointments', icon: Calendar },
     { id: 'email' as SettingTab, label: 'Email', icon: Mail },
     { id: 'badge' as SettingTab, label: 'Badge Config', icon: Printer },
     { id: 'qr' as SettingTab, label: 'QR Settings', icon: QrCode },
@@ -208,8 +201,6 @@ export default function AdminSettingsPage() {
         return SECURITY_SETTINGS
       case 'registration':
         return REGISTRATION_SETTINGS
-      case 'appointment':
-        return APPOINTMENT_SETTINGS
       case 'email':
         return EMAIL_NOTIFICATION_SETTINGS
       case 'badge':
@@ -226,7 +217,7 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/admin" className="text-sm text-blue-600 hover:underline">
@@ -236,8 +227,8 @@ export default function AdminSettingsPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
-            <p className="text-sm text-gray-500">Configure system-wide settings</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">System Settings</h1>
+            <p className="text-sm text-[#9A9F87]">Configure system-wide settings</p>
           </div>
           <button
             onClick={handleSave}
@@ -264,7 +255,7 @@ export default function AdminSettingsPage() {
                 className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors ${
                   activeTab === tab.id
                     ? 'bg-blue-50 text-blue-700'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    : 'bg-[#10150D] text-[#9A9F87] hover:bg-[#4B5320]/10'
                 }`}
               >
                 <tab.icon className="h-4 w-4" />
@@ -273,9 +264,9 @@ export default function AdminSettingsPage() {
             ))}
           </div>
 
-          <div className="flex-1 rounded-xl border border-gray-200 bg-white shadow-sm">
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 capitalize">{activeTab.replace('-', ' ')} Settings</h3>
+          <div className="flex-1 rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+            <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+              <h3 className="text-lg font-semibold text-[#F5F5DC] capitalize">{activeTab.replace('-', ' ')} Settings</h3>
             </div>
             <div className="p-4 space-y-4">
               {loading ? (
@@ -285,7 +276,7 @@ export default function AdminSettingsPage() {
               ) : (
                 getSettingsForTab(activeTab).map((setting) => (
                   <div key={setting.key}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{setting.description || setting.key}</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">{setting.description || setting.key}</label>
                     {typeof settings[setting.key]?.value === 'boolean' ? (
                       <label className="flex items-center gap-2">
                         <input
@@ -294,14 +285,14 @@ export default function AdminSettingsPage() {
                           onChange={(e) => updateSetting(setting.key, e.target.checked)}
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="text-sm text-gray-600">{settings[setting.key]?.value ? 'Enabled' : 'Disabled'}</span>
+                        <span className="text-sm text-[#9A9F87]">{settings[setting.key]?.value ? 'Enabled' : 'Disabled'}</span>
                       </label>
                     ) : (
                       <input
                         type={typeof settings[setting.key]?.value === 'number' ? 'number' : 'text'}
                         value={String(settings[setting.key]?.value || '')}
                         onChange={(e) => updateSetting(setting.key, typeof settings[setting.key]?.value === 'number' ? parseInt(e.target.value) || 0 : e.target.value)}
-                        className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     )}
                   </div>
@@ -314,3 +305,5 @@ export default function AdminSettingsPage() {
     </div>
   )
 }
+
+

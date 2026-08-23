@@ -24,7 +24,7 @@ export async function requireAdmin() {
     .from('user_roles')
     .select('role')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
   if (error || !userRole) {
     return { authorized: false, error: 'Access denied', status: 403 as const }
@@ -52,7 +52,7 @@ export async function requireRole(allowedRoles: string[]) {
     .from('user_roles')
     .select('role')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
   if (error || !userRole) {
     return { authorized: false, error: 'Access denied', status: 403 as const }

@@ -135,12 +135,12 @@ export default function AdminAuditLogsPage() {
       case 'warning':
         return 'bg-amber-50 text-amber-700'
       default:
-        return 'bg-gray-50 text-gray-700'
+        return 'bg-gray-50 text-[#9A9F87]'
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/admin" className="text-sm text-blue-600 hover:underline">
@@ -150,13 +150,13 @@ export default function AdminAuditLogsPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
-            <p className="text-sm text-gray-500">View, filter, and export system audit logs</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Audit Logs</h1>
+            <p className="text-sm text-[#9A9F87]">View, filter, and export system audit logs</p>
           </div>
           <div className="flex gap-2">
             <button
               onClick={handleRefresh}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-[#10150D] px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -177,11 +177,11 @@ export default function AdminAuditLogsPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
             <div className="flex items-center gap-2 mb-3">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Filters</span>
+              <Filter className="h-4 w-4 text-[#9A9F87]" />
+              <span className="text-sm font-medium text-[#9A9F87]">Filters</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div className="relative">
@@ -191,7 +191,7 @@ export default function AdminAuditLogsPage() {
                   placeholder="Search all fields..."
                   value={filters.search}
                   onChange={(e) => handleFilterChange('search', e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 bg-[#10150D] pl-9 pr-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <input
@@ -199,26 +199,26 @@ export default function AdminAuditLogsPage() {
                 placeholder="User..."
                 value={filters.user}
                 onChange={(e) => handleFilterChange('user', e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <input
                 type="text"
                 placeholder="Action..."
                 value={filters.action}
                 onChange={(e) => handleFilterChange('action', e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <input
                 type="text"
                 placeholder="Module..."
                 value={filters.entity_type}
                 onChange={(e) => handleFilterChange('entity_type', e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <select
                 value={filters.status}
                 onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Statuses</option>
                 <option value="success">Success</option>
@@ -231,34 +231,34 @@ export default function AdminAuditLogsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Timestamp</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">User</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Action</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Module</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Entity ID</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">IP Address</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Details</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Timestamp</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">User</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Action</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Module</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Entity ID</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">IP Address</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                  <tr key={log.id} className="hover:bg-[#4B5320]/10 transition-colors">
+                    <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">
                       {log.created_at ? new Date(log.created_at).toLocaleString() : '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{log.performed_by}</td>
-                    <td className="px-4 py-3 font-medium text-gray-900">{log.action}</td>
-                    <td className="px-4 py-3 text-gray-600">{log.entity_type}</td>
-                    <td className="px-4 py-3 text-gray-600 font-mono text-xs">{log.entity_id || '—'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{log.performed_by}</td>
+                    <td className="px-4 py-3 font-medium text-[#F5F5DC]">{log.action}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{log.entity_type}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] font-mono text-xs">{log.entity_id || '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium capitalize ${getStatusColor(log.status)}`}>
                         {log.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 font-mono text-xs">{log.ip_address || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600 max-w-xs truncate" title={log.details || undefined}>{log.details || '—'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] font-mono text-xs">{log.ip_address || '—'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] max-w-xs truncate" title={log.details || undefined}>{log.details || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -274,20 +274,20 @@ export default function AdminAuditLogsPage() {
           {!loading && logs.length === 0 && (
             <div className="p-12 text-center">
               <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No audit logs found</p>
+              <p className="text-[#9A9F87]">No audit logs found</p>
             </div>
           )}
 
           {!loading && logs.length > 0 && (
-            <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3">
-              <span className="text-sm text-gray-500">
+            <div className="flex items-center justify-between border-t border-[rgba(85,107,47,0.35)] px-4 py-3">
+              <span className="text-sm text-[#9A9F87]">
                 Page {page + 1} of {totalPages}
               </span>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPage((p) => Math.max(0, p - 1))}
                   disabled={page === 0}
-                  className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-[#10150D] px-3 py-1.5 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Prev
@@ -295,7 +295,7 @@ export default function AdminAuditLogsPage() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
                   disabled={page >= totalPages - 1}
-                  className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-[#10150D] px-3 py-1.5 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />
@@ -308,3 +308,5 @@ export default function AdminAuditLogsPage() {
     </div>
   )
 }
+
+

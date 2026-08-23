@@ -77,6 +77,12 @@ export interface AdminUser {
     position: string | null
     office_location: string | null
   } | null
+  host_assignment?: {
+    employee_id: string
+    full_name: string | null
+    position: string | null
+    department: string | null
+  } | null
 }
 
 export interface Department {

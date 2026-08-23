@@ -45,19 +45,25 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'No matching user_roles row found.', rowsDeleted: 0 }, { status: 404 })
     }
 
-    const { data: deletedRows, error: deleteError } = await admin
-       .from('user_roles')
-       .delete()
-       .eq('user_id', userId)
-       .select()
+     const { data: deletedRows, error: deleteError } = await admin
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+        .select()
 
-     if (deleteError || !deletedRows || deletedRows.length === 0) {
-      console.error('[DELETE USER] Delete failed:', deleteError?.message)
-      await logAuditAction('User Delete Failed', 'user', userId, `user_roles delete failed: ${deleteError?.message || 'no rows deleted'}`)
-      return NextResponse.json({ success: false, reason: deleteError?.message || 'No rows deleted', rowsDeleted: 0 }, { status: 500 })
-    }
+      if (deleteError || !deletedRows || deletedRows.length === 0) {
+        console.error('[DELETE USER] Delete failed:', deleteError?.message)
+        await logAuditAction('User Delete Failed', 'user', userId, `user_roles delete failed: ${deleteError?.message || 'no rows deleted'}`)
+        return NextResponse.json({ success: false, reason: deleteError?.message || 'No rows deleted', rowsDeleted: 0 }, { status: 500 })
+      }
 
-    const { data: afterDelete } = await admin
+      // Clean up any host assignments for this user
+      await admin
+        .from('user_host_assignments')
+        .delete()
+        .eq('user_id', userId)
+
+      const { data: afterDelete } = await admin
        .from('user_roles')
        .select('*')
        .eq('user_id', userId)

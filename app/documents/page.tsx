@@ -229,7 +229,7 @@ export default function DocumentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <Link href="/dashboard" className="text-sm text-blue-600 hover:underline">
@@ -238,10 +238,10 @@ export default function DocumentsPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Document Verification Center</h1>
+          <h1 className="text-2xl font-bold text-[#F5F5DC]">Document Verification Center</h1>
           <button
             onClick={fetchVerifications}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
           >
             <RefreshCw className="h-4 w-4" />
             Refresh
@@ -269,8 +269,8 @@ export default function DocumentsPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
             <div className="flex flex-col gap-3">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -279,14 +279,14 @@ export default function DocumentsPage() {
                   placeholder="Search by visitor name, registration number, document number, host employee, organization..."
                   value={filters.search}
                   onChange={(e) => updateFilter('search', e.target.value)}
-                  className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+                  className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-[#10150D] text-black placeholder:text-[#9A9F87] focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
                 />
               </div>
               <div className="flex flex-wrap gap-3">
                 <select
                   value={filters.document_type}
                   onChange={(e) => updateFilter('document_type', e.target.value)}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">All Document Types</option>
                   <option value="National Identity Card">National Identity Card</option>
@@ -303,7 +303,7 @@ export default function DocumentsPage() {
                 <select
                   value={filters.status}
                   onChange={(e) => updateFilter('status', e.target.value)}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">All Status</option>
                   <option value="Pending">Pending</option>
@@ -316,14 +316,14 @@ export default function DocumentsPage() {
                   type="date"
                   value={filters.date_from}
                   onChange={(e) => updateFilter('date_from', e.target.value)}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Date from"
                 />
                 <input
                   type="date"
                   value={filters.date_to}
                   onChange={(e) => updateFilter('date_to', e.target.value)}
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Date to"
                 />
               </div>
@@ -331,7 +331,7 @@ export default function DocumentsPage() {
           </div>
           <div className="overflow-x-auto">
             {loading ? (
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div key={i} className="p-4">
                     <div className="h-5 bg-gray-200 rounded animate-pulse mb-2 w-3/4"></div>
@@ -340,31 +340,31 @@ export default function DocumentsPage() {
                 ))}
               </div>
             ) : verifications.length === 0 ? (
-              <div className="py-12 text-center text-gray-500">
+              <div className="py-12 text-center text-[#9A9F87]">
                 <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                 <p>No document verifications found</p>
               </div>
             ) : (
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Document Type</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Document Number</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Upload Date</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Verified By</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Verified Date</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700 w-48">Actions</th>
+                  <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Visitor</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Document Type</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Document Number</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Upload Date</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Verified By</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Verified Date</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Host</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87] w-48">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                   {verifications.map((verification) => {
                     const statusConfig = STATUS_CONFIG[verification.status] || STATUS_CONFIG.Pending
                     const StatusIcon = statusConfig.icon
                     return (
-                      <tr key={verification.id} className="hover:bg-gray-50 transition-colors">
+                      <tr key={verification.id} className="hover:bg-[#4B5320]/10 transition-colors">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             {verification.visitor?.photo_url ? (
@@ -377,15 +377,15 @@ export default function DocumentsPage() {
                               <User className="h-10 w-10 text-gray-300" />
                             )}
                             <div>
-                              <span className="font-medium text-gray-900">{verification.visitor?.full_name || '—'}</span>
-                              <span className="text-xs text-gray-500 block">{verification.visitor?.email || ''}</span>
+                              <span className="font-medium text-[#F5F5DC]">{verification.visitor?.full_name || '—'}</span>
+                              <span className="text-xs text-[#9A9F87] block">{verification.visitor?.email || ''}</span>
                               <span className="text-xs text-gray-400 block">{verification.visitor?.visitor_organization || ''}</span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-gray-600">{verification.document_type}</td>
-                        <td className="px-4 py-3 text-gray-600 font-mono">{verification.document_number || '—'}</td>
-                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                        <td className="px-4 py-3 text-[#9A9F87]">{verification.document_type}</td>
+                        <td className="px-4 py-3 text-[#9A9F87] font-mono">{verification.document_number || '—'}</td>
+                        <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">
                            {verification.created_at ? new Date(verification.created_at).toLocaleDateString() : '—'}
                         </td>
                         <td className="px-4 py-3">
@@ -394,7 +394,7 @@ export default function DocumentsPage() {
                             {statusConfig.label}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-gray-600">
+                        <td className="px-4 py-3 text-[#9A9F87]">
                           {verification.approved_by ? (
                             <span className="inline-flex items-center gap-1">
                               <UserCheck className="h-3 w-3" />
@@ -404,12 +404,12 @@ export default function DocumentsPage() {
                             '—'
                           )}
                         </td>
-                        <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                        <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">
                           {verification.approved_at
                             ? new Date(verification.approved_at).toLocaleDateString()
                             : '—'}
                         </td>
-                        <td className="px-4 py-3 text-gray-600">
+                        <td className="px-4 py-3 text-[#9A9F87]">
                           {verification.visit?.employee?.full_name || '—'}
                           {verification.visit?.employee?.department && (
                             <span className="text-xs text-gray-400 block">{verification.visit.employee.department}</span>
@@ -422,7 +422,7 @@ export default function DocumentsPage() {
                               className="p-1 rounded-md hover:bg-gray-100 transition-colors"
                               title="View Details"
                             >
-                              <Eye className="h-4 w-4 text-gray-600" />
+                              <Eye className="h-4 w-4 text-[#9A9F87]" />
                             </button>
                             {verification.status === 'Pending' && canApprove && (
                               <button
@@ -462,7 +462,7 @@ export default function DocumentsPage() {
                               className="p-1 rounded-md hover:bg-gray-100 transition-colors"
                               title="Download"
                             >
-                              <Download className="h-4 w-4 text-gray-600" />
+                              <Download className="h-4 w-4 text-[#9A9F87]" />
                             </button>
                           </div>
                         </td>
@@ -504,14 +504,14 @@ function StatCard({ title, value, icon: Icon, color }: { title: string; value: s
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-gray-500">{title}</p>
+        <p className="text-sm font-medium text-[#9A9F87]">{title}</p>
         <div className={`p-2 rounded-lg ${colorClasses[color] || colorClasses.amber}`}>
           <Icon className="h-4 w-4" />
         </div>
       </div>
-      <p className="mt-2 text-2xl font-bold text-gray-900">{value}</p>
+      <p className="mt-2 text-2xl font-bold text-[#F5F5DC]">{value}</p>
     </div>
   )
 }
@@ -553,9 +553,9 @@ function DocumentDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-4xl rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
-        <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
-          <h2 className="text-lg font-semibold text-gray-900">Document Verification</h2>
+      <div className="w-full max-w-4xl rounded-xl bg-[#10150D] shadow-xl max-h-[90vh] flex flex-col">
+        <div className="flex-shrink-0 flex items-center justify-between border-b border-[rgba(85,107,47,0.35)] p-4">
+          <h2 className="text-lg font-semibold text-[#F5F5DC]">Document Verification</h2>
           <button onClick={onClose} className="p-1 rounded-md hover:bg-gray-100">
             <X className="h-5 w-5" />
           </button>
@@ -565,8 +565,8 @@ function DocumentDetailModal({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Visitor Information</h3>
-                <div className="rounded-lg border border-gray-200 p-4 space-y-3">
+                <h3 className="text-sm font-medium text-[#9A9F87] mb-2">Visitor Information</h3>
+                <div className="rounded-lg border border-[rgba(85,107,47,0.35)] p-4 space-y-3">
                   <div className="flex items-center gap-3">
                     {document.visitor?.photo_url ? (
                       <img
@@ -578,71 +578,71 @@ function DocumentDetailModal({
                       <User className="h-16 w-16 text-gray-300" />
                     )}
                     <div>
-                      <span className="text-xs font-medium text-gray-500 uppercase">Name</span>
-                      <p className="text-sm font-semibold text-gray-900">{document.visitor?.full_name || '—'}</p>
+                      <span className="text-xs font-medium text-[#9A9F87] uppercase">Name</span>
+                      <p className="text-sm font-semibold text-[#F5F5DC]">{document.visitor?.full_name || '—'}</p>
                     </div>
                   </div>
                   <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase">Email</span>
-                    <p className="text-sm text-gray-700">{document.visitor?.email || '—'}</p>
+                    <span className="text-xs font-medium text-[#9A9F87] uppercase">Email</span>
+                    <p className="text-sm text-[#9A9F87]">{document.visitor?.email || '—'}</p>
                   </div>
                   <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase">Organization</span>
-                    <p className="text-sm text-gray-700">{document.visitor?.visitor_organization || '—'}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Visit Information</h3>
-                <div className="rounded-lg border border-gray-200 p-4 space-y-2">
-                  <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase">Visit ID</span>
-                    <p className="text-sm text-gray-700">{document.visit_id || '—'}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase">Visit Status</span>
-                    <p className="text-sm text-gray-700 capitalize">{document.visit?.status?.replace('_', ' ') || '—'}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase">Host Employee</span>
-                    <p className="text-sm text-gray-700">{document.visit?.employee?.full_name || '—'}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase">Department</span>
-                    <p className="text-sm text-gray-700">{document.visit?.employee?.department || '—'}</p>
+                    <span className="text-xs font-medium text-[#9A9F87] uppercase">Organization</span>
+                    <p className="text-sm text-[#9A9F87]">{document.visitor?.visitor_organization || '—'}</p>
                   </div>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Document Information</h3>
-                <div className="rounded-lg border border-gray-200 p-4 space-y-2">
+                <h3 className="text-sm font-medium text-[#9A9F87] mb-2">Visit Information</h3>
+                <div className="rounded-lg border border-[rgba(85,107,47,0.35)] p-4 space-y-2">
                   <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase">Document Type</span>
-                    <p className="text-sm text-gray-700">{document.document_type}</p>
+                    <span className="text-xs font-medium text-[#9A9F87] uppercase">Visit ID</span>
+                    <p className="text-sm text-[#9A9F87]">{document.visit_id || '—'}</p>
                   </div>
                   <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase">Status</span>
+                    <span className="text-xs font-medium text-[#9A9F87] uppercase">Visit Status</span>
+                    <p className="text-sm text-[#9A9F87] capitalize">{document.visit?.status?.replace('_', ' ') || '—'}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-[#9A9F87] uppercase">Host Employee</span>
+                    <p className="text-sm text-[#9A9F87]">{document.visit?.employee?.full_name || '—'}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-[#9A9F87] uppercase">Department</span>
+                    <p className="text-sm text-[#9A9F87]">{document.visit?.employee?.department || '—'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-[#9A9F87] mb-2">Document Information</h3>
+                <div className="rounded-lg border border-[rgba(85,107,47,0.35)] p-4 space-y-2">
+                  <div>
+                    <span className="text-xs font-medium text-[#9A9F87] uppercase">Document Type</span>
+                    <p className="text-sm text-[#9A9F87]">{document.document_type}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium text-[#9A9F87] uppercase">Status</span>
                     <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${statusConfig.color}`}>
                       <StatusIcon className="h-3 w-3" />
                       {statusConfig.label}
                     </span>
                   </div>
                   <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase">Upload Date</span>
-                    <p className="text-sm text-gray-700">{document.created_at ? new Date(document.created_at).toLocaleString() : '—'}</p>
+                    <span className="text-xs font-medium text-[#9A9F87] uppercase">Upload Date</span>
+                    <p className="text-sm text-[#9A9F87]">{document.created_at ? new Date(document.created_at).toLocaleString() : '—'}</p>
                   </div>
                   {document.approved_at && (
                     <div>
-                      <span className="text-xs font-medium text-gray-500 uppercase">Verified Date</span>
-                      <p className="text-sm text-gray-700">{document.approved_at ? new Date(document.approved_at).toLocaleString() : '—'}</p>
+                      <span className="text-xs font-medium text-[#9A9F87] uppercase">Verified Date</span>
+                      <p className="text-sm text-[#9A9F87]">{document.approved_at ? new Date(document.approved_at).toLocaleString() : '—'}</p>
                     </div>
                   )}
                   {document.approved_by && (
                     <div>
-                      <span className="text-xs font-medium text-gray-500 uppercase">Verified By</span>
-                      <p className="text-sm text-gray-700">{document.approved_by}</p>
+                      <span className="text-xs font-medium text-[#9A9F87] uppercase">Verified By</span>
+                      <p className="text-sm text-[#9A9F87]">{document.approved_by}</p>
                     </div>
                   )}
                 </div>
@@ -650,7 +650,7 @@ function DocumentDetailModal({
 
               {document.status === 'Rejected' && document.rejected_reason && (
                 <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">Rejection Reason</h3>
+                  <h3 className="text-sm font-medium text-[#9A9F87] mb-2">Rejection Reason</h3>
                   <div className="rounded-lg border border-red-200 bg-red-50 p-4">
                     <p className="text-sm text-red-700">{document.rejected_reason}</p>
                   </div>
@@ -658,14 +658,14 @@ function DocumentDetailModal({
               )}
 
               <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Verification Notes</h3>
-                <div className="rounded-lg border border-gray-200 p-4">
-                  <p className="text-sm text-gray-700">{document.rejected_reason || 'No notes'}</p>
+                <h3 className="text-sm font-medium text-[#9A9F87] mb-2">Verification Notes</h3>
+                <div className="rounded-lg border border-[rgba(85,107,47,0.35)] p-4">
+                  <p className="text-sm text-[#9A9F87]">{document.rejected_reason || 'No notes'}</p>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Actions</h3>
+                <h3 className="text-sm font-medium text-[#9A9F87] mb-2">Actions</h3>
                 <div className="flex flex-wrap gap-2">
                   {document.status === 'Pending' && canApprove && (
                     <button
@@ -696,7 +696,7 @@ function DocumentDetailModal({
                   )}
                   <button
                     onClick={() => onDownload(document.id)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-[#10150D] px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
                   >
                     <Download className="h-4 w-4" />
                     Download
@@ -707,8 +707,8 @@ function DocumentDetailModal({
 
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Front Image</h3>
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 overflow-auto">
+                <h3 className="text-sm font-medium text-[#9A9F87] mb-2">Front Image</h3>
+                <div className="rounded-lg border border-[rgba(85,107,47,0.35)] bg-gray-50 p-4 overflow-auto">
                   {document.document_url ? (
                     <img
                       src={document.document_url}
@@ -717,7 +717,7 @@ function DocumentDetailModal({
                       onClick={() => setShowImageModal({ url: document.document_url!, alt: document.document_type })}
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                    <div className="flex flex-col items-center justify-center py-12 text-[#9A9F87]">
                       <FileText className="h-12 w-12 mb-3 text-gray-300" />
                       <p>Front image not available</p>
                     </div>
@@ -726,8 +726,8 @@ function DocumentDetailModal({
               </div>
 
               <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-2">Back Image</h3>
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 overflow-auto">
+                <h3 className="text-sm font-medium text-[#9A9F87] mb-2">Back Image</h3>
+                <div className="rounded-lg border border-[rgba(85,107,47,0.35)] bg-gray-50 p-4 overflow-auto">
                   {document.back_image_url ? (
                     <img
                       src={document.back_image_url}
@@ -736,7 +736,7 @@ function DocumentDetailModal({
                       onClick={() => setShowImageModal({ url: document.back_image_url!, alt: document.document_type })}
                     />
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                    <div className="flex flex-col items-center justify-center py-12 text-[#9A9F87]">
                       <FileText className="h-12 w-12 mb-3 text-gray-300" />
                       <p>Back image not available</p>
                     </div>
@@ -748,9 +748,9 @@ function DocumentDetailModal({
         </div>
 
         {showRejectForm && (
-          <div className="flex-shrink-0 border-t border-gray-200 p-4">
+          <div className="flex-shrink-0 border-t border-[rgba(85,107,47,0.35)] p-4">
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">Rejection Reason</label>
+              <label className="block text-sm font-medium text-[#9A9F87]">Rejection Reason</label>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
@@ -774,7 +774,7 @@ function DocumentDetailModal({
                 </button>
                 <button
                   onClick={() => setShowRejectForm(false)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-[#10150D] px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
                 >
                   Cancel
                 </button>
@@ -784,9 +784,9 @@ function DocumentDetailModal({
         )}
 
         {showReplacementForm && (
-          <div className="flex-shrink-0 border-t border-gray-200 p-4">
+          <div className="flex-shrink-0 border-t border-[rgba(85,107,47,0.35)] p-4">
             <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700">Replacement Reason</label>
+              <label className="block text-sm font-medium text-[#9A9F87]">Replacement Reason</label>
               <textarea
                 value={replacementReason}
                 onChange={(e) => setReplacementReason(e.target.value)}
@@ -810,7 +810,7 @@ function DocumentDetailModal({
                 </button>
                 <button
                   onClick={() => setShowReplacementForm(false)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-[#10150D] px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
                 >
                   Cancel
                 </button>
@@ -944,3 +944,4 @@ function ImageViewer({ url, alt, onClose }: { url: string; alt: string; onClose:
     </div>
   )
 }
+

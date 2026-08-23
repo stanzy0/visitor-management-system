@@ -39,7 +39,6 @@ const DEFAULT_SETTINGS: SettingRow[] = [
   { key: 'working_hours_start', value: '08:00', category: 'visitor', description: 'Working hours start' },
   { key: 'working_hours_end', value: '18:00', category: 'visitor', description: 'Working hours end' },
   { key: 'max_visit_duration', value: 480, category: 'visitor', description: 'Max visit duration in minutes' },
-  { key: 'require_appointment', value: false, category: 'visitor', description: 'Require appointment' },
   { key: 'require_photo', value: true, category: 'visitor', description: 'Require visitor photo' },
   { key: 'require_id_verification', value: false, category: 'visitor', description: 'Require ID verification' },
   { key: 'require_vehicle_registration', value: false, category: 'visitor', description: 'Require vehicle registration' },
@@ -53,7 +52,6 @@ const DEFAULT_SETTINGS: SettingRow[] = [
   { key: 'notify_inapp', value: true, category: 'notifications', description: 'Enable in-app notifications' },
   { key: 'notify_emergency', value: true, category: 'notifications', description: 'Enable emergency alerts' },
   { key: 'notify_watchlist', value: true, category: 'notifications', description: 'Enable watchlist alerts' },
-  { key: 'notify_appointments', value: true, category: 'notifications', description: 'Enable appointment alerts' },
   { key: 'session_timeout', value: 30, category: 'security', description: 'Session timeout in minutes' },
   { key: 'password_expiry_days', value: 90, category: 'security', description: 'Password expiry in days' },
   { key: 'max_login_attempts', value: 6, category: 'security', description: 'Max login attempts' },
@@ -64,7 +62,6 @@ const DEFAULT_SETTINGS: SettingRow[] = [
   { key: 'sender_email', value: '', category: 'email', description: 'Sender email address' },
   { key: 'reply_to_email', value: '', category: 'email', description: 'Reply-to email address' },
   { key: 'enable_emails', value: true, category: 'email', description: 'Enable all email sending' },
-  { key: 'enable_appointment_emails', value: true, category: 'email', description: 'Enable appointment emails' },
   { key: 'enable_reminder_emails', value: true, category: 'email', description: 'Enable reminder emails' },
   { key: 'enable_emergency_emails', value: true, category: 'email', description: 'Enable emergency emails' },
   { key: 'theme', value: 'light', category: 'appearance', description: 'UI theme' },
@@ -277,17 +274,17 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">System Settings</h1>
-            <p className="text-sm text-gray-500">Admin configuration and preferences</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">System Settings</h1>
+            <p className="text-sm text-[#9A9F87]">Admin configuration and preferences</p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={fetchSettings}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -311,7 +308,7 @@ export default function SettingsPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-1">
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
                 <nav className="space-y-1">
                   {CATEGORIES.map((cat) => {
                     const Icon = cat.icon
@@ -322,7 +319,7 @@ export default function SettingsPage() {
                         className={`w-full flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                           activeCategory === cat.id
                             ? 'bg-blue-50 text-blue-700'
-                            : 'text-gray-700 hover:bg-gray-100'
+                            : 'text-[#9A9F87] hover:bg-gray-100'
                         }`}
                       >
                         <Icon className="h-4 w-4" />
@@ -332,9 +329,9 @@ export default function SettingsPage() {
                   })}
                 </nav>
 
-                <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="mt-6 pt-4 border-t border-[rgba(85,107,47,0.35)]">
                   <h4 className="text-xs font-semibold text-gray-400 uppercase mb-2">Audit Info</h4>
-                  <div className="space-y-1 text-xs text-gray-600">
+                  <div className="space-y-1 text-xs text-[#9A9F87]">
                     <p>Last Backup: {lastBackup || 'Never'}</p>
                     <p>Last Change: {lastConfigChange || 'Never'}</p>
                     <p>Last Login: {lastLogin || 'Never'}</p>
@@ -345,13 +342,13 @@ export default function SettingsPage() {
 
             <div className="lg:col-span-3">
               {activeCategory === 'backup' ? (
-                <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Backup & Configuration</h3>
+                <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-6">
+                  <h3 className="text-lg font-semibold text-[#F5F5DC] mb-4">Backup & Configuration</h3>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between p-4 border border-[rgba(85,107,47,0.35)] rounded-lg">
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900">Export Configuration</h4>
-                        <p className="text-xs text-gray-500">Download all settings as JSON</p>
+                        <h4 className="text-sm font-medium text-[#F5F5DC]">Export Configuration</h4>
+                        <p className="text-xs text-[#9A9F87]">Download all settings as JSON</p>
                       </div>
                       <button
                         onClick={handleExportConfig}
@@ -361,10 +358,10 @@ export default function SettingsPage() {
                         Export
                       </button>
                     </div>
-                    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between p-4 border border-[rgba(85,107,47,0.35)] rounded-lg">
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900">Import Configuration</h4>
-                        <p className="text-xs text-gray-500">Upload a previously exported JSON file</p>
+                        <h4 className="text-sm font-medium text-[#F5F5DC]">Import Configuration</h4>
+                        <p className="text-xs text-[#9A9F87]">Upload a previously exported JSON file</p>
                       </div>
                       <label className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 cursor-pointer">
                         <Upload className="h-4 w-4" />
@@ -372,14 +369,14 @@ export default function SettingsPage() {
                         <input type="file" accept=".json" onChange={handleImportConfig} className="hidden" />
                       </label>
                     </div>
-                    <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between p-4 border border-[rgba(85,107,47,0.35)] rounded-lg">
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900">Download Settings JSON</h4>
-                        <p className="text-xs text-gray-500">Save a copy of current configuration</p>
+                        <h4 className="text-sm font-medium text-[#F5F5DC]">Download Settings JSON</h4>
+                        <p className="text-xs text-[#9A9F87]">Save a copy of current configuration</p>
                       </div>
                       <button
                         onClick={handleExportConfig}
-                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                        className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
                       >
                         <Download className="h-4 w-4" />
                         Download
@@ -388,16 +385,16 @@ export default function SettingsPage() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                  <div className="p-4 border-b border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 capitalize">{activeCategory.replace('_', ' ')} Settings</h3>
+                <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+                  <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+                    <h3 className="text-lg font-semibold text-[#F5F5DC] capitalize">{activeCategory.replace('_', ' ')} Settings</h3>
                   </div>
                   <div className="p-4 space-y-4">
                     {getSettingsByCategory(activeCategory).map((setting) => (
                       <div key={setting.key} className="flex items-center justify-between">
                         <div className="flex-1">
-                          <label className="text-sm font-medium text-gray-900">{setting.key.replace(/_/g, ' ')}</label>
-                          {setting.description && <p className="text-xs text-gray-500">{setting.description}</p>}
+                          <label className="text-sm font-medium text-[#F5F5DC]">{setting.key.replace(/_/g, ' ')}</label>
+                          {setting.description && <p className="text-xs text-[#9A9F87]">{setting.description}</p>}
                         </div>
                         <div className="ml-4 w-64">
                           {typeof setting.value === 'boolean' ? (
@@ -408,7 +405,7 @@ export default function SettingsPage() {
                                 onChange={(e) => updateSetting(setting.key, e.target.checked)}
                                 className="sr-only peer"
                               />
-                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[#10150D] after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                             </label>
                           ) : typeof setting.value === 'number' ? (
                             <input
@@ -442,3 +439,5 @@ export default function SettingsPage() {
     </div>
   )
 }
+
+

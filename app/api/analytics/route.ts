@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { getAnalyticsStats, getVisitorTrends, getHostAnalytics, getSecurityAnalytics, getDocumentAnalytics, getAppointmentAnalytics, getBadgeAnalytics, getPropertyAnalytics, getVisitorTypes, getVisitorSources, getRepeatVisitors } from '@/lib/server/analytics'
+import { getAnalyticsStats, getVisitorTrends, getHostAnalytics, getSecurityAnalytics, getDocumentAnalytics, getBadgeAnalytics, getPropertyAnalytics, getVisitorTypes, getVisitorSources, getRepeatVisitors } from '@/lib/server/analytics'
 import { supabase } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
@@ -22,13 +22,12 @@ export async function GET(request: NextRequest) {
     const hostId = searchParams.get('hostId') || ''
     const officeLocation = searchParams.get('officeLocation') || ''
 
-    const [stats, visitorTrends, hostAnalytics, securityAnalytics, documentAnalytics, appointmentAnalytics, badgeAnalytics, propertyAnalytics, visitorTypes, visitorSources, repeatVisitors] = await Promise.all([
+    const [stats, visitorTrends, hostAnalytics, securityAnalytics, documentAnalytics, badgeAnalytics, propertyAnalytics, visitorTypes, visitorSources, repeatVisitors] = await Promise.all([
       getAnalyticsStats(dateRange, department, visitorType, hostId, officeLocation),
       getVisitorTrends(dateRange),
       getHostAnalytics(dateRange),
       getSecurityAnalytics(dateRange),
       getDocumentAnalytics(dateRange),
-      getAppointmentAnalytics(dateRange),
       getBadgeAnalytics(dateRange),
       getPropertyAnalytics(dateRange),
       getVisitorTypes(dateRange),
@@ -52,7 +51,6 @@ export async function GET(request: NextRequest) {
         hostAnalytics,
         securityAnalytics,
         documentAnalytics,
-        appointmentAnalytics,
         badgeAnalytics,
         propertyAnalytics,
         visitorTypes,

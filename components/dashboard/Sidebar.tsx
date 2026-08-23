@@ -14,7 +14,6 @@ import {
   LogOut,
   Menu,
   Monitor,
-  Calendar,
   Building2,
   BarChart3,
   IdCard,
@@ -33,7 +32,9 @@ import {
   QrCode,
   ChevronLeft,
   ChevronRight,
+  Palette,
 } from 'lucide-react'
+import ImageWithFallback from '@/components/ui/ImageWithFallback'
 import { getCurrentUser, UserRole, PERMISSIONS } from '@/lib/auth-client'
 import { slideInRight, staggerContainer, fadeUp } from '@/lib/animations/variants'
 
@@ -43,7 +44,6 @@ const NAV_SECTIONS = [
     { label: 'Reception Kiosk', icon: Monitor, href: '/reception/kiosk', permission: 'dashboard' },
     { label: 'Self Check-In Kiosk', icon: QrCode, href: '/kiosk', permission: 'dashboard' },
     { label: 'Visitors', icon: Users, href: '/visitors', permission: 'visitors' },
-    { label: 'Appointments', icon: Calendar, href: '/appointments', permission: 'appointments' },
     { label: 'Visits', icon: Clock, href: '/visits', permission: 'visits' },
     { label: 'Badges', icon: IdCard, href: '/badges', permission: 'badges' },
     { label: 'QR Scanner', icon: Scan, href: '/scanner', permission: 'scanner' },
@@ -87,6 +87,7 @@ const NAV_SECTIONS = [
     { label: 'Assets & Property', icon: ShieldCheck, href: '/assets', permission: 'dashboard' },
   ]},
   { title: 'CONFIGURATION', items: [
+    { label: 'Branding', icon: Palette, href: '/settings/branding', permission: 'settings' },
     { label: 'Badge Designer', icon: Shield, href: '/admin/badges', permission: 'badges' },
     { label: 'Settings', icon: Settings, href: '/settings', permission: 'settings' },
   ]},
@@ -160,9 +161,11 @@ export default function Sidebar({ open, onClose, userRole, userEmail, onLogout, 
       >
         <div className="flex items-center justify-between p-5 border-b border-slate-800 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-blue-600 shadow-lg shadow-blue-500/30">
-              <ShieldCheck className="h-6 w-6 text-white" />
-            </div>
+            <ImageWithFallback
+              src="/images/army logo.png"
+              alt="Army Logo"
+              className="h-10 w-10 object-contain"
+            />
             <div>
               <span className="text-lg font-bold text-white tracking-tight">VMS</span>
               <span className="text-xs text-slate-400 block -mt-0.5">Command Center</span>

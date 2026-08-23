@@ -20,8 +20,6 @@ export default function NotificationCard({ notification, onMarkAsRead, onDelete 
         return '✕'
       case 'visitor':
         return '👤'
-      case 'appointment':
-        return '📅'
       case 'employee':
         return '👨‍💼'
       case 'system':

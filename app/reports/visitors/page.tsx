@@ -266,8 +266,8 @@ export default function VisitorReportsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <Link href="/reports" className="text-sm text-primary hover:underline mb-1 inline-block">← Back to Reports</Link>
-            <h1 className="text-2xl font-bold text-gray-900">Visitor Reports</h1>
-            <p className="text-sm text-gray-500">Detailed visitor analytics and history</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Visitor Reports</h1>
+            <p className="text-sm text-[#9A9F87]">Detailed visitor analytics and history</p>
           </div>
         </div>
 
@@ -384,3 +384,4 @@ export default function VisitorReportsPage() {
     </div>
   )
 }
+

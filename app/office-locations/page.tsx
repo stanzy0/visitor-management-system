@@ -27,8 +27,8 @@ const initialFormData: OfficeLocationFormData = {
   department: '',
 }
 
-const inputClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+const inputClasses = "w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-[#10150D] text-black placeholder:text-[#9A9F87] focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
 
 export default function OfficeLocationsPage() {
   const [officeLocations, setOfficeLocations] = useState<OfficeLocation[]>([])
@@ -197,7 +197,7 @@ export default function OfficeLocationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/dashboard" className="text-sm text-blue-600 hover:underline">
@@ -206,7 +206,7 @@ export default function OfficeLocationsPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Office Locations</h1>
+          <h1 className="text-2xl font-bold text-[#F5F5DC]">Office Locations</h1>
           <div className="flex items-center gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -238,7 +238,7 @@ export default function OfficeLocationsPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
           <div className="overflow-x-auto">
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -247,21 +247,21 @@ export default function OfficeLocationsPage() {
             ) : (
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 font-semibold text-gray-700">Location Name</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Building</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Department</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Created</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700 w-24">Actions</th>
+                  <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Location Name</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Building</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Department</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Created</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87] w-24">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                   {filteredLocations.map((location) => (
-                    <tr key={location.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 font-medium text-gray-900">{location.name}</td>
-                      <td className="px-4 py-3 text-gray-600">{location.building || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600">{location.department || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600">
+                    <tr key={location.id} className="hover:bg-[#4B5320]/10 transition-colors">
+                      <td className="px-4 py-3 font-medium text-[#F5F5DC]">{location.name}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">{location.building || '—'}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">{location.department || '—'}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">
                         {location.created_at ? new Date(location.created_at).toLocaleDateString() : '—'}
                       </td>
                       <td className="px-4 py-3">
@@ -271,7 +271,7 @@ export default function OfficeLocationsPage() {
                             className="p-1 rounded-md hover:bg-gray-100 transition-colors"
                             aria-label="Edit"
                           >
-                            <Edit className="h-4 w-4 text-gray-600" />
+                            <Edit className="h-4 w-4 text-[#9A9F87]" />
                           </button>
                           <button
                             onClick={() => handleDelete(location.id)}
@@ -290,7 +290,7 @@ export default function OfficeLocationsPage() {
 
             {!loading && filteredLocations.length === 0 && (
               <div className="py-12 text-center">
-                <p className="text-gray-500">
+                <p className="text-[#9A9F87]">
                   {searchTerm ? 'No locations match your search' : 'No office locations found'}
                 </p>
                 {!searchTerm && (
@@ -309,9 +309,9 @@ export default function OfficeLocationsPage() {
 
         {modalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="w-full max-w-md rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
-              <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
-                <h2 className="text-lg font-semibold text-gray-900">
+            <div className="w-full max-w-md rounded-xl bg-[#10150D] shadow-xl max-h-[90vh] flex flex-col">
+              <div className="flex-shrink-0 flex items-center justify-between border-b border-[rgba(85,107,47,0.35)] p-4">
+                <h2 className="text-lg font-semibold text-[#F5F5DC]">
                   {editingLocation ? 'Edit Office Location' : 'Add Office Location'}
                 </h2>
                 <button
@@ -325,7 +325,7 @@ export default function OfficeLocationsPage() {
               <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
                 <div className="p-4 space-y-4">
                   <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="name" className="block text-sm font-medium text-[#9A9F87] mb-1">
                       Location Name
                     </label>
                     <input
@@ -339,7 +339,7 @@ export default function OfficeLocationsPage() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="building" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="building" className="block text-sm font-medium text-[#9A9F87] mb-1">
                       Building
                     </label>
                     <input
@@ -352,7 +352,7 @@ export default function OfficeLocationsPage() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="department" className="block text-sm font-medium text-[#9A9F87] mb-1">
                       Department
                     </label>
                     <input
@@ -365,11 +365,11 @@ export default function OfficeLocationsPage() {
                     />
                   </div>
                 </div>
-                <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t border-gray-200">
+                <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t border-[rgba(85,107,47,0.35)]">
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
-                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors"
                   >
                     Cancel
                   </button>
@@ -390,3 +390,5 @@ export default function OfficeLocationsPage() {
     </div>
   )
 }
+
+

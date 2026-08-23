@@ -39,11 +39,11 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-[#0B0F08] p-4">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Check Your Email</h1>
-            <p className="mt-2 text-gray-600">If an account exists for this email, a password reset link has been sent.</p>
+            <h1 className="text-3xl font-bold text-[#F5F5DC]">Check Your Email</h1>
+            <p className="mt-2 text-[#9A9F87]">If an account exists for this email, a password reset link has been sent.</p>
           </div>
           <a href="/login" className="flex w-full justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
             Back to Login
@@ -54,11 +54,11 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#0B0F08] p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Forgot Password</h1>
-          <p className="mt-2 text-gray-600">Enter your email address and we&apos;ll send you a password reset link.</p>
+          <h1 className="text-3xl font-bold text-[#F5F5DC]">Forgot Password</h1>
+          <p className="mt-2 text-[#9A9F87]">Enter your email address and we&apos;ll send you a password reset link.</p>
         </div>
 
         <form onSubmit={handleReset} className="space-y-6">
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-[#9A9F87]">
               Email Address
             </label>
             <input
@@ -79,7 +79,7 @@ export default function ForgotPasswordPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="Enter your email"
-              className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -99,3 +99,4 @@ export default function ForgotPasswordPage() {
     </div>
   )
 }
+

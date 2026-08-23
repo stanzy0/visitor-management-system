@@ -12,8 +12,6 @@ export interface AnalyticsStats {
   securityHolds: number
   rejectedVisitors: number
   noShows: number
-  completedAppointments: number
-  cancelledAppointments: number
   overstayedVisitors: number
   badgesPrintedToday: number
   assetsRegisteredToday: number
@@ -55,15 +53,6 @@ export interface DocumentAnalytics {
   replacementRequests: number
   avgVerificationTime: string
   verificationSuccessRate: number
-}
-
-export interface AppointmentAnalytics {
-  today: number
-  upcoming: number
-  completed: number
-  cancelled: number
-  avgDuration: string
-  noShowRate: number
 }
 
 export interface BadgeAnalytics {
@@ -119,7 +108,7 @@ export async function getAnalyticsStats(dateRange: string, department: string, v
     return {
       visitorsToday: 0, visitorsThisWeek: 0, visitorsThisMonth: 0, activeVisitors: 0, checkedIn: 0, checkedOut: 0,
       pendingApproval: 0, pendingDocumentVerification: 0, securityHolds: 0, rejectedVisitors: 0, noShows: 0,
-      completedAppointments: 0, cancelledAppointments: 0, overstayedVisitors: 0, badgesPrintedToday: 0, assetsRegisteredToday: 0,
+      overstayedVisitors: 0, badgesPrintedToday: 0, assetsRegisteredToday: 0,
     }
   }
 
@@ -159,8 +148,6 @@ export async function getAnalyticsStats(dateRange: string, department: string, v
     securityHolds: 0,
     rejectedVisitors: rejectedVisits.count || 0,
     noShows: 0,
-    completedAppointments: 0,
-    cancelledAppointments: 0,
     overstayedVisitors: overstayedVisits.count || 0,
     badgesPrintedToday: badgesToday.count || 0,
     assetsRegisteredToday: assetsToday.count || 0,
@@ -353,31 +340,6 @@ export async function getDocumentAnalytics(dateRange: string): Promise<DocumentA
     replacementRequests: replacements.count || 0,
     avgVerificationTime: avgTime,
     verificationSuccessRate: successRate,
-  }
-}
-
-export async function getAppointmentAnalytics(dateRange: string): Promise<AppointmentAnalytics> {
-  if (!supabaseAdmin) {
-    return { today: 0, upcoming: 0, completed: 0, cancelled: 0, avgDuration: '0h 0m', noShowRate: 0 }
-  }
-
-  const { start, end } = getDateRange(dateRange)
-  const today = new Date().toISOString().split('T')[0]
-
-  const [todayAppts, upcomingAppts, completedAppts, cancelledAppts] = await Promise.all([
-    supabaseAdmin.from('appointments').select('id', { count: 'exact' }).eq('appointment_date', today),
-    supabaseAdmin.from('appointments').select('id', { count: 'exact' }).gte('appointment_date', today).in('status', ['Scheduled', 'Arrived']),
-    supabaseAdmin.from('appointments').select('id', { count: 'exact' }).eq('status', 'Completed').gte('appointment_date', start.toISOString()).lt('appointment_date', end.toISOString()),
-    supabaseAdmin.from('appointments').select('id', { count: 'exact' }).eq('status', 'Cancelled').gte('appointment_date', start.toISOString()).lt('appointment_date', end.toISOString()),
-  ])
-
-  return {
-    today: todayAppts.count || 0,
-    upcoming: upcomingAppts.count || 0,
-    completed: completedAppts.count || 0,
-    cancelled: cancelledAppts.count || 0,
-    avgDuration: '1h 0m',
-    noShowRate: 0,
   }
 }
 

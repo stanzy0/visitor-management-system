@@ -103,22 +103,22 @@ export default function DatabaseHealthPage() {
 
   if (loading || !data) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Database Health</h1>
-            <p className="text-sm text-gray-500">Monitor database performance and storage</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Database Health</h1>
+            <p className="text-sm text-[#9A9F87]">Monitor database performance and storage</p>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={fetchData} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <button onClick={fetchData} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
               <RefreshCw className="h-4 w-4" />
               Refresh
             </button>
@@ -131,40 +131,40 @@ export default function DatabaseHealthPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Total Tables</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Total Tables</p>
               <Table className="h-4 w-4 text-gray-400" />
             </div>
-            <p className="mt-2 text-2xl font-bold text-gray-900">{data.tableSizes.length}</p>
+            <p className="mt-2 text-2xl font-bold text-[#F5F5DC]">{data.tableSizes.length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Total Rows</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Total Rows</p>
               <Database className="h-4 w-4 text-gray-400" />
             </div>
-            <p className="mt-2 text-2xl font-bold text-gray-900">{data.tableSizes.reduce((acc, t) => acc + t.row_count, 0).toLocaleString()}</p>
+            <p className="mt-2 text-2xl font-bold text-[#F5F5DC]">{data.tableSizes.reduce((acc, t) => acc + t.row_count, 0).toLocaleString()}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Last Backup</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Last Backup</p>
               <Clock className="h-4 w-4 text-gray-400" />
             </div>
-            <p className="mt-2 text-sm font-medium text-gray-900">{data.lastBackup ? new Date(data.lastBackup).toLocaleString() : 'N/A'}</p>
+            <p className="mt-2 text-sm font-medium text-[#F5F5DC]">{data.lastBackup ? new Date(data.lastBackup).toLocaleString() : 'N/A'}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-gray-500">Active Connections</p>
+              <p className="text-sm font-medium text-[#9A9F87]">Active Connections</p>
               <Activity className="h-4 w-4 text-gray-400" />
             </div>
-            <p className="mt-2 text-2xl font-bold text-gray-900">{data.activeConnections}</p>
+            <p className="mt-2 text-2xl font-bold text-[#F5F5DC]">{data.activeConnections}</p>
           </div>
         </div>
 
         {/* Table Sizes Chart */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Table Sizes</h3>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+            <h3 className="text-lg font-semibold text-[#F5F5DC]">Table Sizes</h3>
           </div>
           <div className="p-4">
             <ResponsiveContainer width="100%" height={300}>
@@ -180,25 +180,25 @@ export default function DatabaseHealthPage() {
         </div>
 
         {/* Table Details */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">Table Details</h3>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+            <h3 className="text-lg font-semibold text-[#F5F5DC]">Table Details</h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Table</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Rows</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Size</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Table</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Rows</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Size</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {data.tableSizes.map((table, i) => (
-                  <tr key={i} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-900 font-medium">{table.table_name}</td>
-                    <td className="px-4 py-3 text-gray-600">{table.row_count.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-gray-600">{formatBytes(Number(table.size_bytes))}</td>
+                  <tr key={i} className="hover:bg-[#4B5320]/10">
+                    <td className="px-4 py-3 text-[#F5F5DC] font-medium">{table.table_name}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{table.row_count.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{formatBytes(Number(table.size_bytes))}</td>
                   </tr>
                 ))}
               </tbody>
@@ -209,3 +209,5 @@ export default function DatabaseHealthPage() {
     </div>
   )
 }
+
+

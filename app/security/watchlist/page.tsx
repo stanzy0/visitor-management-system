@@ -136,7 +136,7 @@ export default function WatchlistPage() {
   }
 
   const severityColors: Record<WatchlistSeverity, string> = {
-    Low: 'bg-gray-100 text-gray-800',
+    Low: 'bg-gray-100 text-[#F5F5DC]',
     Medium: 'bg-blue-100 text-blue-800',
     High: 'bg-amber-100 text-amber-800',
     Critical: 'bg-red-100 text-red-800',
@@ -156,12 +156,12 @@ export default function WatchlistPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Watchlist Management</h1>
-            <p className="text-sm text-gray-500">Admin-only watchlist for security screening</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Watchlist Management</h1>
+            <p className="text-sm text-[#9A9F87]">Admin-only watchlist for security screening</p>
           </div>
           <button onClick={() => { setEditingEntry(null); setForm({ full_name: '', reason: '', severity: 'Medium', document_number: '', phone: '', email: '', is_active: true }); setModalOpen(true) }} className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-sm font-medium text-white hover:bg-red-700 min-h-[52px]">
             <Plus className="h-4 w-4" />
@@ -175,7 +175,7 @@ export default function WatchlistPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <input
@@ -188,7 +188,7 @@ export default function WatchlistPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-x-auto">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm overflow-x-auto">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
@@ -196,35 +196,35 @@ export default function WatchlistPage() {
           ) : (
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Name</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Reason</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Severity</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Document Number</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Actions</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Name</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Reason</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Severity</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Document Number</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {filteredEntries.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900">{entry.full_name}</td>
-                    <td className="px-4 py-3 text-gray-600">{entry.reason}</td>
+                  <tr key={entry.id} className="hover:bg-[#4B5320]/10 transition-colors">
+                    <td className="px-4 py-3 font-medium text-[#F5F5DC]">{entry.full_name}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{entry.reason}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${severityColors[entry.severity]}`}>
                         {entry.severity}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{entry.document_number || '—'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{entry.document_number || '—'}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${entry.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-700'}`}>
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${entry.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-[#9A9F87]'}`}>
                         {entry.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <button onClick={() => openEdit(entry)} className="p-1 rounded-md hover:bg-gray-100">
-                          <Edit className="h-4 w-4 text-gray-600" />
+                          <Edit className="h-4 w-4 text-[#9A9F87]" />
                         </button>
                         <button onClick={() => handleDelete(entry.id)} className="p-1 rounded-md hover:bg-red-50">
                           <Trash2 className="h-4 w-4 text-red-600" />
@@ -241,24 +241,24 @@ export default function WatchlistPage() {
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white shadow-xl p-6">
+          <div className="w-full max-w-md rounded-xl bg-[#10150D] shadow-xl p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">{editingEntry ? 'Edit Watchlist Entry' : 'Add Watchlist Entry'}</h2>
+              <h2 className="text-lg font-semibold text-[#F5F5DC]">{editingEntry ? 'Edit Watchlist Entry' : 'Add Watchlist Entry'}</h2>
               <button onClick={() => { setModalOpen(false); setEditingEntry(null) }} className="p-2 rounded-md hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Full Name *</label>
                 <input type="text" value={form.full_name} onChange={(e) => setForm((prev) => ({ ...prev, full_name: e.target.value }))} required className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reason *</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Reason *</label>
                 <textarea value={form.reason} onChange={(e) => setForm((prev) => ({ ...prev, reason: e.target.value }))} required rows={3} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Severity</label>
                 <select value={form.severity} onChange={(e) => setForm((prev) => ({ ...prev, severity: e.target.value as WatchlistSeverity }))} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                   <option value="Low">Low</option>
                   <option value="Medium">Medium</option>
@@ -267,19 +267,19 @@ export default function WatchlistPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Document Number</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Document Number</label>
                 <input type="text" value={form.document_number} onChange={(e) => setForm((prev) => ({ ...prev, document_number: e.target.value }))} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Phone</label>
                 <input type="text" value={form.phone} onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Email</label>
                 <input type="email" value={form.email} onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))} className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
               </div>
               <div className="flex justify-end gap-3">
-                <button type="button" onClick={() => { setModalOpen(false); setEditingEntry(null) }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 min-h-[44px]">
+                <button type="button" onClick={() => { setModalOpen(false); setEditingEntry(null) }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 min-h-[44px]">
                   Cancel
                 </button>
                 <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 min-h-[44px]">
@@ -294,3 +294,5 @@ export default function WatchlistPage() {
     </div>
   )
 }
+
+

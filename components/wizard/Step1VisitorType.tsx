@@ -21,8 +21,8 @@ export default function Step1VisitorType({ visitorType, onSelect, error, touched
           <button
             key={type}
             onClick={() => onSelect(type)}
-            className={`rounded-xl border-2 px-4 py-4 text-sm font-semibold transition-all ${
-              visitorType === type ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-gray-300'
+            className={`rounded-xl border-2 px-4 py-4 text-base font-semibold transition-all ${
+              visitorType === type ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-gray-300 text-black'
             } ${touched && error ? 'border-red-500' : ''}`}
           >
             {type}

@@ -65,3 +65,23 @@ export async function getLookups(): Promise<{ departments: Department[]; positio
   if (!res.ok) throw new Error('Failed to fetch lookups')
   return res.json()
 }
+
+export async function getCiEmployees(search?: string): Promise<Employee[]> {
+  const url = search ? `/api/employees/ci?q=${encodeURIComponent(search)}` : '/api/employees/ci'
+  const res = await fetch(url, {
+    headers: await getAuthHeaders(),
+  })
+  if (!res.ok) throw new Error('Failed to fetch CI employees')
+  const { data } = await res.json()
+  return data as Employee[]
+}
+
+export async function getDirectors(search?: string): Promise<Employee[]> {
+  const url = search ? `/api/employees/directors?q=${encodeURIComponent(search)}` : '/api/employees/directors'
+  const res = await fetch(url, {
+    headers: await getAuthHeaders(),
+  })
+  if (!res.ok) throw new Error('Failed to fetch Director employees')
+  const { data } = await res.json()
+  return data as Employee[]
+}

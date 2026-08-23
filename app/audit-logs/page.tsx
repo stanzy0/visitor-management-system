@@ -118,7 +118,7 @@ export default function AuditLogsPage() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/dashboard" className="text-sm text-blue-600 hover:underline">
@@ -127,7 +127,7 @@ export default function AuditLogsPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
+          <h1 className="text-2xl font-bold text-[#F5F5DC]">Audit Logs</h1>
           <div className="flex items-center gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -148,7 +148,7 @@ export default function AuditLogsPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
           <div className="overflow-x-auto">
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -157,24 +157,24 @@ export default function AuditLogsPage() {
             ) : (
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 font-semibold text-gray-700">Action</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Entity Type</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Entity ID</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Performed By</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Details</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Date/Time</th>
+                  <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Action</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Entity Type</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Entity ID</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Performed By</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Details</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Date/Time</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                   {filteredLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 font-medium text-gray-900">{log.action}</td>
-                      <td className="px-4 py-3 text-gray-600">{log.entity_type || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600">{log.entity_id || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600">{log.performed_by}</td>
-                      <td className="px-4 py-3 text-gray-600">{log.details || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                    <tr key={log.id} className="hover:bg-[#4B5320]/10 transition-colors">
+                      <td className="px-4 py-3 font-medium text-[#F5F5DC]">{log.action}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">{log.entity_type || '—'}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">{log.entity_id || '—'}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">{log.performed_by}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">{log.details || '—'}</td>
+                      <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">
                         {log.created_at ? new Date(log.created_at).toLocaleString() : '—'}
                       </td>
                     </tr>
@@ -186,7 +186,7 @@ export default function AuditLogsPage() {
 
           {!loading && filteredLogs.length === 0 && (
             <div className="py-12 text-center">
-              <p className="text-gray-500">No audit logs found</p>
+              <p className="text-[#9A9F87]">No audit logs found</p>
             </div>
           )}
         </div>
@@ -194,3 +194,5 @@ export default function AuditLogsPage() {
     </div>
   )
 }
+
+

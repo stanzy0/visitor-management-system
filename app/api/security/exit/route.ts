@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     if (visitId) {
       const { data: visit, error: visitError } = await supabaseAdmin
         .from('visits')
-        .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*), appointment:appointments(*)')
+        .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*)')
         .eq('id', visitId)
         .single()
 
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
                 duration: visit.check_in_time ? calculateDuration(visit.check_in_time) : 'N/A',
                 purpose: visit.purpose || 'Visit',
                 hostName: employee.full_name || 'Host',
-                orgName: 'AFCSC Visitor Management',
+                orgName: 'Department of Land Warfare',
               },
               relatedType: 'visit',
               relatedId: visit_id,

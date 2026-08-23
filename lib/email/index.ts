@@ -199,7 +199,7 @@ async function logEmail(payload: Partial<EmailPayload> & { status: string; error
 }
 
 function renderTemplate(template: EmailTemplate, data: Record<string, string | number | boolean | undefined>): string {
-  const orgName = data.orgName || 'Visitor Management System'
+  const orgName = data.orgName || 'Visitors Management System'
   const orgEmail = data.orgEmail || 'support@visitor-management.local'
   const orgPhone = data.orgPhone || ''
   const orgAddress = data.orgAddress || ''
@@ -272,75 +272,6 @@ function getTemplateContent(template: EmailTemplate, data: Record<string, string
   const orgPhone = data.orgPhone || ''
 
   switch (template) {
-    case 'appointment_created':
-      return `
-        <h2 style="margin-top: 0;">Appointment Created</h2>
-        <p>Dear ${visitorName},</p>
-        <p>Your appointment has been created successfully.</p>
-        <div class="info-box">
-          <p><strong>Date:</strong> ${date}</p>
-          <p><strong>Time:</strong> ${time}</p>
-          <p><strong>Host:</strong> ${hostName}</p>
-          <p><strong>Purpose:</strong> ${purpose}</p>
-          <p><strong>Location:</strong> ${location}</p>
-        </div>
-        <p>Please arrive 10 minutes before your scheduled time.</p>
-      `
-
-    case 'appointment_approved':
-      return `
-        <h2 style="margin-top: 0;">Appointment Approved</h2>
-        <p>Dear ${visitorName},</p>
-        <p>Your appointment has been approved.</p>
-        <div class="info-box">
-          <p><strong>Date:</strong> ${date}</p>
-          <p><strong>Time:</strong> ${time}</p>
-          <p><strong>Host:</strong> ${hostName}</p>
-          <p><strong>Purpose:</strong> ${purpose}</p>
-          <p><strong>Location:</strong> ${location}</p>
-        </div>
-        <p>We look forward to seeing you.</p>
-      `
-
-    case 'appointment_rejected':
-      return `
-        <h2 style="margin-top: 0;">Appointment Update</h2>
-        <p>Dear ${visitorName},</p>
-        <p>We regret to inform you that your appointment could not be approved at this time.</p>
-        <div class="warning-box">
-          <p><strong>Date:</strong> ${date}</p>
-          <p><strong>Host:</strong> ${hostName}</p>
-          <p><strong>Purpose:</strong> ${purpose}</p>
-        </div>
-        <p>Please contact us to reschedule or for further assistance.</p>
-      `
-
-    case 'appointment_cancelled':
-      return `
-        <h2 style="margin-top: 0;">Appointment Cancelled</h2>
-        <p>Dear ${visitorName},</p>
-        <p>Your appointment has been cancelled.</p>
-        <div class="warning-box">
-          <p><strong>Date:</strong> ${date}</p>
-          <p><strong>Host:</strong> ${hostName}</p>
-          <p><strong>Purpose:</strong> ${purpose}</p>
-        </div>
-        <p>If you did not request this cancellation, please contact us immediately.</p>
-      `
-
-    case 'appointment_rescheduled':
-      return `
-        <h2 style="margin-top: 0;">Appointment Rescheduled</h2>
-        <p>Dear ${visitorName},</p>
-        <p>Your appointment has been rescheduled.</p>
-        <div class="info-box">
-          <p><strong>New Date:</strong> ${date}</p>
-          <p><strong>New Time:</strong> ${time}</p>
-          <p><strong>Host:</strong> ${hostName}</p>
-          <p><strong>Purpose:</strong> ${purpose}</p>
-        </div>
-      `
-
     case 'visitor_checked_in':
       return `
         <h2 style="margin-top: 0;">Visitor Checked In</h2>
@@ -398,9 +329,9 @@ function getTemplateContent(template: EmailTemplate, data: Record<string, string
 
     case 'visitor_reminder':
       return `
-        <h2 style="margin-top: 0;">Appointment Reminder</h2>
+        <h2 style="margin-top: 0;">Visit Reminder</h2>
         <p>Dear ${visitorName},</p>
-        <p>This is a reminder about your upcoming appointment.</p>
+        <p>This is a reminder about your upcoming visit.</p>
         <div class="info-box">
           <p><strong>Date:</strong> ${date}</p>
           <p><strong>Time:</strong> ${time}</p>
@@ -412,9 +343,9 @@ function getTemplateContent(template: EmailTemplate, data: Record<string, string
 
     case 'host_reminder':
       return `
-        <h2 style="margin-top: 0;">Visitor Appointment Reminder</h2>
+        <h2 style="margin-top: 0;">Visitor Visit Reminder</h2>
         <p>Dear ${hostName},</p>
-        <p>You have an upcoming visitor appointment.</p>
+        <p>You have an upcoming visitor visit.</p>
         <div class="info-box">
           <p><strong>Visitor:</strong> ${visitorName}</p>
           <p><strong>Date:</strong> ${date}</p>

@@ -7,6 +7,8 @@ export const RECIPIENT_ROLES = {
   Security: 'Security',
   Visitor: 'Visitor',
   Host: 'Host',
+  PA_TO_CI: 'PA_TO_CI',
+  PA_TO_DIRECTOR: 'PA_TO_DIRECTOR',
 } as const
 
 export type NotificationType =
@@ -15,7 +17,6 @@ export type NotificationType =
   | 'warning'
   | 'error'
   | 'visitor'
-  | 'appointment'
   | 'employee'
   | 'system'
   | 'watchlist_match'
@@ -212,6 +213,26 @@ export async function createSystemNotification(
   relatedId?: string
 ): Promise<Notification | null> {
   return createNotification(title, message, type, null, RECIPIENT_ROLES.Admin, relatedType, relatedId)
+}
+
+export async function createPANotification(
+  title: string,
+  message: string,
+  type: NotificationType = 'info',
+  relatedType?: string,
+  relatedId?: string
+): Promise<Notification | null> {
+  return createNotification(title, message, type, null, RECIPIENT_ROLES.PA_TO_CI, relatedType, relatedId)
+}
+
+export async function createPADirectorNotification(
+  title: string,
+  message: string,
+  type: NotificationType = 'info',
+  relatedType?: string,
+  relatedId?: string
+): Promise<Notification | null> {
+  return createNotification(title, message, type, null, RECIPIENT_ROLES.PA_TO_DIRECTOR, relatedType, relatedId)
 }
 
 export async function getNotifications(
@@ -439,8 +460,7 @@ export async function getNotificationPreferences(userId: string): Promise<Notifi
     email: data.email ?? true,
     browser: data.browser ?? true,
     sms: data.sms ?? false,
-    system: data.system ?? true,
-    appointmentReminders: data.appointment_reminders ?? true,
+    system: data.system,
     securityAlerts: data.security_alerts ?? true,
     hostNotifications: data.host_notifications ?? true,
     visitorNotifications: data.visitor_notifications ?? true,
@@ -461,7 +481,6 @@ export async function updateNotificationPreferences(
       browser: preferences.browser ?? true,
       sms: preferences.sms ?? false,
       system: preferences.system ?? true,
-      appointment_reminders: preferences.appointmentReminders ?? true,
       security_alerts: preferences.securityAlerts ?? true,
       host_notifications: preferences.hostNotifications ?? true,
       visitor_notifications: preferences.visitorNotifications ?? true,

@@ -129,16 +129,15 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-0.5">
-                      {notification.type === 'success' && '✓'}
-                      {notification.type === 'warning' && '⚠'}
-                      {notification.type === 'error' && '✕'}
-                      {notification.type === 'visitor' && '👤'}
-                      {notification.type === 'appointment' && '📅'}
-                      {notification.type === 'employee' && '👨‍💼'}
-                      {notification.type === 'system' && '⚙'}
+                       {notification.type === 'success' && '✓'}
+                       {notification.type === 'warning' && '⚠'}
+                       {notification.type === 'error' && '✕'}
+                       {notification.type === 'visitor' && '👤'}
+                       {notification.type === 'employee' && '👨‍💼'}
+                       {notification.type === 'system' && '⚙'}
                       {(notification.type === 'watchlist_match' || notification.type === 'watchlist_override') && '✋'}
                       {(notification.type === 'watchlist_added' || notification.type === 'watchlist_updated') && '➕'}
-                      {(!notification.is_read && !['success', 'warning', 'error', 'visitor', 'appointment', 'employee', 'system', 'watchlist_match', 'watchlist_added', 'watchlist_updated', 'watchlist_override'].includes(notification.type)) && '•'}
+                      {(!notification.is_read && !['success', 'warning', 'error', 'visitor', 'employee', 'system', 'watchlist_match', 'watchlist_added', 'watchlist_updated', 'watchlist_override'].includes(notification.type)) && '•'}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">

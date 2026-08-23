@@ -21,8 +21,8 @@ const initialFormData: EmployeeFormData & { department_id?: string | null; posit
   office_location_id: null,
 }
 
-const inputClasses = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+const inputClasses = "w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-[#10150D] text-black placeholder:text-[#9A9F87] focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -234,11 +234,11 @@ export default function EmployeesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
         <div className="flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Employees</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#F5F5DC]">Employees</h1>
             <button
               onClick={openAddModal}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors min-h-[44px]"
@@ -269,7 +269,7 @@ export default function EmployeesPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
           <div className="overflow-x-auto">
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -278,23 +278,23 @@ export default function EmployeesPage() {
             ) : (
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 font-semibold text-gray-700">Full Name</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Email</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Phone</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Department</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Position</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700 w-24">Actions</th>
+                  <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Full Name</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Email</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Phone</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Department</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Position</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87] w-24">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                   {filteredEmployees.map((employee) => (
-                    <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-3 font-medium text-gray-900">{employee.full_name}</td>
-                      <td className="px-4 py-3 text-gray-600">{employee.email}</td>
-                      <td className="px-4 py-3 text-gray-600">{employee.phone || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600">{employee.department || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600">{employee.position || '—'}</td>
+                    <tr key={employee.id} className="hover:bg-[#4B5320]/10 transition-colors">
+                      <td className="px-4 py-3 font-medium text-[#F5F5DC]">{employee.full_name}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">{employee.email}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">{employee.phone || '—'}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">{employee.department || '—'}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">{employee.position || '—'}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <button
@@ -302,7 +302,7 @@ export default function EmployeesPage() {
                             className="p-1 rounded-md hover:bg-gray-100 transition-colors"
                             aria-label="Edit employee"
                           >
-                            <Edit className="h-4 w-4 text-gray-600" />
+                            <Edit className="h-4 w-4 text-[#9A9F87]" />
                           </button>
                           <button
                             onClick={() => handleDelete(employee.id)}
@@ -322,7 +322,7 @@ export default function EmployeesPage() {
 
           {!loading && filteredEmployees.length === 0 && (
             <div className="py-12 text-center">
-              <p className="text-gray-500">
+              <p className="text-[#9A9F87]">
                 {searchTerm ? 'No employees match your search' : 'No employees found'}
               </p>
             </div>
@@ -331,9 +331,9 @@ export default function EmployeesPage() {
 
         {modalOpen && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
-            <div className="w-full max-w-md rounded-t-2xl sm:rounded-xl bg-white shadow-xl max-h-[90vh] sm:max-h-[85vh] flex flex-col">
-              <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
-                <h2 className="text-lg font-semibold text-gray-900">
+            <div className="w-full max-w-md rounded-t-2xl sm:rounded-xl bg-[#10150D] shadow-xl max-h-[90vh] sm:max-h-[85vh] flex flex-col">
+              <div className="flex-shrink-0 flex items-center justify-between border-b border-[rgba(85,107,47,0.35)] p-4">
+                <h2 className="text-lg font-semibold text-[#F5F5DC]">
                   {editingEmployee ? 'Edit Employee' : 'Add Employee'}
                 </h2>
                 <button
@@ -347,7 +347,7 @@ export default function EmployeesPage() {
               <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
                 <div className="p-4 space-y-4">
                   <div>
-                    <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="full_name" className="block text-sm font-medium text-[#9A9F87] mb-1">
                       Full Name
                     </label>
                     <input
@@ -361,7 +361,7 @@ export default function EmployeesPage() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="email" className="block text-sm font-medium text-[#9A9F87] mb-1">
                       Email
                     </label>
                     <input
@@ -375,7 +375,7 @@ export default function EmployeesPage() {
                     />
                   </div>
                   <div>
-                    <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="phone" className="block text-sm font-medium text-[#9A9F87] mb-1">
                       Phone
                     </label>
                     <input
@@ -388,7 +388,7 @@ export default function EmployeesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Department *</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Department *</label>
                     <SearchableCombobox
                       options={departments.map((d) => ({ value: d.id, label: d.name }))}
                       value={formData.department_id || ''}
@@ -401,7 +401,7 @@ export default function EmployeesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Office Location *</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Office Location *</label>
                     <SearchableCombobox
                       options={filteredOfficeLocations.map((l) => ({ value: l.id, label: l.display_name || l.name }))}
                       value={formData.office_location_id || ''}
@@ -415,7 +415,7 @@ export default function EmployeesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Position *</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Position *</label>
                     <SearchableCombobox
                       options={positions.map((p) => ({ value: p.id, label: p.title }))}
                       value={formData.position_id || ''}
@@ -428,11 +428,11 @@ export default function EmployeesPage() {
                     />
                   </div>
                 </div>
-                <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t border-gray-200">
+                <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t border-[rgba(85,107,47,0.35)]">
                   <button
                     type="button"
                     onClick={() => setModalOpen(false)}
-                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors"
                   >
                     Cancel
                   </button>
@@ -453,3 +453,5 @@ export default function EmployeesPage() {
     </div>
   )
 }
+
+

@@ -186,7 +186,7 @@ export default function AdminBadgeTemplatesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/admin/badges" className="text-sm text-blue-600 hover:underline">
@@ -196,8 +196,8 @@ export default function AdminBadgeTemplatesPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Badge Templates</h1>
-            <p className="text-sm text-gray-500">Create and manage badge templates</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Badge Templates</h1>
+            <p className="text-sm text-[#9A9F87]">Create and manage badge templates</p>
           </div>
           <button
             onClick={() => {
@@ -238,11 +238,11 @@ export default function AdminBadgeTemplatesPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {templates.map((template) => (
-            <div key={template.id} className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
+            <div key={template.id} className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{template.name}</h3>
-                  <p className="text-sm text-gray-500">{template.description || 'No description'}</p>
+                  <h3 className="text-lg font-semibold text-[#F5F5DC]">{template.name}</h3>
+                  <p className="text-sm text-[#9A9F87]">{template.description || 'No description'}</p>
                 </div>
                 {template.is_default && (
                   <span className="inline-flex items-center rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700">
@@ -252,26 +252,26 @@ export default function AdminBadgeTemplatesPage() {
               </div>
               <div className="space-y-2 mb-4">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Size:</span>
-                  <span className="text-gray-900">{template.badge_size}</span>
+                  <span className="text-[#9A9F87]">Size:</span>
+                  <span className="text-[#F5F5DC]">{template.badge_size}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Orientation:</span>
-                  <span className="text-gray-900 capitalize">{template.orientation}</span>
+                  <span className="text-[#9A9F87]">Orientation:</span>
+                  <span className="text-[#F5F5DC] capitalize">{template.orientation}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">QR Position:</span>
-                  <span className="text-gray-900 capitalize">{template.qr_position}</span>
+                  <span className="text-[#9A9F87]">QR Position:</span>
+                  <span className="text-[#F5F5DC] capitalize">{template.qr_position}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Photo Position:</span>
-                  <span className="text-gray-900 capitalize">{template.photo_position}</span>
+                  <span className="text-[#9A9F87]">Photo Position:</span>
+                  <span className="text-[#F5F5DC] capitalize">{template.photo_position}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleEdit(template)}
-                  className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
                 >
                   <Edit className="h-4 w-4" />
                   Edit
@@ -279,7 +279,7 @@ export default function AdminBadgeTemplatesPage() {
                 {!template.is_default && (
                   <button
                     onClick={() => handleDelete(template.id)}
-                    className="p-1.5 rounded-lg border border-gray-300 text-red-600 hover:bg-gray-50"
+                    className="p-1.5 rounded-lg border border-gray-300 text-red-600 hover:bg-[#4B5320]/10"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -292,16 +292,16 @@ export default function AdminBadgeTemplatesPage() {
         {templates.length === 0 && !loading && (
           <div className="p-12 text-center">
             <Shield className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-500">No templates found</p>
+            <p className="text-[#9A9F87]">No templates found</p>
           </div>
         )}
       </div>
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
-            <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
-              <h2 className="text-lg font-semibold text-gray-900">{editingTemplate ? 'Edit Template' : 'Create Template'}</h2>
+          <div className="w-full max-w-2xl rounded-xl bg-[#10150D] shadow-xl max-h-[90vh] flex flex-col">
+            <div className="flex-shrink-0 flex items-center justify-between border-b border-[rgba(85,107,47,0.35)] p-4">
+              <h2 className="text-lg font-semibold text-[#F5F5DC]">{editingTemplate ? 'Edit Template' : 'Create Template'}</h2>
               <button onClick={() => setModalOpen(false)} className="p-1 rounded-md hover:bg-gray-100">
                 <X className="h-5 w-5" />
               </button>
@@ -310,21 +310,21 @@ export default function AdminBadgeTemplatesPage() {
               <div className="p-4 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Name *</label>
                     <input
                       type="text"
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black"
+                      className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Badge Size</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Badge Size</label>
                     <select
                       value={formData.badge_size}
                       onChange={(e) => setFormData({ ...formData, badge_size: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black"
+                      className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black"
                     >
                       <option value="CR80">CR80</option>
                       <option value="A4">A4</option>
@@ -333,32 +333,32 @@ export default function AdminBadgeTemplatesPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Description</label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={2}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black"
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Orientation</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Orientation</label>
                     <select
                       value={formData.orientation}
                       onChange={(e) => setFormData({ ...formData, orientation: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black"
+                      className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black"
                     >
                       <option value="landscape">Landscape</option>
                       <option value="portrait">Portrait</option>
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">QR Position</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">QR Position</label>
                     <select
                       value={formData.qr_position}
                       onChange={(e) => setFormData({ ...formData, qr_position: e.target.value })}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black"
+                      className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black"
                     >
                       <option value="right">Right</option>
                       <option value="left">Left</option>
@@ -369,7 +369,7 @@ export default function AdminBadgeTemplatesPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Primary Color</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Primary Color</label>
                     <input
                       type="color"
                       value={formData.primary_color}
@@ -378,7 +378,7 @@ export default function AdminBadgeTemplatesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Secondary Color</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Secondary Color</label>
                     <input
                       type="color"
                       value={formData.secondary_color}
@@ -387,7 +387,7 @@ export default function AdminBadgeTemplatesPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Text Color</label>
                     <input
                       type="color"
                       value={formData.text_color}
@@ -404,7 +404,7 @@ export default function AdminBadgeTemplatesPage() {
                       onChange={(e) => setFormData({ ...formData, expiry_display: e.target.checked })}
                       className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700">Show Expiry Date</span>
+                    <span className="text-sm text-[#9A9F87]">Show Expiry Date</span>
                   </label>
                   <label className="flex items-center gap-2">
                     <input
@@ -413,7 +413,7 @@ export default function AdminBadgeTemplatesPage() {
                       onChange={(e) => setFormData({ ...formData, department_display: e.target.checked })}
                       className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700">Show Department</span>
+                    <span className="text-sm text-[#9A9F87]">Show Department</span>
                   </label>
                   <label className="flex items-center gap-2">
                     <input
@@ -422,7 +422,7 @@ export default function AdminBadgeTemplatesPage() {
                       onChange={(e) => setFormData({ ...formData, office_display: e.target.checked })}
                       className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700">Show Office Location</span>
+                    <span className="text-sm text-[#9A9F87]">Show Office Location</span>
                   </label>
                   <label className="flex items-center gap-2">
                     <input
@@ -431,12 +431,12 @@ export default function AdminBadgeTemplatesPage() {
                       onChange={(e) => setFormData({ ...formData, signature_area: e.target.checked })}
                       className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700">Show Signature Area</span>
+                    <span className="text-sm text-[#9A9F87]">Show Signature Area</span>
                   </label>
                 </div>
               </div>
-              <div className="border-t border-gray-200 p-4 flex justify-end gap-2">
-                <button type="button" onClick={() => setModalOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+              <div className="border-t border-[rgba(85,107,47,0.35)] p-4 flex justify-end gap-2">
+                <button type="button" onClick={() => setModalOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">Cancel</button>
                 <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   {editingTemplate ? 'Update Template' : 'Create Template'}
@@ -449,3 +449,5 @@ export default function AdminBadgeTemplatesPage() {
     </div>
   )
 }
+
+

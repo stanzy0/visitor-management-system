@@ -28,8 +28,8 @@ interface Visit {
   badge?: Badge | null
 }
 
-const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
-const selectClasses = "rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-[#10150D] text-black placeholder:text-[#9A9F87] focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+const selectClasses = "rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
 
 export default function VisitsPage() {
   const [visits, setVisits] = useState<Visit[]>([])
@@ -323,7 +323,7 @@ const statusStyles: Record<string, string> = {
   approved: 'bg-blue-50 text-blue-700 border-blue-200',
   rejected: 'bg-red-50 text-red-700 border-red-200',
   checked_in: 'bg-green-50 text-green-700 border-green-200',
-  checked_out: 'bg-gray-50 text-gray-700 border-gray-200',
+  checked_out: 'bg-gray-50 text-[#9A9F87] border-[rgba(85,107,47,0.35)]',
 }
 
   const filteredVisits = visits.filter((v) => {
@@ -344,7 +344,7 @@ const statusStyles: Record<string, string> = {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
         <div className="mb-4 sm:mb-6">
           <a href="/dashboard" className="text-sm text-blue-600 hover:underline">← Back to Dashboard</a>
@@ -352,7 +352,7 @@ const statusStyles: Record<string, string> = {
 
         <div className="flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Visits</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#F5F5DC]">Visits</h1>
             <div className="flex items-center gap-2">
               <NotificationBell />
               <div className="relative flex-1 sm:flex-none">
@@ -391,7 +391,7 @@ const statusStyles: Record<string, string> = {
             <p className="text-xs text-red-600 mt-1">{error}</p>
             <button
               onClick={fetchVisits}
-              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-red-300 bg-[#10150D] px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
             >
               <RefreshCw className="h-4 w-4" />
               Try Again
@@ -400,7 +400,7 @@ const statusStyles: Record<string, string> = {
         )}
 
         {!error && (
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
           <div className="overflow-x-auto">
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -409,19 +409,19 @@ const statusStyles: Record<string, string> = {
             ) : (
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 font-semibold text-gray-700">Visitor Name</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Visitor Organization</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Host Employee</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Purpose</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Created</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700 w-40">Actions</th>
+                  <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Visitor Name</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Visitor Organization</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Host Employee</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Purpose</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Created</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87] w-40">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                   {filteredVisits.map((visit) => (
-                    <tr key={visit.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={visit.id} className="hover:bg-[#4B5320]/10 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {visit.visitor?.photo_url ? (
@@ -432,17 +432,17 @@ const statusStyles: Record<string, string> = {
                             />
                           ) : (
                             <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-[#9A9F87]">
                                  {(visit.visitor?.full_name || '?').charAt(0).toUpperCase()}
                               </span>
                             </div>
                           )}
-                          <span className="font-medium text-gray-900">{visit.visitor?.full_name || '—'}</span>
+                          <span className="font-medium text-[#F5F5DC]">{visit.visitor?.full_name || '—'}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{visit.visitor?.visitor_organization || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600">{visit.employee?.full_name || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600">{visit.purpose || '—'}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">{visit.visitor?.visitor_organization || '—'}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">{visit.employee?.full_name || '—'}</td>
+                      <td className="px-4 py-3 text-[#9A9F87]">{visit.purpose || '—'}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-1">
                           <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium w-fit ${statusStyles[visit.status]}`}>
@@ -452,14 +452,14 @@ const statusStyles: Record<string, string> = {
                             <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium w-fit ${
                               visit.badge.badge_status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' :
                               visit.badge.badge_status === 'Expired' ? 'bg-red-50 text-red-700 border-red-200' :
-                              'bg-gray-50 text-gray-700 border-gray-200'
+                              'bg-gray-50 text-[#9A9F87] border-[rgba(85,107,47,0.35)]'
                             }`}>
                               Badge: {visit.badge.badge_status}
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                      <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">
                         {visit.created_at ? new Date(visit.created_at).toLocaleDateString() : '—'}
                       </td>
                       <td className="px-4 py-3">
@@ -579,7 +579,7 @@ const statusStyles: Record<string, string> = {
 
           {!error && !loading && filteredVisits.length === 0 && (
             <div className="py-12 text-center">
-              <p className="text-gray-500">No visits found</p>
+              <p className="text-[#9A9F87]">No visits found</p>
             </div>
           )}
         </div>
@@ -596,3 +596,4 @@ const statusStyles: Record<string, string> = {
     </div>
   )
 }
+

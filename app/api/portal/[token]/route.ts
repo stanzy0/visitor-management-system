@@ -43,7 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const { data: visit, error: visitError } = await supabaseAdmin
       .from('visits')
-      .select('id, registration_number, status, visitor_type, source, rejection_reason, check_in_time, check_out_time, created_at, purpose, visitor_id, employee_id, appointment_id')
+      .select('id, registration_number, status, visitor_type, source, rejection_reason, check_in_time, check_out_time, created_at, purpose, visitor_id, employee_id')
       .eq('id', badge.visit_id)
       .single()
 
@@ -139,33 +139,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     console.log('FOUND EMPLOYEE')
 
     console.log('================================')
-    console.log('STEP 5')
-    console.log('QUERY NAME: appointments lookup')
-    console.log('INPUT:', visit.appointment_id)
-    console.log('================================')
-
-    let appointment = null
-    if (visit.appointment_id) {
-      const { data: appointmentData, error: appointmentError } = await supabaseAdmin
-        .from('appointments')
-        .select('id, appointment_date, appointment_time, expected_arrival, status, purpose')
-        .eq('id', visit.appointment_id)
-        .single()
-
-      console.log('RESULT:', appointmentData)
-      console.log('ERROR:', appointmentError)
-
-      if (appointmentError) {
-        console.log('APPOINTMENT QUERY FAILED')
-      }
-
-      appointment = appointmentData || null
-    } else {
-      console.log('RESULT: null (no appointment_id)')
-      console.log('ERROR: null')
-    }
-
-    console.log('================================')
     console.log('STEP 6')
     console.log('QUERY NAME: return payload')
     console.log('================================')
@@ -183,7 +156,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       purpose: visit.purpose,
       visitor,
       employee,
-      appointment,
       badge: {
         id: badge.id,
         badge_number: badge.badge_number,

@@ -32,13 +32,6 @@ export default function MobileMenu() {
             Check Status
           </Link>
           <Link
-            href="/appointments"
-            className="text-sm font-medium text-gray-600 hover:text-[#0B3D91] px-2 py-1"
-            onClick={() => setOpen(false)}
-          >
-            Appointments
-          </Link>
-          <Link
             href="/login"
             className="text-sm font-medium text-gray-600 hover:text-[#0B3D91] px-2 py-1"
             onClick={() => setOpen(false)}

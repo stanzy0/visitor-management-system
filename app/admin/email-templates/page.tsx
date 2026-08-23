@@ -48,14 +48,6 @@ const DEFAULT_TEMPLATES: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at'>
     is_active: true,
   },
   {
-    name: 'Appointment Update',
-    subject: 'Your appointment has been updated',
-    body_html: '<p>Dear {name},</p><p>Your appointment details have been updated. Please review the new information.</p>',
-    body_text: 'Dear {name},\n\nYour appointment details have been updated. Please review the new information.',
-    category: 'Notification',
-    is_active: true,
-  },
-  {
     name: 'Visitor Checkout',
     subject: 'You have been checked out',
     body_html: '<p>Dear {name},</p><p>You have been checked out of the facility. Thank you for your visit.</p>',
@@ -252,7 +244,7 @@ export default function AdminEmailTemplatesPage() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/admin" className="text-sm text-blue-600 hover:underline">
@@ -262,8 +254,8 @@ export default function AdminEmailTemplatesPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Email Templates</h1>
-            <p className="text-sm text-gray-500">Manage email templates for visitor communications</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Email Templates</h1>
+            <p className="text-sm text-[#9A9F87]">Manage email templates for visitor communications</p>
           </div>
           <button
             onClick={() => {
@@ -283,8 +275,8 @@ export default function AdminEmailTemplatesPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -293,12 +285,12 @@ export default function AdminEmailTemplatesPage() {
                   placeholder="Search by name or subject..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-gray-300 bg-[#10150D] pl-9 pr-3 py-2 text-sm"
                 />
               </div>
               <button
                 onClick={fetchTemplates}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
               >
                 <RefreshCw className="h-4 w-4" />
                 Refresh
@@ -309,27 +301,27 @@ export default function AdminEmailTemplatesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Template Name</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Subject</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Category</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Updated</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Actions</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Template Name</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Subject</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Category</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Updated</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {filteredTemplates.map((template) => (
-                  <tr key={template.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900">{template.name}</td>
-                    <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{template.subject}</td>
-                    <td className="px-4 py-3 text-gray-600">{template.category}</td>
+                  <tr key={template.id} className="hover:bg-[#4B5320]/10 transition-colors">
+                    <td className="px-4 py-3 font-medium text-[#F5F5DC]">{template.name}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] max-w-xs truncate">{template.subject}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{template.category}</td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${template.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-700'}`}>
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${template.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-[#9A9F87]'}`}>
                         {template.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{new Date(template.updated_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{new Date(template.updated_at).toLocaleDateString()}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         <button
@@ -337,21 +329,21 @@ export default function AdminEmailTemplatesPage() {
                           className="p-1 rounded-md hover:bg-gray-100"
                           title="Preview"
                         >
-                          <Eye className="h-4 w-4 text-gray-600" />
+                          <Eye className="h-4 w-4 text-[#9A9F87]" />
                         </button>
                         <button
                           onClick={() => handleEdit(template)}
                           className="p-1 rounded-md hover:bg-gray-100"
                           title="Edit"
                         >
-                          <Edit className="h-4 w-4 text-gray-600" />
+                          <Edit className="h-4 w-4 text-[#9A9F87]" />
                         </button>
                         <button
                           onClick={() => handleTestEmail(template)}
                           className="p-1 rounded-md hover:bg-gray-100"
                           title="Test Email"
                         >
-                          <Send className="h-4 w-4 text-gray-600" />
+                          <Send className="h-4 w-4 text-[#9A9F87]" />
                         </button>
                         <button
                           onClick={() => handleDelete(template.id)}
@@ -371,7 +363,7 @@ export default function AdminEmailTemplatesPage() {
           {!loading && templates.length === 0 && (
             <div className="p-12 text-center">
               <Mail className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No email templates found</p>
+              <p className="text-[#9A9F87]">No email templates found</p>
             </div>
           )}
 
@@ -385,9 +377,9 @@ export default function AdminEmailTemplatesPage() {
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-3xl rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
-            <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
-              <h2 className="text-lg font-semibold text-gray-900">{editingTemplate ? 'Edit Template' : 'Create Template'}</h2>
+          <div className="w-full max-w-3xl rounded-xl bg-[#10150D] shadow-xl max-h-[90vh] flex flex-col">
+            <div className="flex-shrink-0 flex items-center justify-between border-b border-[rgba(85,107,47,0.35)] p-4">
+              <h2 className="text-lg font-semibold text-[#F5F5DC]">{editingTemplate ? 'Edit Template' : 'Create Template'}</h2>
               <button onClick={() => { setModalOpen(false); resetForm(); }} className="p-1 rounded-md hover:bg-gray-100">
                 <X className="h-5 w-5" />
               </button>
@@ -395,53 +387,53 @@ export default function AdminEmailTemplatesPage() {
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
               <div className="p-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Template Name *</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Template Name *</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Subject *</label>
                   <input
                     type="text"
                     required
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Category *</label>
                   <input
                     type="text"
                     required
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Body HTML</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Body HTML</label>
                   <textarea
                     value={formData.body_html}
                     onChange={(e) => setFormData({ ...formData, body_html: e.target.value })}
                     rows={8}
                     placeholder="<p>Rich text HTML content...</p>"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-mono"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Body Text</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Body Text</label>
                   <textarea
                     value={formData.body_text}
                     onChange={(e) => setFormData({ ...formData, body_text: e.target.value })}
                     rows={4}
                     placeholder="Plain text fallback..."
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm"
                   />
                 </div>
                 <div className="flex items-center gap-2">
@@ -452,11 +444,11 @@ export default function AdminEmailTemplatesPage() {
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                     className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <label htmlFor="is_active" className="text-sm font-medium text-gray-700">Active</label>
+                  <label htmlFor="is_active" className="text-sm font-medium text-[#9A9F87]">Active</label>
                 </div>
               </div>
-              <div className="border-t border-gray-200 p-4 flex justify-end gap-2">
-                <button type="button" onClick={() => { setModalOpen(false); resetForm(); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+              <div className="border-t border-[rgba(85,107,47,0.35)] p-4 flex justify-end gap-2">
+                <button type="button" onClick={() => { setModalOpen(false); resetForm(); }} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">Cancel</button>
                 <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   {editingTemplate ? 'Update Template' : 'Create Template'}
@@ -469,40 +461,40 @@ export default function AdminEmailTemplatesPage() {
 
       {previewTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-4xl rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
-            <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
-              <h2 className="text-lg font-semibold text-gray-900">Template Preview</h2>
+          <div className="w-full max-w-4xl rounded-xl bg-[#10150D] shadow-xl max-h-[90vh] flex flex-col">
+            <div className="flex-shrink-0 flex items-center justify-between border-b border-[rgba(85,107,47,0.35)] p-4">
+              <h2 className="text-lg font-semibold text-[#F5F5DC]">Template Preview</h2>
               <button onClick={() => setPreviewTemplate(null)} className="p-1 rounded-md hover:bg-gray-100">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Subject</p>
-                <p className="text-sm text-gray-900 font-medium">{previewTemplate.subject}</p>
+                <p className="text-xs font-medium text-[#9A9F87] uppercase tracking-wider mb-1">Subject</p>
+                <p className="text-sm text-[#F5F5DC] font-medium">{previewTemplate.subject}</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">HTML Preview</p>
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <p className="text-xs font-medium text-[#9A9F87] uppercase tracking-wider mb-1">HTML Preview</p>
+                <div className="rounded-lg border border-[rgba(85,107,47,0.35)] bg-gray-50 p-4">
                   <iframe
                     srcDoc={previewTemplate.body_html}
                     title="Template Preview"
-                    className="w-full h-96 border-0 bg-white rounded-md"
+                    className="w-full h-96 border-0 bg-[#10150D] rounded-md"
                     sandbox=""
                   />
                 </div>
               </div>
               {previewTemplate.body_text && (
                 <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Text Version</p>
-                  <pre className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg overflow-auto whitespace-pre-wrap">
+                  <p className="text-xs font-medium text-[#9A9F87] uppercase tracking-wider mb-1">Text Version</p>
+                  <pre className="text-sm text-[#9A9F87] bg-gray-50 p-3 rounded-lg overflow-auto whitespace-pre-wrap">
                     {previewTemplate.body_text}
                   </pre>
                 </div>
               )}
             </div>
-            <div className="border-t border-gray-200 p-4 flex justify-end">
-              <button onClick={() => setPreviewTemplate(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Close</button>
+            <div className="border-t border-[rgba(85,107,47,0.35)] p-4 flex justify-end">
+              <button onClick={() => setPreviewTemplate(null)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">Close</button>
             </div>
           </div>
         </div>
@@ -510,3 +502,5 @@ export default function AdminEmailTemplatesPage() {
     </div>
   )
 }
+
+

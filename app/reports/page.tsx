@@ -58,8 +58,6 @@ export default function ReportsDashboardPage() {
   const [companiesData, setCompaniesData] = useState<Array<{ name: string; count: number }>>([])
   const [hourlyData, setHourlyData] = useState<Array<{ hour: string; count: number }>>([])
   const [recentVisits, setRecentVisits] = useState<Array<{ id: string; visitor: { full_name: string; visitor_organization: string } | null; employee: { full_name: string; department: string } | null; purpose: string; status: string; check_in_time: string | null; check_out_time: string | null; created_at: string }>>([])
-  const [appointmentStats, setAppointmentStats] = useState({ total: 0, completed: 0, noShows: 0, completionRate: 0 })
-  const [appointmentsByDepartment, setAppointmentsByDepartment] = useState<Array<{ name: string; count: number }>>([])
   const [departments, setDepartments] = useState<string[]>([])
 
   useEffect(() => {
@@ -191,19 +189,7 @@ export default function ReportsDashboardPage() {
     setRecentVisits(data || [])
   }
 
-  async function fetchAppointmentStats(start: Date, end: Date) {
-    const { data } = await supabase.from('appointments').select('status, employee:employees(department)').gte('created_at', start.toISOString()).lt('created_at', end.toISOString()) as { data: Array<{ status: string; employee?: { department?: string } }> | null }
-    const total = data?.length || 0
-    const completed = data?.filter(a => a.status === 'Completed').length || 0
-    const noShows = data?.filter(a => a.status === 'No Show').length || 0
-    setAppointmentStats({ total, completed, noShows, completionRate: total > 0 ? (completed / total) * 100 : 0 })
-    const deptCounts: Record<string, number> = {}
-    data?.forEach(a => { const dept = a.employee?.department || 'Unknown'; deptCounts[dept] = (deptCounts[dept] || 0) + 1 })
-    setAppointmentsByDepartment(Object.entries(deptCounts).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10))
-  }
-
   const fetchAllData = async () => {
-    setLoading(true)
     const { start, end } = getDateRange()
 
     try {
@@ -251,7 +237,6 @@ export default function ReportsDashboardPage() {
         fetchCompaniesData(start, end),
         fetchHourlyData(),
         fetchRecentVisits(),
-        fetchAppointmentStats(start, end),
       ])
     } catch (error) {
       console.error('Error fetching reports data:', error)
@@ -317,8 +302,8 @@ export default function ReportsDashboardPage() {
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
-            <p className="text-sm text-gray-500">Real-time operational insights and reporting</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Reports & Analytics</h1>
+            <p className="text-sm text-[#9A9F87]">Real-time operational insights and reporting</p>
           </div>
         </div>
 
@@ -344,15 +329,13 @@ export default function ReportsDashboardPage() {
           <ReportKPICard title="Total Visitors" value={stats.totalVisitors} icon={Users} color="blue" loading={loading} index={0} />
           <ReportKPICard title="Total Visits" value={stats.totalVisits} icon={Calendar} color="purple" loading={loading} index={1} />
           <ReportKPICard title="Visitors Today" value={stats.totalVisitors} icon={TrendingUp} color="green" loading={loading} index={2} />
-          <ReportKPICard title="Appointments" value={appointmentStats.total} icon={Calendar} color="amber" loading={loading} index={3} />
-          <ReportKPICard title="Badges Printed" value={0} icon={Printer} color="emerald" loading={loading} index={4} />
+          <ReportKPICard title="Badges Printed" value={0} icon={Printer} color="emerald" loading={loading} index={3} />
           <ReportKPICard title="Avg Duration" value={stats.avgVisitDuration} icon={Clock} color="gray" loading={loading} index={5} />
           <ReportKPICard title="Pending" value={stats.pendingVisits} icon={AlertTriangle} color="orange" loading={loading} index={6} />
           <ReportKPICard title="Approved" value={stats.approvedVisits} icon={CheckCircle2} color="green" loading={loading} index={7} />
           <ReportKPICard title="Active" value={stats.activeVisitors} icon={Users} color="blue" loading={loading} index={8} />
           <ReportKPICard title="Checked Out" value={stats.checkedOutVisits} icon={LogOut} color="gray" loading={loading} index={9} />
           <ReportKPICard title="Rejected" value={stats.rejectedVisits} icon={XCircle} color="red" loading={loading} index={10} />
-          <ReportKPICard title="Completion Rate" value={`${appointmentStats.completionRate.toFixed(1)}%`} icon={BarChart3} color="emerald" loading={loading} index={11} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -434,18 +417,6 @@ export default function ReportsDashboardPage() {
           </ChartCard>
         </div>
 
-        <ChartCard title="Appointments by Department" subtitle="Appointment distribution" loading={loading}>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={appointmentsByDepartment}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#D4AF37" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-
         <ReportTable
           title="Recent Visits"
           subtitle="Last 10 visits"
@@ -463,20 +434,18 @@ export default function ReportsDashboardPage() {
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Link href="/reports/visitors" className="rounded-[20px] border border-gray-200/60 bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_40px_rgba(0,0,0,0.1)] transition-shadow">
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">Visitor Reports</h3>
-            <p className="text-xs text-gray-500">Detailed visitor analytics and history</p>
+          <Link href="/reports/visitors" className="rounded-[20px] border border-[rgba(85,107,47,0.35)]/60 bg-[#10150D] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:shadow-[0_10px_40px_rgba(0,0,0,0.1)] transition-shadow">
+            <h3 className="text-sm font-semibold text-[#F5F5DC] mb-1">Visitor Reports</h3>
+            <p className="text-xs text-[#9A9F87]">Detailed visitor analytics and history</p>
           </Link>
-          <Link href="/reports/appointments" className="rounded-[20px] border border-gray-200/60 bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_40px_rgba(0,0,0,0.1)] transition-shadow">
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">Appointment Reports</h3>
-            <p className="text-xs text-gray-500">Appointment analytics and trends</p>
-          </Link>
-          <Link href="/reports/security" className="rounded-[20px] border border-gray-200/60 bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_10px_40px_rgba(0,0,0,0.1)] transition-shadow">
-            <h3 className="text-sm font-semibold text-gray-900 mb-1">Security Reports</h3>
-            <p className="text-xs text-gray-500">Security incidents and alerts</p>
+          <Link href="/reports/security" className="rounded-[20px] border border-[rgba(85,107,47,0.35)]/60 bg-[#10150D] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:shadow-[0_10px_40px_rgba(0,0,0,0.1)] transition-shadow">
+            <h3 className="text-sm font-semibold text-[#F5F5DC] mb-1">Security Reports</h3>
+            <p className="text-xs text-[#9A9F87]">Security incidents and alerts</p>
           </Link>
         </div>
       </div>
     </div>
   )
 }
+
+

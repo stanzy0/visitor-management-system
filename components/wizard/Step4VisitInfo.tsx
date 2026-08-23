@@ -89,7 +89,8 @@ export default function Step4VisitInfo({ host_employee_id = '', purpose = '', cu
               onChange('host_employee_id', val)
               const emp = employees.find((e) => e.id === val)
               if (emp) {
-                onChange('purpose', purpose)
+                onChange('host_department', emp.department || '')
+                onChange('office_location', emp.office_location || '')
               }
             }}
             placeholder="Search by name, department, or position..."

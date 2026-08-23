@@ -452,25 +452,11 @@ export default function PublicRegistrationWizard() {
     }
   }
 
-  useEffect(() => {
+   useEffect(() => {
     if (!formData.employee_id) return
 
     const channel = supabase
       .channel('host-availability-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'appointments',
-          filter: `employee_id=eq.${formData.employee_id}`,
-        },
-        (payload) => {
-          if (payload.new && (payload.new as { appointment_date?: string }).appointment_date === formData.visit_date) {
-            checkAvailability()
-          }
-        }
-      )
       .on(
         'postgres_changes',
         {

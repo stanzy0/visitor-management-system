@@ -112,12 +112,12 @@ export default function SecurityDashboardPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
         <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Security Dashboard</h1>
-              <p className="text-sm text-gray-500">Live gate and security operations overview</p>
+              <h1 className="text-2xl font-bold text-[#F5F5DC]">Security Dashboard</h1>
+              <p className="text-sm text-[#9A9F87]">Live gate and security operations overview</p>
             </div>
             <NotificationBell />
           </div>
@@ -127,20 +127,20 @@ export default function SecurityDashboardPage() {
             <a
               key={card.title}
               href={card.href}
-              className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
+              className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm hover:shadow-md transition-shadow"
             >
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-500">{card.title}</p>
+                <p className="text-sm font-medium text-[#9A9F87]">{card.title}</p>
                 <card.icon className={`h-4 w-4 ${
                   card.color === 'green' ? 'text-green-600' :
                   card.color === 'red' ? 'text-red-600' :
                   card.color === 'amber' ? 'text-amber-600' :
                   card.color === 'blue' ? 'text-blue-600' :
                   card.color === 'purple' ? 'text-purple-600' :
-                  card.color === 'orange' ? 'text-orange-600' : 'text-gray-600'
+                  card.color === 'orange' ? 'text-orange-600' : 'text-[#9A9F87]'
                 }`} />
               </div>
-              <p className="mt-2 text-2xl font-bold text-gray-900">{card.value}</p>
+              <p className="mt-2 text-2xl font-bold text-[#F5F5DC]">{card.value}</p>
             </a>
           ))}
         </div>
@@ -148,3 +148,5 @@ export default function SecurityDashboardPage() {
     </div>
   )
 }
+
+

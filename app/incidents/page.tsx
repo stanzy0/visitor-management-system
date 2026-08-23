@@ -28,7 +28,7 @@ const SEVERITIES: IncidentSeverity[] = ['Low', 'Medium', 'High', 'Critical']
 const STATUSES: IncidentStatus[] = ['Open', 'Assigned', 'Investigating', 'Resolved', 'Closed']
 
 const SEVERITY_COLORS: Record<IncidentSeverity, string> = {
-  Low: 'bg-gray-50 text-gray-700 border-gray-200',
+  Low: 'bg-gray-50 text-[#9A9F87] border-[rgba(85,107,47,0.35)]',
   Medium: 'bg-blue-50 text-blue-700 border-blue-200',
   High: 'bg-amber-50 text-amber-700 border-amber-200',
   Critical: 'bg-red-50 text-red-700 border-red-200',
@@ -39,7 +39,7 @@ const STATUS_COLORS: Record<IncidentStatus, string> = {
   Assigned: 'bg-blue-50 text-blue-700 border-blue-200',
   Investigating: 'bg-amber-50 text-amber-700 border-amber-200',
   Resolved: 'bg-green-50 text-green-700 border-green-200',
-  Closed: 'bg-gray-50 text-gray-700 border-gray-200',
+  Closed: 'bg-gray-50 text-[#9A9F87] border-[rgba(85,107,47,0.35)]',
 }
 
 export default function IncidentsPage() {
@@ -137,7 +137,7 @@ export default function IncidentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       {notification && (
         <div className={`fixed top-0 left-0 right-0 z-50 p-4 text-center text-base font-medium shadow-lg ${
           notification.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
@@ -149,8 +149,8 @@ export default function IncidentsPage() {
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Incident Management</h1>
-            <p className="text-sm text-gray-500">Track and manage security incidents</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Incident Management</h1>
+            <p className="text-sm text-[#9A9F87]">Track and manage security incidents</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -163,38 +163,38 @@ export default function IncidentsPage() {
 
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
+            <div className="bg-[#10150D] rounded-xl p-4 border border-[rgba(85,107,47,0.35)]">
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle className="h-5 w-5 text-red-600" />
-                <p className="text-sm text-gray-600">Open Incidents</p>
+                <p className="text-sm text-[#9A9F87]">Open Incidents</p>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{stats.open}</p>
+              <p className="text-3xl font-bold text-[#F5F5DC]">{stats.open}</p>
             </div>
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
+            <div className="bg-[#10150D] rounded-xl p-4 border border-[rgba(85,107,47,0.35)]">
               <div className="flex items-center gap-2 mb-2">
                 <XCircle className="h-5 w-5 text-red-600" />
-                <p className="text-sm text-gray-600">Critical Incidents</p>
+                <p className="text-sm text-[#9A9F87]">Critical Incidents</p>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{stats.critical}</p>
+              <p className="text-3xl font-bold text-[#F5F5DC]">{stats.critical}</p>
             </div>
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
+            <div className="bg-[#10150D] rounded-xl p-4 border border-[rgba(85,107,47,0.35)]">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle2 className="h-5 w-5 text-green-600" />
-                <p className="text-sm text-gray-600">Resolved Today</p>
+                <p className="text-sm text-[#9A9F87]">Resolved Today</p>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{stats.resolvedToday}</p>
+              <p className="text-3xl font-bold text-[#F5F5DC]">{stats.resolvedToday}</p>
             </div>
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
+            <div className="bg-[#10150D] rounded-xl p-4 border border-[rgba(85,107,47,0.35)]">
               <div className="flex items-center gap-2 mb-2">
                 <Clock className="h-5 w-5 text-blue-600" />
-                <p className="text-sm text-gray-600">Avg Resolution</p>
+                <p className="text-sm text-[#9A9F87]">Avg Resolution</p>
               </div>
-              <p className="text-3xl font-bold text-gray-900">{stats.averageResolutionMinutes ? `${stats.averageResolutionMinutes}m` : '—'}</p>
+              <p className="text-3xl font-bold text-[#F5F5DC]">{stats.averageResolutionMinutes ? `${stats.averageResolutionMinutes}m` : '—'}</p>
             </div>
           </div>
         )}
 
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="bg-[#10150D] rounded-xl border border-[rgba(85,107,47,0.35)] p-4">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -243,9 +243,9 @@ export default function IncidentsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="bg-[#10150D] rounded-xl border border-[rgba(85,107,47,0.35)] overflow-hidden">
           {incidents.length === 0 ? (
-            <div className="p-12 text-center text-gray-500">
+            <div className="p-12 text-center text-[#9A9F87]">
               <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
               <p className="text-lg font-medium">No incidents found</p>
               <p className="text-sm">Try adjusting your filters or create a new incident</p>
@@ -254,24 +254,24 @@ export default function IncidentsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 font-semibold text-gray-700">Incident</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Category</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Severity</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Assigned To</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Created</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700 text-right">Actions</th>
+                  <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Incident</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Category</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Severity</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Assigned To</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Created</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87] text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                   {incidents.map((incident) => (
-                    <tr key={incident.id} className="hover:bg-gray-50">
+                    <tr key={incident.id} className="hover:bg-[#4B5320]/10">
                       <td className="px-4 py-4">
-                        <p className="font-medium text-gray-900">{incident.title}</p>
-                        <p className="text-xs text-gray-500">{incident.incident_number}</p>
+                        <p className="font-medium text-[#F5F5DC]">{incident.title}</p>
+                        <p className="text-xs text-[#9A9F87]">{incident.incident_number}</p>
                       </td>
-                      <td className="px-4 py-4 text-gray-600">{incident.category}</td>
+                      <td className="px-4 py-4 text-[#9A9F87]">{incident.category}</td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${SEVERITY_COLORS[incident.severity]}`}>
                           {incident.severity}
@@ -282,14 +282,14 @@ export default function IncidentsPage() {
                           {incident.status}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-gray-600">{incident.assigned_to || '—'}</td>
-                      <td className="px-4 py-4 text-gray-600 whitespace-nowrap">
+                      <td className="px-4 py-4 text-[#9A9F87]">{incident.assigned_to || '—'}</td>
+                      <td className="px-4 py-4 text-[#9A9F87] whitespace-nowrap">
                          {incident.created_at ? new Date(incident.created_at).toLocaleDateString() : '—'}
                       </td>
                       <td className="px-4 py-4 text-right">
                         <a
                           href={`/incidents/${incident.id}`}
-                          className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                          className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-[#10150D] px-3 py-1.5 text-xs font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
                         >
                           <Eye className="h-3.5 w-3.5" />
                           View
@@ -348,17 +348,17 @@ function CreateIncidentModal({ onClose, onSuccess }: { onClose: () => void; onSu
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[#10150D] rounded-2xl max-w-lg w-full p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-gray-900">Create Incident</h3>
+          <h3 className="text-xl font-bold text-[#F5F5DC]">Create Incident</h3>
           <button onClick={onClose} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100">
-            <XCircle className="h-5 w-5 text-gray-500" />
+            <XCircle className="h-5 w-5 text-[#9A9F87]" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+            <label className="block text-sm font-medium text-[#9A9F87] mb-1">Title *</label>
             <input
               type="text"
               value={formData.title}
@@ -368,7 +368,7 @@ function CreateIncidentModal({ onClose, onSuccess }: { onClose: () => void; onSu
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+            <label className="block text-sm font-medium text-[#9A9F87] mb-1">Description *</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -379,7 +379,7 @@ function CreateIncidentModal({ onClose, onSuccess }: { onClose: () => void; onSu
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+              <label className="block text-sm font-medium text-[#9A9F87] mb-1">Category</label>
               <select
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value as IncidentCategory })}
@@ -391,7 +391,7 @@ function CreateIncidentModal({ onClose, onSuccess }: { onClose: () => void; onSu
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Severity</label>
+              <label className="block text-sm font-medium text-[#9A9F87] mb-1">Severity</label>
               <select
                 value={formData.severity}
                 onChange={(e) => setFormData({ ...formData, severity: e.target.value as IncidentSeverity })}
@@ -404,7 +404,7 @@ function CreateIncidentModal({ onClose, onSuccess }: { onClose: () => void; onSu
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+            <label className="block text-sm font-medium text-[#9A9F87] mb-1">Location</label>
             <input
               type="text"
               value={formData.location}
@@ -423,7 +423,7 @@ function CreateIncidentModal({ onClose, onSuccess }: { onClose: () => void; onSu
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 min-h-[44px]"
+              className="px-4 py-2.5 border border-gray-300 rounded-lg font-medium hover:bg-[#4B5320]/10 min-h-[44px]"
             >
               Cancel
             </button>
@@ -433,3 +433,5 @@ function CreateIncidentModal({ onClose, onSuccess }: { onClose: () => void; onSu
     </div>
   )
 }
+
+

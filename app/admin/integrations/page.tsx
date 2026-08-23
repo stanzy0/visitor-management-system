@@ -128,7 +128,7 @@ export default function IntegrationsPage() {
       case 'error':
         return { bg: 'bg-red-50', text: 'text-red-700', label: 'Error' }
       default:
-        return { bg: 'bg-gray-50', text: 'text-gray-700', label: status }
+        return { bg: 'bg-gray-50', text: 'text-[#9A9F87]', label: status }
     }
   }
 
@@ -210,7 +210,7 @@ export default function IntegrationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/dashboard" className="text-sm text-blue-600 hover:underline">
@@ -220,12 +220,12 @@ export default function IntegrationsPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Integrations</h1>
-            <p className="text-sm text-gray-500">Manage external service connections and API configurations</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Integrations</h1>
+            <p className="text-sm text-[#9A9F87]">Manage external service connections and API configurations</p>
           </div>
           <button
             onClick={fetchIntegrations}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-[#10150D] px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
           >
             <RefreshCw className="h-4 w-4" />
             Refresh
@@ -239,22 +239,22 @@ export default function IntegrationsPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">About Integrations</h3>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
+            <h3 className="text-lg font-semibold text-[#F5F5DC]">About Integrations</h3>
           </div>
           <div className="p-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-[#9A9F87]">
               Integrations allow the visitor management system to connect with external services for email notifications, SMS alerts, QR code generation, and file storage. Configure each integration below by providing the required API keys and testing the connection.
             </p>
           </div>
         </div>
 
         {integrations.length === 0 ? (
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-8 text-center">
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-8 text-center">
             <Puzzle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No integrations configured</h3>
-            <p className="text-sm text-gray-500">There are no integrations to display at this time.</p>
+            <h3 className="text-lg font-medium text-[#F5F5DC] mb-2">No integrations configured</h3>
+            <p className="text-sm text-[#9A9F87]">There are no integrations to display at this time.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -264,16 +264,16 @@ export default function IntegrationsPage() {
               const isKeyVisible = visibleKeys[integration.id]
 
               return (
-                <div key={integration.id} className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                <div key={integration.id} className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-gray-50 text-gray-600">
+                        <div className="p-2 rounded-lg bg-gray-50 text-[#9A9F87]">
                           <Icon className="h-5 w-5" />
                         </div>
                         <div>
-                          <h3 className="text-sm font-semibold text-gray-900">{integration.name}</h3>
-                          <p className="text-xs text-gray-500">{integration.provider}</p>
+                          <h3 className="text-sm font-semibold text-[#F5F5DC]">{integration.name}</h3>
+                          <p className="text-xs text-[#9A9F87]">{integration.provider}</p>
                         </div>
                       </div>
                       <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${statusBadge.bg} ${statusBadge.text}`}>
@@ -283,19 +283,19 @@ export default function IntegrationsPage() {
 
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">API Key</label>
+                        <label className="block text-xs font-medium text-[#9A9F87] mb-1">API Key</label>
                         <div className="relative">
                           <input
                             type={isKeyVisible ? 'text' : 'password'}
                             value={integration.api_key || ''}
                             onChange={e => handleApiKeyChange(integration.id, e.target.value)}
                             placeholder="Enter API key..."
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 text-sm text-[#F5F5DC] placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
                           />
                           <button
                             type="button"
                             onClick={() => toggleKeyVisibility(integration.id)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#9A9F87]"
                           >
                             {isKeyVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
@@ -303,8 +303,8 @@ export default function IntegrationsPage() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Last Tested</label>
-                        <p className="text-xs text-gray-600">{formatTimestamp(integration.last_tested)}</p>
+                        <label className="block text-xs font-medium text-[#9A9F87] mb-1">Last Tested</label>
+                        <p className="text-xs text-[#9A9F87]">{formatTimestamp(integration.last_tested)}</p>
                       </div>
 
                       <div className="flex items-center gap-2">
@@ -344,3 +344,5 @@ export default function IntegrationsPage() {
     </div>
   )
 }
+
+

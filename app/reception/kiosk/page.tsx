@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, PERMISSIONS, UserRole } from '@/lib/auth-client'
-import { Users, QrCode, Scan, LogIn, LogOut, Printer, Calendar, Clock, UserCheck, Search, Loader2 } from 'lucide-react'
+import { Users, QrCode, Scan, LogIn, LogOut, Printer, Clock, UserCheck, Search, Loader2 } from 'lucide-react'
 import { generateVisitQRCode } from '@/lib/qrcode'
 import { logAuditAction } from '@/lib/client/audit'
 
@@ -21,22 +21,9 @@ interface Visit {
   employee: { full_name: string; department: string; office_location: string } | null
 }
 
-interface Appointment {
-  id: string
-  visitor_id: string
-  employee_id: string
-  appointment_date: string
-  expected_arrival: string | null
-  purpose: string
-  status: string
-  visitor: { full_name: string; visitor_organization: string | null; photo_url: string | null } | null
-  employee: { full_name: string; department: string } | null
-}
-
 interface Stats {
   visitorsToday: number
   currentlyOnSite: number
-  upcomingAppointments: number
   pendingApprovals: number
 }
 
@@ -46,11 +33,9 @@ export default function KioskPage() {
   const [stats, setStats] = useState<Stats>({
     visitorsToday: 0,
     currentlyOnSite: 0,
-    upcomingAppointments: 0,
     pendingApprovals: 0,
   })
   const [recentVisits, setRecentVisits] = useState<Visit[]>([])
-  const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [kioskLocked, setKioskLocked] = useState(false)
   const [pinInput, setPinInput] = useState('')
@@ -78,17 +63,15 @@ export default function KioskPage() {
     const today = new Date().toISOString().split('T')[0]
     const now = new Date().toISOString()
 
-    const [visitorsTodayRes, onSiteRes, upcomingApptRes, pendingRes] = await Promise.all([
+    const [visitorsTodayRes, onSiteRes, pendingRes] = await Promise.all([
       supabase.from('visits').select('id', { count: 'exact' }).gte('created_at', today),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'checked_in'),
-      supabase.from('appointments').select('id', { count: 'exact' }).gte('appointment_date', today).in('status', ['Scheduled', 'Approved']),
       supabase.from('visits').select('id', { count: 'exact' }).eq('status', 'pending'),
     ])
 
     setStats({
       visitorsToday: visitorsTodayRes.count ?? 0,
       currentlyOnSite: onSiteRes.count ?? 0,
-      upcomingAppointments: upcomingApptRes.count ?? 0,
       pendingApprovals: pendingRes.count ?? 0,
     })
   }, [])
@@ -111,25 +94,6 @@ export default function KioskPage() {
     setLoading(false)
   }, [])
 
-  const fetchUpcomingAppointments = useCallback(async () => {
-    const today = new Date().toISOString().split('T')[0]
-    const { data, error } = await supabase
-      .from('appointments')
-      .select(`
-        *,
-        visitor:visitors(full_name, visitor_organization, photo_url),
-        employee:employees(full_name, department)
-      `)
-      .gte('appointment_date', today)
-      .in('status', ['Scheduled', 'Approved'])
-      .order('appointment_date', { ascending: true })
-      .order('expected_arrival', { ascending: true })
-
-    if (!error) {
-      setUpcomingAppointments(data || [])
-    }
-  }, [])
-
   const setupRealtime = useCallback(() => {
     if (realtimeChannel.current) {
       supabase.removeChannel(realtimeChannel.current)
@@ -143,14 +107,8 @@ export default function KioskPage() {
           fetchRecentVisits()
         }, 100)
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => {
-        setTimeout(() => {
-          fetchStats()
-          fetchUpcomingAppointments()
-        }, 250)
-      })
       .subscribe()
-  }, [fetchStats, fetchRecentVisits, fetchUpcomingAppointments])
+  }, [fetchStats, fetchRecentVisits])
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -167,7 +125,6 @@ export default function KioskPage() {
       setAuthChecking(false)
       fetchStats()
       fetchRecentVisits()
-      fetchUpcomingAppointments()
       setupRealtime()
       resetInactivityTimer()
     }
@@ -285,7 +242,7 @@ export default function KioskPage() {
         visitor:visitors(full_name, visitor_organization, photo_url),
         employee:employees(full_name, department, office_location)
       `)
-      .or(`visitor.full_name.ilike.%${searchTerm}%,visitor_organization.ilike.%${searchTerm}%,appointment_date.ilike.%${searchTerm}%`)
+      .or(`visitor.full_name.ilike.%${searchTerm}%,visitor_organization.ilike.%${searchTerm}%`)
       .order('created_at', { ascending: false })
       .limit(10)
 
@@ -304,7 +261,7 @@ export default function KioskPage() {
     approved: 'bg-blue-50 text-blue-700',
     rejected: 'bg-red-50 text-red-700',
     checked_in: 'bg-green-50 text-green-700',
-    checked_out: 'bg-gray-50 text-gray-700',
+    checked_out: 'bg-gray-50 text-[#9A9F87]',
   }
 
   if (authChecking) {
@@ -318,9 +275,9 @@ export default function KioskPage() {
   if (kioskLocked) {
     return (
       <div className="flex h-screen bg-gray-900 items-center justify-center">
-        <div className="bg-white rounded-2xl p-8 max-w-sm w-full mx-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Kiosk Locked</h2>
-          <p className="text-gray-600 mb-6 text-center">Enter PIN to unlock</p>
+        <div className="bg-[#10150D] rounded-2xl p-8 max-w-sm w-full mx-4">
+          <h2 className="text-2xl font-bold text-[#F5F5DC] mb-4 text-center">Kiosk Locked</h2>
+          <p className="text-[#9A9F87] mb-6 text-center">Enter PIN to unlock</p>
           <input
             type="password"
             value={pinInput}
@@ -345,11 +302,11 @@ export default function KioskPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" onClick={resetInactivityTimer} onTouchStart={resetInactivityTimer}>
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="min-h-screen bg-[#0B0F08]" onClick={resetInactivityTimer} onTouchStart={resetInactivityTimer}>
+      <header className="bg-[#10150D] border-b border-[rgba(85,107,47,0.35)] px-6 py-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Reception Kiosk</h1>
-          <div className="text-sm text-gray-500">Welcome, {userRole}</div>
+          <h1 className="text-2xl font-bold text-[#F5F5DC]">Reception Kiosk</h1>
+          <div className="text-sm text-[#9A9F87]">Welcome, {userRole}</div>
         </div>
       </header>
 
@@ -361,25 +318,20 @@ export default function KioskPage() {
 
       <main className="p-6 space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
+          <div className="bg-[#10150D] rounded-xl p-4 text-center shadow-sm">
             <Users className="h-8 w-8 mx-auto text-blue-600 mb-2" />
-            <p className="text-3xl font-bold text-gray-900">{stats.visitorsToday}</p>
-            <p className="text-sm text-gray-600">Visitors Today</p>
+            <p className="text-3xl font-bold text-[#F5F5DC]">{stats.visitorsToday}</p>
+            <p className="text-sm text-[#9A9F87]">Visitors Today</p>
           </div>
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
+          <div className="bg-[#10150D] rounded-xl p-4 text-center shadow-sm">
             <UserCheck className="h-8 w-8 mx-auto text-green-600 mb-2" />
-            <p className="text-3xl font-bold text-gray-900">{stats.currentlyOnSite}</p>
-            <p className="text-sm text-gray-600">On Site</p>
+            <p className="text-3xl font-bold text-[#F5F5DC]">{stats.currentlyOnSite}</p>
+            <p className="text-sm text-[#9A9F87]">On Site</p>
           </div>
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
-            <Calendar className="h-8 w-8 mx-auto text-purple-600 mb-2" />
-            <p className="text-3xl font-bold text-gray-900">{stats.upcomingAppointments}</p>
-            <p className="text-sm text-gray-600">Upcoming</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 text-center shadow-sm">
+          <div className="bg-[#10150D] rounded-xl p-4 text-center shadow-sm">
             <Clock className="h-8 w-8 mx-auto text-amber-600 mb-2" />
-            <p className="text-3xl font-bold text-gray-900">{stats.pendingApprovals}</p>
-            <p className="text-sm text-gray-600">Pending</p>
+            <p className="text-3xl font-bold text-[#F5F5DC]">{stats.pendingApprovals}</p>
+            <p className="text-sm text-[#9A9F87]">Pending</p>
           </div>
         </div>
 
@@ -389,10 +341,10 @@ export default function KioskPage() {
             <span className="text-lg font-semibold">Register Visitor</span>
           </Link>
 
-          <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="bg-[#10150D] rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-2 mb-3">
-              <Search className="h-5 w-5 text-gray-600" />
-              <span className="font-semibold text-gray-900">Appointment Lookup</span>
+              <Search className="h-5 w-5 text-[#9A9F87]" />
+              <span className="font-semibold text-[#F5F5DC]">Visitor Lookup</span>
             </div>
             <input
               type="text"
@@ -407,7 +359,7 @@ export default function KioskPage() {
                 {searchResults.map(visit => (
                   <div key={visit.id} className="text-sm p-2 bg-gray-50 rounded">
                     <p className="font-medium">{visit.visitor?.full_name}</p>
-                    <p className="text-gray-600">{visit.employee?.full_name}</p>
+                    <p className="text-[#9A9F87]">{visit.employee?.full_name}</p>
                   </div>
                 ))}
               </div>
@@ -421,7 +373,7 @@ export default function KioskPage() {
 
           <button
             onClick={() => setKioskLocked(true)}
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-2xl p-6 flex flex-col items-center justify-center transition-colors min-h-[120px]"
+            className="bg-gray-200 hover:bg-gray-300 text-[#F5F5DC] rounded-2xl p-6 flex flex-col items-center justify-center transition-colors min-h-[120px]"
           >
             <LogOut className="h-12 w-12 mb-3" />
             <span className="text-lg font-semibold">Lock Kiosk</span>
@@ -430,33 +382,33 @@ export default function KioskPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-[#F5F5DC] mb-4 flex items-center gap-2">
               <QrCode className="h-5 w-5" /> Recent Visitors
             </h2>
-            <div className="bg-white rounded-xl border border-gray-200">
+            <div className="bg-[#10150D] rounded-xl border border-[rgba(85,107,47,0.35)]">
               {loading ? (
                 <div className="p-6 flex justify-center">
                   <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
                 </div>
               ) : recentVisits.length === 0 ? (
-                <p className="p-6 text-center text-gray-500">No recent visitors</p>
+                <p className="p-6 text-center text-[#9A9F87]">No recent visitors</p>
               ) : (
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-[rgba(85,107,47,0.25)]">
                   {recentVisits.map(visit => (
                     <div key={visit.id} className="p-4 flex items-center gap-3">
                       {visit.visitor?.photo_url ? (
                         <img src={visit.visitor.photo_url} alt="" className="h-12 w-12 rounded-full object-cover" />
                       ) : (
                         <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-lg font-medium text-gray-500">
+                          <span className="text-lg font-medium text-[#9A9F87]">
                             {(visit.visitor?.full_name || '').charAt(0).toUpperCase()}
                           </span>
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900">{visit.visitor?.full_name || '—'}</p>
-                        <p className="text-sm text-gray-600">{visit.employee?.full_name || '—'}</p>
-                        <p className="text-xs text-gray-500">{visit.employee?.department || '—'}</p>
+                        <p className="font-semibold text-[#F5F5DC]">{visit.visitor?.full_name || '—'}</p>
+                        <p className="text-sm text-[#9A9F87]">{visit.employee?.full_name || '—'}</p>
+                        <p className="text-xs text-[#9A9F87]">{visit.employee?.department || '—'}</p>
                       </div>
                       <span className={`text-xs px-2 py-1 rounded-full ${statusColors[visit.status] || ''}`}>
                         {visit.status.replace('_', ' ')}
@@ -488,7 +440,7 @@ export default function KioskPage() {
                           className="p-2 rounded hover:bg-gray-100"
                           title="Print Badge"
                         >
-                          <Printer className="h-4 w-4 text-gray-600" />
+                          <Printer className="h-4 w-4 text-[#9A9F87]" />
                         </button>
                       </div>
                     </div>
@@ -498,42 +450,10 @@ export default function KioskPage() {
             </div>
           </div>
 
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Calendar className="h-5 w-5" /> Upcoming Appointments
-            </h2>
-            <div className="bg-white rounded-xl border border-gray-200">
-              {upcomingAppointments.length === 0 ? (
-                <p className="p-6 text-center text-gray-500">No upcoming appointments</p>
-              ) : (
-                <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto">
-                  {upcomingAppointments.map(appt => (
-                    <div key={appt.id} className="p-4 flex items-center gap-3">
-                      {appt.visitor?.photo_url ? (
-                        <img src={appt.visitor.photo_url} alt="" className="h-12 w-12 rounded-full object-cover" />
-                      ) : (
-                        <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-lg font-medium text-gray-500">
-                            {(appt.visitor?.full_name || '').charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900">{appt.visitor?.full_name || '—'}</p>
-                        <p className="text-sm text-gray-600">{appt.employee?.full_name || '—'}</p>
-                        <p className="text-xs text-gray-500">{appt.appointment_date} {appt.expected_arrival}</p>
-                      </div>
-                      <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700">
-                        {appt.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </main>
     </div>
   )
 }
+
+

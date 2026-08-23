@@ -115,7 +115,7 @@ export default function HostProfilePage() {
   if (!employeeId && userRole !== 'Admin') {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-gray-500">No employee record found for your account.</p>
+        <p className="text-[#9A9F87]">No employee record found for your account.</p>
       </div>
     )
   }
@@ -129,7 +129,7 @@ export default function HostProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-3xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/host" className="text-sm text-blue-600 hover:underline">
@@ -137,10 +137,10 @@ export default function HostProfilePage() {
           </a>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-6 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-            <p className="text-sm text-gray-500">View and edit your profile information</p>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-6 border-b border-[rgba(85,107,47,0.35)]">
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">My Profile</h1>
+            <p className="text-sm text-[#9A9F87]">View and edit your profile information</p>
           </div>
 
           {notification && (
@@ -152,68 +152,68 @@ export default function HostProfilePage() {
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Full Name</label>
                 <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2">
                   <User className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-900">{profile?.full_name || '—'}</span>
+                  <span className="text-sm text-[#F5F5DC]">{profile?.full_name || '—'}</span>
                 </div>
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Email</label>
                 <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2">
                   <Mail className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-900">{profile?.email || '—'}</span>
+                  <span className="text-sm text-[#F5F5DC]">{profile?.email || '—'}</span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Department</label>
                 <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2">
                   <Building2 className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-900">{profile?.department || '—'}</span>
+                  <span className="text-sm text-[#F5F5DC]">{profile?.department || '—'}</span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Office Location</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Office Location</label>
                 <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2">
                   <Building2 className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-900">{profile?.office_location || '—'}</span>
+                  <span className="text-sm text-[#F5F5DC]">{profile?.office_location || '—'}</span>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Phone</label>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-400" />
                   <input
                     type="tel"
                     value={form.phone}
                     onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Office Extension</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Office Extension</label>
                 <input
                   type="text"
                   value={form.office_extension}
                   onChange={(e) => setForm({ ...form, office_extension: e.target.value })}
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Availability</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-1">Availability</label>
                 <textarea
                   value={form.availability}
                   onChange={(e) => setForm({ ...form, availability: e.target.value })}
                   rows={3}
                   placeholder="e.g., Mon-Fri 9am - 5pm"
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -234,3 +234,5 @@ export default function HostProfilePage() {
     </div>
   )
 }
+
+

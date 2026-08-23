@@ -87,7 +87,7 @@ export default function ExitControlPage() {
     setLoading(true)
     const { data, error } = await supabase
       .from('visits')
-      .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*), appointment:appointments(*)')
+      .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*)')
       .eq('status', 'checked_in')
       .order('check_in_time', { ascending: true })
 
@@ -230,7 +230,7 @@ export default function ExitControlPage() {
     try {
       let query = supabase
         .from('visits')
-        .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*), appointment:appointments(*)')
+        .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*)')
         .eq('status', 'checked_in')
 
       if (searchMethod === 'name') {
@@ -297,7 +297,7 @@ export default function ExitControlPage() {
 
             const { data, error } = await supabase
               .from('visits')
-              .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*), appointment:appointments(*)')
+              .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*)')
               .eq('status', 'checked_in')
               .or(`badge.qr_token.eq.${lookupValue},registration_number.eq.${lookupValue},id.eq.${lookupValue}`)
               .limit(1)
@@ -340,15 +340,11 @@ export default function ExitControlPage() {
   }
 
   const calculateOverstay = (visit: Visit) => {
-    if (!visit.check_in_time || !visit.appointment?.expected_arrival) {
+    if (!visit.check_in_time) {
       setOverstayMinutes(0)
       return
     }
-
-    const checkIn = new Date(visit.check_in_time)
-    const expectedArrival = new Date(`${visit.appointment.appointment_date}T${visit.appointment.expected_arrival || '00:00'}`)
-    const diffMinutes = Math.max(0, Math.round((checkIn.getTime() - expectedArrival.getTime()) / 60000))
-    setOverstayMinutes(diffMinutes)
+    setOverstayMinutes(0)
   }
 
   const validateExit = () => {
@@ -403,10 +399,6 @@ export default function ExitControlPage() {
         await supabase.from('visitor_badges').update({
           badge_status: badgeReturnStatus === 'returned' ? 'Checked Out' : badgeReturnStatus === 'lost' ? 'Lost' : 'Damaged',
         }).eq('id', selectedVisit.badge.id)
-      }
-
-      if (selectedVisit.appointment?.id) {
-        await supabase.from('appointments').update({ status: 'Completed' }).eq('id', selectedVisit.appointment.id)
       }
 
       await fetch('/api/security/exit', {
@@ -543,7 +535,7 @@ export default function ExitControlPage() {
   }, [selectedVisit?.check_in_time])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       {notification && (
         <div className={`fixed top-0 left-0 right-0 z-50 p-3 text-center text-sm sm:text-base font-medium shadow-lg ${
           notification.type === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
@@ -556,20 +548,20 @@ export default function ExitControlPage() {
         <div className="flex flex-col gap-2 sm:gap-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Gate Pass & Exit Control</h1>
-              <p className="text-xs sm:text-sm text-gray-500">Validate and process visitor exits</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-[#F5F5DC]">Gate Pass & Exit Control</h1>
+              <p className="text-xs sm:text-sm text-[#9A9F87]">Validate and process visitor exits</p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => { setActiveTab('pending'); fetchVisits(); }}
-              className={`px-3 py-2.5 rounded-lg text-sm font-medium ${activeTab === 'pending' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
+              className={`px-3 py-2.5 rounded-lg text-sm font-medium ${activeTab === 'pending' ? 'bg-blue-600 text-white' : 'bg-[#10150D] text-[#9A9F87] border border-gray-300'}`}
             >
               Pending Exit
             </button>
             <button
               onClick={() => { setActiveTab('reports'); fetchReport(); }}
-              className={`px-3 py-2.5 rounded-lg text-sm font-medium ${activeTab === 'reports' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
+              className={`px-3 py-2.5 rounded-lg text-sm font-medium ${activeTab === 'reports' ? 'bg-blue-600 text-white' : 'bg-[#10150D] text-[#9A9F87] border border-gray-300'}`}
             >
               Reports
             </button>
@@ -579,8 +571,8 @@ export default function ExitControlPage() {
         {activeTab === 'pending' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1 space-y-4">
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Search Method</label>
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+                <label className="block text-sm font-medium text-[#9A9F87] mb-2">Search Method</label>
                 <div className="flex flex-wrap gap-2 mb-3">
                   {[
                     { key: 'name', label: 'Name' },
@@ -592,7 +584,7 @@ export default function ExitControlPage() {
                       key={method.key}
                       onClick={() => setSearchMethod(method.key as any)}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium border ${
-                        searchMethod === method.key ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300'
+                        searchMethod === method.key ? 'bg-blue-600 text-white border-blue-600' : 'bg-[#10150D] text-[#9A9F87] border-gray-300'
                       }`}
                     >
                       {method.label}
@@ -602,13 +594,13 @@ export default function ExitControlPage() {
 
                 {scanningQr ? (
                   <div className="space-y-3">
-                    <div id="exit-qr-reader" className="rounded-xl overflow-hidden border-2 border-gray-200" />
-                    <button onClick={stopQrScan} className="w-full py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <div id="exit-qr-reader" className="rounded-xl overflow-hidden border-2 border-[rgba(85,107,47,0.35)]" />
+                    <button onClick={stopQrScan} className="w-full py-2 rounded-lg border border-gray-300 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
                       Stop Scanner
                     </button>
                   </div>
                 ) : searchMethod === 'qr' ? (
-                  <button onClick={startQrScan} className="w-full py-3 rounded-lg border-2 border-dashed border-gray-300 text-sm font-medium text-gray-700 hover:border-blue-500 hover:text-blue-600">
+                  <button onClick={startQrScan} className="w-full py-3 rounded-lg border-2 border-dashed border-gray-300 text-sm font-medium text-[#9A9F87] hover:border-blue-500 hover:text-blue-600">
                     Start QR Scanner
                   </button>
                 ) : (
@@ -631,8 +623,8 @@ export default function ExitControlPage() {
                 )}
               </div>
 
-              <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Visitors Inside ({visits.length})</h3>
+              <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+                <h3 className="text-sm font-semibold text-[#9A9F87] mb-3">Visitors Inside ({visits.length})</h3>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {visits.map((visit) => (
                     <button
@@ -643,17 +635,17 @@ export default function ExitControlPage() {
                         loadSecurityAlerts(visit.id)
                         calculateOverstay(visit)
                       }}
-                      className={`w-full text-left rounded-lg border p-3 text-sm hover:bg-gray-50 ${
-                        selectedVisit?.id === visit.id ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                      className={`w-full text-left rounded-lg border p-3 text-sm hover:bg-[#4B5320]/10 ${
+                        selectedVisit?.id === visit.id ? 'border-blue-500 bg-blue-50' : 'border-[rgba(85,107,47,0.35)]'
                       }`}
                     >
-                      <p className="font-medium text-gray-900">{visit.visitor?.full_name || '—'}</p>
-                      <p className="text-xs text-gray-500">Badge: {visit.badge?.badge_number || '—'}</p>
-                      <p className="text-xs text-gray-500">Host: {visit.employee?.full_name || '—'}</p>
+                      <p className="font-medium text-[#F5F5DC]">{visit.visitor?.full_name || '—'}</p>
+                      <p className="text-xs text-[#9A9F87]">Badge: {visit.badge?.badge_number || '—'}</p>
+                      <p className="text-xs text-[#9A9F87]">Host: {visit.employee?.full_name || '—'}</p>
                     </button>
                   ))}
                   {visits.length === 0 && (
-                    <p className="text-sm text-gray-500 text-center py-4">No visitors currently inside</p>
+                    <p className="text-sm text-[#9A9F87] text-center py-4">No visitors currently inside</p>
                   )}
                 </div>
               </div>
@@ -661,18 +653,18 @@ export default function ExitControlPage() {
 
             <div className="lg:col-span-2">
               {selectedVisit ? (
-                <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6 space-y-6">
+                <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-6 space-y-6">
                   <div className="flex items-start gap-6">
                     {selectedVisit.visitor?.photo_url ? (
-                      <img src={selectedVisit.visitor.photo_url} alt="" className="h-24 w-24 rounded-2xl object-cover border border-gray-200" />
+                      <img src={selectedVisit.visitor.photo_url} alt="" className="h-24 w-24 rounded-2xl object-cover border border-[rgba(85,107,47,0.35)]" />
                     ) : (
-                      <div className="h-24 w-24 rounded-2xl bg-gray-200 flex items-center justify-center text-3xl font-bold text-gray-500">
+                      <div className="h-24 w-24 rounded-2xl bg-gray-200 flex items-center justify-center text-3xl font-bold text-[#9A9F87]">
                         {(selectedVisit.visitor?.full_name || '?').charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="flex-1">
-                      <h2 className="text-2xl font-bold text-gray-900">{selectedVisit.visitor?.full_name || 'Unknown'}</h2>
-                      <p className="text-gray-600">{selectedVisit.visitor?.visitor_organization || 'No company'}</p>
+                      <h2 className="text-2xl font-bold text-[#F5F5DC]">{selectedVisit.visitor?.full_name || 'Unknown'}</h2>
+                      <p className="text-[#9A9F87]">{selectedVisit.visitor?.visitor_organization || 'No company'}</p>
                       <div className="flex flex-wrap gap-2 mt-3">
                         <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200">
                           {selectedVisit.status.replace('_', ' ')}
@@ -693,44 +685,44 @@ export default function ExitControlPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="p-4 bg-gray-50 rounded-xl">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Host Employee</p>
-                      <p className="text-base font-medium text-gray-900">{selectedVisit.employee?.full_name || '—'}</p>
+                      <p className="text-xs text-[#9A9F87] uppercase tracking-wide mb-1">Host Employee</p>
+                      <p className="text-base font-medium text-[#F5F5DC]">{selectedVisit.employee?.full_name || '—'}</p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-xl">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Department</p>
-                      <p className="text-base font-medium text-gray-900">{selectedVisit.employee?.department || '—'}</p>
+                      <p className="text-xs text-[#9A9F87] uppercase tracking-wide mb-1">Department</p>
+                      <p className="text-base font-medium text-[#F5F5DC]">{selectedVisit.employee?.department || '—'}</p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-xl">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Office</p>
-                      <p className="text-base font-medium text-gray-900">{selectedVisit.employee?.office_location || '—'}</p>
+                      <p className="text-xs text-[#9A9F87] uppercase tracking-wide mb-1">Office</p>
+                      <p className="text-base font-medium text-[#F5F5DC]">{selectedVisit.employee?.office_location || '—'}</p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-xl">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Arrival Time</p>
-                      <p className="text-base font-medium text-gray-900">{selectedVisit.check_in_time ? new Date(selectedVisit.check_in_time).toLocaleString() : '—'}</p>
+                      <p className="text-xs text-[#9A9F87] uppercase tracking-wide mb-1">Arrival Time</p>
+                      <p className="text-base font-medium text-[#F5F5DC]">{selectedVisit.check_in_time ? new Date(selectedVisit.check_in_time).toLocaleString() : '—'}</p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-xl">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Duration on Site</p>
-                      <p className="text-base font-medium text-gray-900">{durationOnSite}</p>
+                      <p className="text-xs text-[#9A9F87] uppercase tracking-wide mb-1">Duration on Site</p>
+                      <p className="text-base font-medium text-[#F5F5DC]">{durationOnSite}</p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-xl">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Badge Number</p>
-                      <p className="text-base font-medium text-gray-900">{selectedVisit.badge?.badge_number || '—'}</p>
+                      <p className="text-xs text-[#9A9F87] uppercase tracking-wide mb-1">Badge Number</p>
+                      <p className="text-base font-medium text-[#F5F5DC]">{selectedVisit.badge?.badge_number || '—'}</p>
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-gray-200 p-4">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <div className="rounded-xl border border-[rgba(85,107,47,0.35)] p-4">
+                    <h3 className="text-sm font-semibold text-[#F5F5DC] mb-3 flex items-center gap-2">
                       <Package className="h-4 w-4" /> Property Items ({properties.length})
                     </h3>
                     {properties.length === 0 ? (
-                      <p className="text-sm text-gray-500">No property items registered</p>
+                      <p className="text-sm text-[#9A9F87]">No property items registered</p>
                     ) : (
                       <div className="space-y-2">
                         {properties.map((item) => (
                           <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <div>
-                              <p className="text-sm font-medium text-gray-900">{item.item_name}</p>
-                              <p className="text-xs text-gray-500">{item.category}</p>
+                              <p className="text-sm font-medium text-[#F5F5DC]">{item.item_name}</p>
+                              <p className="text-xs text-[#9A9F87]">{item.category}</p>
                             </div>
                             <select
                               value={propertyStatuses[item.id] || item.status || 'returned'}
@@ -747,8 +739,8 @@ export default function ExitControlPage() {
                     )}
                   </div>
 
-                  <div className="rounded-xl border border-gray-200 p-4">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  <div className="rounded-xl border border-[rgba(85,107,47,0.35)] p-4">
+                    <h3 className="text-sm font-semibold text-[#F5F5DC] mb-3 flex items-center gap-2">
                       <ShieldAlert className="h-4 w-4" /> Badge Return
                     </h3>
                     <div className="flex flex-wrap gap-2">
@@ -761,7 +753,7 @@ export default function ExitControlPage() {
                               ? status === 'returned' ? 'bg-green-600 text-white border-green-600'
                               : status === 'lost' ? 'bg-red-600 text-white border-red-600'
                               : 'bg-amber-600 text-white border-amber-600'
-                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                              : 'bg-[#10150D] text-[#9A9F87] border-gray-300 hover:bg-[#4B5320]/10'
                           }`}
                         >
                           {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -846,16 +838,16 @@ export default function ExitControlPage() {
                     )}
                     <button
                       onClick={resetSelection}
-                      className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 min-h-[52px]"
+                      className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-[#10150D] px-6 py-3 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 min-h-[52px]"
                     >
                       Clear
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-12 text-center">
+                <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-12 text-center">
                   <LogOut className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">Search or select a visitor to process exit</p>
+                  <p className="text-[#9A9F87]">Search or select a visitor to process exit</p>
                 </div>
               )}
             </div>
@@ -864,24 +856,24 @@ export default function ExitControlPage() {
 
         {activeTab === 'reports' && report && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Currently Inside</p>
-              <p className="text-2xl font-bold text-gray-900">{report.visitorsCurrentlyInside}</p>
+            <div className="bg-[#10150D] rounded-xl p-4 border border-[rgba(85,107,47,0.35)]">
+              <p className="text-xs text-[#9A9F87] uppercase tracking-wide">Currently Inside</p>
+              <p className="text-2xl font-bold text-[#F5F5DC]">{report.visitorsCurrentlyInside}</p>
             </div>
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Exited Today</p>
-              <p className="text-2xl font-bold text-gray-900">{report.visitorsExitedToday}</p>
+            <div className="bg-[#10150D] rounded-xl p-4 border border-[rgba(85,107,47,0.35)]">
+              <p className="text-xs text-[#9A9F87] uppercase tracking-wide">Exited Today</p>
+              <p className="text-2xl font-bold text-[#F5F5DC]">{report.visitorsExitedToday}</p>
             </div>
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Avg Duration</p>
-              <p className="text-2xl font-bold text-gray-900">{report.averageVisitDuration} min</p>
+            <div className="bg-[#10150D] rounded-xl p-4 border border-[rgba(85,107,47,0.35)]">
+              <p className="text-xs text-[#9A9F87] uppercase tracking-wide">Avg Duration</p>
+              <p className="text-2xl font-bold text-[#F5F5DC]">{report.averageVisitDuration} min</p>
             </div>
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Badge Losses</p>
+            <div className="bg-[#10150D] rounded-xl p-4 border border-[rgba(85,107,47,0.35)]">
+              <p className="text-xs text-[#9A9F87] uppercase tracking-wide">Badge Losses</p>
               <p className="text-2xl font-bold text-red-700">{report.badgeLosses}</p>
             </div>
-            <div className="bg-white rounded-xl p-4 border border-gray-200">
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Property Incidents</p>
+            <div className="bg-[#10150D] rounded-xl p-4 border border-[rgba(85,107,47,0.35)]">
+              <p className="text-xs text-[#9A9F87] uppercase tracking-wide">Property Incidents</p>
               <p className="text-2xl font-bold text-red-700">{report.propertyIncidents}</p>
             </div>
           </div>
@@ -890,3 +882,5 @@ export default function ExitControlPage() {
     </div>
   )
 }
+
+

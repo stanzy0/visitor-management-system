@@ -116,10 +116,27 @@ export default function ChangePasswordPage() {
         ])
       }
 
-      setSuccess(true)
-      setTimeout(() => {
-        window.location.href = '/dashboard'
-      }, 2000)
+      if (user?.id) {
+        const { data: userRole } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single()
+
+        const role = userRole?.role
+        let redirectUrl = '/dashboard'
+        if (role === 'PA_TO_CI') redirectUrl = '/pa-ci'
+        else if (role === 'PA_TO_DIRECTOR') redirectUrl = '/pa-director'
+        else if (role === 'Security') redirectUrl = '/security'
+        else if (role === 'Host Employee') redirectUrl = '/host'
+
+        setSuccess(true)
+        setTimeout(() => {
+          window.location.href = redirectUrl
+        }, 2000)
+      } else {
+        setError('Unable to verify user session. Please log in again.')
+      }
     } catch {
       setError('An unexpected error occurred. Please try again.')
     } finally {
@@ -129,14 +146,14 @@ export default function ChangePasswordPage() {
 
   if (success) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="flex min-h-screen items-center justify-center bg-[#0B0F08] p-4">
         <div className="w-full max-w-md space-y-8">
           <div className="text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
               <CheckCircle2 className="h-6 w-6 text-green-600" />
             </div>
-            <h1 className="mt-4 text-3xl font-bold text-gray-900">Password Changed</h1>
-            <p className="mt-2 text-gray-600">Redirecting to dashboard...</p>
+            <h1 className="mt-4 text-3xl font-bold text-[#F5F5DC]">Password Changed</h1>
+            <p className="mt-2 text-[#9A9F87]">Redirecting to your dashboard...</p>
           </div>
         </div>
       </div>
@@ -144,14 +161,14 @@ export default function ChangePasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#0B0F08] p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
             <Lock className="h-6 w-6 text-blue-600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900">Change Password</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-[#F5F5DC]">Change Password</h1>
+          <p className="mt-2 text-[#9A9F87]">
             Your account is using a temporary password. You must create a new password before continuing.
           </p>
         </div>
@@ -162,7 +179,7 @@ export default function ChangePasswordPage() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="email" className="block text-sm font-medium text-[#9A9F87]">
               Email
             </label>
             <input
@@ -170,12 +187,12 @@ export default function ChangePasswordPage() {
               type="email"
               value={email}
               readOnly
-              className="mt-1 block w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-gray-600"
+              className="mt-1 block w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-[#9A9F87]"
             />
           </div>
 
           <div>
-            <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="currentPassword" className="block text-sm font-medium text-[#9A9F87]">
               Current Password
             </label>
             <input
@@ -185,12 +202,12 @@ export default function ChangePasswordPage() {
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
               placeholder="Enter your current password"
-              className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="newPassword" className="block text-sm font-medium text-[#9A9F87]">
               New Password
             </label>
             <input
@@ -200,15 +217,15 @@ export default function ChangePasswordPage() {
               onChange={(e) => setNewPassword(e.target.value)}
               required
               placeholder="Enter new password"
-              className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-[#9A9F87]">
               Must be at least {PASSWORD_MIN_LENGTH} characters with uppercase, lowercase, number, and special character.
             </p>
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#9A9F87]">
               Confirm Password
             </label>
             <input
@@ -218,7 +235,7 @@ export default function ChangePasswordPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
               placeholder="Confirm new password"
-              className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -234,3 +251,4 @@ export default function ChangePasswordPage() {
     </div>
   )
 }
+

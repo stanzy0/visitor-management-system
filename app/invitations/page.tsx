@@ -8,8 +8,8 @@ import { getCurrentUser, PERMISSIONS } from '@/lib/auth-client'
 import { VisitorInvitation, getInvitationsByHost, getAllInvitations, approveInvitation, rejectInvitation, cancelInvitation } from '@/lib/client/invitations'
 import InvitationStatusCard from '@/components/InvitationStatusCard'
 
-const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
-const selectClasses = "rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-[#10150D] text-black placeholder:text-[#9A9F87] focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+const selectClasses = "rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
 
 export default function InvitationsPage() {
   const [invitations, setInvitations] = useState<VisitorInvitation[]>([])
@@ -165,7 +165,7 @@ export default function InvitationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/dashboard" className="text-sm text-blue-600 hover:underline">
@@ -174,7 +174,7 @@ export default function InvitationsPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900">Invitations</h1>
+          <h1 className="text-2xl font-bold text-[#F5F5DC]">Invitations</h1>
           <div className="flex items-center gap-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -201,7 +201,7 @@ export default function InvitationsPage() {
             </select>
             <button
               onClick={refresh}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -216,25 +216,25 @@ export default function InvitationsPage() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-            <p className="text-sm text-gray-500">Pending</p>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+            <p className="text-sm text-[#9A9F87]">Pending</p>
             <p className="text-2xl font-bold text-amber-600">{invitations.filter(i => i.status === 'Pending').length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-            <p className="text-sm text-gray-500">Completed</p>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+            <p className="text-sm text-[#9A9F87]">Completed</p>
             <p className="text-2xl font-bold text-blue-600">{invitations.filter(i => i.status === 'Completed').length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-            <p className="text-sm text-gray-500">Approved</p>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+            <p className="text-sm text-[#9A9F87]">Approved</p>
             <p className="text-2xl font-bold text-green-600">{invitations.filter(i => i.status === 'Approved').length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-            <p className="text-sm text-gray-500">Expired</p>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+            <p className="text-sm text-[#9A9F87]">Expired</p>
             <p className="text-2xl font-bold text-red-600">{invitations.filter(i => i.status === 'Expired').length}</p>
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
           <div className="overflow-x-auto">
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -243,29 +243,29 @@ export default function InvitationsPage() {
             ) : (
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Purpose</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Date</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700 w-40">Actions</th>
+                  <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Visitor</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Host</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Purpose</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Date</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87] w-40">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                   {filteredInvitations.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={inv.id} className="hover:bg-[#4B5320]/10 transition-colors">
                       <td className="px-4 py-3">
                         <div>
-                          <p className="font-medium text-gray-900">{inv.visitor_name}</p>
-                          <p className="text-xs text-gray-500">{inv.visitor_email}</p>
+                          <p className="font-medium text-[#F5F5DC]">{inv.visitor_name}</p>
+                          <p className="text-xs text-[#9A9F87]">{inv.visitor_email}</p>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">
+                      <td className="px-4 py-3 text-[#9A9F87]">
                         {(inv.host?.full_name || '—')}
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{inv.purpose}</td>
-                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                      <td className="px-4 py-3 text-[#9A9F87]">{inv.purpose}</td>
+                      <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">
                         {inv.expected_date}
                         {inv.expected_time && <span className="block text-xs text-gray-400">{inv.expected_time}</span>}
                       </td>
@@ -305,7 +305,7 @@ export default function InvitationsPage() {
 
           {!loading && filteredInvitations.length === 0 && (
             <div className="py-12 text-center">
-              <p className="text-gray-500">No invitations found</p>
+              <p className="text-[#9A9F87]">No invitations found</p>
             </div>
           )}
         </div>
@@ -313,3 +313,5 @@ export default function InvitationsPage() {
     </div>
   )
 }
+
+

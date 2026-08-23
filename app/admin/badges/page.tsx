@@ -139,7 +139,7 @@ export default function AdminBadgesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/admin" className="text-sm text-blue-600 hover:underline">
@@ -149,8 +149,8 @@ export default function AdminBadgesPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Badge Designer & Printing</h1>
-            <p className="text-sm text-gray-500">Design templates, manage printers, and control badge printing</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Badge Designer & Printing</h1>
+            <p className="text-sm text-[#9A9F87]">Design templates, manage printers, and control badge printing</p>
           </div>
           <div className="flex items-center gap-3">
             <a
@@ -162,14 +162,14 @@ export default function AdminBadgesPage() {
             </a>
             <a
               href="/admin/badges/printers"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-[#10150D] px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors"
             >
               <Printer className="h-4 w-4" />
               Printers
             </a>
             <a
               href="/admin/badges/history"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-[#10150D] px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors"
             >
               <Eye className="h-4 w-4" />
               History
@@ -183,8 +183,8 @@ export default function AdminBadgesPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <input
@@ -192,13 +192,13 @@ export default function AdminBadgesPage() {
                   placeholder="Search badges..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 bg-[#10150D] pl-9 pr-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Status</option>
                 <option value="Active">Active</option>
@@ -212,37 +212,37 @@ export default function AdminBadgesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Badge Number</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Company</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Printed</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Reprints</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Actions</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Badge Number</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Visitor</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Company</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Printed</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Reprints</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {filteredBadges.map((badge) => (
-                  <tr key={badge.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900">{badge.badge_number}</td>
-                    <td className="px-4 py-3 text-gray-600">{badge.visit?.visitor?.full_name || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600">{badge.visit?.visitor?.visitor_organization || '—'}</td>
+                  <tr key={badge.id} className="hover:bg-[#4B5320]/10 transition-colors">
+                    <td className="px-4 py-3 font-medium text-[#F5F5DC]">{badge.badge_number}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{badge.visit?.visitor?.full_name || '—'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{badge.visit?.visitor?.visitor_organization || '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                         badge.badge_status === 'Active' ? 'bg-green-50 text-green-700' :
                         badge.badge_status === 'Expired' ? 'bg-red-50 text-red-700' :
                         badge.badge_status === 'Revoked' ? 'bg-red-50 text-red-700' :
                         badge.badge_status === 'Cancelled' ? 'bg-red-50 text-red-700' :
-                        'bg-gray-50 text-gray-700'
+                        'bg-gray-50 text-[#9A9F87]'
                       }`}>
                         {badge.badge_status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">
+                    <td className="px-4 py-3 text-[#9A9F87]">
                       {badge.printed_at ? new Date(badge.printed_at).toLocaleString() : '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{badge.reprint_count}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{badge.reprint_count}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <button
@@ -250,7 +250,7 @@ export default function AdminBadgesPage() {
                           className="p-1 rounded-md hover:bg-gray-100"
                           title="Preview"
                         >
-                          <Eye className="h-4 w-4 text-gray-600" />
+                          <Eye className="h-4 w-4 text-[#9A9F87]" />
                         </button>
                         <button
                           onClick={() => handleReprint(badge.id)}
@@ -285,7 +285,7 @@ export default function AdminBadgesPage() {
           {filteredBadges.length === 0 && !loading && (
             <div className="p-12 text-center">
               <Shield className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No badges found</p>
+              <p className="text-[#9A9F87]">No badges found</p>
             </div>
           )}
         </div>
@@ -293,13 +293,13 @@ export default function AdminBadgesPage() {
 
       {selectedBadge && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-xl bg-white shadow-xl">
+          <div className="w-full max-w-2xl max-h-[95vh] overflow-y-auto rounded-xl bg-[#10150D] shadow-xl">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Badge Preview</h2>
+                <h2 className="text-xl font-bold text-[#F5F5DC]">Badge Preview</h2>
                 <button
                   onClick={() => setSelectedBadge(null)}
-                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
                 >
                   Close
                 </button>
@@ -315,7 +315,7 @@ export default function AdminBadgesPage() {
                 </button>
                 <button
                   onClick={() => handleDownloadPDF(selectedBadge)}
-                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10"
                 >
                   <Download className="h-4 w-4" />
                   Download PDF
@@ -328,3 +328,5 @@ export default function AdminBadgesPage() {
     </div>
   )
 }
+
+

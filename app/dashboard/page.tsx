@@ -63,12 +63,11 @@ import * as XLSX from 'xlsx'
 const COLORS = ['#1e40af', '#0f766e', '#b91c1c', '#a16207', '#6d28d9', '#be185d', '#0f766e', '#c2410c']
 
 const QUICK_ACTIONS = [
-  { label: 'Register Visitor', description: 'Add a new visitor to the system', icon: UserPlus, href: '/visitors/new', color: 'blue' as const },
-  { label: 'Check In', description: 'Process visitor arrival and entry', icon: UserCheck, href: '/visits?status=checked_in', color: 'green' as const },
-  { label: 'Check Out', description: 'Process visitor departure', icon: LogOut, href: '/visits?status=checked_out', color: 'gray' as const },
-  { label: 'Print Badge', description: 'Generate and print visitor badge', icon: Printer, href: '/badges', color: 'amber' as const },
-  { label: 'Search Visitor', description: 'Search visitor records', icon: Search, href: '/visitors', color: 'purple' as const },
-  { label: 'Appointments', description: 'View and manage appointments', icon: Calendar, href: '/appointments', color: 'indigo' as const },
+  { label: 'Register Visitor', description: 'Add a new visitor to the system', icon: UserPlus, href: '/visitors/new', color: 'blue' as const, roles: ['Admin', 'Receptionist'] },
+  { label: 'Check In', description: 'Process visitor arrival and entry', icon: UserCheck, href: '/visits?status=checked_in', color: 'green' as const, roles: ['Admin', 'Receptionist', 'Security', 'PA_TO_DIRECTOR', 'PA_TO_CI'] },
+  { label: 'Check Out', description: 'Process visitor departure', icon: LogOut, href: '/visits?status=checked_out', color: 'gray' as const, roles: ['Admin', 'Receptionist', 'Security', 'PA_TO_DIRECTOR', 'PA_TO_CI'] },
+  { label: 'Print Badge', description: 'Generate and print visitor badge', icon: Printer, href: '/badges', color: 'amber' as const, roles: ['Admin', 'Receptionist', 'Security'] },
+  { label: 'Search Visitor', description: 'Search visitor records', icon: Search, href: '/visitors', color: 'purple' as const, roles: ['Admin', 'Receptionist', 'Security', 'PA_TO_DIRECTOR', 'PA_TO_CI'] },
 ]
 
 export default function DashboardPage() {
@@ -84,7 +83,6 @@ export default function DashboardPage() {
   const { notifications, unreadCount } = useNotifications()
   const [filters, setFilters] = useState<DashboardFilters>({ range: 'today' })
   const [exporting, setExporting] = useState(false)
-  const [appointmentsToday, setAppointmentsToday] = useState(0)
   const [securityStats, setSecurityStats] = useState({
     visitorsWaitingAtGate: 0,
     visitorsCleared: 0,
@@ -117,30 +115,23 @@ export default function DashboardPage() {
   }, [branding])
 
   useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const today = new Date().toISOString().split('T')[0]
-        const { data } = await supabase.from('appointments').select('*', { count: 'exact', head: true }).eq('appointment_date', today)
-        setAppointmentsToday(data?.length ?? 0)
-      } catch {
-        // ignore
-      }
-    }
-    fetchAppointments()
-  }, [])
-
-  useEffect(() => {
     const fetchSecurityStats = async () => {
+      if (!authReady) return
+      if (!['Admin', 'Commandant', 'Director', 'Security', 'Operations', 'Receptionist', 'Host Employee'].includes(userRole)) return
+
       try {
         const res = await fetch('/api/security/stats', {
           headers: await getAuthHeaders(),
         })
-        console.log('Security Stats Status:', res.status)
+
+        if (res.status === 401 || res.status === 403) {
+          return
+        }
+
         if (!res.ok) {
-          const text = await res.text()
-          console.log('Security Stats Error Body:', text)
           throw new Error(`Request failed: ${res.status}`)
         }
+
         const json = await res.json()
         if (json.success) {
           setSecurityStats(json.data)
@@ -149,18 +140,33 @@ export default function DashboardPage() {
         console.error('Failed to fetch security stats:', err)
       }
     }
-    fetchSecurityStats()
-  }, [])
+
+    if (authReady) {
+      fetchSecurityStats()
+    }
+  }, [authReady, userRole])
 
   useEffect(() => {
     const fetchPendingOnlineRegistrations = async () => {
+      if (!authReady) return
+      if (!['Admin', 'Receptionist'].includes(userRole)) {
+        setPendingOnlineRegistrations([])
+        return
+      }
+
       try {
         const res = await fetch('/api/public/registrations', {
           headers: await getAuthHeaders(),
         })
+
+        if (res.status === 401 || res.status === 403) {
+          return
+        }
+
         if (!res.ok) {
           throw new Error(`Request failed: ${res.status}`)
         }
+
         const json = await res.json()
         if (json.success) {
           setPendingOnlineRegistrations(json.data)
@@ -169,18 +175,29 @@ export default function DashboardPage() {
         console.error('Failed to fetch pending online registrations:', err)
       }
     }
-    fetchPendingOnlineRegistrations()
-  }, [])
+
+    if (authReady) {
+      fetchPendingOnlineRegistrations()
+    }
+  }, [authReady, userRole])
 
   useEffect(() => {
     const fetchPendingDocuments = async () => {
+      if (!authReady) return
+
       try {
         const res = await fetch('/api/documents?verification_status=Pending&limit=5', {
           headers: await getAuthHeaders(),
         })
+
+        if (res.status === 401 || res.status === 403) {
+          return
+        }
+
         if (!res.ok) {
           throw new Error(`Request failed: ${res.status}`)
         }
+
         const json = await res.json()
         const documents: Array<{
           id: string
@@ -189,7 +206,7 @@ export default function DashboardPage() {
           document_number?: string
           created_at: string
         }> = json.data || []
-        if (res.ok && documents.length > 0) {
+        if (documents.length > 0) {
           setPendingDocuments(documents.map((doc) => ({
             id: doc.id,
             visitor_name: doc.visitor?.full_name || 'Unknown',
@@ -199,18 +216,22 @@ export default function DashboardPage() {
             created_at: doc.created_at,
             photo_url: doc.visitor?.photo_url || null,
           })))
-        } else if (res.ok) {
+        } else {
           setPendingDocuments([])
         }
       } catch (err) {
         console.error('Failed to fetch pending documents:', err)
       }
     }
-    fetchPendingDocuments()
+
+    if (authReady) {
+      fetchPendingDocuments()
+    }
   }, [authReady])
 
   useEffect(() => {
     const fetchRecentVisitors = async () => {
+      if (!authReady) return
       try {
         const { data } = await supabase
           .from('visits')
@@ -242,8 +263,11 @@ export default function DashboardPage() {
         console.error('Failed to fetch recent visitors:', err)
       }
     }
-    fetchRecentVisitors()
-  }, [])
+
+    if (authReady) {
+      fetchRecentVisitors()
+    }
+  }, [authReady])
 
   const handleLogout = async () => {
     try {
@@ -400,8 +424,10 @@ export default function DashboardPage() {
     router.push('/visitors/' + id)
   }
 
-  const isAdmin = userRole === 'Admin'
-  const showAllSections = isAdmin
+   const isAdmin = userRole === 'Admin'
+   const isPA = userRole === 'PA_TO_DIRECTOR' || userRole === 'PA_TO_CI'
+   const showAllSections = isAdmin
+   const showPASections = isPA
 
   const emergencyAlertCount = securityAlerts.filter(a => a.severity === 'critical').length
   const warningAlertCount = securityAlerts.filter(a => a.severity === 'warning').length
@@ -442,7 +468,7 @@ export default function DashboardPage() {
       <div className="flex h-screen bg-dashboard-bg items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 font-medium">Failed to load dashboard</p>
-          <p className="text-sm text-gray-500 mt-1">{error}</p>
+          <p className="text-sm text-[#9A9F87] mt-1">{error}</p>
           <button onClick={() => refetch()} className="mt-4 px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary-hover transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50">Retry</button>
         </div>
       </div>
@@ -515,7 +541,7 @@ export default function DashboardPage() {
               transition={{ delay: 0.2 }}
               className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"
             >
-              {QUICK_ACTIONS.map((action, index) => (
+              {QUICK_ACTIONS.filter(action => !action.roles || action.roles.includes(userRole)).map((action, index) => (
                 <QuickActionCard
                   key={action.label}
                   label={action.label}
@@ -528,19 +554,21 @@ export default function DashboardPage() {
               ))}
             </motion.div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <RecentVisitorsTable
-                visitors={recentVisitors}
-                onViewProfile={handleViewProfile}
-                onPrintBadge={handlePrintBadge}
-              />
-              <PendingApprovalsTable
-                approvals={pendingOnlineRegistrations}
-                onApprove={handleApproveRegistration}
-                onReject={handleRejectRegistration}
-                onViewProfile={handleViewProfile}
-              />
-            </div>
+            {!isPA && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <RecentVisitorsTable
+                  visitors={recentVisitors}
+                  onViewProfile={handleViewProfile}
+                  onPrintBadge={handlePrintBadge}
+                />
+                <PendingApprovalsTable
+                  approvals={pendingOnlineRegistrations}
+                  onApprove={handleApproveRegistration}
+                  onReject={handleRejectRegistration}
+                  onViewProfile={handleViewProfile}
+                />
+              </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {loading ? (
@@ -561,15 +589,15 @@ export default function DashboardPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-[20px] border border-gray-200/60 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden"
+                className="rounded-[20px] border border-[rgba(85,107,47,0.35)]/60 bg-[#10150D] shadow-[0_10px_30px_rgba(0,0,0,0.35)] overflow-hidden"
               >
-                <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                <div className="p-5 border-b border-[rgba(85,107,47,0.25)] flex items-center justify-between">
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2.5">
+                    <h2 className="text-lg font-semibold text-[#F5F5DC] flex items-center gap-2.5">
                       <Bell className="h-5 w-5 text-primary" />
                       Recent Notifications
                     </h2>
-                    <p className="text-sm text-gray-500 mt-0.5">{notifications.length} recent notification{notifications.length !== 1 ? 's' : ''}</p>
+                    <p className="text-sm text-[#9A9F87] mt-0.5">{notifications.length} recent notification{notifications.length !== 1 ? 's' : ''}</p>
                   </div>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
@@ -581,16 +609,16 @@ export default function DashboardPage() {
                     View All
                   </motion.button>
                 </div>
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-[rgba(85,107,47,0.25)]">
                   {notifications.map((notification) => (
-                    <div key={notification.id} className="p-4 hover:bg-gray-50/80 transition-colors">
+                    <div key={notification.id} className="p-4 hover:bg-[#4B5320]/10/80 transition-colors">
                       <div className="flex items-start gap-3">
                         <div className="p-2 rounded-xl bg-gray-50 flex-shrink-0">
-                          <Bell className="h-4 w-4 text-gray-600" />
+                          <Bell className="h-4 w-4 text-[#9A9F87]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900">{notification.title}</p>
-                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{notification.message}</p>
+                          <p className="text-sm font-semibold text-[#F5F5DC]">{notification.title}</p>
+                          <p className="text-xs text-[#9A9F87] mt-0.5 line-clamp-1">{notification.message}</p>
                         </div>
                         <span className="text-xs text-gray-400 font-mono flex-shrink-0">
                           {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -606,7 +634,7 @@ export default function DashboardPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-[20px] border border-gray-200/60 bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
+                className="rounded-[20px] border border-[rgba(85,107,47,0.35)]/60 bg-[#10150D] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
               >
                 <SecurityPanel alerts={securityAlerts} />
               </motion.div>
@@ -629,19 +657,19 @@ export default function DashboardPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-[20px] border border-gray-200/60 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden"
+                className="rounded-[20px] border border-[rgba(85,107,47,0.35)]/60 bg-[#10150D] shadow-[0_10px_30px_rgba(0,0,0,0.35)] overflow-hidden"
               >
-                <div className="p-5 border-b border-gray-100 flex items-center justify-between cursor-pointer"
+                <div className="p-5 border-b border-[rgba(85,107,47,0.25)] flex items-center justify-between cursor-pointer"
                      onClick={() => router.push('/documents?verification_status=Pending')}>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900">Pending Documents</h2>
-                    <p className="text-sm text-gray-500">{pendingDocuments.length} documents awaiting verification</p>
+                    <h2 className="text-lg font-semibold text-[#F5F5DC]">Pending Documents</h2>
+                    <p className="text-sm text-[#9A9F87]">{pendingDocuments.length} documents awaiting verification</p>
                   </div>
                   <Clock className="h-5 w-5 text-amber-600" />
                 </div>
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-[rgba(85,107,47,0.25)]">
                   {pendingDocuments.map((doc) => (
-                    <div key={doc.id} className="p-4 hover:bg-gray-50 transition-colors">
+                    <div key={doc.id} className="p-4 hover:bg-[#4B5320]/10 transition-colors">
                       <div className="flex items-center gap-4">
                         {doc.photo_url ? (
                           <img src={doc.photo_url} alt={doc.visitor_name} className="h-10 w-10 rounded-full object-cover" />
@@ -651,13 +679,13 @@ export default function DashboardPage() {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900">{doc.visitor_name}</p>
-                          <p className="text-sm text-gray-500 line-clamp-1">{doc.document_type} • {doc.document_number}</p>
+                          <p className="font-medium text-[#F5F5DC]">{doc.visitor_name}</p>
+                          <p className="text-sm text-[#9A9F87] line-clamp-1">{doc.document_type} • {doc.document_number}</p>
                           {doc.organization && <p className="text-xs text-gray-400">{doc.organization}</p>}
                         </div>
                         <div className="text-right">
                           <Clock className="h-4 w-4 text-amber-600 inline-block mb-1" />
-                          <p className="text-xs text-gray-500">{doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '—'}</p>
+                          <p className="text-xs text-[#9A9F87]">{doc.created_at ? new Date(doc.created_at).toLocaleDateString() : '—'}</p>
                         </div>
                       </div>
                     </div>
@@ -668,21 +696,7 @@ export default function DashboardPage() {
 
             {showAllSections && (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900">Appointment Analytics</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-                  <PremiumStatCard title="Today's Appointments" value={appointmentsToday.toString()} icon={Calendar} color="blue" onClick={() => router.push('/appointments')} index={0} />
-                  <PremiumStatCard title="Arrived" value="0" icon={UserCheck} color="amber" onClick={() => router.push('/appointments?status=Arrived')} index={1} />
-                  <PremiumStatCard title="Checked In" value="0" icon={CheckCircle} color="green" onClick={() => router.push('/appointments?status=Checked In')} index={2} />
-                  <PremiumStatCard title="Completed" value="0" icon={CheckCircle2} color="green" onClick={() => router.push('/appointments?status=Completed')} index={3} />
-                  <PremiumStatCard title="Cancelled" value="0" icon={XCircle} color="red" onClick={() => router.push('/appointments?status=Cancelled')} index={4} />
-                  <PremiumStatCard title="No Shows" value="0" icon={XCircle} color="orange" onClick={() => router.push('/appointments?status=No Show')} index={5} />
-                </div>
-              </div>
-            )}
-
-            {showAllSections && (
-              <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900">Visitor Analytics</h2>
+                <h2 className="text-xl font-bold text-[#F5F5DC]">Visitor Analytics</h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <ChartCard title="Visitors by Day" subtitle="Last 30 days">
                     <ResponsiveContainer width="100%" height={300}>
@@ -759,7 +773,7 @@ export default function DashboardPage() {
 
             {showAllSections && (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900">Badge Analytics</h2>
+                <h2 className="text-xl font-bold text-[#F5F5DC]">Badge Analytics</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   <PremiumStatCard title="Generated" value={stats.badgesGenerated.toString()} icon={Printer} color="blue" index={0} />
                   <PremiumStatCard title="Printed" value={stats.badgesPrinted.toString()} icon={Printer} color="green" index={1} />
@@ -784,7 +798,7 @@ export default function DashboardPage() {
 
             {showAllSections && (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900">Employee Analytics</h2>
+                <h2 className="text-xl font-bold text-[#F5F5DC]">Employee Analytics</h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <ChartCard title="Employees by Department">
                     <ResponsiveContainer width="100%" height={300}>
@@ -816,18 +830,18 @@ export default function DashboardPage() {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-[20px] border border-gray-200/60 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] p-6"
+                className="rounded-[20px] border border-[rgba(85,107,47,0.35)]/60 bg-[#10150D] shadow-[0_10px_30px_rgba(0,0,0,0.35)] p-6"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Export Dashboard</h3>
-                    <p className="text-sm text-gray-500">Download current dashboard view</p>
+                    <h3 className="text-lg font-semibold text-[#F5F5DC]">Export Dashboard</h3>
+                    <p className="text-sm text-[#9A9F87]">Download current dashboard view</p>
                   </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         onClick={() => handleExportDashboard('csv')}
                         disabled={exporting}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[44px]"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-3 py-2.5 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[44px]"
                         aria-label="Export as CSV"
                       >
                         CSV
@@ -860,3 +874,5 @@ export default function DashboardPage() {
     </div>
   )
 }
+
+

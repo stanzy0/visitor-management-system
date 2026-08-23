@@ -120,12 +120,12 @@ export default function AdminLogsPage() {
       case 'info':
         return 'bg-blue-50 text-blue-700'
       default:
-        return 'bg-gray-50 text-gray-700'
+        return 'bg-gray-50 text-[#9A9F87]'
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/admin" className="text-sm text-blue-600 hover:underline">
@@ -135,8 +135,8 @@ export default function AdminLogsPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">System Logs</h1>
-            <p className="text-sm text-gray-500">View and export system logs</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">System Logs</h1>
+            <p className="text-sm text-[#9A9F87]">View and export system logs</p>
           </div>
           <button
             onClick={handleExportCSV}
@@ -147,8 +147,8 @@ export default function AdminLogsPage() {
           </button>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -157,13 +157,13 @@ export default function AdminLogsPage() {
                   placeholder="Search logs..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-gray-300 bg-[#10150D] pl-9 pr-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <select
                 value={levelFilter}
                 onChange={(e) => setLevelFilter(e.target.value)}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Levels</option>
                 <option value="error">Error</option>
@@ -173,7 +173,7 @@ export default function AdminLogsPage() {
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-sm text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Categories</option>
                 <option value="application">Application</option>
@@ -188,28 +188,28 @@ export default function AdminLogsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Level</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Category</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Message</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Details</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Source</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Created At</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Level</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Category</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Message</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Details</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Source</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Created At</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={log.id} className="hover:bg-[#4B5320]/10 transition-colors">
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getLevelColor(log.level)}`}>
                         {log.level}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{log.category}</td>
-                    <td className="px-4 py-3 font-medium text-gray-900">{log.message}</td>
-                    <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{log.details || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600">{log.source || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                    <td className="px-4 py-3 text-[#9A9F87]">{log.category}</td>
+                    <td className="px-4 py-3 font-medium text-[#F5F5DC]">{log.message}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] max-w-xs truncate">{log.details || '—'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{log.source || '—'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">
                       {log.created_at ? new Date(log.created_at).toLocaleString() : '—'}
                     </td>
                   </tr>
@@ -220,7 +220,7 @@ export default function AdminLogsPage() {
           {logs.length === 0 && !loading && (
             <div className="p-12 text-center">
               <Filter className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No logs found</p>
+              <p className="text-[#9A9F87]">No logs found</p>
             </div>
           )}
           {loading && (
@@ -233,3 +233,5 @@ export default function AdminLogsPage() {
     </div>
   )
 }
+
+

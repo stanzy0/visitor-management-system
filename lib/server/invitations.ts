@@ -157,23 +157,20 @@ export async function approveInvitation(token: string): Promise<VisitorInvitatio
     visitorId = newVisitor.id
   }
 
-  const { data: appointment, error: appointmentError } = await supabaseAdmin
-    .from('appointments')
+  const { data: visit, error: visitError } = await supabaseAdmin
+    .from('visits')
     .insert({
       visitor_id: visitorId,
       employee_id: invitation.host_employee_id,
-      appointment_date: invitation.expected_date,
-      expected_arrival: invitation.expected_time || '09:00',
-      expected_departure: invitation.expected_time || '17:00',
       purpose: invitation.purpose,
-      notes: invitation.notes || '',
-      status: 'Scheduled',
+      status: 'approved',
+      created_at: new Date().toISOString(),
     })
     .select()
     .single()
 
-  if (appointmentError || !appointment) {
-    throw new Error(appointmentError?.message || 'Failed to create appointment')
+  if (visitError || !visit) {
+    throw new Error(visitError?.message || 'Failed to create visit')
   }
 
   const badgeNumberRes = await supabaseAdmin.rpc('generate_visitor_badge_number')
@@ -188,7 +185,7 @@ export async function approveInvitation(token: string): Promise<VisitorInvitatio
   const { data: badge, error: badgeError } = await supabaseAdmin
     .from('visitor_badges')
     .insert({
-      visit_id: appointment.id,
+      visit_id: visit.id,
       badge_number: badgeNumberRes.data,
       qr_token: qrToken,
       badge_status: 'Active',
@@ -206,7 +203,6 @@ export async function approveInvitation(token: string): Promise<VisitorInvitatio
     .update({
       status: 'Approved',
       updated_at: new Date().toISOString(),
-      appointment_id: appointment.id,
       badge_id: badge.id,
     })
     .eq('invitation_token', token)
@@ -215,7 +211,7 @@ export async function approveInvitation(token: string): Promise<VisitorInvitatio
     throw new Error(updateError.message)
   }
 
-  return { ...invitation, status: 'Approved', appointment_id: appointment.id, badge_id: badge.id } as VisitorInvitation
+  return { ...invitation, status: 'Approved', badge_id: badge.id } as VisitorInvitation
 }
 
 export async function rejectInvitation(token: string): Promise<VisitorInvitation> {

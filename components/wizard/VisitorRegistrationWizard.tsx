@@ -32,6 +32,8 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
     vehicle_type: '',
     emergency_contact: '',
     host_employee_id: '',
+    host_department: '',
+    office_location: '',
     purpose: '',
     custom_purpose: '',
     has_vehicle: false,
@@ -54,6 +56,7 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
     doc_front_url: '',
     doc_back_url: '',
     doc_notes: '',
+    photo_url: '',
   })
   const [error, setError] = useState<string | null>(null)
   const [validationErrors, setValidationErrors] = useState<Record<string, string | null>>({})
@@ -111,8 +114,8 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
     } else if (step === 6) {
       errors = validateStep6({
         emergency_contact: formData.emergency_contact,
-        emergency_relationship: formData.emergency_relationship || formData.emergency_contact,
-        emergency_phone: formData.emergency_contact,
+        emergency_relationship: formData.emergency_relationship,
+        emergency_phone: formData.emergency_phone,
       })
     }
 
@@ -162,8 +165,8 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
       }),
       ...validateStep6({
         emergency_contact: formData.emergency_contact,
-        emergency_relationship: formData.emergency_contact,
-        emergency_phone: formData.emergency_contact,
+        emergency_relationship: formData.emergency_relationship,
+        emergency_phone: formData.emergency_phone,
       }),
     }
 
@@ -234,7 +237,7 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
 
       const { data: employeeData } = await supabase
         .from('employees')
-        .select('office_location')
+        .select('office_location, full_name')
         .eq('id', formData.host_employee_id)
         .single()
 
@@ -290,9 +293,6 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
           source: 'internal',
           registration_number: regNumber,
           visitor_type: visitorType,
-          visit_date: formData.visit_date,
-          arrival_time: formData.arrival_time || null,
-          expected_duration: formData.expected_duration || 0,
           office_location: officeLocation,
           notes: formData.notes || null,
         })
@@ -318,6 +318,37 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
           verified: false,
           verification_status: 'Pending',
         })
+      }
+
+      try {
+        const registrationNumber = visit.registration_number || regNumber
+        await fetch('/api/notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: 'New Visitor Registration',
+            message: `${visitor.full_name} has been registered for ${employeeData?.full_name || 'a host'} (${registrationNumber}).`,
+            type: 'visitor',
+            recipientRole: 'PA_TO_CI',
+            relatedType: 'visit',
+            relatedId: visit.id,
+          }),
+        })
+
+        await fetch('/api/notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: 'New Visitor Registration',
+            message: `${visitor.full_name} has been registered for ${employeeData?.full_name || 'a host'} (${registrationNumber}).`,
+            type: 'visitor',
+            recipientRole: 'PA_TO_DIRECTOR',
+            relatedType: 'visit',
+            relatedId: visit.id,
+          }),
+        })
+      } catch {
+        // notification delivery failure should not block registration
       }
 
       onComplete?.()
@@ -348,8 +379,8 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
     }))
     if (step === 6) return hasValidationErrors(validateStep6({
       emergency_contact: formData.emergency_contact,
-      emergency_relationship: formData.emergency_contact,
-      emergency_phone: formData.emergency_contact,
+      emergency_relationship: formData.emergency_relationship,
+      emergency_phone: formData.emergency_phone,
     }))
     return false
   }
@@ -386,13 +417,18 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
             vehicle_color={formData.vehicle_color}
             registration_number={formData.registration_number}
             emergency_contact={formData.emergency_contact}
+            emergency_relationship={formData.emergency_relationship}
             doc_type={formData.doc_type}
             doc_number={formData.doc_number}
             expiry_date={formData.expiry_date}
             host_employee_id={formData.host_employee_id}
+            host_department={formData.host_department}
+            office_location={formData.office_location}
             purpose={formData.purpose}
             custom_purpose={formData.custom_purpose}
             expected_duration={formData.expected_duration || 0}
+            id_verification={formData.id_verification}
+            photo_url={formData.photo_url || null}
           />
         )}
 
@@ -413,8 +449,8 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
 
         {step < totalSteps ? (
           <button
+            type="button"
             onClick={next}
-            disabled={isStepInvalid()}
             className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
           >
             Next

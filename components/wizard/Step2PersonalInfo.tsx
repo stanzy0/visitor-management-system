@@ -1,6 +1,9 @@
 'use client'
 
 import type { VisitorFormData } from '@/lib/types/visitor'
+import SearchableCombobox from '@/components/ui/SearchableCombobox'
+import { NATIONALITY_OPTIONS } from '@/lib/data/countries'
+import PhotoCapture from '@/components/PhotoCapture'
 
 interface Step2Props {
   full_name?: string
@@ -10,13 +13,14 @@ interface Step2Props {
   nationality?: string
   visitor_address?: string
   visitor_organization?: string
+  photo_url?: string | null
   onChange: (field: keyof VisitorFormData, value: string) => void
   errors?: Record<string, string | null>
   touched?: Set<string>
   onBlur?: (field: string) => void
 }
 
-export default function Step2PersonalInfo({ full_name = '', gender = '', phone = '', email = '', nationality = '', visitor_address = '', visitor_organization = '', onChange, errors = {}, touched = new Set(), onBlur }: Step2Props) {
+export default function Step2PersonalInfo({ full_name = '', gender = '', phone = '', email = '', nationality = '', visitor_address = '', visitor_organization = '', photo_url = '', onChange, errors = {}, touched = new Set(), onBlur }: Step2Props) {
   const inputClasses = (field: string) => {
     const base = 'w-full rounded-lg border px-3 py-2'
     const touchedAndError = touched.has(field) && errors[field]
@@ -26,6 +30,17 @@ export default function Step2PersonalInfo({ full_name = '', gender = '', phone =
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium text-gray-900">Personal Information</h3>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Visitor Photograph</label>
+        <PhotoCapture
+          value={photo_url || null}
+          onChange={(dataUrl) => onChange('photo_url', dataUrl || '')}
+          error={touched.has('photo_url') && errors.photo_url ? errors.photo_url : undefined}
+          required={false}
+        />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
@@ -50,7 +65,15 @@ export default function Step2PersonalInfo({ full_name = '', gender = '', phone =
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Nationality *</label>
-          <input type="text" value={nationality} onChange={(e) => onChange('nationality', e.target.value)} onBlur={() => onBlur?.('nationality')} className={inputClasses('nationality')} />
+          <SearchableCombobox
+            options={NATIONALITY_OPTIONS}
+            value={nationality}
+            onChange={(value) => onChange('nationality', value)}
+            placeholder="Select nationality"
+            searchPlaceholder="Search nationality..."
+            noResultsText="No nationality found"
+            required
+          />
           {touched.has('nationality') && errors.nationality && <p className="text-sm text-red-600 mt-1">{errors.nationality}</p>}
         </div>
         <div>

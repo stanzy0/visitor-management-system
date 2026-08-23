@@ -50,7 +50,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
 
 const categoryColors: Record<string, string> = {
   'Security Alert': 'bg-red-50 text-red-700 border-red-200',
-  'Banned': 'bg-gray-50 text-gray-700 border-gray-200',
+  'Banned': 'bg-gray-50 text-[#9A9F87] border-[rgba(85,107,47,0.35)]',
   'VIP': 'bg-amber-50 text-amber-700 border-amber-200',
   'Contractor': 'bg-blue-50 text-blue-700 border-blue-200',
   'Person of Interest': 'bg-purple-50 text-purple-700 border-purple-200',
@@ -59,7 +59,7 @@ const categoryColors: Record<string, string> = {
 
 const statusColors: Record<string, string> = {
   'Active': 'bg-green-50 text-green-700 border-green-200',
-  'Expired': 'bg-gray-50 text-gray-700 border-gray-200',
+  'Expired': 'bg-gray-50 text-[#9A9F87] border-[rgba(85,107,47,0.35)]',
 }
 
 export default function WatchlistPage() {
@@ -304,7 +304,7 @@ export default function WatchlistPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/dashboard" className="text-sm text-blue-600 hover:underline">
@@ -315,12 +315,12 @@ export default function WatchlistPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <ShieldAlert className="h-8 w-8 text-red-600" />
-            <h1 className="text-2xl font-bold text-gray-900">Visitor Watchlist</h1>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Visitor Watchlist</h1>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={fetchEntries}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -347,8 +347,8 @@ export default function WatchlistPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -357,13 +357,13 @@ export default function WatchlistPage() {
                   placeholder="Search by name, phone, email, organization, vehicle..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
+                  className="pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-[#10150D] text-black placeholder:text-[#9A9F87] focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
                 />
               </div>
               <select
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Categories</option>
                 {CATEGORY_OPTIONS.map((cat) => (
@@ -373,7 +373,7 @@ export default function WatchlistPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">All Status</option>
                 {STATUS_OPTIONS.map((s) => (
@@ -390,29 +390,29 @@ export default function WatchlistPage() {
             ) : (
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 font-semibold text-gray-700">Name</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Category</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Organization</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Reason</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Added By</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Created</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700 w-28">Actions</th>
+                  <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Name</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Category</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Organization</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Reason</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Added By</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Created</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87] w-28">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                   {filteredEntries.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={entry.id} className="hover:bg-[#4B5320]/10 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
-                          <span className="font-medium text-gray-900">{entry.full_name}</span>
-                          {entry.phone && <span className="text-xs text-gray-500">{entry.phone}</span>}
-                          {entry.email && <span className="text-xs text-gray-500">{entry.email}</span>}
+                          <span className="font-medium text-[#F5F5DC]">{entry.full_name}</span>
+                          {entry.phone && <span className="text-xs text-[#9A9F87]">{entry.phone}</span>}
+                          {entry.email && <span className="text-xs text-[#9A9F87]">{entry.email}</span>}
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${categoryColors[entry.category] || 'bg-gray-50 text-gray-700'}`}>
+                        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${categoryColors[entry.category] || 'bg-gray-50 text-[#9A9F87]'}`}>
                           {categoryIcons[entry.category]}
                           {entry.category}
                         </span>
@@ -425,14 +425,14 @@ export default function WatchlistPage() {
                           {entry.status}
                         </button>
                       </td>
-                      <td className="px-4 py-3 text-gray-600">{entry.visitor_organization || '—'}</td>
-                      <td className="px-4 py-3 text-gray-600 max-w-xs truncate" title={entry.reason || ''}>
+                      <td className="px-4 py-3 text-[#9A9F87]">{entry.visitor_organization || '—'}</td>
+                      <td className="px-4 py-3 text-[#9A9F87] max-w-xs truncate" title={entry.reason || ''}>
                         {entry.reason || '—'}
                       </td>
-                      <td className="px-4 py-3 text-gray-600">
+                      <td className="px-4 py-3 text-[#9A9F87]">
                         {entry.added_by}
                       </td>
-                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                      <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">
                          {entry.created_at ? new Date(entry.created_at).toLocaleDateString() : '—'}
                       </td>
                       <td className="px-4 py-3">
@@ -442,14 +442,14 @@ export default function WatchlistPage() {
                             className="p-1 rounded-md hover:bg-gray-100 transition-colors"
                             title="Edit"
                           >
-                            <Edit className="h-4 w-4 text-gray-600" />
+                            <Edit className="h-4 w-4 text-[#9A9F87]" />
                           </button>
                           <button
                             onClick={() => handleStatusToggle(entry)}
                             className="p-1 rounded-md hover:bg-gray-100 transition-colors"
                             title={entry.status === 'Active' ? 'Deactivate' : 'Reactivate'}
                           >
-                            <RefreshCw className="h-4 w-4 text-gray-600" />
+                            <RefreshCw className="h-4 w-4 text-[#9A9F87]" />
                           </button>
                           {userRole === 'Admin' && (
                             <button
@@ -471,7 +471,7 @@ export default function WatchlistPage() {
             {!loading && filteredEntries.length === 0 && (
               <div className="py-12 text-center">
                 <ShieldAlert className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No watchlist entries found</p>
+                <p className="text-[#9A9F87]">No watchlist entries found</p>
               </div>
             )}
           </div>
@@ -481,9 +481,9 @@ export default function WatchlistPage() {
       {/* Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
-            <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
-              <h2 className="text-lg font-semibold text-gray-900">
+          <div className="w-full max-w-lg rounded-xl bg-[#10150D] shadow-xl max-h-[90vh] flex flex-col">
+            <div className="flex-shrink-0 flex items-center justify-between border-b border-[rgba(85,107,47,0.35)] p-4">
+              <h2 className="text-lg font-semibold text-[#F5F5DC]">
                 {editingEntry ? 'Edit Watchlist Entry' : 'Add Watchlist Entry'}
               </h2>
               <button
@@ -497,77 +497,77 @@ export default function WatchlistPage() {
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
               <div className="p-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Full Name *</label>
                   <input
                     type="text"
                     value={formData.full_name}
                     onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                     required
                     placeholder="Enter full name"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Email</label>
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="Enter email"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Phone</label>
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       placeholder="Enter phone"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">ID Number</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">ID Number</label>
                     <input
                       type="text"
                       value={formData.id_number}
                       onChange={(e) => setFormData({ ...formData, id_number: e.target.value })}
                       placeholder="Enter ID number"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Vehicle Registration</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Vehicle Registration</label>
                     <input
                       type="text"
                       value={formData.vehicle_registration}
                       onChange={(e) => setFormData({ ...formData, vehicle_registration: e.target.value })}
                       placeholder="Enter registration"
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Organization</label>
                   <input
                     type="text"
                     value={formData.visitor_organization}
                     onChange={(e) => setFormData({ ...formData, visitor_organization: e.target.value })}
                     placeholder="Enter organization"
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Category</label>
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value as WatchlistEntry['category'] })}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       {CATEGORY_OPTIONS.map((cat) => (
                         <option key={cat} value={cat}>{cat}</option>
@@ -575,11 +575,11 @@ export default function WatchlistPage() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <label className="block text-sm font-medium text-[#9A9F87] mb-1">Status</label>
                     <select
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value as 'Active' | 'Expired' })}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       {STATUS_OPTIONS.map((s) => (
                         <option key={s} value={s}>{s}</option>
@@ -588,31 +588,31 @@ export default function WatchlistPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Reason</label>
                   <textarea
                     value={formData.reason}
                     onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                     placeholder="Enter reason"
                     rows={2}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Notes</label>
                   <textarea
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                     placeholder="Enter notes"
                     rows={2}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black placeholder:text-gray-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>
-              <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t border-gray-200">
+              <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t border-[rgba(85,107,47,0.35)]">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors"
                 >
                   Cancel
                 </button>
@@ -632,3 +632,5 @@ export default function WatchlistPage() {
     </div>
   )
 }
+
+

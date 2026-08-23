@@ -12,7 +12,6 @@ import {
   Settings,
   LogOut,
   Monitor,
-  Calendar,
   Building2,
   BarChart3,
   IdCard,
@@ -32,6 +31,8 @@ import {
   ChevronRight,
   Palette,
 } from 'lucide-react'
+import ImageWithFallback from '@/components/ui/ImageWithFallback'
+import type { LucideIcon } from 'lucide-react'
 import { UserRole, PERMISSIONS } from '@/lib/auth-client'
 import { staggerContainer, fadeUp } from '@/lib/animations/variants'
 
@@ -41,7 +42,6 @@ const NAV_SECTIONS = [
     { label: 'Reception Kiosk', icon: Monitor, href: '/reception/kiosk', permission: 'dashboard' },
     { label: 'Self Check-In Kiosk', icon: QrCode, href: '/kiosk', permission: 'dashboard' },
     { label: 'Visitors', icon: Users, href: '/visitors', permission: 'visitors' },
-    { label: 'Appointments', icon: Calendar, href: '/appointments', permission: 'appointments' },
     { label: 'Visits', icon: Clock, href: '/visits', permission: 'visits' },
     { label: 'Badges', icon: IdCard, href: '/badges', permission: 'badges' },
     { label: 'QR Scanner', icon: Scan, href: '/scanner', permission: 'scanner' },
@@ -91,6 +91,18 @@ const NAV_SECTIONS = [
   ]},
 ]
 
+export interface NavSectionItem {
+  label: string
+  icon: LucideIcon
+  href: string
+  permission: string
+}
+
+export interface NavSection {
+  title: string
+  items: NavSectionItem[]
+}
+
 interface PremiumSidebarProps {
   open: boolean
   onClose: () => void
@@ -100,15 +112,22 @@ interface PremiumSidebarProps {
   currentPath?: string
   collapsed?: boolean
   onToggleCollapse?: () => void
+  navSections?: NavSection[]
+  brandSubtitle?: string
 }
 
 function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() => {
     if (typeof window === 'undefined') return false
-    return window.matchMedia(query).matches
+    try {
+      return window.matchMedia(query).matches
+    } catch {
+      return false
+    }
   })
 
   useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return
     const mq = window.matchMedia(query)
     const update = () => setMatches(mq.matches)
     update()
@@ -128,6 +147,8 @@ export default function PremiumSidebar({
   currentPath,
   collapsed = false,
   onToggleCollapse,
+  navSections,
+  brandSubtitle,
 }: PremiumSidebarProps) {
   const [liveTime, setLiveTime] = useState(new Date())
   const isDesktop = useMediaQuery('(min-width: 1024px)')
@@ -171,13 +192,15 @@ export default function PremiumSidebar({
             className="flex items-center gap-3"
             style={{ display: isCollapsed ? 'flex' : 'flex' }}
           >
-            <div className="p-2 rounded-xl bg-primary shadow-lg shadow-primary/30 flex-shrink-0">
-              <ShieldCheck className="h-6 w-6 text-white" />
-            </div>
+            <ImageWithFallback
+              src="/images/army logo.png"
+              alt="Army Logo"
+              className="h-10 w-10 object-contain"
+            />
             {!isCollapsed && (
               <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
-                <span className="text-lg font-bold text-white tracking-tight">AFCSC VMS</span>
-                <span className="text-xs text-slate-400 block -mt-0.5">Command Center</span>
+                 <span className="text-lg font-bold text-white tracking-tight">Department of Land Warfare</span>
+                <span className="text-xs text-slate-400 block -mt-0.5">{brandSubtitle ?? 'Command Center'}</span>
               </motion.div>
             )}
           </motion.div>
@@ -230,8 +253,8 @@ export default function PremiumSidebar({
 
         <nav className={`flex-1 overflow-y-auto scrollbar-thin ${isCollapsed ? 'p-2' : 'p-3'}`}>
           <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-6">
-            {NAV_SECTIONS.map((section) => {
-              const items = getNavItems(section.items)
+            {(navSections ?? NAV_SECTIONS).map((section) => {
+              const items = navSections ? section.items : getNavItems(section.items)
               if (items.length === 0) return null
               return (
                 <div key={section.title}>

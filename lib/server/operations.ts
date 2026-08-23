@@ -13,7 +13,6 @@ export interface OperationsKpis {
   overstayedVisitors: number
   activeSecurityAlerts: number
   visitorsLeavingToday: number
-  appointmentsNow: number
 }
 
 export interface OperationsVisitor {
@@ -42,12 +41,6 @@ export interface OperationsVisitor {
     badge_status: string
     printed_at: string | null
     expires_at: string
-  } | null
-  appointment: {
-    id: string
-    appointment_date: string
-    appointment_time: string
-    status: string
   } | null
 }
 
@@ -94,7 +87,6 @@ export interface SecurityAlertItem {
 
 export interface HostAvailability {
   available: Array<{ id: string; full_name: string; department: string | null }>
-  inAppointments: Array<{ id: string; full_name: string; department: string | null; appointment_time: string }>
   unavailable: Array<{ id: string; full_name: string; department: string | null; reason: string }>
   outsideOffice: Array<{ id: string; full_name: string; office_location: string | null }>
 }
@@ -132,7 +124,7 @@ export async function getOperationsKpis(): Promise<OperationsKpis> {
       visitorsInside: 0, waitingReception: 0, waitingDocumentVerification: 0,
       waitingBadgePrinting: 0, waitingSecurityClearance: 0, approvedWaitingCheckIn: 0,
       checkedIn: 0, checkedOutToday: 0, overstayedVisitors: 0, activeSecurityAlerts: 0,
-      visitorsLeavingToday: 0, appointmentsNow: 0,
+      visitorsLeavingToday: 0,
     }
   }
 
@@ -147,7 +139,6 @@ export async function getOperationsKpis(): Promise<OperationsKpis> {
     checkedOutTodayRes,
     overstayedRes,
     alertsRes,
-    appointmentsNowRes,
   ] = await Promise.all([
     supabaseAdmin.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'checked_in'),
     supabaseAdmin.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
@@ -155,7 +146,6 @@ export async function getOperationsKpis(): Promise<OperationsKpis> {
     supabaseAdmin.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'checked_out').gte('check_out_time', todayStart).lt('check_out_time', todayEnd),
     supabaseAdmin.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'overstayed'),
     supabaseAdmin.from('security_alerts').select('id', { count: 'exact', head: true }).eq('is_resolved', false),
-    supabaseAdmin.from('appointments').select('id', { count: 'exact', head: true }).eq('appointment_date', now.toISOString().split('T')[0]).in('status', ['Scheduled', 'Arrived']),
   ])
 
   const checkedInCount = insideRes.count || 0
@@ -212,7 +202,6 @@ export async function getOperationsKpis(): Promise<OperationsKpis> {
     overstayedVisitors: overstayedRes.count || 0,
     activeSecurityAlerts: alertsRes.count || 0,
     visitorsLeavingToday,
-    appointmentsNow: appointmentsNowRes.count || 0,
   }
 }
 
@@ -224,7 +213,7 @@ export async function getLiveVisitors(page: number = 1, limit: number = 50, sear
   const offset = (page - 1) * limit
   let query = supabaseAdmin
     .from('visits')
-    .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*), appointment:appointments(*)', { count: 'exact' })
+    .select('*, visitor:visitors(*), employee:employees(*), badge:visitor_badges(*)', { count: 'exact' })
     .in('status', ['pending', 'approved', 'checked_in', 'overstayed'])
     .order('created_at', { ascending: false })
 
@@ -551,21 +540,13 @@ export async function getSecurityPanel(): Promise<{
 
 export async function getHostAvailability(): Promise<HostAvailability> {
   if (!supabaseAdmin) {
-    return { available: [], inAppointments: [], unavailable: [], outsideOffice: [] }
+    return { available: [], unavailable: [], outsideOffice: [] }
   }
-
-  const today = new Date().toISOString().split('T')[0]
 
   const employees = await supabaseAdmin
     .from('employees')
     .select('id, full_name, department, office_location, status')
     .order('full_name', { ascending: true })
-
-  const appointments = await supabaseAdmin
-    .from('appointments')
-    .select('employee_id, appointment_time, status')
-    .eq('appointment_date', today)
-    .in('status', ['Scheduled', 'Arrived'])
 
   const activeVisits = await supabaseAdmin
     .from('visits')
@@ -575,12 +556,10 @@ export async function getHostAvailability(): Promise<HostAvailability> {
   const activeVisitEmployeeIds = new Set((activeVisits.data || []).map((v: { employee_id: string }) => v.employee_id))
 
   const available: Array<{ id: string; full_name: string; department: string | null }> = []
-  const inAppointments: Array<{ id: string; full_name: string; department: string | null; appointment_time: string }> = []
   const unavailable: Array<{ id: string; full_name: string; department: string | null; reason: string }> = []
   const outsideOffice: Array<{ id: string; full_name: string; office_location: string | null }> = []
 
   const employeesList = (employees.data || []) as Array<{ id: string; full_name: string; department: string | null; office_location: string | null; status: string }>
-  const appointmentsList = (appointments.data || []) as Array<{ employee_id: string; appointment_time: string }>
 
   employeesList.forEach((emp: { id: string; full_name: string; department: string | null; office_location: string | null; status: string }) => {
     if (emp.status !== 'active') {
@@ -592,20 +571,14 @@ export async function getHostAvailability(): Promise<HostAvailability> {
       return
     }
 
-    const hasAppointment = appointmentsList.some((a: { employee_id: string }) => a.employee_id === emp.id)
-    if (hasAppointment) {
-      const appt = appointmentsList.find((a: { employee_id: string }) => a.employee_id === emp.id)
-      inAppointments.push({ id: emp.id, full_name: emp.full_name, department: emp.department, appointment_time: appt?.appointment_time || '' })
-    } else {
-      available.push({ id: emp.id, full_name: emp.full_name, department: emp.department })
-    }
+    available.push({ id: emp.id, full_name: emp.full_name, department: emp.department })
 
     if (!emp.office_location) {
       outsideOffice.push({ id: emp.id, full_name: emp.full_name, office_location: emp.office_location })
     }
   })
 
-  return { available, inAppointments, unavailable, outsideOffice }
+  return { available, unavailable, outsideOffice }
 }
 
 export async function getOfficeOccupancy(): Promise<OfficeOccupancy[]> {

@@ -47,13 +47,6 @@ export interface BadgePreviewVisit {
   rejection_reason: string | null
   visitor: BadgePreviewVisitor | null
   employee: BadgePreviewEmployee | null
-  appointment: {
-    id: string
-    appointment_date: string
-    appointment_time: string | null
-    expected_arrival: string | null
-    status: string
-  } | null
 }
 
 export interface BadgeTemplateOption {

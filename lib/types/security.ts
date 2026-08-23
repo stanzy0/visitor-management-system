@@ -29,7 +29,6 @@ export type SecurityAlertType =
   | 'Badge Expired'
   | 'Watchlist Match'
   | 'Visitor Overstayed'
-  | 'Appointment Cancelled'
   | 'Invalid QR'
   | 'Duplicate Check-In'
   | 'Host Not Available'
@@ -96,5 +95,4 @@ export type DenialReason =
   | 'Expired Badge'
   | 'Watchlist Match'
   | 'Host Unavailable'
-  | 'Appointment Cancelled'
   | 'Other'

@@ -82,7 +82,7 @@ export default function SystemInfoPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )
@@ -90,8 +90,8 @@ export default function SystemInfoPage() {
 
   if (!systemInfo) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">No system information available</p>
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center">
+        <p className="text-[#9A9F87]">No system information available</p>
       </div>
     )
   }
@@ -104,14 +104,14 @@ export default function SystemInfoPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">System Information</h1>
-            <p className="text-sm text-gray-500">Real-time system metrics and status</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">System Information</h1>
+            <p className="text-sm text-[#9A9F87]">Real-time system metrics and status</p>
           </div>
-          <button onClick={fetchSystemInfo} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+          <button onClick={fetchSystemInfo} className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">
             <RefreshCw className="h-4 w-4" />
             Refresh
           </button>
@@ -122,12 +122,12 @@ export default function SystemInfoPage() {
           {resources.map((resource) => {
             const Icon = resource.icon
             return (
-              <div key={resource.label} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div key={resource.label} className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-medium text-gray-500">{resource.label}</p>
+                  <p className="text-xs font-medium text-[#9A9F87]">{resource.label}</p>
                   <Icon className="h-4 w-4 text-gray-400" />
                 </div>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-[#F5F5DC]">
                   {resource.value !== null ? `${resource.value.toFixed(1)}${resource.unit}` : 'N/A'}
                 </p>
                 {resource.value !== null && (
@@ -154,8 +154,8 @@ export default function SystemInfoPage() {
         </div>
 
         {/* Status Indicators */}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">System Status</h2>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-6">
+          <h2 className="text-lg font-semibold text-[#F5F5DC] mb-4">System Status</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <StatusItem label="CPU" status={systemInfo.cpu_usage_percent && systemInfo.cpu_usage_percent > 80 ? 'warning' : 'healthy'} />
             <StatusItem label="Memory" status={systemInfo.memory_usage_percent && systemInfo.memory_usage_percent > 80 ? 'warning' : 'healthy'} />
@@ -170,12 +170,12 @@ export default function SystemInfoPage() {
 
 function InfoCard({ label, value, icon: Icon }: { label: string; value: string; icon: React.ComponentType<{ className?: string }> }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 shadow-sm">
       <div className="flex items-center gap-2 mb-2">
         <Icon className="h-4 w-4 text-gray-400" />
-        <p className="text-xs font-medium text-gray-500">{label}</p>
+        <p className="text-xs font-medium text-[#9A9F87]">{label}</p>
       </div>
-      <p className="text-sm font-semibold text-gray-900">{value}</p>
+      <p className="text-sm font-semibold text-[#F5F5DC]">{value}</p>
     </div>
   )
 }
@@ -197,3 +197,5 @@ function StatusItem({ label, status }: { label: string; status: string }) {
     </div>
   )
 }
+
+

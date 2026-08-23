@@ -118,7 +118,7 @@ export default function AdminBackupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/admin" className="text-sm text-blue-600 hover:underline">
@@ -128,8 +128,8 @@ export default function AdminBackupPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Backup Management</h1>
-            <p className="text-sm text-gray-500">Create, download, and restore system backups</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Backup Management</h1>
+            <p className="text-sm text-[#9A9F87]">Create, download, and restore system backups</p>
           </div>
           <button
             onClick={handleCreateBackup}
@@ -147,26 +147,26 @@ export default function AdminBackupPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Filename</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Size</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Created By</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Created At</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Actions</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Filename</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Size</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Created By</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Created At</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {backups.map((backup) => (
-                  <tr key={backup.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900">{backup.filename}</td>
-                    <td className="px-4 py-3 text-gray-600">{backup.size}</td>
-                    <td className="px-4 py-3 text-gray-600">{backup.created_by}</td>
-                    <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
+                  <tr key={backup.id} className="hover:bg-[#4B5320]/10 transition-colors">
+                    <td className="px-4 py-3 font-medium text-[#F5F5DC]">{backup.filename}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{backup.size}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{backup.created_by}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] whitespace-nowrap">
                       {backup.created_at ? new Date(backup.created_at).toLocaleString() : '—'}
                     </td>
                     <td className="px-4 py-3">
@@ -183,7 +183,7 @@ export default function AdminBackupPage() {
                           className="p-1 rounded-md hover:bg-gray-100"
                           title="Download"
                         >
-                          <Download className="h-4 w-4 text-gray-600" />
+                          <Download className="h-4 w-4 text-[#9A9F87]" />
                         </button>
                         <button
                           onClick={() => handleRestore(backup.id)}
@@ -207,7 +207,7 @@ export default function AdminBackupPage() {
           {backups.length === 0 && !loading && (
             <div className="p-12 text-center">
               <AlertTriangle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No backups found</p>
+              <p className="text-[#9A9F87]">No backups found</p>
             </div>
           )}
           {loading && (
@@ -220,3 +220,5 @@ export default function AdminBackupPage() {
     </div>
   )
 }
+
+

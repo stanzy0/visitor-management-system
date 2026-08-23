@@ -39,7 +39,6 @@ export default function NotificationFilters({ filters, onFilterChange }: Notific
           >
             <option value="all">All Types</option>
             <option value="visitor">Visitor</option>
-            <option value="appointment">Appointment</option>
             <option value="employee">Employee</option>
             <option value="system">System</option>
             <option value="info">Info</option>

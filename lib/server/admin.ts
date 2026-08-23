@@ -3,6 +3,27 @@ import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
 import type { AdminDashboardStats, SystemHealth, AdminRole, SystemLog, BackupRecord, AdminUser, Department, Office, Integration, EmailTemplate, AuditLogEntry, SystemHealthDetailed } from '@/lib/types/admin'
 
+export function generateTemporaryPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+  const bytes = Buffer.from(require('crypto').randomBytes(16))
+  let result = 'VMS-'
+  for (let i = 0; i < 16; i++) {
+    result += chars[bytes[i] % chars.length]
+    if (i === 3 || i === 7 || i === 11) result += '-'
+  }
+  return result
+}
+
+/**
+ * Normalize an email address exactly as it should be stored/looked up in Auth:
+ * trim surrounding whitespace and force lowercase. Supabase lowercases emails
+ * on storage but does NOT trim, so a stray trailing space at creation makes the
+ * stored address unmatchable at login ("Invalid login credentials").
+ */
+export function normalizeEmail(email: string): string {
+  return (email || '').trim().toLowerCase()
+}
+
 export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
@@ -302,8 +323,8 @@ export async function sendTestEmail(email: string): Promise<{ success: boolean; 
       body: JSON.stringify({
         to: email,
         subject: 'Test Email from Admin Portal',
-        html: '<p>This is a test email from the AFCSC Visitor Management System Admin Portal.</p>',
-        text: 'This is a test email from the AFCSC Visitor Management System Admin Portal.',
+        html: '<p>This is a test email from the Department of Land Warfare Visitors Management System Admin Portal.</p>',
+        text: 'This is a test email from the Department of Land Warfare Visitors Management System Admin Portal.',
       }),
     })
 
@@ -326,7 +347,7 @@ export async function getEmailSettings(): Promise<{ id: string; key: string; val
   const { data, error } = await supabaseAdmin
     .from('system_settings')
     .select('*')
-    .in('key', ['resend_api_status', 'sender_name', 'sender_email', 'reply_to_email', 'enable_emails', 'enable_appointment_emails', 'enable_reminder_emails', 'enable_emergency_emails'])
+    .in('key', ['resend_api_status', 'sender_name', 'sender_email', 'reply_to_email', 'enable_emails', 'enable_reminder_emails', 'enable_emergency_emails'])
 
   if (error) {
     throw new Error(error.message)
@@ -366,44 +387,184 @@ export async function getAllUsers(): Promise<AdminUser[]> {
     .order('created_at', { ascending: false })
 
   if (error) throw new Error(error.message)
+
+  const users = data || []
+
+  // Fetch host assignments for users who have them
+  const userIds = users.map(u => u.user_id)
+  if (userIds.length > 0) {
+    const { data: assignments, error: assignmentError } = await supabaseAdmin
+      .from('user_host_assignments')
+      .select('user_id, employee_id, employee:employees!inner(full_name, position, department)')
+      .in('user_id', userIds)
+
+    // Only merge assignments if the table exists and query succeeded
+    if (!assignmentError && assignments) {
+      const assignmentMap = new Map(
+        assignments.map(a => [a.user_id, { employee_id: a.employee_id, ...a.employee }])
+      )
+      return users.map(user => ({
+        ...user,
+        host_assignment: assignmentMap.get(user.user_id) || null,
+      }))
+    }
+  }
+
   return data || []
 }
 
-export async function createUser(data: { email: string; full_name: string; role: string; password: string }): Promise<{ id: string; email?: string; [key: string]: unknown }> {
-  if (!supabaseAdmin) throw new Error('Service role key not configured')
+export async function createUser(data: { email: string; full_name: string; role: string; password?: string; must_change_password?: boolean; assigned_host_id?: string; assigned_director_id?: string }): Promise<{ id: string; email?: string; temporary_password?: string; diagnostics?: Record<string, unknown>; [key: string]: unknown }> {
+  if (!supabaseAdmin) {
+    throw new Error('Service role key not configured')
+  }
+
+  const normalizedEmail = normalizeEmail(data.email)
+  const mustChangePassword = data.must_change_password ?? true
+  const tempPassword = data.password || generateTemporaryPassword()
+
+  // Safe diagnostics — never includes the plaintext password.
+  const diagnostics = {
+    normalized_email: normalizedEmail,
+    auth_user_id: null as string | null,
+    auth_created: false,
+    role_created: false,
+    host_assigned: false,
+  }
 
   const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email: data.email,
-    password: data.password,
+    email: normalizedEmail,
+    password: tempPassword,
     email_confirm: true,
+    user_metadata: { must_change_password: mustChangePassword },
   })
 
   if (authError || !authData.user) {
+    console.error('[USER CREATE SERVER] Supabase Auth user creation failed:', {
+      code: authError?.code,
+      message: authError?.message,
+      status: authError?.status,
+    })
     throw new Error(authError?.message || 'Failed to create user')
+  }
+
+  diagnostics.auth_user_id = authData.user.id
+  diagnostics.auth_created = true
+  const userId = authData.user.id
+
+  // Verify the Auth record actually exists and the stored email matches.
+  const { data: verifiedUser, error: verifyError } = await supabaseAdmin.auth.admin.getUserById(userId)
+  if (verifyError || !verifiedUser?.user) {
+    console.error('[USER CREATE SERVER] getUserById verification failed:', verifyError?.message)
+    await supabaseAdmin.auth.admin.deleteUser(userId)
+    throw new Error('Failed to verify created auth user')
+  }
+  if (verifiedUser.user.email && verifiedUser.user.email !== normalizedEmail) {
+    console.error('[USER CREATE SERVER] Email mismatch after creation', {
+      stored: verifiedUser.user.email,
+      expected: normalizedEmail,
+    })
   }
 
   const { error: roleError } = await supabaseAdmin
     .from('user_roles')
     .insert({
-      user_id: authData.user.id,
-      email: data.email,
+      user_id: userId,
+      email: normalizedEmail,
       full_name: data.full_name,
       role: data.role,
+      must_change_password: mustChangePassword,
     })
 
   if (roleError) {
-    await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+    console.error('[USER CREATE SERVER] user_roles insert failed:', {
+      code: roleError.code,
+      message: roleError.message,
+      details: roleError.details,
+      hint: roleError.hint,
+    })
+    await supabaseAdmin.from('user_roles').delete().eq('user_id', userId)
+    await supabaseAdmin.auth.admin.deleteUser(userId)
     throw new Error(roleError.message)
   }
+  diagnostics.role_created = true
 
-  await logAuditAction('User Created', 'user', authData.user.id, `Created user ${data.email} with role ${data.role}`)
+  const { data: existingEmployee } = await supabaseAdmin
+    .from('employees')
+    .select('id, user_id')
+    .eq('email', normalizedEmail)
+    .is('user_id', null)
+    .maybeSingle()
+
+  if (existingEmployee) {
+    const { error: updateError } = await supabaseAdmin
+      .from('employees')
+      .update({ user_id: userId })
+      .eq('id', existingEmployee.id)
+
+    if (updateError) {
+      console.error('[USER CREATE SERVER] employee.user_id update failed:', {
+        code: updateError.code,
+        message: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint,
+      })
+    }
+  }
+
+  if (data.role === 'PA_TO_CI' && data.assigned_host_id) {
+    const { error: assignmentError } = await supabaseAdmin
+      .from('user_host_assignments')
+      .insert({
+        user_id: userId,
+        employee_id: data.assigned_host_id,
+      })
+
+    if (assignmentError) {
+      console.error('[USER CREATE SERVER] PA_TO_CI host assignment failed:', {
+        code: assignmentError.code,
+        message: assignmentError.message,
+        details: assignmentError.details,
+        hint: assignmentError.hint,
+      })
+      await supabaseAdmin.from('user_roles').delete().eq('user_id', userId)
+      await supabaseAdmin.auth.admin.deleteUser(userId)
+      throw new Error(assignmentError.message)
+    }
+    diagnostics.host_assigned = true
+  }
+
+  if (data.role === 'PA_TO_DIRECTOR' && data.assigned_director_id) {
+    const { error: assignmentError } = await supabaseAdmin
+      .from('user_host_assignments')
+      .insert({
+        user_id: userId,
+        employee_id: data.assigned_director_id,
+      })
+
+    if (assignmentError) {
+      console.error('[USER CREATE SERVER] PA_TO_DIRECTOR host assignment failed:', {
+        code: assignmentError.code,
+        message: assignmentError.message,
+        details: assignmentError.details,
+        hint: assignmentError.hint,
+      })
+      await supabaseAdmin.from('user_roles').delete().eq('user_id', userId)
+      await supabaseAdmin.auth.admin.deleteUser(userId)
+      throw new Error(assignmentError.message)
+    }
+    diagnostics.host_assigned = true
+  }
+
+  await logAuditAction('User Created', 'user', userId, `Created user ${normalizedEmail} with role ${data.role}`)
   return {
     id: authData.user.id,
-    email: authData.user.email,
-  } as { id: string; email?: string; [key: string]: unknown }
+    email: normalizedEmail,
+    temporary_password: tempPassword,
+    diagnostics,
+  } as { id: string; email?: string; temporary_password?: string; diagnostics?: Record<string, unknown>; [key: string]: unknown }
 }
 
-export async function updateUser(userId: string, updates: { full_name?: string; email?: string; role?: string }): Promise<void> {
+export async function updateUser(userId: string, updates: { full_name?: string; email?: string; role?: string; assigned_host_id?: string | null; assigned_director_id?: string | null; must_change_password?: boolean }): Promise<void> {
   if (!supabaseAdmin) throw new Error('Service role key not configured')
 
   const { error } = await supabaseAdmin
@@ -412,6 +573,45 @@ export async function updateUser(userId: string, updates: { full_name?: string; 
     .eq('user_id', userId)
 
   if (error) throw new Error(error.message)
+
+  // Manage host assignment for PA_TO_CI users
+  if (updates.role === 'PA_TO_CI') {
+    if (updates.assigned_host_id) {
+      await supabaseAdmin
+        .from('user_host_assignments')
+        .upsert({ user_id: userId, employee_id: updates.assigned_host_id })
+    }
+  } else if (updates.role && updates.role !== 'PA_TO_CI') {
+    await supabaseAdmin
+      .from('user_host_assignments')
+      .delete()
+      .eq('user_id', userId)
+  } else if (updates.assigned_host_id === null && !updates.role) {
+    await supabaseAdmin
+      .from('user_host_assignments')
+      .delete()
+      .eq('user_id', userId)
+  }
+
+  // Manage director assignment for PA_TO_DIRECTOR users
+  if (updates.role === 'PA_TO_DIRECTOR') {
+    if (updates.assigned_director_id) {
+      await supabaseAdmin
+        .from('user_host_assignments')
+        .upsert({ user_id: userId, employee_id: updates.assigned_director_id })
+    }
+  } else if (updates.role && updates.role !== 'PA_TO_DIRECTOR') {
+    await supabaseAdmin
+      .from('user_host_assignments')
+      .delete()
+      .eq('user_id', userId)
+  } else if (updates.assigned_director_id === null && !updates.role) {
+    await supabaseAdmin
+      .from('user_host_assignments')
+      .delete()
+      .eq('user_id', userId)
+  }
+
   await logAuditAction('User Updated', 'user', userId, `Updated user ${userId}`)
 }
 
@@ -424,6 +624,11 @@ export async function deleteUser(userId: string): Promise<void> {
     .eq('user_id', userId)
 
   if (error) throw new Error(error.message)
+
+  await supabaseAdmin
+    .from('user_host_assignments')
+    .delete()
+    .eq('user_id', userId)
 
   await supabaseAdmin.auth.admin.deleteUser(userId)
   await logAuditAction('User Deleted', 'user', userId, `Deleted user ${userId}`)

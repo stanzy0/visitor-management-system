@@ -321,7 +321,7 @@ export default function KioskPage() {
       case 'rejected':
       case 'cancelled':
         return 'text-red-700 bg-red-50 border-red-200'
-      default: return 'text-gray-700 bg-gray-50 border-gray-200'
+      default: return 'text-[#9A9F87] bg-gray-50 border-[rgba(85,107,47,0.35)]'
     }
   }
 
@@ -330,7 +330,7 @@ export default function KioskPage() {
       case 'Active': return 'text-emerald-700 bg-emerald-50 border-emerald-200'
       case 'Expired': return 'text-red-700 bg-red-50 border-red-200'
       case 'Cancelled': return 'text-orange-700 bg-orange-50 border-orange-200'
-      default: return 'text-gray-700 bg-gray-50 border-gray-200'
+      default: return 'text-[#9A9F87] bg-gray-50 border-[rgba(85,107,47,0.35)]'
     }
   }
 
@@ -353,7 +353,7 @@ export default function KioskPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" onTouchStart={resetInactivityTimer} onClick={resetInactivityTimer}>
+    <div className="min-h-screen bg-[#0B0F08]" onTouchStart={resetInactivityTimer} onClick={resetInactivityTimer}>
       {message && (
         <div className={`fixed top-0 left-0 right-0 z-50 p-4 text-center text-lg font-medium shadow-lg ${
           message.type === 'success' ? 'bg-green-600 text-white' :
@@ -367,14 +367,14 @@ export default function KioskPage() {
       {screen === 'welcome' && (
         <div className="flex flex-col items-center justify-center min-h-screen p-6">
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Armed Forces Command and Staff College</h1>
-            <p className="text-2xl text-gray-600 font-medium">Visitor Self Check-In</p>
+            <h1 className="text-4xl md:text-5xl font-bold text-[#F5F5DC] mb-4">Armed Forces Command and Staff College</h1>
+            <p className="text-2xl text-[#9A9F87] font-medium">Visitor Self Check-In</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
             <button
               onClick={startQrScanner}
-              className={`${TOUCH} bg-white border-2 border-gray-200 hover:border-blue-500 hover:shadow-lg flex flex-col items-center gap-4 py-8`}
+              className={`${TOUCH} bg-[#10150D] border-2 border-[rgba(85,107,47,0.35)] hover:border-blue-500 hover:shadow-lg flex flex-col items-center gap-4 py-8`}
             >
               <QrCode className="h-16 w-16 text-blue-600" />
               <span className="text-xl">Scan QR Code</span>
@@ -382,7 +382,7 @@ export default function KioskPage() {
 
             <button
               onClick={() => setScreen('registration')}
-              className={`${TOUCH} bg-white border-2 border-gray-200 hover:border-blue-500 hover:shadow-lg flex flex-col items-center gap-4 py-8`}
+              className={`${TOUCH} bg-[#10150D] border-2 border-[rgba(85,107,47,0.35)] hover:border-blue-500 hover:shadow-lg flex flex-col items-center gap-4 py-8`}
             >
               <Keyboard className="h-16 w-16 text-blue-600" />
               <span className="text-xl">Enter Registration Number</span>
@@ -390,7 +390,7 @@ export default function KioskPage() {
 
             <button
               onClick={() => setScreen('search')}
-              className={`${TOUCH} bg-white border-2 border-gray-200 hover:border-blue-500 hover:shadow-lg flex flex-col items-center gap-4 py-8`}
+              className={`${TOUCH} bg-[#10150D] border-2 border-[rgba(85,107,47,0.35)] hover:border-blue-500 hover:shadow-lg flex flex-col items-center gap-4 py-8`}
             >
               <Search className="h-16 w-16 text-blue-600" />
               <span className="text-xl">Search by Name</span>
@@ -399,7 +399,7 @@ export default function KioskPage() {
 
           <button
             onClick={() => setShowSettings(true)}
-            className="mt-12 text-gray-400 hover:text-gray-600 flex items-center gap-2"
+            className="mt-12 text-gray-400 hover:text-[#9A9F87] flex items-center gap-2"
           >
             <Settings className="h-5 w-5" />
             <span className="text-sm">Settings</span>
@@ -409,9 +409,9 @@ export default function KioskPage() {
 
       {screen === 'qr-scanner' && (
         <div className="flex flex-col items-center justify-center min-h-screen p-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Scan Your QR Code</h2>
+          <h2 className="text-3xl font-bold text-[#F5F5DC] mb-8">Scan Your QR Code</h2>
           <div className="w-full max-w-md">
-            <div id="qr-reader" className="rounded-2xl overflow-hidden border-4 border-gray-200 shadow-2xl" />
+            <div id="qr-reader" className="rounded-2xl overflow-hidden border-4 border-[rgba(85,107,47,0.35)] shadow-2xl" />
           </div>
           {qrError && (
             <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-center">
@@ -421,7 +421,7 @@ export default function KioskPage() {
           )}
           <button
             onClick={() => { stopQrScanner(); setScreen('welcome') }}
-            className={`${TOUCH} mt-8 bg-gray-200 text-gray-800 hover:bg-gray-300`}
+            className={`${TOUCH} mt-8 bg-gray-200 text-[#F5F5DC] hover:bg-gray-300`}
           >
             Back
           </button>
@@ -430,7 +430,7 @@ export default function KioskPage() {
 
       {screen === 'registration' && (
         <div className="flex flex-col items-center justify-center min-h-screen p-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Enter Registration Number</h2>
+          <h2 className="text-3xl font-bold text-[#F5F5DC] mb-8">Enter Registration Number</h2>
           <div className="w-full max-w-md">
             <input
               type="text"
@@ -450,7 +450,7 @@ export default function KioskPage() {
           </div>
           <button
             onClick={() => { setRegistrationNumber(''); setScreen('welcome') }}
-            className={`${TOUCH} mt-8 bg-gray-200 text-gray-800 hover:bg-gray-300`}
+            className={`${TOUCH} mt-8 bg-gray-200 text-[#F5F5DC] hover:bg-gray-300`}
           >
             Back
           </button>
@@ -459,7 +459,7 @@ export default function KioskPage() {
 
       {screen === 'search' && (
         <div className="flex flex-col items-center justify-center min-h-screen p-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Search for Your Visit</h2>
+          <h2 className="text-3xl font-bold text-[#F5F5DC] mb-8">Search for Your Visit</h2>
           <div className="w-full max-w-2xl">
             <div className="relative mb-6">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-6 w-6 text-gray-400" />
@@ -488,20 +488,20 @@ export default function KioskPage() {
                   <button
                     key={result.id}
                     onClick={() => { setVisit(result); setScreen('confirmation') }}
-                    className="w-full p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 text-left"
+                    className="w-full p-4 bg-[#10150D] border-2 border-[rgba(85,107,47,0.35)] rounded-xl hover:border-blue-500 text-left"
                   >
                     <div className="flex items-center gap-4">
                       {result.visitor?.photo_url ? (
                         <img src={result.visitor.photo_url} alt="" className="h-14 w-14 rounded-xl object-cover" />
                       ) : (
-                        <div className="h-14 w-14 rounded-xl bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-500">
+                        <div className="h-14 w-14 rounded-xl bg-gray-200 flex items-center justify-center text-xl font-bold text-[#9A9F87]">
                           {result.visitor?.full_name?.charAt(0).toUpperCase() || '?'}
                         </div>
                       )}
                       <div className="flex-1">
-                        <p className="text-lg font-semibold text-gray-900">{result.visitor?.full_name || 'Unknown'}</p>
-                        <p className="text-sm text-gray-600">{result.visitor?.visitor_organization || 'No company'}</p>
-                        <p className="text-xs text-gray-500">Host: {result.employee?.full_name || 'N/A'} · {result.employee?.office_location || ''}</p>
+                        <p className="text-lg font-semibold text-[#F5F5DC]">{result.visitor?.full_name || 'Unknown'}</p>
+                        <p className="text-sm text-[#9A9F87]">{result.visitor?.visitor_organization || 'No company'}</p>
+                        <p className="text-xs text-[#9A9F87]">Host: {result.employee?.full_name || 'N/A'} · {result.employee?.office_location || ''}</p>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(result.status)}`}>
                         {result.status.replace('_', ' ')}
@@ -513,12 +513,12 @@ export default function KioskPage() {
             )}
 
             {!loading && searchTerm && searchResults.length === 0 && (
-              <div className="text-center py-8 text-gray-500 text-lg">No visits found</div>
+              <div className="text-center py-8 text-[#9A9F87] text-lg">No visits found</div>
             )}
           </div>
           <button
             onClick={() => { setSearchTerm(''); setSearchResults([]); setScreen('welcome') }}
-            className={`${TOUCH} mt-8 bg-gray-200 text-gray-800 hover:bg-gray-300`}
+            className={`${TOUCH} mt-8 bg-gray-200 text-[#F5F5DC] hover:bg-gray-300`}
           >
             Back
           </button>
@@ -527,21 +527,21 @@ export default function KioskPage() {
 
       {screen === 'confirmation' && visit && (
         <div className="flex flex-col items-center justify-center min-h-screen p-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Confirm Your Identity</h2>
+          <h2 className="text-3xl font-bold text-[#F5F5DC] mb-8">Confirm Your Identity</h2>
 
-          <div className="w-full max-w-2xl bg-white rounded-2xl border-2 border-gray-200 shadow-xl overflow-hidden">
+          <div className="w-full max-w-2xl bg-[#10150D] rounded-2xl border-2 border-[rgba(85,107,47,0.35)] shadow-xl overflow-hidden">
             <div className="p-6 md:p-8">
               <div className="flex items-start gap-6 mb-6">
                 {visit.visitor?.photo_url ? (
-                  <img src={visit.visitor.photo_url} alt="" className="h-24 w-24 rounded-2xl object-cover border-2 border-gray-200" />
+                  <img src={visit.visitor.photo_url} alt="" className="h-24 w-24 rounded-2xl object-cover border-2 border-[rgba(85,107,47,0.35)]" />
                 ) : (
-                  <div className="h-24 w-24 rounded-2xl bg-gray-200 flex items-center justify-center text-3xl font-bold text-gray-500">
+                  <div className="h-24 w-24 rounded-2xl bg-gray-200 flex items-center justify-center text-3xl font-bold text-[#9A9F87]">
                     {visit.visitor?.full_name?.charAt(0).toUpperCase() || '?'}
                   </div>
                 )}
                 <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-gray-900">{visit.visitor?.full_name || 'Unknown Visitor'}</h3>
-                  <p className="text-gray-600 text-lg">{visit.visitor?.visitor_organization || 'No company'}</p>
+                  <h3 className="text-2xl font-bold text-[#F5F5DC]">{visit.visitor?.full_name || 'Unknown Visitor'}</h3>
+                  <p className="text-[#9A9F87] text-lg">{visit.visitor?.visitor_organization || 'No company'}</p>
                   <div className="flex flex-wrap gap-2 mt-3">
                     <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(visit.status)}`}>
                       {visit.status.replace('_', ' ')}
@@ -557,37 +557,37 @@ export default function KioskPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="p-4 bg-gray-50 rounded-xl">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Host</p>
-                  <p className="text-base font-medium text-gray-900 flex items-center gap-2">
+                  <p className="text-xs text-[#9A9F87] uppercase tracking-wide mb-1">Host</p>
+                  <p className="text-base font-medium text-[#F5F5DC] flex items-center gap-2">
                     <UserCheck className="h-4 w-4 text-gray-400" />
                     {visit.employee?.full_name || 'N/A'}
                   </p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-xl">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Department</p>
-                  <p className="text-base font-medium text-gray-900 flex items-center gap-2">
+                  <p className="text-xs text-[#9A9F87] uppercase tracking-wide mb-1">Department</p>
+                  <p className="text-base font-medium text-[#F5F5DC] flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-gray-400" />
                     {visit.employee?.department || 'N/A'}
                   </p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-xl">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Office</p>
-                  <p className="text-base font-medium text-gray-900 flex items-center gap-2">
+                  <p className="text-xs text-[#9A9F87] uppercase tracking-wide mb-1">Office</p>
+                  <p className="text-base font-medium text-[#F5F5DC] flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-gray-400" />
                     {visit.employee?.office_location || 'N/A'}
                   </p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-xl">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Purpose</p>
-                  <p className="text-base font-medium text-gray-900">{visit.purpose || 'N/A'}</p>
+                  <p className="text-xs text-[#9A9F87] uppercase tracking-wide mb-1">Purpose</p>
+                  <p className="text-base font-medium text-[#F5F5DC]">{visit.purpose || 'N/A'}</p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-xl">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Registration</p>
-                  <p className="text-base font-medium text-gray-900 font-mono">{visit.registration_number}</p>
+                  <p className="text-xs text-[#9A9F87] uppercase tracking-wide mb-1">Registration</p>
+                  <p className="text-base font-medium text-[#F5F5DC] font-mono">{visit.registration_number}</p>
                 </div>
                 <div className="p-4 bg-gray-50 rounded-xl">
-                  <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Badge</p>
-                  <p className="text-base font-medium text-gray-900">{visit.badge?.badge_number || 'Not issued'}</p>
+                  <p className="text-xs text-[#9A9F87] uppercase tracking-wide mb-1">Badge</p>
+                  <p className="text-base font-medium text-[#F5F5DC]">{visit.badge?.badge_number || 'Not issued'}</p>
                 </div>
               </div>
 
@@ -619,7 +619,7 @@ export default function KioskPage() {
                   </button>
                   <button
                     onClick={() => { setVisit(null); setScreen('welcome') }}
-                    className={`${TOUCH} flex-1 bg-gray-200 text-gray-800 hover:bg-gray-300`}
+                    className={`${TOUCH} flex-1 bg-gray-200 text-[#F5F5DC] hover:bg-gray-300`}
                   >
                     Cancel
                   </button>
@@ -633,8 +633,8 @@ export default function KioskPage() {
       {screen === 'processing' && (
         <div className="flex flex-col items-center justify-center min-h-screen p-6">
           <Loader2 className="h-16 w-16 animate-spin text-blue-600 mb-6" />
-          <h2 className="text-2xl font-bold text-gray-900">Processing Check-In...</h2>
-          <p className="text-gray-600 mt-2">Please wait</p>
+          <h2 className="text-2xl font-bold text-[#F5F5DC]">Processing Check-In...</h2>
+          <p className="text-[#9A9F87] mt-2">Please wait</p>
         </div>
       )}
 
@@ -642,11 +642,11 @@ export default function KioskPage() {
         <div className="flex flex-col items-center justify-center min-h-screen p-6">
           <div className="text-center">
             <CheckCircle2 className="h-24 w-24 text-green-600 mx-auto mb-6" />
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">Welcome!</h2>
-            <p className="text-xl text-gray-700 mb-2">Please proceed to</p>
+            <h2 className="text-4xl font-bold text-[#F5F5DC] mb-4">Welcome!</h2>
+            <p className="text-xl text-[#9A9F87] mb-2">Please proceed to</p>
             <p className="text-2xl font-semibold text-blue-600 mb-2">{visit.employee?.office_location || 'Reception'}</p>
-            <p className="text-lg text-gray-600 mb-1">Host: {visit.employee?.full_name || 'N/A'}</p>
-            <p className="text-sm text-gray-500 mt-4">This screen will reset shortly</p>
+            <p className="text-lg text-[#9A9F87] mb-1">Host: {visit.employee?.full_name || 'N/A'}</p>
+            <p className="text-sm text-[#9A9F87] mt-4">This screen will reset shortly</p>
           </div>
         </div>
       )}
@@ -656,11 +656,11 @@ export default function KioskPage() {
           <div className="text-center">
             <XCircle className="h-24 w-24 text-red-600 mx-auto mb-6" />
             <h2 className="text-4xl font-bold text-red-700 mb-4">ACCESS DENIED</h2>
-            <p className="text-xl text-gray-700">Please contact Reception.</p>
+            <p className="text-xl text-[#9A9F87]">Please contact Reception.</p>
           </div>
           <button
             onClick={() => { setVisit(null); setScreen('welcome') }}
-            className={`${TOUCH} mt-12 bg-gray-200 text-gray-800 hover:bg-gray-300`}
+            className={`${TOUCH} mt-12 bg-gray-200 text-[#F5F5DC] hover:bg-gray-300`}
           >
             Back to Welcome
           </button>
@@ -669,27 +669,27 @@ export default function KioskPage() {
 
       {showSettings && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+          <div className="bg-[#10150D] rounded-2xl max-w-md w-full p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-900">Kiosk Settings</h3>
+              <h3 className="text-xl font-bold text-[#F5F5DC]">Kiosk Settings</h3>
               <button onClick={() => setShowSettings(false)} className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100">
-                <X className="h-6 w-6 text-gray-500" />
+                <X className="h-6 w-6 text-[#9A9F87]" />
               </button>
             </div>
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-base font-medium text-gray-700">Enable Kiosk</span>
+                <span className="text-base font-medium text-[#9A9F87]">Enable Kiosk</span>
                 <button
                   onClick={() => setKioskEnabled(!kioskEnabled)}
-                  className={`${TOUCH} ${kioskEnabled ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-800'}`}
+                  className={`${TOUCH} ${kioskEnabled ? 'bg-green-600 text-white' : 'bg-gray-200 text-[#F5F5DC]'}`}
                 >
                   {kioskEnabled ? 'Enabled' : 'Disabled'}
                 </button>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Idle Timeout (seconds)</label>
+                <label className="block text-sm font-medium text-[#9A9F87] mb-2">Idle Timeout (seconds)</label>
                 <input
                   type="number"
                   value={idleTimeout / 1000}
@@ -711,3 +711,5 @@ export default function KioskPage() {
     </div>
   )
 }
+
+

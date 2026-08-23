@@ -35,8 +35,8 @@ interface Visit {
   badge?: VisitorBadgeType | null
 }
 
-const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-black placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
-const selectClasses = "rounded-lg border border-gray-300 bg-white px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+const searchInputClasses = "pl-9 pr-4 py-2 border border-gray-300 rounded-lg bg-[#10150D] text-black placeholder:text-[#9A9F87] focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64"
+const selectClasses = "rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
 
 export default function BadgesPage() {
   const [badges, setBadges] = useState<VisitorBadgeType[]>([])
@@ -269,7 +269,7 @@ export default function BadgesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-3 sm:p-4 lg:p-6 space-y-4 sm:space-y-6">
         <div className="mb-4 sm:mb-6">
           <a href="/dashboard" className="text-sm text-blue-600 hover:underline">← Back to Dashboard</a>
@@ -277,7 +277,7 @@ export default function BadgesPage() {
 
         <div className="flex flex-col gap-3">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Badge Management</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-[#F5F5DC]">Badge Management</h1>
             <div className="flex items-center gap-2">
               <div className="relative flex-1 sm:flex-none">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -302,7 +302,7 @@ export default function BadgesPage() {
               </select>
               <button
                 onClick={fetchBadges}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 min-h-[44px]"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 min-h-[44px]"
               >
                 <RefreshCw className="h-4 w-4" />
                 <span className="hidden sm:inline">Refresh</span>
@@ -318,25 +318,25 @@ export default function BadgesPage() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-            <p className="text-sm text-gray-500">Active Badges</p>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+            <p className="text-sm text-[#9A9F87]">Active Badges</p>
             <p className="text-2xl font-bold text-green-600">{badges.filter(b => b.badge_status === 'Active').length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-            <p className="text-sm text-gray-500">Expired Badges</p>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+            <p className="text-sm text-[#9A9F87]">Expired Badges</p>
             <p className="text-2xl font-bold text-red-600">{badges.filter(b => b.badge_status === 'Expired').length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-            <p className="text-sm text-gray-500">Checked Out</p>
-            <p className="text-2xl font-bold text-gray-600">{badges.filter(b => b.badge_status === 'Checked Out').length}</p>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+            <p className="text-sm text-[#9A9F87]">Checked Out</p>
+            <p className="text-2xl font-bold text-[#9A9F87]">{badges.filter(b => b.badge_status === 'Checked Out').length}</p>
           </div>
-          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-4">
-            <p className="text-sm text-gray-500">Reprints</p>
+          <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-4">
+            <p className="text-sm text-[#9A9F87]">Reprints</p>
             <p className="text-2xl font-bold text-blue-600">{badges.reduce((sum, b) => sum + (b.reprint_count || 0), 0)}</p>
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
           <div className="overflow-x-auto">
             {loading ? (
               <div className="flex items-center justify-center py-12">
@@ -345,21 +345,21 @@ export default function BadgesPage() {
             ) : (
               <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50">
-                    <th className="px-4 py-3 font-semibold text-gray-700">Badge #</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Issued</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700">Expires</th>
-                    <th className="px-4 py-3 font-semibold text-gray-700 w-32">Actions</th>
+                  <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Badge #</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Visitor</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Host</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Issued</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87]">Expires</th>
+                    <th className="px-4 py-3 font-semibold text-[#9A9F87] w-32">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                   {filteredBadges.map((badge) => (
-                    <tr key={badge.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={badge.id} className="hover:bg-[#4B5320]/10 transition-colors">
                       <td className="px-4 py-3">
-                        <span className="font-mono font-medium text-gray-900">{badge.badge_number}</span>
+                        <span className="font-mono font-medium text-[#F5F5DC]">{badge.badge_number}</span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
@@ -371,22 +371,22 @@ export default function BadgesPage() {
                             />
                           ) : (
                             <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-[#9A9F87]">
                                 {(badge.visit?.visitor?.full_name || 'V').charAt(0).toUpperCase()}
                               </span>
                             </div>
                           )}
                           <div>
-                            <p className="font-medium text-gray-900 text-xs">
+                            <p className="font-medium text-[#F5F5DC] text-xs">
                               {badge.visit?.visitor?.full_name || '—'}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-[#9A9F87]">
                               {badge.visit?.visitor?.visitor_organization || '—'}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600 text-xs">
+                      <td className="px-4 py-3 text-[#9A9F87] text-xs">
                         {badge.visit?.employee?.full_name || '—'}
                         {badge.visit?.employee?.department && <span className="block text-gray-400">{badge.visit.employee.department}</span>}
                       </td>
@@ -394,16 +394,16 @@ export default function BadgesPage() {
                         <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${
                           badge.badge_status === 'Active' ? 'bg-green-50 text-green-700 border-green-200' :
                           badge.badge_status === 'Expired' ? 'bg-red-50 text-red-700 border-red-200' :
-                          badge.badge_status === 'Checked Out' ? 'bg-gray-50 text-gray-700 border-gray-200' :
+                          badge.badge_status === 'Checked Out' ? 'bg-gray-50 text-[#9A9F87] border-[rgba(85,107,47,0.35)]' :
                           'bg-red-50 text-red-700 border-red-200'
                         }`}>
                           {badge.badge_status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">
+                      <td className="px-4 py-3 text-[#9A9F87] text-xs whitespace-nowrap">
                         {badge.issued_at ? new Date(badge.issued_at).toLocaleDateString() : '—'}
                       </td>
-                      <td className="px-4 py-3 text-gray-600 text-xs whitespace-nowrap">
+                      <td className="px-4 py-3 text-[#9A9F87] text-xs whitespace-nowrap">
                         {badge.expires_at ? new Date(badge.expires_at).toLocaleDateString() : '—'}
                       </td>
                       <td className="px-4 py-3">
@@ -453,26 +453,26 @@ export default function BadgesPage() {
 
           {!loading && filteredBadges.length === 0 && (
             <div className="py-12 text-center">
-              <p className="text-gray-500">No badges found</p>
+              <p className="text-[#9A9F87]">No badges found</p>
             </div>
           )}
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Generate Badge for Visit</h3>
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-[#F5F5DC] mb-4">Generate Badge for Visit</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Visitor</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Host</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700 w-40">Actions</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Visitor</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Host</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87] w-40">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {visits.map((visit) => (
-                  <tr key={visit.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={visit.id} className="hover:bg-[#4B5320]/10 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {visit.visitor?.photo_url ? (
@@ -483,23 +483,23 @@ export default function BadgesPage() {
                           />
                         ) : (
                           <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-[#9A9F87]">
                               {(visit.visitor?.full_name || 'V').charAt(0).toUpperCase()}
                             </span>
                           </div>
                         )}
                         <div>
-                          <p className="font-medium text-gray-900 text-xs">{visit.visitor?.full_name || '—'}</p>
-                          <p className="text-xs text-gray-500">{visit.visitor?.visitor_organization || '—'}</p>
+                          <p className="font-medium text-[#F5F5DC] text-xs">{visit.visitor?.full_name || '—'}</p>
+                          <p className="text-xs text-[#9A9F87]">{visit.visitor?.visitor_organization || '—'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 text-xs">{visit.employee?.full_name || '—'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87] text-xs">{visit.employee?.full_name || '—'}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${
                         visit.status === 'approved' ? 'bg-blue-50 text-blue-700 border-blue-200' :
                         visit.status === 'checked_in' ? 'bg-green-50 text-green-700 border-green-200' :
-                        visit.status === 'checked_out' ? 'bg-gray-50 text-gray-700 border-gray-200' :
+                        visit.status === 'checked_out' ? 'bg-gray-50 text-[#9A9F87] border-[rgba(85,107,47,0.35)]' :
                         'bg-amber-50 text-amber-700 border-amber-200'
                       }`}>
                          {(visit.status || 'unknown').replace('_', ' ')}
@@ -572,3 +572,5 @@ export default function BadgesPage() {
     </div>
   )
 }
+
+

@@ -189,7 +189,7 @@ export default function AdminDepartmentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#0B0F08]">
       <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="mb-6">
           <a href="/admin" className="text-sm text-blue-600 hover:underline">
@@ -199,13 +199,13 @@ export default function AdminDepartmentsPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Department Management</h1>
-            <p className="text-sm text-gray-500">Create and manage organization departments</p>
+            <h1 className="text-2xl font-bold text-[#F5F5DC]">Department Management</h1>
+            <p className="text-sm text-[#9A9F87]">Create and manage organization departments</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={fetchDepartments}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-[#10150D] px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -230,8 +230,8 @@ export default function AdminDepartmentsPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
-          <div className="p-4 border-b border-gray-200">
+        <div className="rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-sm">
+          <div className="p-4 border-b border-[rgba(85,107,47,0.35)]">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
@@ -239,39 +239,39 @@ export default function AdminDepartmentsPage() {
                 placeholder="Search by department name or head..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2 text-sm text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full rounded-lg border border-gray-300 bg-[#10150D] pl-9 pr-3 py-2 text-sm text-black placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 font-semibold text-gray-700">Department Name</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Head of Department</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Building</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Status</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Created</th>
-                  <th className="px-4 py-3 font-semibold text-gray-700">Actions</th>
+                <tr className="border-b border-[rgba(85,107,47,0.35)] bg-gray-50">
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Department Name</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Head of Department</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Building</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Status</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Created</th>
+                  <th className="px-4 py-3 font-semibold text-[#9A9F87]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[rgba(85,107,47,0.25)]">
                 {filteredDepartments.map((dept) => (
-                  <tr key={dept.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900">{dept.name}</td>
-                    <td className="px-4 py-3 text-gray-600">{dept.head_name || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600">{dept.building || '—'}</td>
+                  <tr key={dept.id} className="hover:bg-[#4B5320]/10 transition-colors">
+                    <td className="px-4 py-3 font-medium text-[#F5F5DC]">{dept.name}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{dept.head_name || '—'}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{dept.building || '—'}</td>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => handleToggleStatus(dept)}
                         className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium cursor-pointer transition-colors ${
-                          dept.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'
+                          dept.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-[#9A9F87]'
                         }`}
                       >
                         {dept.is_active ? 'Active' : 'Inactive'}
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{formatDate(dept.created_at)}</td>
+                    <td className="px-4 py-3 text-[#9A9F87]">{formatDate(dept.created_at)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <button
@@ -279,7 +279,7 @@ export default function AdminDepartmentsPage() {
                           className="p-1 rounded-md hover:bg-gray-100"
                           title="Edit"
                         >
-                          <Edit className="h-4 w-4 text-gray-600" />
+                          <Edit className="h-4 w-4 text-[#9A9F87]" />
                         </button>
                         <button
                           onClick={() => handleDelete(dept.id)}
@@ -298,7 +298,7 @@ export default function AdminDepartmentsPage() {
           {filteredDepartments.length === 0 && !loading && (
             <div className="p-12 text-center">
               <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500">No departments found</p>
+              <p className="text-[#9A9F87]">No departments found</p>
             </div>
           )}
           {loading && (
@@ -311,9 +311,9 @@ export default function AdminDepartmentsPage() {
 
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-xl bg-white shadow-xl max-h-[90vh] flex flex-col">
-            <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-200 p-4">
-              <h2 className="text-lg font-semibold text-gray-900">{editingDept ? 'Edit Department' : 'Create Department'}</h2>
+          <div className="w-full max-w-2xl rounded-xl bg-[#10150D] shadow-xl max-h-[90vh] flex flex-col">
+            <div className="flex-shrink-0 flex items-center justify-between border-b border-[rgba(85,107,47,0.35)] p-4">
+              <h2 className="text-lg font-semibold text-[#F5F5DC]">{editingDept ? 'Edit Department' : 'Create Department'}</h2>
               <button onClick={() => setModalOpen(false)} className="p-1 rounded-md hover:bg-gray-100">
                 <X className="h-5 w-5" />
               </button>
@@ -321,35 +321,35 @@ export default function AdminDepartmentsPage() {
             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
               <div className="p-4 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Department Name *</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Department Name *</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Head of Department</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Head of Department</label>
                   <input
                     type="text"
                     value={formData.head_name}
                     onChange={(e) => setFormData({ ...formData, head_name: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Building</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Building</label>
                   <input
                     type="text"
                     value={formData.building}
                     onChange={(e) => setFormData({ ...formData, building: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-black"
+                    className="w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium text-[#9A9F87] mb-1">Status</label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -357,12 +357,12 @@ export default function AdminDepartmentsPage() {
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                       className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700">{formData.is_active ? 'Active' : 'Inactive'}</span>
+                    <span className="text-sm text-[#9A9F87]">{formData.is_active ? 'Active' : 'Inactive'}</span>
                   </label>
                 </div>
               </div>
-              <div className="border-t border-gray-200 p-4 flex justify-end gap-2">
-                <button type="button" onClick={() => setModalOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+              <div className="border-t border-[rgba(85,107,47,0.35)] p-4 flex justify-end gap-2">
+                <button type="button" onClick={() => setModalOpen(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10">Cancel</button>
                 <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   {editingDept ? 'Update Department' : 'Create Department'}
@@ -375,3 +375,5 @@ export default function AdminDepartmentsPage() {
     </div>
   )
 }
+
+
