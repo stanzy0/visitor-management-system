@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, UserRole } from '@/lib/auth-client'
 import {
@@ -16,14 +16,12 @@ import {
   Eye,
   CalendarDays,
   LogOut,
-  RefreshCw,
   LayoutDashboard,
   History,
   User,
   CheckCircle,
   CheckCircle2,
   CheckCheck,
-  FileText,
 } from 'lucide-react'
 import PremiumSidebar, { type NavSection } from '@/components/dashboard/premium/PremiumSidebar'
 import PremiumHeader from '@/components/dashboard/premium/PremiumHeader'
@@ -296,13 +294,9 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
   const [tableQuery, setTableQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
-  const [currentTime, setCurrentTime] = useState(new Date())
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [reviewVisitId, setReviewVisitId] = useState<string | null>(null)
-
-  const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
-  const clockInterval = useRef<NodeJS.Timeout | null>(null)
 
   const showNotification = useCallback((type: 'success' | 'error', message: string) => {
     setNotification({ type, message })
@@ -337,6 +331,9 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
   }, [])
 
   useEffect(() => {
+    let pollInterval: NodeJS.Timeout | null = null
+    let realtimeChannel: ReturnType<typeof supabase.channel> | null = null
+
     const checkAuth = async () => {
       const user = await getCurrentUser()
       if (!user) {
@@ -353,26 +350,33 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
       setAuthChecking(false)
       fetchAllData()
 
-      realtimeChannel.current = supabase
+      realtimeChannel = supabase
         .channel(`pa-${paRole}-changes`)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'visits' }, () => fetchAllData())
-        .subscribe()
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log(`[PA Dashboard ${paRole}] Realtime subscription active`)
+          } else if (status === 'CHANNEL_ERROR') {
+            console.warn(`[PA Dashboard ${paRole}] Realtime subscription failed, using polling fallback`)
+          }
+        })
 
-      return () => {
-        if (realtimeChannel.current) {
-          supabase.removeChannel(realtimeChannel.current)
-        }
+      pollInterval = setInterval(() => {
+        fetchAllData()
+      }, 30000)
+    }
+
+    checkAuth()
+
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval)
+      }
+      if (realtimeChannel) {
+        supabase.removeChannel(realtimeChannel)
       }
     }
-    checkAuth()
   }, [paRole, fetchAllData])
-
-  useEffect(() => {
-    clockInterval.current = setInterval(() => setCurrentTime(new Date()), 1000)
-    return () => {
-      if (clockInterval.current) clearInterval(clockInterval.current)
-    }
-  }, [])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()

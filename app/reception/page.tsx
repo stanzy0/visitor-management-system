@@ -176,7 +176,17 @@ export default function ReceptionPage() {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'security_alerts' }, () => fetchAllData())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_badges' }, () => fetchAllData())
         .on('postgres_changes', { event: '*', schema: 'public', table: 'incidents' }, () => fetchAllData())
-        .subscribe()
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('[Reception] Realtime subscription active')
+          } else if (status === 'CHANNEL_ERROR') {
+            console.warn('[Reception] Realtime subscription failed, using polling fallback')
+          }
+        })
+
+      refreshInterval.current = setInterval(() => {
+        fetchAllData()
+      }, 30000)
     }
     checkAuth()
 
@@ -308,10 +318,6 @@ export default function ReceptionPage() {
     const hours = Math.floor(diff / (1000 * 60 * 60))
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
     return `${hours}h ${minutes}m`
-  }
-
-  const isVIP = (organization?: string) => {
-    return organization?.toLowerCase().includes('vip') || organization?.toLowerCase().includes('government') || false
   }
 
   const getSeverityColor = (severity: AlertSeverity) => {

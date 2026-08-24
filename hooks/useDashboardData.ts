@@ -414,12 +414,23 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'visitor_documents' }, debouncedRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_logs' }, debouncedRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, debouncedRefresh)
-      .subscribe()
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('[Dashboard] Realtime subscription active')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.warn('[Dashboard] Realtime subscription failed, falling back to polling')
+        }
+      })
+
+    const pollInterval = setInterval(() => {
+      silentRefresh()
+    }, 30000)
 
     return () => {
       if (debounceRef.current) {
         clearTimeout(debounceRef.current)
       }
+      clearInterval(pollInterval)
       supabase.removeChannel(channel)
     }
   }, [enabled, silentRefresh])
