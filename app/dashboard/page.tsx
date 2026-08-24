@@ -118,7 +118,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchSecurityStats = async () => {
       if (!authReady) return
-      if (!['Admin', 'Commandant', 'Director', 'Security', 'Operations', 'Receptionist', 'Host Employee'].includes(userRole)) return
+      if (!['Admin', 'Commandant', 'Director', 'Security', 'Operations', 'Host Employee'].includes(userRole)) return
 
       try {
         const res = await fetch('/api/security/stats', {
@@ -185,6 +185,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchPendingDocuments = async () => {
       if (!authReady) return
+      if (userRole === 'Receptionist') return
 
       try {
         const res = await fetch('/api/documents?verification_status=Pending&limit=5', {
@@ -428,6 +429,7 @@ export default function DashboardPage() {
 
    const isAdmin = userRole === 'Admin'
    const isPA = userRole === 'PA_TO_DIRECTOR' || userRole === 'PA_TO_CI'
+   const isReceptionist = userRole === 'Receptionist'
    const showAllSections = isAdmin
    const showPASections = isPA
 
@@ -438,14 +440,18 @@ export default function DashboardPage() {
     ? `${securityAlerts.length} active alert${securityAlerts.length !== 1 ? 's' : ''}`
     : 'All systems operational'
 
-  const kpiCards = [
-    { title: 'Visitors Today', value: stats.visitorsToday, description: 'Visitor check-ins today', icon: Users, color: 'blue' as const, trend: stats.visitorsTrend },
-    { title: 'Currently Checked In', value: stats.visitorsCurrentlyInside, description: 'Visitors on premises', icon: UserCheck, color: 'green' as const },
-    { title: 'Pending Approvals', value: stats.pendingApprovals, description: 'Awaiting approval', icon: Clock, color: 'amber' as const },
-    { title: 'Badges Printed Today', value: stats.badgesPrinted, description: 'Badges issued today', icon: Printer, color: 'indigo' as const },
-    { title: 'Total Employees', value: stats.registeredEmployees, description: 'Active employee roster', icon: Crown, color: 'purple' as const },
-    { title: 'Emergency Alerts', value: emergencyAlertCount, description: emergencyDescription, icon: ShieldAlert, color: emergencyColor },
-  ]
+   const kpiCards = [
+     { title: 'Visitors Today', value: stats.visitorsToday, description: 'Visitor check-ins today', icon: Users, color: 'blue' as const, trend: stats.visitorsTrend },
+     { title: 'Currently Checked In', value: stats.visitorsCurrentlyInside, description: 'Visitors on premises', icon: UserCheck, color: 'green' as const },
+     { title: 'Pending Approvals', value: stats.pendingApprovals, description: 'Awaiting approval', icon: Clock, color: 'amber' as const },
+     { title: 'Badges Printed Today', value: stats.badgesPrinted, description: 'Badges issued today', icon: Printer, color: 'indigo' as const },
+     { title: 'Total Employees', value: stats.registeredEmployees, description: 'Active employee roster', icon: Crown, color: 'purple' as const },
+     { title: 'Emergency Alerts', value: emergencyAlertCount, description: emergencyDescription, icon: ShieldAlert, color: emergencyColor },
+   ]
+
+   const displayedKpiCards = isReceptionist
+     ? kpiCards.filter(c => ['Visitors Today', 'Currently Checked In', 'Pending Approvals', 'Badges Printed Today'].includes(c.title))
+     : kpiCards
 
   const activityTimelineEvents = activity.slice(0, 10).map(a => ({
     id: a.id,
@@ -522,7 +528,7 @@ export default function DashboardPage() {
                 transition={{ staggerChildren: 0.05, delayChildren: 0.1 }}
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"
               >
-                {kpiCards.map((card, index) => (
+                {displayedKpiCards.map((card, index) => (
                   <PremiumStatCard
                     key={card.title}
                     title={card.title}
@@ -585,7 +591,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <SystemStatus />
+            {!isReceptionist && <SystemStatus />}
 
             {notifications.length > 0 && (
               <motion.div
@@ -632,7 +638,7 @@ export default function DashboardPage() {
               </motion.div>
             )}
 
-            {securityAlerts.length > 0 && (
+            {!isReceptionist && securityAlerts.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -642,7 +648,7 @@ export default function DashboardPage() {
               </motion.div>
             )}
 
-            {securityStats.visitorsWaitingAtGate > 0 && (
+            {!isReceptionist && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -655,7 +661,7 @@ export default function DashboardPage() {
               </motion.div>
             )}
 
-            {pendingDocuments.length > 0 && (
+            {!isReceptionist && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
