@@ -77,6 +77,7 @@ export default function DashboardPage() {
   const [authChecking, setAuthChecking] = useState(true)
   const [userRole, setUserRole] = useState<UserRole>('Receptionist')
   const [userEmail, setUserEmail] = useState('')
+  const [userName, setUserName] = useState('')
   const [authReady, setAuthReady] = useState(false)
    const [chartColors, setChartColors] = useState<string[]>(COLORS)
   const { branding } = useBranding()
@@ -286,6 +287,7 @@ export default function DashboardPage() {
         if (!user) { window.location.href = '/login'; return }
         setUserRole(user.role)
         setUserEmail(user.email)
+        setUserName(user.full_name || '')
         setAuthChecking(false)
         setAuthReady(true)
       } catch {
@@ -491,6 +493,7 @@ export default function DashboardPage() {
       <div className="flex flex-1 flex-col min-w-0">
         <PremiumHeader
           userEmail={userEmail}
+          userName={userName}
           userRole={userRole}
           filters={filters}
           onFilterChange={(newFilters) => setFilters(newFilters as DashboardFilters)}

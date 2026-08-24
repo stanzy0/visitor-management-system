@@ -10,6 +10,7 @@ import { fadeUp, hoverScale } from '@/lib/animations/variants'
 
 interface PremiumHeaderProps {
   userEmail: string
+  userName?: string
   userRole: string
   filters: DashboardFilters
   onFilterChange: (filters: DashboardFilters) => void
@@ -30,6 +31,7 @@ interface PremiumHeaderProps {
 
 export default function PremiumHeader({
   userEmail,
+  userName,
   userRole,
   filters,
   onFilterChange,
@@ -237,14 +239,14 @@ export default function PremiumHeader({
             className="flex items-center gap-3 pl-3 border-l border-gray-200"
           >
             <div className="hidden sm:block text-right">
-              <p className="text-sm font-semibold text-gray-900">{userEmail}</p>
-              <p className="text-xs text-gray-500">{roleLabel ?? userRole}</p>
+              <p className="text-sm font-semibold text-gray-900">{userName || userEmail}</p>
+              <p className="text-xs text-gray-500">{userName ? userEmail : (roleLabel ?? userRole)}</p>
               {assignedHostName && (
                 <p className="text-xs text-gray-400 mt-0.5">{assignedHostLabel}: {assignedHostName}</p>
               )}
             </div>
             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white shadow-lg shadow-primary/30 ring-2 ring-white">
-              <span className="text-sm font-bold">{(userRole || 'U').charAt(0).toUpperCase()}</span>
+              <span className="text-sm font-bold">{(userName || userRole || 'U').charAt(0).toUpperCase()}</span>
             </div>
           </motion.div>
         </div>

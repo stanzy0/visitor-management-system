@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { logAuditAction } from '@/lib/client/audit'
-import { CheckCircle2, Lock } from 'lucide-react'
+import { CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react'
 
 function isValidPassword(password: string): { valid: boolean; error?: string } {
   if (password.length < 8) {
@@ -27,6 +27,8 @@ function isValidPassword(password: string): { valid: boolean; error?: string } {
 export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showNew, setShowNew] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -125,15 +127,25 @@ export default function ResetPasswordPage() {
             <label htmlFor="newPassword" className="block text-sm font-medium text-[#9A9F87]">
               New Password
             </label>
-            <input
-              id="newPassword"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              placeholder="Enter new password"
-              className="mt-1 block w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="relative">
+              <input
+                id="newPassword"
+                type={showNew ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                placeholder="Enter new password"
+                className="mt-1 block w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 pr-10 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNew((s) => !s)}
+                aria-label={showNew ? 'Hide password' : 'Show password'}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#9A9F87] hover:text-gray-300 focus:outline-none"
+              >
+                {showNew ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
             <p className="mt-1 text-xs text-[#9A9F87]">
               Must be at least 8 characters with uppercase, lowercase, number, and special character.
             </p>
@@ -143,15 +155,25 @@ export default function ResetPasswordPage() {
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-[#9A9F87]">
               Confirm Password
             </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              placeholder="Confirm new password"
-              className="mt-1 block w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                type={showConfirm ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                placeholder="Confirm new password"
+                className="mt-1 block w-full rounded-lg border border-gray-300 bg-[#10150D] px-3 py-2 pr-10 text-black placeholder:text-[#9A9F87] focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm((s) => !s)}
+                aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#9A9F87] hover:text-gray-300 focus:outline-none"
+              >
+                {showConfirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
 
           <button

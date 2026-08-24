@@ -289,6 +289,7 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
   const [authChecking, setAuthChecking] = useState(true)
   const [userRole, setUserRole] = useState<UserRole>('Receptionist')
   const [userEmail, setUserEmail] = useState('')
+  const [userName, setUserName] = useState('')
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [tableQuery, setTableQuery] = useState('')
@@ -347,6 +348,7 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
       }
       setUserRole(user.role)
       setUserEmail(user.email || '')
+      setUserName(user.full_name || '')
       setAuthChecking(false)
       fetchAllData()
 
@@ -516,6 +518,7 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
       <div className="flex flex-1 flex-col min-w-0">
         <PremiumHeader
           userEmail={userEmail}
+          userName={userName}
           userRole={userRole}
           filters={{ range: 'today' }}
           onFilterChange={() => {}}
