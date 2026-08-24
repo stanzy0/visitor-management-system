@@ -24,15 +24,20 @@ export async function GET(request: NextRequest) {
   }
 
   const hostEmployeeId = await getHostEmployeeIdForPA(user.id, userRole.role)
-  if (!hostEmployeeId) {
+  const isAdmin = userRole.role === 'Admin'
+
+  if (!hostEmployeeId && !isAdmin) {
     return NextResponse.json({ success: true, data: [] })
   }
 
-  const { data: visits, error } = await supabaseAdmin
+  let visitsQuery = supabaseAdmin
     .from('visits')
     .select('*, visitor:visitors(*), employee:employees(*)')
-    .eq('employee_id', hostEmployeeId)
     .order('created_at', { ascending: false })
+
+  const { data: visits, error } = !isAdmin && hostEmployeeId
+    ? await visitsQuery.eq('employee_id', hostEmployeeId)
+    : await visitsQuery
 
   if (error) {
     return NextResponse.json({ success: false, message: error.message, error: '' }, { status: 500 })

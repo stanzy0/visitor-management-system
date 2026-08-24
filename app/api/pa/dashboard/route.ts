@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
   }
 
   const hostEmployeeId = await getHostEmployeeIdForPA(user.id, userRole.role)
-  if (!hostEmployeeId) {
+  const isAdmin = userRole.role === 'Admin'
+
+  if (!hostEmployeeId && !isAdmin) {
     return NextResponse.json({
       success: true,
       data: {
@@ -38,11 +40,13 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  const { data: hostEmployee, error: hostError } = await supabaseAdmin
-    .from('employees')
-    .select('id, full_name, position, department')
-    .eq('id', hostEmployeeId)
-    .single()
+  const { data: hostEmployee, error: hostError } = isAdmin
+    ? { data: null, error: null }
+    : await supabaseAdmin
+        .from('employees')
+        .select('id, full_name, position, department')
+        .eq('id', hostEmployeeId!)
+        .single()
 
   if (hostError) {
     return NextResponse.json({ success: false, message: 'Failed to load host employee', error: hostError.message }, { status: 500 })
@@ -59,13 +63,16 @@ export async function GET(request: NextRequest) {
   // Single source of truth: every visit created today for the assigned host,
   // across all statuses. All counters and the visitor list are derived from this
   // one dataset so they can never diverge.
-  const { data: todaysVisits, error: visitsError } = await supabaseAdmin
+  let visitsQuery = supabaseAdmin
     .from('visits')
     .select('*, visitor:visitors(*), employee:employees(*)')
-    .eq('employee_id', hostEmployeeId)
     .gte('created_at', todayStart)
     .lt('created_at', todayEnd)
     .order('created_at', { ascending: false })
+
+  const { data: todaysVisits, error: visitsError } = !isAdmin && hostEmployeeId
+    ? await visitsQuery.eq('employee_id', hostEmployeeId)
+    : await visitsQuery
 
   if (visitsError) {
     return NextResponse.json({ success: false, message: 'Failed to load visits', error: visitsError.message }, { status: 500 })

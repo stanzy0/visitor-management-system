@@ -18,8 +18,22 @@ export async function GET(
     return NextResponse.json({ success: false, message: 'Server configuration error', error: 'Service role key not configured' }, { status: 500 })
   }
 
-  const { role, hostEmployeeId } = await getAssignedHostEmployeeForPA(user.id)
-  if (!role || !hostEmployeeId) {
+  const { data: userRole } = await supabaseAdmin
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .single()
+
+  if (!userRole || (userRole.role !== 'PA_TO_DIRECTOR' && userRole.role !== 'PA_TO_CI' && userRole.role !== 'Admin')) {
+    return NextResponse.json({ success: false, message: 'Access denied', error: '' }, { status: 403 })
+  }
+
+  const isAdmin = userRole.role === 'Admin'
+  const { role, hostEmployeeId } = isAdmin
+    ? { role: 'Admin', hostEmployeeId: null }
+    : await getAssignedHostEmployeeForPA(user.id)
+
+  if (!isAdmin && (!role || !hostEmployeeId)) {
     return NextResponse.json({ success: false, message: 'Access denied', error: '' }, { status: 403 })
   }
 
@@ -37,7 +51,7 @@ export async function GET(
     return NextResponse.json({ success: false, message: 'Visit not found', error: '' }, { status: 404 })
   }
 
-  if (visit.employee_id !== hostEmployeeId) {
+  if (!isAdmin && visit.employee_id !== hostEmployeeId) {
     return NextResponse.json({ success: false, message: 'You are not authorized to view this visitor.', error: 'forbidden' }, { status: 403 })
   }
 
