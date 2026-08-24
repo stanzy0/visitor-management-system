@@ -9,7 +9,8 @@ import { fadeIn, hoverScale } from '@/lib/animations/variants'
 import type { DashboardFilters } from '@/hooks/useDashboardData'
 
 interface DashboardHeaderProps {
-  userEmail: string
+  userEmail?: string
+  userName?: string
   userRole: string
   filters: DashboardFilters
   onFilterChange: (filters: DashboardFilters) => void
@@ -18,7 +19,7 @@ interface DashboardHeaderProps {
 }
 
 export default function DashboardHeader({
-  userEmail,
+  userName,
   userRole,
   filters,
   onFilterChange,
@@ -77,7 +78,7 @@ export default function DashboardHeader({
               transition={{ delay: 0.2 }}
               className="text-sm text-gray-500"
             >
-              {greeting}, {(userEmail || '').split('@')[0]} • {currentDate}
+              {userName ? `${greeting}, ${userName}` : greeting} • {currentDate}
             </motion.p>
           </div>
         </div>
@@ -162,8 +163,8 @@ export default function DashboardHeader({
             className="flex items-center gap-3 pl-3 border-l border-gray-200"
           >
             <div className="hidden sm:block text-right">
-              <p className="text-sm font-semibold text-gray-900">{userEmail}</p>
-              <p className="text-xs text-gray-500 capitalize">{userRole}</p>
+              <p className="text-sm font-semibold text-gray-900">{userName || (userRole || '')}</p>
+              {userName && <p className="text-xs text-gray-500 capitalize">{userRole}</p>}
             </div>
             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-lg shadow-blue-500/30 ring-2 ring-white">
               <span className="text-sm font-bold text-white">{(userRole || 'U').charAt(0).toUpperCase()}</span>

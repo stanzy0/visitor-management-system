@@ -517,7 +517,6 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
 
       <div className="flex flex-1 flex-col min-w-0">
         <PremiumHeader
-          userEmail={userEmail}
           userName={userName}
           userRole={userRole}
           filters={{ range: 'today' }}

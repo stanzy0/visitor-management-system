@@ -9,7 +9,6 @@ import type { DashboardFilters } from '@/hooks/useDashboardData'
 import { fadeUp, hoverScale } from '@/lib/animations/variants'
 
 interface PremiumHeaderProps {
-  userEmail: string
   userName?: string
   userRole: string
   filters: DashboardFilters
@@ -30,7 +29,6 @@ interface PremiumHeaderProps {
 }
 
 export default function PremiumHeader({
-  userEmail,
   userName,
   userRole,
   filters,
@@ -72,8 +70,6 @@ export default function PremiumHeader({
     day: 'numeric',
   })
 
-  const userTitle = userRole === 'Receptionist' ? 'Reception Officer' : userRole
-
   const FILTERS = [
     { label: 'Today', value: 'today' },
     { label: 'Yesterday', value: 'yesterday' },
@@ -109,8 +105,18 @@ export default function PremiumHeader({
             transition={{ delay: 0.1 }}
             className="text-xl font-bold text-gray-900 tracking-tight"
           >
-            {title ?? `${greeting}, ${userTitle}`}
+            {userName ? `${greeting}, ${userName}` : (title ?? greeting)}
           </motion.h1>
+          {title && userName && (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-xs font-medium text-gray-500"
+            >
+              {title}
+            </motion.p>
+          )}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -239,8 +245,8 @@ export default function PremiumHeader({
             className="flex items-center gap-3 pl-3 border-l border-gray-200"
           >
             <div className="hidden sm:block text-right">
-              <p className="text-sm font-semibold text-gray-900">{userName || userEmail}</p>
-              <p className="text-xs text-gray-500">{userName ? userEmail : (roleLabel ?? userRole)}</p>
+              <p className="text-sm font-semibold text-gray-900">{userName || (roleLabel ?? userRole)}</p>
+              {userName && <p className="text-xs text-gray-500">{roleLabel ?? userRole}</p>}
               {assignedHostName && (
                 <p className="text-xs text-gray-400 mt-0.5">{assignedHostLabel}: {assignedHostName}</p>
               )}
