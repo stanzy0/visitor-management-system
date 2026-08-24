@@ -13,13 +13,32 @@ export async function GET() {
       supabaseAdmin.from('office_locations').select('*').order('display_name'),
     ])
 
+    const officeLocations = (locResult.data || []).map((loc: any) => ({
+      ...loc,
+      display_name: loc.display_name || `${loc.building ? `${loc.building} — ` : ''}${loc.office_name || loc.name}`,
+    }))
+
+    const hqLandWarfare = {
+      id: '00000000-0000-0000-0000-000000000001',
+      name: 'Head Quarter',
+      building: 'Head Quarter',
+      department: 'Department of Land Warfare',
+      office_name: 'Head Quarter',
+      display_name: 'Head Quarter Department of Land Warfare',
+    }
+
+    const hasHqLandWarfare = officeLocations.some(
+      (loc: any) => loc.name === 'Head Quarter' && loc.department === 'Department of Land Warfare'
+    )
+
+    if (!hasHqLandWarfare) {
+      officeLocations.push(hqLandWarfare)
+    }
+
     return NextResponse.json({
       departments: deptResult.data || [],
       positions: posResult.data || [],
-      office_locations: (locResult.data || []).map((loc: any) => ({
-        ...loc,
-        display_name: loc.display_name || `${loc.building ? `${loc.building} — ` : ''}${loc.office_name || loc.name}`,
-      })),
+      office_locations: officeLocations,
     })
   } catch {
     return NextResponse.json({ success: false, message: 'Something went wrong. Please try again.', error: 'Internal server error' }, { status: 500 })
