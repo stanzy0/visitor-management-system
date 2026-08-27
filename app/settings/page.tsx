@@ -18,6 +18,7 @@ import {
   Building2,
   UserCheck,
   QrCode,
+  AlertTriangle,
 } from 'lucide-react'
 
 interface SettingRow {
@@ -93,6 +94,10 @@ export default function SettingsPage() {
   const [lastConfigChange, setLastConfigChange] = useState<string | null>(null)
   const [lastLogin, setLastLogin] = useState<string | null>(null)
   const realtimeChannel = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const [clearing, setClearing] = useState(false)
+  const [clearResult, setClearResult] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [showClearModal, setShowClearModal] = useState(false)
+  const [clearConfirmText, setClearConfirmText] = useState('')
 
   async function fetchSettings() {
     setLoading(true)
@@ -220,6 +225,34 @@ export default function SettingsPage() {
     }
     reader.readAsText(file)
     e.target.value = ''
+  }
+
+  async function handleClearVisitorData() {
+    if (clearConfirmText !== 'CLEAR VISITOR DATA') {
+      setClearResult({ type: 'error', text: 'Please type the confirmation phrase exactly.' })
+      return
+    }
+
+    setClearing(true)
+    setClearResult(null)
+    try {
+      const res = await fetch('/api/admin/clear-visitor-data', {
+        method: 'POST',
+        headers: await getAuthHeaders(),
+      })
+      const json = await res.json()
+      if (res.ok && json.success) {
+        setClearResult({ type: 'success', text: 'Visitor and operational data cleared successfully.' })
+        setShowClearModal(false)
+        setClearConfirmText('')
+      } else {
+        setClearResult({ type: 'error', text: json.message || 'Failed to clear visitor data' })
+      }
+    } catch (error) {
+      setClearResult({ type: 'error', text: 'Failed to clear visitor data' })
+    } finally {
+      setClearing(false)
+    }
   }
 
   function updateSetting(key: string, value: SettingValue) {
@@ -432,6 +465,80 @@ export default function SettingsPage() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-xl border border-red-500/30 bg-[#10150D] shadow-sm p-6">
+          <div className="flex items-start gap-4">
+            <div className="p-2 rounded-xl bg-red-500/10 flex-shrink-0">
+              <AlertTriangle className="h-5 w-5 text-red-500" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-[#F5F5DC]">Clear Visitor &amp; Operational Data</h3>
+              <p className="text-sm text-[#9A9F87] mt-1">
+                Permanently delete all visitor and visitor-related operational/testing data (visitors, visits, badges,
+                documents, notifications). Staff accounts, employees, departments, office locations, roles, permissions
+                and branding are NOT affected.
+              </p>
+              <div className="mt-4">
+                <button
+                  onClick={() => { setShowClearModal(true); setClearConfirmText(''); setClearResult(null) }}
+                  className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition-colors min-h-[44px]"
+                >
+                  <AlertTriangle className="h-4 w-4" />
+                  Clear Visitor &amp; Operational Data
+                </button>
+              </div>
+              {clearResult && (
+                <div className={`mt-3 rounded-lg p-3 text-sm ${clearResult.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                  {clearResult.text}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {showClearModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div className="w-full max-w-lg rounded-2xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertTriangle className="h-6 w-6 text-red-500" />
+                <h2 className="text-xl font-bold text-[#F5F5DC]">Clear Visitor &amp; Operational Data</h2>
+              </div>
+              <p className="text-sm text-[#9A9F87] mb-2">
+                This permanently deletes all visitor and visitor-related operational/testing data.
+              </p>
+              <p className="text-sm text-[#9A9F87] mb-4">
+                Staff accounts, Admin accounts, Receptionist accounts, PA to CI accounts, PA to Director accounts,
+                employees, departments, office locations, roles, permissions, branding and system configuration will
+                NOT be deleted.
+              </p>
+              <label className="block text-sm font-medium text-[#F5F5DC] mb-1">
+                Type <span className="font-mono font-bold">CLEAR VISITOR DATA</span> to confirm:
+              </label>
+              <input
+                value={clearConfirmText}
+                onChange={(e) => setClearConfirmText(e.target.value)}
+                placeholder="CLEAR VISITOR DATA"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm mb-4"
+              />
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowClearModal(false)}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleClearVisitorData}
+                  disabled={clearing || clearConfirmText !== 'CLEAR VISITOR DATA'}
+                  className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                >
+                  {clearing && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Permanently Clear Visitor Data
+                </button>
+              </div>
             </div>
           </div>
         )}

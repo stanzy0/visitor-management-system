@@ -298,6 +298,7 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [reviewVisitId, setReviewVisitId] = useState<string | null>(null)
+  const [dateRange, setDateRange] = useState<'today' | '7days' | '30days'>('today')
 
   const showNotification = useCallback((type: 'success' | 'error', message: string) => {
     setNotification({ type, message })
@@ -306,7 +307,7 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
 
   const fetchAllData = useCallback(async () => {
     try {
-      const res = await fetch('/api/pa/dashboard')
+      const res = await fetch(`/api/pa/dashboard?range=${dateRange}`)
       if (!res.ok) {
         const text = await res.text()
         console.error(`PA dashboard API ${res.status}: ${text}`)
@@ -329,7 +330,7 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [dateRange])
 
   useEffect(() => {
     let pollInterval: NodeJS.Timeout | null = null
@@ -378,7 +379,7 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
         supabase.removeChannel(realtimeChannel)
       }
     }
-  }, [paRole, fetchAllData])
+  }, [paRole, fetchAllData, dateRange])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -519,15 +520,19 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
         <PremiumHeader
           userName={userName}
           userRole={userRole}
-          filters={{ range: 'today' }}
-          onFilterChange={() => {}}
+          filters={{ range: dateRange }}
+          onFilterChange={(filters) => {
+            if (filters.range && filters.range !== dateRange) {
+              setDateRange(filters.range as 'today' | '7days' | '30days')
+            }
+          }}
           onExport={() => {}}
           exporting={false}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
           title={title}
           showExport={false}
           showSettings={false}
-          showFilter={false}
+          showFilter={true}
           searchValue={searchQuery}
           onSearchChange={setSearchQuery}
           assignedHostLabel={hostTitle}

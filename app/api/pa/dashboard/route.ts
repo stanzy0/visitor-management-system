@@ -52,22 +52,41 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, message: 'Failed to load host employee', error: hostError.message }, { status: 500 })
   }
 
-  // "Today" is derived from created_at using the same date-range convention the
-  // rest of the application uses (Reception, Host, Reports dashboards). The
-  // visits table has no visit_date column; scheduled_date is not reliably
-  // populated, so created_at is the canonical, populated field for "today".
-  const today = new Date().toISOString().split('T')[0]
-  const todayStart = `${today}T00:00:00`
-  const todayEnd = `${today}T23:59:59.999`
+  const { searchParams } = new URL(request.url)
+  const range = searchParams.get('range') || 'today'
 
-  // Single source of truth: every visit created today for the assigned host,
-  // across all statuses. All counters and the visitor list are derived from this
-  // one dataset so they can never diverge.
+  const now = new Date()
+  let startDate: Date
+  let endDate: Date = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+
+  switch (range) {
+    case '7days':
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6, 0, 0, 0, 0)
+      break
+    case '30days':
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0, 0)
+      break
+    case 'yesterday':
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0, 0)
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999)
+      break
+    case 'thisMonth':
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0)
+      break
+    case 'today':
+    default:
+      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+      break
+  }
+
+  const startStr = startDate.toISOString()
+  const endStr = endDate.toISOString()
+
   let visitsQuery = supabaseAdmin
     .from('visits')
     .select('*, visitor:visitors(*), employee:employees(*)')
-    .gte('created_at', todayStart)
-    .lt('created_at', todayEnd)
+    .gte('created_at', startStr)
+    .lte('created_at', endStr)
     .order('created_at', { ascending: false })
 
   const { data: todaysVisits, error: visitsError } = !isAdmin && hostEmployeeId
@@ -93,6 +112,7 @@ export async function GET(request: NextRequest) {
       checkedInVisits,
       checkedOutVisits,
       hostEmployee: hostEmployee || null,
+      range,
     },
   })
 }
