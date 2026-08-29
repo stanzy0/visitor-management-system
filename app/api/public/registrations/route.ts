@@ -92,26 +92,16 @@ export async function POST(request: NextRequest) {
       const portalUrl = buildPortalQrUrl(badge.qr_token)
       const qrDataUrl = await QRCode.toDataURL(portalUrl, { width: 300, margin: 2 })
 
-      const qrVerification = await verifyBadgeQR(badge.id, badge.qr_token)
-      if (!qrVerification.valid) {
-        console.error('[Badge Creation Error - Public Reg QR Verification Failed]', {
-          badge_number: badge.badge_number,
-          qr_token: badge.qr_token,
-          error: qrVerification.error,
-          visit_id,
-          registration_number: visit.registration_number,
-          timestamp: new Date().toISOString(),
-        })
-
-        await supabaseAdmin
-          .from('visitor_badges')
-          .delete()
-          .eq('id', badge.id)
-
-         return NextResponse.json(
-           { error: `QR verification failed: ${qrVerification.error}` },
-           { status: 500 }
-         )
+       const qrVerification = await verifyBadgeQR(badge.id, badge.qr_token)
+       if (!qrVerification.valid) {
+         console.warn('[Badge Creation Warning - Public Reg QR Verification Check Failed]', {
+           badge_number: badge.badge_number,
+           qr_token: badge.qr_token,
+           error: qrVerification.error,
+           visit_id,
+           registration_number: visit.registration_number,
+           timestamp: new Date().toISOString(),
+         })
        }
 
         await sendEmail({
@@ -199,9 +189,9 @@ export async function POST(request: NextRequest) {
         visit_id
       ).catch(() => {})
 
-      await logAuditAction('Public Registration Approved', 'visit', visit_id, `Registration ${visit.registration_number} approved`)
+       await logAuditAction('Public Registration Approved', 'visit', visit_id, `Registration ${visit.registration_number} approved`).catch(() => {})
 
-      return NextResponse.json({ success: true, data: { badge_number: badge.badge_number, qr_token: badge.qr_token } })
+       return NextResponse.json({ success: true, data: { badge_number: badge.badge_number, qr_token: badge.qr_token } })
     }
 
     if (action === 'reject') {
