@@ -279,7 +279,6 @@ export async function GET(request: NextRequest) {
     let query = supabaseAdmin
       .from('visits')
       .select('*')
-      .eq('source', 'public')
       .eq('status', 'pending')
       .order('created_at', { ascending: true })
 
@@ -420,6 +419,7 @@ export async function GET(request: NextRequest) {
 
     const enrichedVisits = visits.map((visit: any) => ({
       ...visit,
+      full_name: visitorsMap.get(visit.visitor_id)?.full_name || null,
       visitor: visitorsMap.get(visit.visitor_id) || null,
       employee: employeesMap.get(visit.employee_id) || null,
     }))

@@ -190,7 +190,7 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
         supabase.from('visits').select('id', { count: 'exact', head: true }).gte('created_at', weekAgo),
         supabase.from('visits').select('id', { count: 'exact', head: true }).gte('created_at', monthAgo),
         supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'checked_in'),
-        supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+        supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
         supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'checked_in'),
         supabase.from('visits').select('id', { count: 'exact', head: true }).eq('status', 'checked_out'),
         supabase.from('visitor_badges').select('id', { count: 'exact', head: true }).eq('badge_status', 'Active'),
