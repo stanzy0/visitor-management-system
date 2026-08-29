@@ -45,40 +45,10 @@ const NAV_SECTIONS = [
   ]},
   { title: 'SECURITY', items: [
     { label: 'ID Verification', icon: FileText, href: '/documents', permission: 'documents' },
-    { label: 'Emergency Occupancy', icon: AlertTriangle, href: '/emergency', permission: 'emergency' },
     { label: 'Host Portal', icon: Users, href: '/host', permission: 'host' },
   ]},
-  { title: 'ADMINISTRATION', items: [
-    { label: 'Admin Portal', icon: Shield, href: '/admin', permission: 'dashboard' },
-    { label: 'Employees', icon: UserCheck, href: '/employees', permission: 'employees' },
-    { label: 'Office Locations', icon: Building2, href: '/office-locations', permission: 'settings' },
-    { label: 'Vehicle Management', icon: Car, href: '/vehicles', permission: 'vehicles' },
-    { label: 'Users', icon: Users, href: '/users', permission: 'users' },
-    { label: 'System Monitoring', icon: Monitor, href: '/system', permission: 'dashboard' },
-  ]},
-  { title: 'DEPLOYMENT & RECOVERY', items: [
-    { label: 'Deployment Center', icon: GitBranch, href: '/deployment', permission: 'dashboard' },
-    { label: 'Backups', icon: Database, href: '/deployment/backups', permission: 'dashboard' },
-    { label: 'Restore Center', icon: FileDown, href: '/deployment/restore', permission: 'dashboard' },
-    { label: 'Maintenance Mode', icon: Settings, href: '/deployment/maintenance', permission: 'dashboard' },
-    { label: 'Version Management', icon: GitBranch, href: '/deployment/version', permission: 'dashboard' },
-    { label: 'System Info', icon: HardDrive, href: '/deployment/system-info', permission: 'dashboard' },
-  ]},
-  { title: 'MONITORING', items: [
-    { label: 'Notifications', icon: Bell, href: '/notifications', permission: 'dashboard' },
-    { label: 'Audit Logs', icon: ShieldCheck, href: '/audit-logs', permission: 'audit-logs' },
-    { label: 'Reports', icon: FileText, href: '/reports', permission: 'reports' },
-    { label: 'Analytics', icon: BarChart3, href: '/analytics', permission: 'analytics' },
-    { label: 'Operations Center', icon: Activity, href: '/operations', permission: 'operations' },
-    { label: 'Email Logs', icon: FileText, href: '/email-logs', permission: 'email' },
-  ]},
-  { title: 'ASSETS & PROPERTY', items: [
-    { label: 'Assets & Property', icon: ShieldCheck, href: '/assets', permission: 'dashboard' },
-  ]},
-  { title: 'CONFIGURATION', items: [
-    { label: 'Branding', icon: Palette, href: '/settings/branding', permission: 'settings' },
-    { label: 'Badge Designer', icon: Shield, href: '/admin/badges', permission: 'badges' },
-    { label: 'Settings', icon: Settings, href: '/settings', permission: 'settings' },
+  { title: 'INVITATIONS', items: [
+    { label: 'Invitations', icon: FileText, href: '/invitations', permission: 'invitations' },
   ]},
 ]
 

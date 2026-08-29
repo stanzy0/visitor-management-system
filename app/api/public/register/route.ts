@@ -83,25 +83,25 @@ export async function POST(request: NextRequest) {
     } = body
 
     if (!full_name || !phone || !email || !employee_id || !purpose || !visit_date) {
-      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
+      return NextResponse.json({ success: false, message: 'Missing required fields: full_name, phone, email, employee_id, purpose, visit_date', error: 'Missing required fields' }, { status: 400 })
     }
 
     const trimmedEmail = String(email).trim()
     const trimmedPhone = String(phone).trim()
     if (!EMAIL_RE.test(trimmedEmail)) {
-      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
+      return NextResponse.json({ success: false, message: 'Invalid email format', error: 'Invalid email' }, { status: 400 })
     }
     if (!PHONE_RE.test(trimmedPhone)) {
-      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
+      return NextResponse.json({ success: false, message: 'Invalid phone format', error: 'Invalid phone' }, { status: 400 })
     }
 
     const today = new Date().toISOString().split('T')[0]
     if (visit_date < today) {
-      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
+      return NextResponse.json({ success: false, message: 'Visit date cannot be in the past', error: 'Invalid visit_date' }, { status: 400 })
     }
 
     if (expected_duration && Number(expected_duration) <= 0) {
-      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
+      return NextResponse.json({ success: false, message: 'Expected duration must be positive', error: 'Invalid expected_duration' }, { status: 400 })
     }
 
     if (!supabaseAdmin) {
@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
 
     if (!employee) {
       log(regNumber, 'FAILED: Invalid host employee')
-      return NextResponse.json({ success: false, message: '', error: '' }, { status: 400 })
+      return NextResponse.json({ success: false, message: 'Invalid host employee selected', error: 'Invalid employee_id' }, { status: 400 })
     }
 
     log(regNumber, 'Employee found', { employeeId: employee.id })

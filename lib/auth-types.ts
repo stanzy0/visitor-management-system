@@ -66,12 +66,9 @@ export const PERMISSIONS: Record<UserRole, string[]> = {
     'visitors',
     'visits',
     'scanner',
-    'check-in',
-    'check-out',
-    'vehicles',
-    'watchlist',
     'documents',
     'badges',
+    'host',
     'invitations',
   ],
   Security: [
