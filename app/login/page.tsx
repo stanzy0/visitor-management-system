@@ -190,18 +190,17 @@ export default function LoginPage() {
           Back to Home
         </Link>
 
-        <div className="mx-auto w-full max-w-[420px]">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl lg:text-3xl font-bold mt-2 mb-1 text-[#F5F5DC]">
-              VMS
-            </h1>
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#C8A646]">
-                Visitors Management System
+          <div className="mx-auto w-full max-w-[420px]">
+            <div className="text-center mb-6">
+              <img
+                src="/images/visit.png"
+                alt="Visitor Management"
+                className="mx-auto h-32 w-auto object-contain"
+              />
+              <p className="text-[#9A9F87] text-sm mt-4">
+                Sign in to continue
               </p>
-            <p className="text-[#9A9F87] text-sm mt-2">
-              Sign in to continue
-            </p>
-          </div>
+            </div>
 
           <div className="h-px w-full bg-[rgba(85,107,47,0.35)] my-4" />
 

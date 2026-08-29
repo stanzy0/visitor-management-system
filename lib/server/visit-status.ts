@@ -29,6 +29,9 @@ interface ApplyVisitStatusOptions {
   rejectionReason?: string | null
   auditAction?: string
   auditDetails?: string
+  paComment?: string
+  paRole?: string
+  approvedBy?: string
 }
 
 /**
@@ -71,6 +74,17 @@ export async function applyVisitStatusChange(
   if (newStatus === 'checked_in') updates.check_in_time = now
   if (newStatus === 'checked_out') updates.check_out_time = now
   if (newStatus === 'rejected') updates.rejection_reason = options.rejectionReason ?? null
+  if (newStatus === 'approved' && options.paRole && options.paComment) {
+    if (options.paRole === 'PA_TO_DIRECTOR') {
+      updates.pa_director_approved_at = now
+      updates.pa_director_approved_by = options.approvedBy ?? null
+      updates.pa_director_comment = options.paComment
+    } else if (options.paRole === 'PA_TO_CI') {
+      updates.pa_ci_approved_at = now
+      updates.pa_ci_approved_by = options.approvedBy ?? null
+      updates.pa_ci_comment = options.paComment
+    }
+  }
 
   const { data: updatedVisit, error: updateError } = await supabaseAdmin
     .from('visits')

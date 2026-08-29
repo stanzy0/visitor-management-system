@@ -743,7 +743,7 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
       </div>
 
       {reviewVisitId && (
-        <VisitorReviewModal visitId={reviewVisitId} hostLabel={hostTitle.replace('Assigned ', '')} onClose={handleModalClose} />
+        <VisitorReviewModal visitId={reviewVisitId} hostLabel={hostTitle.replace('Assigned ', '')} paRole={paRole} onClose={handleModalClose} />
       )}
     </div>
   )

@@ -24,9 +24,9 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
     full_name: '',
     email: '',
     phone: '',
-    visitor_organization: '',
+    is_pre_arranged: null as boolean | null,
     visitor_address: '',
-    nationality: '',
+    nationality: 'Nigeria',
     gender: '',
     vehicle_plate: '',
     vehicle_type: '',
@@ -92,7 +92,16 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
     if (step === 1) {
       errors = validateStep1(visitorType)
     } else if (step === 2) {
-      errors = validateStep2(formData)
+      errors = validateStep2({
+        full_name: formData.full_name,
+        email: formData.email,
+        phone: formData.phone,
+        nationality: formData.nationality,
+        gender: formData.gender,
+      })
+      if (formData.is_pre_arranged === null || formData.is_pre_arranged === undefined) {
+        errors.is_pre_arranged = 'Please select whether this visit is pre-arranged.'
+      }
     } else if (step === 3) {
       errors = validateStep3(formData)
     } else if (step === 4) {
@@ -247,7 +256,6 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
         full_name: formData.full_name,
         email: formData.email,
         phone: formData.phone,
-        visitor_organization: formData.visitor_organization,
         visitor_address: formData.visitor_address,
         nationality: formData.nationality,
         gender: formData.gender,
@@ -295,6 +303,7 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
           visitor_type: visitorType,
           office_location: officeLocation,
           notes: formData.notes || null,
+          is_pre_arranged: formData.is_pre_arranged ?? false,
         })
         .select()
         .single()
@@ -424,6 +433,7 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
             host_employee_id={formData.host_employee_id}
             host_department={formData.host_department}
             office_location={formData.office_location}
+            is_pre_arranged={formData.is_pre_arranged}
             purpose={formData.purpose}
             custom_purpose={formData.custom_purpose}
             expected_duration={formData.expected_duration || 0}

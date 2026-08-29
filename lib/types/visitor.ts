@@ -35,7 +35,7 @@ export interface VisitorFormData {
   full_name: string
   email: string
   phone: string
-  visitor_organization: string
+  is_pre_arranged: boolean | null
   visitor_address: string
   nationality: string
   gender: string

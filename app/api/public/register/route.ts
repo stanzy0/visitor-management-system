@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       full_name,
       phone,
       email,
-      visitor_organization,
+      is_pre_arranged,
       nationality,
       visitor_address,
       gender,
@@ -145,7 +145,6 @@ export async function POST(request: NextRequest) {
         full_name,
         email: trimmedEmail,
         phone: trimmedPhone,
-        visitor_organization: visitor_organization || null,
         visitor_address: visitor_address || null,
         nationality: nationality || null,
         gender: gender || null,
@@ -177,6 +176,7 @@ export async function POST(request: NextRequest) {
         registration_number: regNumber,
         visitor_type: visitor_type || 'Visitor',
         notes: notes || null,
+        is_pre_arranged: is_pre_arranged ?? false,
       })
       .select()
       .single()
@@ -319,7 +319,7 @@ const { error: docError } = await supabaseAdmin.from('visitor_documents').insert
         template: 'visitor_arrival',
         data: {
           visitorName: full_name,
-          organization: visitor_organization || 'N/A',
+          organization: is_pre_arranged ? 'Pre-arranged Visit' : 'Walk-in Visit',
           purpose,
           date: visit_date,
           time: arrival_time || 'TBD',

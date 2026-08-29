@@ -5,6 +5,7 @@ interface Step7Props {
   full_name?: string
   phone?: string
   email?: string
+  is_pre_arranged?: boolean | null
   visitor_address?: string
   nationality?: string
   gender?: string
@@ -33,6 +34,7 @@ export default function Step7Review({
   full_name = '',
   phone = '',
   email = '',
+  is_pre_arranged = null,
   visitor_address = '',
   nationality = '',
   gender = '',
@@ -78,6 +80,7 @@ export default function Step7Review({
         <p className="text-gray-900"><strong className="text-gray-700">Name:</strong> <span className="text-gray-900">{full_name}</span></p>
         <p className="text-gray-900"><strong className="text-gray-700">Email:</strong> <span className="text-gray-900">{email}</span></p>
         <p className="text-gray-900"><strong className="text-gray-700">Phone:</strong> <span className="text-gray-900">{phone}</span></p>
+        <p className="text-gray-900"><strong className="text-gray-700">Pre-arranged Visit:</strong> <span className="text-gray-900">{is_pre_arranged === true ? 'Yes' : is_pre_arranged === false ? 'No' : '—'}</span></p>
         <p className="text-gray-900"><strong className="text-gray-700">Address:</strong> <span className="text-gray-900">{visitor_address || '—'}</span></p>
         <p className="text-gray-900"><strong className="text-gray-700">Nationality:</strong> <span className="text-gray-900">{nationality || '—'}</span></p>
         <p className="text-gray-900"><strong className="text-gray-700">Gender:</strong> <span className="text-gray-900">{gender || '—'}</span></p>

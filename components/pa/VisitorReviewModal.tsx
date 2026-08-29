@@ -42,8 +42,12 @@ interface VisitDetail {
 interface VisitorReviewModalProps {
   visitId: string | null
   hostLabel: string
+  paRole?: 'PA_TO_CI' | 'PA_TO_DIRECTOR'
   onClose: () => void
 }
+
+const PA_DIRECTOR_COMMENT = 'Director has been informed. Visitor may be admitted.'
+const PA_CI_COMMENT = 'Host has confirmed the visit. Proceed with registration'
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
@@ -60,13 +64,14 @@ function StatusBadge({ status }: { status: string }) {
   )
 }
 
-export default function VisitorReviewModal({ visitId, hostLabel, onClose }: VisitorReviewModalProps) {
+export default function VisitorReviewModal({ visitId, hostLabel, paRole, onClose }: VisitorReviewModalProps) {
   const [detail, setDetail] = useState<VisitDetail | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [action, setAction] = useState<'approve' | 'reject' | 'check_in' | 'check_out' | null>(null)
   const [confirmReject, setConfirmReject] = useState(false)
   const [reason, setReason] = useState('')
+  const [selectedPAComment, setSelectedPAComment] = useState('')
 
   useEffect(() => {
     if (!visitId) return
@@ -110,7 +115,12 @@ export default function VisitorReviewModal({ visitId, hostLabel, onClose }: Visi
     if (!visitId) return
     setAction('approve')
     try {
-      const res = await fetch(`/api/pa/visits/${visitId}/approve`, { method: 'POST' })
+      const comment = paRole === 'PA_TO_DIRECTOR' ? PA_DIRECTOR_COMMENT : paRole === 'PA_TO_CI' ? PA_CI_COMMENT : undefined
+      const res = await fetch(`/api/pa/visits/${visitId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(comment ? { pa_comment: comment } : {}),
+      })
       const json = await res.json()
       if (!res.ok || !json.success) {
         setError(json.message || 'Failed to approve visitor')
@@ -275,23 +285,45 @@ export default function VisitorReviewModal({ visitId, hostLabel, onClose }: Visi
             </div>
 
             {detail.status === 'pending' && !confirmReject && (
-              <div className="flex flex-wrap gap-3 border-t border-gray-100 pt-4">
-                <button
-                  onClick={handleApprove}
-                  disabled={action === 'approve'}
-                  className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60"
-                >
-                  {action === 'approve' ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                  Approve
-                </button>
-                <button
-                  onClick={() => setConfirmReject(true)}
-                  disabled={action === 'approve'}
-                  className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
-                >
-                  <XCircle className="h-4 w-4" />
-                  Reject
-                </button>
+              <div className="space-y-3 border-t border-gray-100 pt-4">
+                {(paRole === 'PA_TO_DIRECTOR' || paRole === 'PA_TO_CI') && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {paRole === 'PA_TO_DIRECTOR' ? 'PA to Director Comment' : 'PA to CI Comment'}
+                    </label>
+                    <select
+                      value={selectedPAComment}
+                      onChange={(e) => setSelectedPAComment(e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    >
+                      <option value="">{paRole === 'PA_TO_DIRECTOR' ? 'Select PA to Director comment...' : 'Select PA to CI comment...'}</option>
+                      {paRole === 'PA_TO_DIRECTOR' && (
+                        <option value={PA_DIRECTOR_COMMENT}>{PA_DIRECTOR_COMMENT}</option>
+                      )}
+                      {paRole === 'PA_TO_CI' && (
+                        <option value={PA_CI_COMMENT}>{PA_CI_COMMENT}</option>
+                      )}
+                    </select>
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={handleApprove}
+                    disabled={action === 'approve'}
+                    className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60"
+                  >
+                    {action === 'approve' ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => setConfirmReject(true)}
+                    disabled={action === 'approve'}
+                    className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                  >
+                    <XCircle className="h-4 w-4" />
+                    Reject
+                  </button>
+                </div>
               </div>
             )}
 

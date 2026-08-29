@@ -12,15 +12,15 @@ interface Step2Props {
   email?: string
   nationality?: string
   visitor_address?: string
-  visitor_organization?: string
+  is_pre_arranged?: boolean | null
   photo_url?: string | null
-  onChange: (field: keyof VisitorFormData, value: string) => void
+  onChange: (field: keyof VisitorFormData, value: string | boolean | null) => void
   errors?: Record<string, string | null>
   touched?: Set<string>
   onBlur?: (field: string) => void
 }
 
-export default function Step2PersonalInfo({ full_name = '', gender = '', phone = '', email = '', nationality = '', visitor_address = '', visitor_organization = '', photo_url = '', onChange, errors = {}, touched = new Set(), onBlur }: Step2Props) {
+export default function Step2PersonalInfo({ full_name = '', gender = '', phone = '', email = '', nationality = '', visitor_address = '', is_pre_arranged = null, photo_url = '', onChange, errors = {}, touched = new Set(), onBlur }: Step2Props) {
   const inputClasses = (field: string) => {
     const base = 'w-full rounded-lg border px-3 py-2'
     const touchedAndError = touched.has(field) && errors[field]
@@ -87,9 +87,32 @@ export default function Step2PersonalInfo({ full_name = '', gender = '', phone =
           {touched.has('email') && errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
         </div>
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Organization / Company *</label>
-          <input type="text" value={visitor_organization} onChange={(e) => onChange('visitor_organization', e.target.value)} onBlur={() => onBlur?.('visitor_organization')} className={inputClasses('visitor_organization')} />
-          {touched.has('visitor_organization') && errors.visitor_organization && <p className="text-sm text-red-600 mt-1">{errors.visitor_organization}</p>}
+          <label className="block text-sm font-medium text-gray-700 mb-2">Pre-arranged Visit *</label>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="is_pre_arranged"
+                value="true"
+                checked={is_pre_arranged === true}
+                onChange={() => onChange('is_pre_arranged', true)}
+                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">Yes</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="is_pre_arranged"
+                value="false"
+                checked={is_pre_arranged === false}
+                onChange={() => onChange('is_pre_arranged', false)}
+                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700">No</span>
+            </label>
+          </div>
+          {touched.has('is_pre_arranged') && errors.is_pre_arranged && <p className="text-sm text-red-600 mt-1">{errors.is_pre_arranged}</p>}
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>

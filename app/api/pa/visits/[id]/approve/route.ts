@@ -5,7 +5,7 @@ import { getAssignedHostEmployeeForPA } from '@/lib/server/pa-helpers'
 import { applyVisitStatusChange, InvalidTransitionError } from '@/lib/server/visit-status'
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
@@ -30,6 +30,7 @@ export async function POST(
   }
 
   const isAdmin = userRole.role === 'Admin'
+  const paRole = userRole.role as 'PA_TO_DIRECTOR' | 'PA_TO_CI' | 'Admin'
   const { role, hostEmployeeId } = isAdmin
     ? { role: 'Admin', hostEmployeeId: null }
     : await getAssignedHostEmployeeForPA(user.id)
@@ -60,10 +61,32 @@ export async function POST(
     return Array.isArray(v) ? v[0]?.full_name : v?.full_name
   })()
 
+  let paComment: string | undefined
+  try {
+    const body = await request.json()
+    if (body && typeof body.pa_comment === 'string') {
+      const trimmed = body.pa_comment.trim()
+      if (trimmed) {
+        if (paRole === 'PA_TO_DIRECTOR' && trimmed !== 'Director has been informed. Visitor may be admitted.') {
+          return NextResponse.json({ success: false, message: 'Invalid PA to Director comment. Must be the exact standardized text.', error: 'invalid_comment' }, { status: 400 })
+        }
+        if (paRole === 'PA_TO_CI' && trimmed !== 'Host has confirmed the visit. Proceed with registration') {
+          return NextResponse.json({ success: false, message: 'Invalid PA to CI comment. Must be the exact standardized text.', error: 'invalid_comment' }, { status: 400 })
+        }
+        paComment = trimmed
+      }
+    }
+  } catch {
+    // No body / invalid JSON — approval without comment is still allowed
+  }
+
   try {
     const updatedVisit = await applyVisitStatusChange(id, 'approved', {
       auditAction: 'Visitor Approved',
-      auditDetails: `PA (${role}) approved ${visitorFullName || 'visitor'}'s visit`,
+      auditDetails: `PA (${role}) approved ${visitorFullName || 'visitor'}'s visit${paComment ? `: ${paComment}` : ''}`,
+      paComment,
+      paRole: paRole === 'Admin' ? undefined : paRole,
+      approvedBy: user.id,
     })
 
     return NextResponse.json({ success: true, data: updatedVisit })

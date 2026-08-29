@@ -38,7 +38,7 @@ export default function PublicRegistrationForm({ invitation }: PublicRegistratio
     phone: invitation.visitor_phone || '',
     organization: invitation.visitor_organization || '',
     address: '',
-    nationality: '',
+    nationality: 'Nigeria',
     gender: '',
     vehicle_plate: '',
     vehicle_type: '',

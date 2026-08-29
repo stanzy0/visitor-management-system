@@ -8,7 +8,9 @@ import PhotoCapture from '@/components/PhotoCapture'
 import SearchableCombobox from '@/components/ui/SearchableCombobox'
 import { validateStep1, validateStep2, validateStep3, validateStep4, validateStep5, validateStep6, hasValidationErrors } from '@/lib/validation/visitor'
 
-type VisitorType = 'Visitor' | 'Contractor' | 'Vendor' | 'Guest Lecturer' | 'VIP' | 'Family Visitor' | 'Other'
+export type RegistrationVariant = 'default' | 'director'
+
+export type VisitorType = 'Visitor' | 'Contractor' | 'Vendor' | 'Guest Lecturer' | 'VIP' | 'Family Visitor' | 'Other'
 
 interface Employee {
   id: string
@@ -333,7 +335,12 @@ const NATIONALITIES = [
   'Zimbabwean',
 ]
 
-export default function PublicRegistrationWizard() {
+interface PublicRegistrationWizardProps {
+  variant?: RegistrationVariant
+}
+
+export default function PublicRegistrationWizard({ variant = 'default' }: PublicRegistrationWizardProps) {
+  const isDirector = variant === 'director'
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -349,7 +356,8 @@ export default function PublicRegistrationWizard() {
    const [availabilityAlternatives, setAvailabilityAlternatives] = useState<Array<{ time: string; availableAt: string }>>([])
    const [checkingAvailability, setCheckingAvailability] = useState(false)
    const [nextAvailableAt, setNextAvailableAt] = useState<string | null>(null)
-   const [customPurpose, setCustomPurpose] = useState('')
+  const [manualPurpose, setManualPurpose] = useState('')
+  const [customPurpose, setCustomPurpose] = useState('')
   const [validationErrors, setValidationErrors] = useState<Record<string, string | null>>({})
   const [touched, setTouched] = useState<Set<string>>(new Set())
 
@@ -373,8 +381,8 @@ export default function PublicRegistrationWizard() {
     full_name: '',
     phone: '',
     email: '',
-    visitor_organization: '',
-    nationality: '',
+    is_pre_arranged: null as boolean | null,
+    nationality: 'Nigeria',
     visitor_address: '',
     gender: '',
     photo_url: null as string | null,
@@ -493,12 +501,14 @@ export default function PublicRegistrationWizard() {
         full_name: formData.full_name,
         email: formData.email,
         phone: formData.phone,
-        visitor_organization: formData.visitor_organization,
         nationality: formData.nationality,
         gender: formData.gender,
       })
       if (!formData.photo_url) {
         errors.photo_url = 'Visitor photograph is required.'
+      }
+      if (formData.is_pre_arranged === null || formData.is_pre_arranged === undefined) {
+        errors.is_pre_arranged = 'Please select whether this visit is pre-arranged.'
       }
     } else if (step === 3) {
       errors = validateStep3({
@@ -510,9 +520,10 @@ export default function PublicRegistrationWizard() {
         doc_back_url: formData.doc_back_url,
       })
     } else if (step === 4) {
+      const purposeValue = isDirector ? manualPurpose : (formData.purpose === 'Other' ? customPurpose : formData.purpose)
       errors = validateStep4({
         host_employee_id: formData.employee_id,
-        purpose: formData.purpose === 'Other' ? customPurpose : formData.purpose,
+        purpose: purposeValue,
         custom_purpose: customPurpose,
         visit_date: formData.visit_date,
         arrival_time: formData.arrival_time,
@@ -608,11 +619,11 @@ export default function PublicRegistrationWizard() {
         full_name: formData.full_name,
         email: formData.email,
         phone: formData.phone,
-        visitor_organization: formData.visitor_organization,
         nationality: formData.nationality,
         gender: formData.gender,
       }),
       ...(!formData.photo_url ? { photo_url: 'Visitor photograph is required.' } : {}),
+      ...(formData.is_pre_arranged === null || formData.is_pre_arranged === undefined ? { is_pre_arranged: 'Please select whether this visit is pre-arranged.' } : {}),
       ...validateStep3({
         doc_type: formData.doc_type,
         doc_number: formData.doc_number,
@@ -623,7 +634,7 @@ export default function PublicRegistrationWizard() {
       }),
       ...validateStep4({
         host_employee_id: formData.employee_id,
-        purpose: formData.purpose === 'Other' ? customPurpose : formData.purpose,
+        purpose: isDirector ? manualPurpose : (formData.purpose === 'Other' ? customPurpose : formData.purpose),
         custom_purpose: customPurpose,
         visit_date: formData.visit_date,
         arrival_time: formData.arrival_time,
@@ -670,36 +681,36 @@ export default function PublicRegistrationWizard() {
       }
 
        const registerResponse = await fetch('/api/public/register', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({
-           full_name: formData.full_name,
-           phone: formData.phone,
-           email: formData.email,
-           visitor_organization: formData.visitor_organization,
-           visitor_address: formData.visitor_address,
-           nationality: formData.nationality,
-           gender: formData.gender,
-           photo_url: formData.photo_url,
-           emergency_phone: formData.emergency_phone,
-           registration_number: formData.registration_number,
-           vehicle_type: formData.vehicle_type,
-           employee_id: formData.employee_id,
-           purpose: formData.purpose === 'Other' ? customPurpose : formData.purpose,
-           visit_date: formData.visit_date,
-           arrival_time: formData.arrival_time,
-           expected_duration: formData.expected_duration,
-           has_vehicle: formData.has_vehicle,
-           visitor_type: visitorType,
-           notes: formData.notes,
-           doc_type: formData.doc_type,
-           doc_number: formData.doc_number,
-           issuing_country: formData.issuing_country,
-           expiry_date: formData.expiry_date,
-           doc_front_url: formData.doc_front_url,
-           doc_back_url: formData.doc_back_url || null,
-         }),
-       })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name: formData.full_name,
+            phone: formData.phone,
+            email: formData.email,
+            is_pre_arranged: formData.is_pre_arranged,
+            visitor_address: formData.visitor_address,
+            nationality: formData.nationality,
+            gender: formData.gender,
+            photo_url: formData.photo_url,
+            emergency_phone: formData.emergency_phone,
+            registration_number: formData.registration_number,
+            vehicle_type: formData.vehicle_type,
+            employee_id: formData.employee_id,
+            purpose: isDirector ? manualPurpose : (formData.purpose === 'Other' ? customPurpose : formData.purpose),
+            visit_date: formData.visit_date,
+            arrival_time: formData.arrival_time,
+            expected_duration: formData.expected_duration,
+            has_vehicle: formData.has_vehicle,
+            visitor_type: visitorType,
+            notes: formData.notes,
+            doc_type: formData.doc_type,
+            doc_number: formData.doc_number,
+            issuing_country: formData.issuing_country,
+            expiry_date: formData.expiry_date,
+            doc_front_url: formData.doc_front_url,
+            doc_back_url: formData.doc_back_url || null,
+          }),
+        })
 
        if (!registerResponse.ok) {
          const errData = await registerResponse.json()
@@ -730,19 +741,21 @@ export default function PublicRegistrationWizard() {
 
 const isStepInvalid = () => {
      if (step === 1) return hasValidationErrors(validateStep1(visitorType))
-     if (step === 2) {
-       const errors = validateStep2({
-         full_name: formData.full_name,
-         email: formData.email,
-         phone: formData.phone,
-         visitor_organization: formData.visitor_organization,
-         nationality: formData.nationality,
-         gender: formData.gender,
-       })
-       if (!formData.photo_url) errors.photo_url = 'Visitor photograph is required.'
-       return hasValidationErrors(errors)
-     }
-     if (step === 3) {
+       if (step === 2) {
+        const errors = validateStep2({
+          full_name: formData.full_name,
+          email: formData.email,
+          phone: formData.phone,
+          nationality: formData.nationality,
+          gender: formData.gender,
+        })
+        if (!formData.photo_url) errors.photo_url = 'Visitor photograph is required.'
+        if (formData.is_pre_arranged === null || formData.is_pre_arranged === undefined) {
+          errors.is_pre_arranged = 'Please select whether this visit is pre-arranged.'
+        }
+        return hasValidationErrors(errors)
+      }
+      if (step === 3) {
        const errors = validateStep3({
          doc_type: formData.doc_type,
          doc_number: formData.doc_number,
@@ -756,7 +769,7 @@ const isStepInvalid = () => {
      }
      if (step === 4) return hasValidationErrors(validateStep4({
        host_employee_id: formData.employee_id,
-       purpose: formData.purpose === 'Other' ? customPurpose : formData.purpose,
+       purpose: isDirector ? manualPurpose : (formData.purpose === 'Other' ? customPurpose : formData.purpose),
        custom_purpose: customPurpose,
        visit_date: formData.visit_date,
        arrival_time: formData.arrival_time,
@@ -825,19 +838,28 @@ const isStepInvalid = () => {
     )
   }
 
+  const formTitle = isDirector ? 'DIRECTOR' : 'Visitor Registration'
+  const formSubtitle = isDirector
+    ? 'DEPARTMENT OF LAND WARFARE\nVISITORS FORM'
+    : 'Armed Forces Command and Staff College · Kaduna, Nigeria'
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-[#0B3D91] text-white">
+      <div className={isDirector ? 'bg-[#0B0F08] text-white' : 'bg-[#0B3D91] text-white'}>
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold">Visitor Registration</h1>
-              <p className="text-xs sm:text-sm text-white/70 mt-0.5">Armed Forces Command and Staff College · Kaduna, Nigeria</p>
+              <h1 className="text-xl sm:text-2xl font-bold">{formTitle}</h1>
+              {isDirector ? (
+                <div className="text-xs sm:text-sm text-[#9A9F87] mt-0.5 whitespace-pre-line">{formSubtitle}</div>
+              ) : (
+                <p className="text-xs sm:text-sm text-white/70 mt-0.5">{formSubtitle}</p>
+              )}
             </div>
             <div className="text-left sm:text-right">
               <p className="text-sm font-medium text-white/90">Step {step} of {totalSteps}</p>
               <div className="mt-1.5 h-1.5 w-40 sm:w-48 rounded-full bg-white/20">
-                <div className="h-1.5 rounded-full bg-[#4DA6FF] transition-all duration-500" style={{ width: `${(step / totalSteps) * 100}%` }} />
+                <div className={`h-1.5 rounded-full transition-all duration-500 ${isDirector ? 'bg-[#C8A951]' : 'bg-[#4DA6FF]'}`} style={{ width: `${(step / totalSteps) * 100}%` }} />
               </div>
             </div>
           </div>
@@ -921,15 +943,38 @@ const isStepInvalid = () => {
                   {touched.has('email') && validationErrors.email && <p className="text-sm text-red-600 mt-1">{validationErrors.email}</p>}
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Organization / Company *</label>
-                  <input
-                    type="text"
-                    value={formData.visitor_organization}
-                    onChange={(e) => updateField('visitor_organization', e.target.value)}
-                    onBlur={() => markTouched('visitor_organization')}
-                    className={`${touched.has('visitor_organization') && validationErrors.visitor_organization ? 'border-red-500 text-red-600' : 'border-gray-300'} w-full rounded-lg border px-3 py-2`}
-                  />
-                  {touched.has('visitor_organization') && validationErrors.visitor_organization && <p className="text-sm text-red-600 mt-1">{validationErrors.visitor_organization}</p>}
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Pre-arranged Visit *</label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="is_pre_arranged"
+                        value="true"
+                        checked={formData.is_pre_arranged === true}
+                        onChange={() => {
+                          updateField('is_pre_arranged', true as unknown as string)
+                          markTouched('is_pre_arranged')
+                        }}
+                        className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="is_pre_arranged"
+                        value="false"
+                        checked={formData.is_pre_arranged === false}
+                        onChange={() => {
+                          updateField('is_pre_arranged', false as unknown as string)
+                          markTouched('is_pre_arranged')
+                        }}
+                        className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-700">No</span>
+                    </label>
+                  </div>
+                  {touched.has('is_pre_arranged') && validationErrors.is_pre_arranged && <p className="text-sm text-red-600 mt-1">{validationErrors.is_pre_arranged}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nationality *</label>
@@ -1272,18 +1317,34 @@ const isStepInvalid = () => {
                 )}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Purpose *</label>
-                  <SearchableCombobox
-                    options={PURPOSE_OPTIONS}
-                    value={formData.purpose}
-                    onChange={(val) => {
-                      updateField('purpose', val)
-                    }}
-                    placeholder="Select purpose..."
-                    searchPlaceholder="Search purpose..."
-                    noResultsText="No matching purpose"
-                    required
-                  />
-                  {formData.purpose === 'Other' && (
+                  {isDirector ? (
+                    <input
+                      type="text"
+                      value={manualPurpose}
+                      onChange={(e) => {
+                        setManualPurpose(e.target.value)
+                        updateField('purpose', e.target.value)
+                      }}
+                      onBlur={() => markTouched('purpose')}
+                      placeholder="Enter purpose of visit..."
+                      required
+                      className={`${touched.has('purpose') && validationErrors.purpose ? 'border-red-500 text-red-600' : 'border-gray-300'} w-full rounded-lg border px-3 py-2`}
+                    />
+                  ) : (
+                    <SearchableCombobox
+                      options={PURPOSE_OPTIONS}
+                      value={formData.purpose}
+                      onChange={(val) => {
+                        updateField('purpose', val)
+                      }}
+                      placeholder="Select purpose..."
+                      searchPlaceholder="Search purpose..."
+                      noResultsText="No matching purpose"
+                      required
+                    />
+                  )}
+                  {touched.has('purpose') && validationErrors.purpose && <p className="text-sm text-red-600 mt-1">{validationErrors.purpose}</p>}
+                  {!isDirector && formData.purpose === 'Other' && (
                     <div className="mt-2">
                       <label className="block text-sm font-medium text-gray-700 mb-1">Specify Purpose *</label>
                       <input
@@ -1405,12 +1466,12 @@ const isStepInvalid = () => {
                 <ReviewRow label="Full Name" value={formData.full_name} />
                 <ReviewRow label="Phone" value={formData.phone} />
                 <ReviewRow label="Email" value={formData.email} />
-                <ReviewRow label="Organization" value={formData.visitor_organization} />
+                <ReviewRow label="Pre-arranged Visit" value={formData.is_pre_arranged === true ? 'Yes' : formData.is_pre_arranged === false ? 'No' : '—'} />
                 <ReviewRow label="Nationality" value={formData.nationality} />
                 <ReviewRow label="ID Type" value={formData.doc_type} />
                 <ReviewRow label="ID Number" value={formData.doc_number} />
                 <ReviewRow label="Host" value={employees.find((e) => e.id === formData.employee_id)?.full_name || formData.employee_id} />
-                 <ReviewRow label="Purpose" value={formData.purpose === 'Other' ? customPurpose : formData.purpose} />
+                 <ReviewRow label="Purpose" value={isDirector ? manualPurpose : formData.purpose} />
                 <ReviewRow label="Visit Date" value={formData.visit_date} />
                 <ReviewRow label="Arrival Time" value={formData.arrival_time} />
                 <ReviewRow label="Vehicle" value={formData.has_vehicle ? `${formData.registration_number} (${formData.vehicle_type})` : 'No'} />

@@ -33,7 +33,6 @@ export function validateStep2(data: {
   full_name?: string
   email?: string
   phone?: string
-  visitor_organization?: string
   nationality?: string
   gender?: string
 }): Record<string, string | null> {
@@ -47,9 +46,6 @@ export function validateStep2(data: {
 
   const phoneErr = validatePhone(data.phone || '')
   if (phoneErr) errors.phone = phoneErr
-
-  const orgErr = validateRequired(data.visitor_organization, 'Organization / Company')
-  if (orgErr) errors.visitor_organization = orgErr
 
   const nationality = data.nationality?.trim()
   if (!nationality) {
