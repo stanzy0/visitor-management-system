@@ -152,7 +152,8 @@ export async function applyVisitStatusChange(
     hostName,
     visitId,
     hostUserId,
-    newStatus === 'checked_in' ? displayTime : null
+    newStatus === 'checked_in' ? displayTime : null,
+    (updatedVisit as { employee_id?: string | null }).employee_id ?? null
   )
 
   return updatedVisit as Record<string, unknown>

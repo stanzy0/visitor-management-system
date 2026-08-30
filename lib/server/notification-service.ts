@@ -235,6 +235,42 @@ export async function createPADirectorNotification(
   return createNotification(title, message, type, null, RECIPIENT_ROLES.PA_TO_DIRECTOR, relatedType, relatedId)
 }
 
+/**
+ * Creates a notification for the Personal Assistant assigned to a given host
+ * employee (via user_host_assignments). This ensures PA users see visit-related
+ * events (new registrations, approvals, check-ins, check-outs) for their host.
+ * Returns null when the host has no assigned PA.
+ */
+export async function createPANotificationForHost(
+  hostEmployeeId: string | null | undefined,
+  title: string,
+  message: string,
+  type: NotificationType = 'info',
+  relatedType?: string,
+  relatedId?: string
+): Promise<Notification | null> {
+  if (!supabaseAdmin || !hostEmployeeId) return null
+
+  const { data: assignment } = await supabaseAdmin
+    .from('user_host_assignments')
+    .select('user_id')
+    .eq('employee_id', hostEmployeeId)
+    .maybeSingle()
+
+  if (!assignment?.user_id) return null
+
+  const { data: userRole } = await supabaseAdmin
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', assignment.user_id)
+    .maybeSingle()
+
+  const role = userRole?.role
+  if (role !== 'PA_TO_CI' && role !== 'PA_TO_DIRECTOR') return null
+
+  return createNotification(title, message, type, assignment.user_id, role, relatedType, relatedId)
+}
+
 export async function getNotifications(
   filters: NotificationFilters,
   userId: string | null,

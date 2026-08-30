@@ -82,34 +82,26 @@ export async function GET(request: NextRequest) {
   const startStr = startDate.toISOString()
   const endStr = endDate.toISOString()
 
-  const startDateStr = startDate.toISOString().split('T')[0]
-  const endDateStr = endDate.toISOString().split('T')[0]
-
-  const baseDateQuery = supabaseAdmin
+  const baseQuery = supabaseAdmin
     .from('visits')
     .select('*, visitor:visitors(*), employee:employees(*)')
-    .gte('visit_date', startDateStr)
-    .lte('visit_date', endDateStr)
+    .or(
+      `and(created_at.gte.${startStr},created_at.lte.${endStr}),` +
+      `and(check_in_time.gte.${startStr},check_in_time.lte.${endStr}),` +
+      `and(check_out_time.gte.${startStr},check_out_time.lte.${endStr})`
+    )
 
-  const baseCreatedQuery = supabaseAdmin
-    .from('visits')
-    .select('*, visitor:visitors(*), employee:employees(*)')
-    .gte('created_at', startStr)
-    .lte('created_at', endStr)
+  const dateQuery = !isAdmin && hostEmployeeId ? baseQuery.eq('employee_id', hostEmployeeId!) : baseQuery
 
-  const dateQuery = !isAdmin && hostEmployeeId ? baseDateQuery.eq('employee_id', hostEmployeeId!) : baseDateQuery
-  const createdQuery = !isAdmin && hostEmployeeId ? baseCreatedQuery.eq('employee_id', hostEmployeeId!) : baseCreatedQuery
-
-  const [{ data: dateData, error: dateError }, { data: createdData, error: createdError }] = await Promise.all([
+  const [{ data: dateData, error: dateError }] = await Promise.all([
     dateQuery.then(q => q),
-    createdQuery.then(q => q),
   ])
 
-  if (dateError || createdError) {
-    return NextResponse.json({ success: false, message: 'Failed to load visits', error: dateError?.message || createdError?.message }, { status: 500 })
+  if (dateError) {
+    return NextResponse.json({ success: false, message: 'Failed to load visits', error: dateError.message }, { status: 500 })
   }
 
-  const all = Array.from(new Map([...(dateData || []), ...(createdData || [])].map(v => [v.id, v])).values())
+  const all = dateData || []
   const pendingVisits = all.filter((v) => v.status === 'pending')
   const approvedVisits = all.filter((v) => v.status === 'approved')
   const checkedInVisits = all.filter((v) => v.status === 'checked_in')

@@ -1,4 +1,4 @@
-import { createAdminNotification, createReceptionistNotification, createSecurityNotification, createHostNotification } from '@/lib/server/notification-service'
+import { createAdminNotification, createReceptionistNotification, createSecurityNotification, createHostNotification, createPANotificationForHost } from '@/lib/server/notification-service'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'visitor' | 'employee' | 'system' | 'watchlist_match' | 'watchlist_added' | 'watchlist_updated' | 'watchlist_override'
@@ -9,7 +9,8 @@ export async function createVisitStatusNotification(
   hostName: string,
   visitId: string,
   hostUserId?: string | null,
-  checkInTime?: string | null
+  checkInTime?: string | null,
+  hostEmployeeId?: string | null
 ) {
   const promises: Promise<unknown>[] = []
 
@@ -44,6 +45,16 @@ export async function createVisitStatusNotification(
         visitId
       )
     )
+    promises.push(
+      createPANotificationForHost(
+        hostEmployeeId,
+        'Visit Approved',
+        `${visitorName}'s visit has been approved.`,
+        'visitor',
+        'visit',
+        visitId
+      )
+    )
   } else if (status === 'rejected') {
     if (hostUserId) {
       promises.push(
@@ -68,6 +79,16 @@ export async function createVisitStatusNotification(
     )
     promises.push(
       createReceptionistNotification(
+        'Visit Rejected',
+        `${visitorName}'s visit has been rejected.`,
+        'visitor',
+        'visit',
+        visitId
+      )
+    )
+    promises.push(
+      createPANotificationForHost(
+        hostEmployeeId,
         'Visit Rejected',
         `${visitorName}'s visit has been rejected.`,
         'visitor',
@@ -115,6 +136,16 @@ export async function createVisitStatusNotification(
         visitId
       )
     )
+    promises.push(
+      createPANotificationForHost(
+        hostEmployeeId,
+        'Visitor Arrived',
+        `${visitorName} has checked in${checkInTime ? ' at ' + checkInTime : ''}.`,
+        'visitor',
+        'visit',
+        visitId
+      )
+    )
   } else if (status === 'checked_out') {
     if (hostUserId) {
       promises.push(
@@ -141,6 +172,16 @@ export async function createVisitStatusNotification(
       createReceptionistNotification(
         'Visitor Checked Out',
         `${visitorName} has checked out.`,
+        'visitor',
+        'visit',
+        visitId
+      )
+    )
+    promises.push(
+      createPANotificationForHost(
+        hostEmployeeId,
+        'Visitor Checked Out',
+        `${visitorName} has checked out${checkInTime ? ' at ' + checkInTime : ''}.`,
         'visitor',
         'visit',
         visitId

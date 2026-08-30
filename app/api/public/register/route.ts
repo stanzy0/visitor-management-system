@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/server/email'
 import type { EmailTemplate } from '@/lib/email/types'
-import { createAdminNotification, createHostNotification } from '@/lib/server/notification-service'
+import { createAdminNotification, createHostNotification, createPANotificationForHost } from '@/lib/server/notification-service'
 import { logAuditAction } from '@/lib/server/audit'
 import QRCode from 'qrcode'
 import { checkRateLimit, rateLimitResponse } from '@/lib/server/rate-limit'
@@ -310,6 +310,16 @@ const { error: docError } = await supabaseAdmin.from('visitor_documents').insert
       visit.id
     )
     log(regNumber, 'Admin notification created')
+
+    await createPANotificationForHost(
+      employee.id,
+      'New Visitor Registration',
+      `${full_name} has submitted a visitor registration (${regNumber}) for ${visit_date}.`,
+      'info',
+      'visit',
+      visit.id
+    )
+    log(regNumber, 'PA notification created')
 
     if (employee.email) {
       const hostResult = await sendEmail({
