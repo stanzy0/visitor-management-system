@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, UserRole } from '@/lib/auth-client'
+import { useNotifications } from '@/contexts/NotificationContext'
 import {
   Loader2,
   Users,
@@ -22,6 +23,7 @@ import {
   CheckCircle,
   CheckCircle2,
   CheckCheck,
+  Bell,
 } from 'lucide-react'
 import PremiumSidebar, { type NavSection } from '@/components/dashboard/premium/PremiumSidebar'
 import PremiumHeader from '@/components/dashboard/premium/PremiumHeader'
@@ -299,6 +301,7 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [reviewVisitId, setReviewVisitId] = useState<string | null>(null)
   const [dateRange, setDateRange] = useState<'today' | '7days' | '30days'>('today')
+  const { notifications: recentNotifications } = useNotifications()
 
   const showNotification = useCallback((type: 'success' | 'error', message: string) => {
     setNotification({ type, message })
@@ -579,6 +582,31 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
                 />
               ))}
             </div>
+
+            {recentNotifications.length > 0 && (
+              <SectionCard id="recent-notifications" title="Recent Notifications" icon={Bell} count={recentNotifications.length}>
+                <div className="divide-y divide-gray-50">
+                  {recentNotifications.slice(0, 10).map((notification) => (
+                    <div key={notification.id} className="p-4 hover:bg-gray-50/80 transition-colors">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-900 text-sm">{notification.title}</p>
+                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{notification.message}</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="p-4 border-t border-gray-100">
+                  <a href="/notifications" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                    View All Notifications
+                  </a>
+                </div>
+              </SectionCard>
+            )}
 
             <SectionCard id="today-visitors" title="Today's Visitors" icon={CalendarDays} count={visitsToday.length}>
               <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

@@ -82,22 +82,34 @@ export async function GET(request: NextRequest) {
   const startStr = startDate.toISOString()
   const endStr = endDate.toISOString()
 
-  let visitsQuery = supabaseAdmin
+  const startDateStr = startDate.toISOString().split('T')[0]
+  const endDateStr = endDate.toISOString().split('T')[0]
+
+  const baseDateQuery = supabaseAdmin
+    .from('visits')
+    .select('*, visitor:visitors(*), employee:employees(*)')
+    .gte('visit_date', startDateStr)
+    .lte('visit_date', endDateStr)
+
+  const baseCreatedQuery = supabaseAdmin
     .from('visits')
     .select('*, visitor:visitors(*), employee:employees(*)')
     .gte('created_at', startStr)
     .lte('created_at', endStr)
-    .order('created_at', { ascending: false })
 
-  const { data: todaysVisits, error: visitsError } = !isAdmin && hostEmployeeId
-    ? await visitsQuery.eq('employee_id', hostEmployeeId)
-    : await visitsQuery
+  const dateQuery = !isAdmin && hostEmployeeId ? baseDateQuery.eq('employee_id', hostEmployeeId!) : baseDateQuery
+  const createdQuery = !isAdmin && hostEmployeeId ? baseCreatedQuery.eq('employee_id', hostEmployeeId!) : baseCreatedQuery
 
-  if (visitsError) {
-    return NextResponse.json({ success: false, message: 'Failed to load visits', error: visitsError.message }, { status: 500 })
+  const [{ data: dateData, error: dateError }, { data: createdData, error: createdError }] = await Promise.all([
+    dateQuery.then(q => q),
+    createdQuery.then(q => q),
+  ])
+
+  if (dateError || createdError) {
+    return NextResponse.json({ success: false, message: 'Failed to load visits', error: dateError?.message || createdError?.message }, { status: 500 })
   }
 
-  const all = todaysVisits || []
+  const all = Array.from(new Map([...(dateData || []), ...(createdData || [])].map(v => [v.id, v])).values())
   const pendingVisits = all.filter((v) => v.status === 'pending')
   const approvedVisits = all.filter((v) => v.status === 'approved')
   const checkedInVisits = all.filter((v) => v.status === 'checked_in')
