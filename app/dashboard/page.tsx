@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser, UserRole } from '@/lib/auth-client'
@@ -147,40 +147,40 @@ export default function DashboardPage() {
     }
   }, [authReady, userRole])
 
-  useEffect(() => {
-    const fetchPendingOnlineRegistrations = async () => {
-      if (!authReady) return
-      if (!['Admin', 'Receptionist'].includes(userRole)) {
-        setPendingOnlineRegistrations([])
+  const fetchPendingOnlineRegistrations = useCallback(async () => {
+    if (!authReady) return
+    if (!['Admin', 'Receptionist'].includes(userRole)) {
+      setPendingOnlineRegistrations([])
+      return
+    }
+
+    try {
+      const res = await fetch('/api/public/registrations', {
+        headers: await getAuthHeaders(),
+      })
+
+      if (res.status === 401 || res.status === 403) {
         return
       }
 
-      try {
-        const res = await fetch('/api/public/registrations', {
-          headers: await getAuthHeaders(),
-        })
-
-        if (res.status === 401 || res.status === 403) {
-          return
-        }
-
-        if (!res.ok) {
-          throw new Error(`Request failed: ${res.status}`)
-        }
-
-        const json = await res.json()
-        if (json.success) {
-          setPendingOnlineRegistrations(json.data)
-        }
-      } catch (err) {
-        console.error('Failed to fetch pending online registrations:', err)
+      if (!res.ok) {
+        throw new Error(`Request failed: ${res.status}`)
       }
-    }
 
+      const json = await res.json()
+      if (json.success) {
+        setPendingOnlineRegistrations(json.data)
+      }
+    } catch (err) {
+      console.error('Failed to fetch pending online registrations:', err)
+    }
+  }, [authReady, userRole])
+
+  useEffect(() => {
     if (authReady) {
       fetchPendingOnlineRegistrations()
     }
-  }, [authReady, userRole])
+  }, [authReady, userRole, fetchPendingOnlineRegistrations])
 
   useEffect(() => {
     const fetchPendingDocuments = async () => {
@@ -231,45 +231,63 @@ export default function DashboardPage() {
     }
   }, [authReady])
 
-  useEffect(() => {
-    const fetchRecentVisitors = async () => {
-      if (!authReady) return
-      try {
-        const { data } = await supabase
-          .from('visits')
-          .select('id, status, created_at, purpose, visitor:visitors(full_name, photo_url), employee:employees(full_name, department)')
-          .order('created_at', { ascending: false })
-          .limit(8)
+  const fetchRecentVisitors = useCallback(async () => {
+    if (!authReady) return
+    try {
+      const { data } = await supabase
+        .from('visits')
+        .select('id, status, created_at, purpose, visitor:visitors(full_name, photo_url), employee:employees(full_name, department)')
+        .order('created_at', { ascending: false })
+        .limit(8)
 
-        if (data) {
-          const mapped = (data as Array<{
-            id: string
-            status: string
-            created_at: string
-            purpose?: string
-            visitor?: { full_name?: string; photo_url?: string | null }
-            employee?: { full_name?: string; department?: string }
-          }>).map((visit) => ({
-            id: visit.id,
-            full_name: visit.visitor?.full_name || 'Unknown',
-            photo_url: visit.visitor?.photo_url || null,
-            status: visit.status,
-            created_at: visit.created_at,
-            purpose: visit.purpose,
-            host_name: visit.employee?.full_name || '—',
-            host_department: visit.employee?.department || '—',
-          }))
-          setRecentVisitors(mapped)
-        }
-      } catch (err) {
-        console.error('Failed to fetch recent visitors:', err)
+      if (data) {
+        const mapped = (data as Array<{
+          id: string
+          status: string
+          created_at: string
+          purpose?: string
+          visitor?: { full_name?: string; photo_url?: string | null }
+          employee?: { full_name?: string; department?: string }
+        }>).map((visit) => ({
+          id: visit.id,
+          full_name: visit.visitor?.full_name || 'Unknown',
+          photo_url: visit.visitor?.photo_url || null,
+          status: visit.status,
+          created_at: visit.created_at,
+          purpose: visit.purpose,
+          host_name: visit.employee?.full_name || '—',
+          host_department: visit.employee?.department || '—',
+        }))
+        setRecentVisitors(mapped)
       }
+    } catch (err) {
+      console.error('Failed to fetch recent visitors:', err)
     }
+  }, [authReady])
 
+  useEffect(() => {
     if (authReady) {
       fetchRecentVisitors()
     }
-  }, [authReady])
+  }, [authReady, fetchRecentVisitors])
+
+  useEffect(() => {
+    if (!authReady) return
+    const channel = supabase
+      .channel('dashboard-pending-registrations')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'visits' },
+        () => {
+          fetchPendingOnlineRegistrations()
+          fetchRecentVisitors()
+        }
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [authReady, fetchPendingOnlineRegistrations, fetchRecentVisitors])
 
   const handleLogout = async () => {
     try {
@@ -424,7 +442,7 @@ export default function DashboardPage() {
   }
 
   const handlePrintBadge = (id: string) => {
-    router.push('/visitors/' + id)
+    router.push('/reception/badge-preview/' + id)
   }
 
    const isAdmin = userRole === 'Admin'

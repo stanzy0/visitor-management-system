@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth-helpers'
+import { requireRole } from '@/lib/auth-helpers'
 import { getVisitForBadgePreview, getBadgeTemplates } from '@/lib/server/badge-preview'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { logAuditAction } from '@/lib/server/audit'
@@ -10,7 +10,7 @@ import { createHostNotification, createSystemNotification, createReceptionistNot
 import { getDocumentVerifications } from '@/lib/server/document-verification'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ visitId: string }> }) {
-  const authResult = await requireAdmin()
+  const authResult = await requireRole(['Admin', 'Receptionist'])
   if (!authResult.authorized) {
     return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ visitId: string }> }) {
-  const authResult = await requireAdmin()
+  const authResult = await requireRole(['Admin'])
   if (!authResult.authorized) {
     return NextResponse.json({ success: false, message: authResult.error, error: authResult.error }, { status: authResult.status })
   }
