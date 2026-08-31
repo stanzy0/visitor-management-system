@@ -300,7 +300,18 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [reviewVisitId, setReviewVisitId] = useState<string | null>(null)
-  const [dateRange, setDateRange] = useState<'today' | '7days' | '30days'>('today')
+  const [dateRange, setDateRange] = useState<'today' | 'yesterday' | '7days' | '30days' | 'thisMonth'>('today')
+
+  const rangeLabel = (r: typeof dateRange) => {
+    switch (r) {
+      case 'today': return "Today's Visitors"
+      case 'yesterday': return 'Yesterday\'s Visitors'
+      case '7days': return 'Visitors (Last 7 Days)'
+      case '30days': return 'Visitors (Last 30 Days)'
+      case 'thisMonth': return 'Visitors (This Month)'
+      default: return "Today's Visitors"
+    }
+  }
   const { notifications: recentNotifications } = useNotifications()
 
   const showNotification = useCallback((type: 'success' | 'error', message: string) => {
@@ -524,11 +535,11 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
           userName={userName}
           userRole={userRole}
           filters={{ range: dateRange }}
-          onFilterChange={(filters) => {
-            if (filters.range && filters.range !== dateRange) {
-              setDateRange(filters.range as 'today' | '7days' | '30days')
-            }
-          }}
+           onFilterChange={(filters) => {
+             if (filters.range && filters.range !== dateRange) {
+               setDateRange(filters.range as typeof dateRange)
+             }
+           }}
           onExport={() => {}}
           exporting={false}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -608,9 +619,9 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
               </SectionCard>
             )}
 
-            <SectionCard id="today-visitors" title="Today's Visitors" icon={CalendarDays} count={visitsToday.length}>
+            <SectionCard id="today-visitors" title={rangeLabel(dateRange)} icon={CalendarDays} count={visitsToday.length}>
               <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <p className="text-sm text-gray-500">Visitor schedule for today</p>
+                <p className="text-sm text-gray-500">{dateRange === 'today' ? 'Visitor schedule for today' : `Showing results for "${rangeLabel(dateRange)}"`}</p>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input

@@ -88,7 +88,9 @@ export async function GET(request: NextRequest) {
     .or(
       `and(created_at.gte.${startStr},created_at.lte.${endStr}),` +
       `and(check_in_time.gte.${startStr},check_in_time.lte.${endStr}),` +
-      `and(check_out_time.gte.${startStr},check_out_time.lte.${endStr})`
+      `and(check_out_time.gte.${startStr},check_out_time.lte.${endStr}),` +
+      `status.eq.pending,` +
+      `status.eq.approved`
     )
 
   const dateQuery = !isAdmin && hostEmployeeId ? baseQuery.eq('employee_id', hostEmployeeId!) : baseQuery
