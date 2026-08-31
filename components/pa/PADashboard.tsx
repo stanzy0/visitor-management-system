@@ -380,7 +380,7 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
 
       pollInterval = setInterval(() => {
         fetchAllData()
-      }, 30000)
+      }, 10000)
     }
 
     checkAuth()
@@ -394,6 +394,23 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
       }
     }
   }, [paRole, fetchAllData, dateRange])
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        fetchAllData()
+      }
+    }
+    const onFocus = () => {
+      fetchAllData()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [fetchAllData])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()

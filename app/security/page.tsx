@@ -83,8 +83,26 @@ export default function SecurityDashboardPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'property_items' }, () => fetchStats())
       .subscribe()
 
+    const pollInterval = setInterval(() => {
+      fetchStats()
+    }, 10000)
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        fetchStats()
+      }
+    }
+    const onFocus = () => {
+      fetchStats()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onFocus)
+
     return () => {
       supabase.removeChannel(channel)
+      clearInterval(pollInterval)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onFocus)
     }
   }, [fetchStats])
 

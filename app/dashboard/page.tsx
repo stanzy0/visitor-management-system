@@ -289,6 +289,28 @@ export default function DashboardPage() {
     }
   }, [authReady, fetchPendingOnlineRegistrations, fetchRecentVisitors])
 
+  useEffect(() => {
+    if (!authReady) return
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        refetch()
+        fetchPendingOnlineRegistrations()
+        fetchRecentVisitors()
+      }
+    }
+    const onFocus = () => {
+      refetch()
+      fetchPendingOnlineRegistrations()
+      fetchRecentVisitors()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onFocus)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onFocus)
+    }
+  }, [authReady, refetch, fetchPendingOnlineRegistrations, fetchRecentVisitors])
+
   const handleLogout = async () => {
     try {
       await supabase.auth.signOut()

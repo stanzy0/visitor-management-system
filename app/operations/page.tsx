@@ -206,10 +206,28 @@ export default function OperationsPage() {
     }
     checkAuth()
 
+    const pollInterval = setInterval(() => {
+      fetchOperations()
+    }, 10000)
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        fetchOperations()
+      }
+    }
+    const onFocus = () => {
+      fetchOperations()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onFocus)
+
     return () => {
       if (realtimeChannel.current) {
         supabase.removeChannel(realtimeChannel.current)
       }
+      clearInterval(pollInterval)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onFocus)
     }
   }, [])
 

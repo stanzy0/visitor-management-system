@@ -424,7 +424,7 @@ export function useDashboardData(filters: DashboardFilters, enabled = true) {
 
     const pollInterval = setInterval(() => {
       silentRefresh()
-    }, 30000)
+    }, 10000)
 
     return () => {
       if (debounceRef.current) {

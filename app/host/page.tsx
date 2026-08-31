@@ -231,10 +231,28 @@ export default function HostPortalPage() {
     }
     checkAuth()
 
+    const pollInterval = setInterval(() => {
+      fetchData()
+    }, 10000)
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        fetchData()
+      }
+    }
+    const onFocus = () => {
+      fetchData()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onFocus)
+
     return () => {
       if (realtimeChannel.current) {
         supabase.removeChannel(realtimeChannel.current)
       }
+      clearInterval(pollInterval)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onFocus)
     }
   }, [])
 
