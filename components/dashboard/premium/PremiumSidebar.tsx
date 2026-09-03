@@ -28,6 +28,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Palette,
+  UserCog,
+  UserPlus,
+  ScrollText,
 } from 'lucide-react'
 import ImageWithFallback from '@/components/ui/ImageWithFallback'
 import type { LucideIcon } from 'lucide-react'
@@ -40,12 +43,19 @@ const NAV_SECTIONS = [
     { label: 'Reception Kiosk', icon: Monitor, href: '/reception/kiosk', permission: 'dashboard' },
     { label: 'Visitors', icon: Users, href: '/visitors', permission: 'visitors' },
     { label: 'Visits', icon: Clock, href: '/visits', permission: 'visits' },
+    { label: 'Employees', icon: UserCog, href: '/employees', permission: 'employees' },
     { label: 'Badges', icon: IdCard, href: '/badges', permission: 'badges' },
     { label: 'QR Scanner', icon: Scan, href: '/scanner', permission: 'scanner' },
   ]},
   { title: 'SECURITY', items: [
     { label: 'ID Verification', icon: FileText, href: '/documents', permission: 'documents' },
     { label: 'Host Portal', icon: Users, href: '/host', permission: 'host' },
+  ]},
+  { title: 'ADMINISTRATION', items: [
+    { label: 'Users', icon: UserPlus, href: '/users', permission: 'users' },
+    { label: 'Reports', icon: FileDown, href: '/reports', permission: 'reports' },
+    { label: 'Audit Logs', icon: ScrollText, href: '/audit-logs', permission: 'audit-logs' },
+    { label: 'Settings', icon: Settings, href: '/settings', permission: 'settings' },
   ]},
   { title: 'INVITATIONS', items: [
     { label: 'Invitations', icon: FileText, href: '/invitations', permission: 'invitations' },
