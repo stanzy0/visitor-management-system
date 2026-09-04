@@ -300,7 +300,9 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [reviewVisitId, setReviewVisitId] = useState<string | null>(null)
-  const [dateRange, setDateRange] = useState<'today' | 'yesterday' | '7days' | '30days' | 'thisMonth'>('today')
+  const [dateRange, setDateRange] = useState<'today' | 'yesterday' | '7days' | '30days' | 'thisMonth' | 'custom'>('today')
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
 
   const rangeLabel = (r: typeof dateRange) => {
     switch (r) {
@@ -309,6 +311,7 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
       case '7days': return 'Visitors (Last 7 Days)'
       case '30days': return 'Visitors (Last 30 Days)'
       case 'thisMonth': return 'Visitors (This Month)'
+      case 'custom': return 'Visitors (Custom Range)'
       default: return "Today's Visitors"
     }
   }
@@ -321,7 +324,12 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
 
   const fetchAllData = useCallback(async () => {
     try {
-      const res = await fetch(`/api/pa/dashboard?range=${dateRange}`)
+      const params = new URLSearchParams({ range: dateRange })
+      if (dateRange === 'custom' && customFrom && customTo) {
+        params.set('from', customFrom)
+        params.set('to', customTo)
+      }
+      const res = await fetch(`/api/pa/dashboard?${params.toString()}`)
       if (!res.ok) {
         const text = await res.text()
         console.error(`PA dashboard API ${res.status}: ${text}`)
@@ -551,13 +559,19 @@ export default function PADashboard({ paRole, title, hostTitle }: PADashboardPro
         <PremiumHeader
           userName={userName}
           userRole={userRole}
-          filters={{ range: dateRange }}
+          filters={{ range: dateRange, customFrom, customTo }}
            onFilterChange={(filters) => {
              if (filters.range && filters.range !== dateRange) {
                setDateRange(filters.range as typeof dateRange)
              }
+             if (filters.customFrom !== undefined) {
+               setCustomFrom(filters.customFrom)
+             }
+             if (filters.customTo !== undefined) {
+               setCustomTo(filters.customTo)
+             }
            }}
-          onExport={() => {}}
+           onExport={() => {}}
           exporting={false}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
           title={title}

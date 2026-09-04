@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { Search, Settings, Download, RefreshCw, Filter } from 'lucide-react'
+import { Search, Settings, Download, RefreshCw, Filter, CalendarIcon } from 'lucide-react'
 import NotificationBell from '@/components/NotificationBell'
 import type { DashboardFilters } from '@/hooks/useDashboardData'
 import { fadeUp, hoverScale } from '@/lib/animations/variants'
@@ -76,6 +76,7 @@ export default function PremiumHeader({
     { label: 'Last 7 Days', value: '7days' },
     { label: 'Last 30 Days', value: '30days' },
     { label: 'This Month', value: 'thisMonth' },
+    { label: 'Custom Range', value: 'custom' },
   ]
 
   return (
@@ -165,7 +166,7 @@ export default function PremiumHeader({
             <motion.div {...hoverScale} className="relative">
             <select
               value={filters.range}
-              onChange={(e) => onFilterChange({ range: e.target.value as DashboardFilters['range'] })}
+              onChange={(e) => onFilterChange({ ...filters, range: e.target.value as DashboardFilters['range'] })}
               aria-label="Date filter"
               className="appearance-none rounded-xl border border-gray-200 bg-white pl-3 pr-8 py-2 text-sm text-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer hover:border-gray-300"
             >
@@ -174,6 +175,29 @@ export default function PremiumHeader({
               ))}
             </select>
             <Filter className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+            {filters.range === 'custom' && (
+              <div className="flex items-center gap-2 mt-2">
+                <div className="relative">
+                  <CalendarIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+                  <input
+                    type="date"
+                    value={filters.customFrom || ''}
+                    onChange={(e) => onFilterChange({ ...filters, customFrom: e.target.value })}
+                    className="appearance-none rounded-lg border border-gray-200 bg-white pl-8 pr-2 py-1.5 text-xs text-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+                <span className="text-xs text-gray-500">to</span>
+                <div className="relative">
+                  <CalendarIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
+                  <input
+                    type="date"
+                    value={filters.customTo || ''}
+                    onChange={(e) => onFilterChange({ ...filters, customTo: e.target.value })}
+                    className="appearance-none rounded-lg border border-gray-200 bg-white pl-8 pr-2 py-1.5 text-xs text-gray-700 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+              </div>
+            )}
             </motion.div>
           )}
 
