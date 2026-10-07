@@ -3,11 +3,15 @@
 import { useState, useEffect } from 'react'
 import ImageWithFallback from '@/components/ui/ImageWithFallback'
 import Link from 'next/link'
-import { Menu, X, ShieldCheck } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 
 const NAV_LINKS = [
+  { href: '#home', label: 'Home' },
+  { href: '#features', label: 'Features' },
+  { href: '#how-it-works', label: 'How It Works' },
+  { href: '#departments', label: 'Departments' },
+  { href: '#security', label: 'Security' },
   { href: '/visitors/new', label: 'Register Visitor' },
-  { href: '/login', label: 'Staff Login' },
 ]
 
 export default function MilitaryHeader() {
@@ -44,41 +48,45 @@ export default function MilitaryHeader() {
   const armyLogo = '/images/army logo.png'
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[rgba(85,107,47,0.35)] bg-[#10150D]/90 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b border-[rgba(85,107,47,0.35)] bg-[#10150D]/95 backdrop-blur-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between py-3">
-          <div className="flex items-center gap-3 sm:gap-4 animate-vms-fade-in-left">
+        <div className="flex items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="flex items-center gap-3 sm:gap-4 min-w-0 transition-opacity duration-200 hover:opacity-85 focus:outline-none focus:ring-2 focus:ring-[#C8A646]/60 focus:ring-offset-2 focus:ring-offset-[#10150D] rounded"
+            aria-label="DLW Visitor Management - Go to homepage"
+            title="Go to homepage"
+          >
             <ImageWithFallback
               src={institutionLogo}
               alt="Armed Forces Command and Staff College Logo"
-              className="h-12 w-12 sm:h-14 sm:w-14 object-contain"
+              className="h-8 w-8 sm:h-9 sm:w-9 object-contain flex-shrink-0"
             />
-            <div className="flex flex-col">
-              <p className="text-sm sm:text-base font-bold uppercase tracking-widest text-[#F5F5DC] leading-tight">
-                VMS
-              </p>
-            </div>
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#F5F5DC] whitespace-nowrap">
+              DLW Visitor Management
+            </span>
             <ImageWithFallback
               src={armyLogo}
-              alt="Army Logo"
-              className="h-12 w-12 sm:h-14 sm:w-14 object-contain"
+              alt="Department of Land Warfare Logo"
+              className="h-7 w-7 sm:h-8 sm:w-8 object-contain flex-shrink-0"
             />
-          </div>
+          </Link>
 
-          <div className="flex items-center gap-4">
-            <nav className="hidden md:flex items-center gap-6">
-              {NAV_LINKS.map(link => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-sm font-medium text-[#9A9F87] hover:text-[#C8A646] transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
+          <nav className="hidden lg:flex items-center gap-6">
+            {NAV_LINKS.map(link => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-xs font-semibold uppercase tracking-wider text-[#9A9F87] hover:text-[#C8A646] transition-colors whitespace-nowrap"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-3 flex-shrink-0">
             <button
-              className="md:hidden p-2 rounded-lg text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors"
+              className="lg:hidden p-2 rounded-lg text-[#9A9F87] hover:bg-[#4B5320]/10 transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Toggle menu"
             >
@@ -88,31 +96,21 @@ export default function MilitaryHeader() {
         </div>
       </div>
 
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-[#C8A646]/40 to-transparent animate-vms-accent-line" />
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-[#C8A646]/50 to-transparent" />
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-[rgba(85,107,47,0.35)] bg-[#0B0F08] py-4 px-4">
-          <nav className="flex flex-col gap-3">
+        <div className="lg:hidden border-t border-[rgba(85,107,47,0.35)] bg-[#0B0F08] py-4 px-4">
+          <nav className="flex flex-col gap-1">
             {NAV_LINKS.map(link => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-[#9A9F87] hover:text-[#C8A646] transition-colors"
+                className="text-sm font-semibold text-[#9A9F87] hover:text-[#C8A646] transition-colors py-2.5 min-h-[44px] flex items-center"
                 onClick={() => setMobileOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
-            <div className="flex items-center gap-2 mt-2">
-              <ShieldCheck className="h-4 w-4 text-[#C8A646]" />
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9A9F87]">
-                System Ready
-              </span>
-              <span className="relative flex h-2 w-2">
-                <span className="animate-vms-subtle-pulse absolute inline-flex h-full w-full rounded-full bg-[#4B5320] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#6B8E23]" />
-              </span>
-            </div>
           </nav>
         </div>
       )}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import Link from 'next/link'
 import {
   LayoutDashboard,
   Users,
@@ -36,6 +37,7 @@ import ImageWithFallback from '@/components/ui/ImageWithFallback'
 import type { LucideIcon } from 'lucide-react'
 import { UserRole, PERMISSIONS } from '@/lib/auth-client'
 import { staggerContainer, fadeUp } from '@/lib/animations/variants'
+import { useBranding } from '@/hooks/useBranding'
 
 const NAV_SECTIONS = [
   { title: 'MAIN', items: [
@@ -121,6 +123,7 @@ export default function PremiumSidebar({
   navSections,
   brandSubtitle,
 }: PremiumSidebarProps) {
+  const { branding } = useBranding()
   const [liveTime, setLiveTime] = useState(new Date())
   const isDesktop = useMediaQuery('(min-width: 1024px)')
 
@@ -133,6 +136,7 @@ export default function PremiumSidebar({
     sectionItems.filter(item => PERMISSIONS[userRole]?.includes(item.permission))
 
   const isCollapsed = collapsed && isDesktop
+  const institutionLogo = branding?.logo_url || '/images/afcsc-logo.png'
 
   return (
     <>
@@ -158,23 +162,36 @@ export default function PremiumSidebar({
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         className="fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 border-r border-slate-800 shadow-2xl lg:relative lg:translate-x-0 lg:w-[280px]"
       >
-        <div className="flex items-center justify-between p-5 border-b border-slate-800 flex-shrink-0">
-          <motion.div
-            className="flex items-center gap-3"
-            style={{ display: isCollapsed ? 'flex' : 'flex' }}
+        <div className="flex items-center justify-between p-4 border-b border-slate-800 flex-shrink-0">
+          <Link
+            href="/dashboard"
+            className="flex items-center justify-center w-full transition-opacity duration-200 hover:opacity-85 focus:outline-none focus:ring-2 focus:ring-white/40 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
+             aria-label="DLW Visitor Management - Go to dashboard"
+             title="Go to dashboard"
           >
-            <ImageWithFallback
-              src="/images/army logo.png"
-              alt="Army Logo"
-              className="h-10 w-10 object-contain"
-            />
-            {!isCollapsed && (
-              <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}>
-                 <span className="text-lg font-bold text-white tracking-tight">Department of Land Warfare</span>
-                <span className="text-xs text-slate-400 block -mt-0.5">{brandSubtitle ?? 'Command Center'}</span>
-              </motion.div>
-            )}
-          </motion.div>
+            <motion.div
+              className="flex items-center gap-2.5 w-full"
+              style={{ display: isCollapsed ? 'flex' : 'flex' }}
+            >
+              <ImageWithFallback
+                src={institutionLogo}
+                alt="Armed Forces Command and Staff College Logo"
+                className="h-8 w-8 object-contain flex-shrink-0"
+              />
+              {!isCollapsed && (
+                <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="flex-1 text-center">
+                  <span className="text-sm font-bold text-white tracking-tight leading-tight">DLW Visitor Management</span>
+                </motion.div>
+              )}
+              {!isCollapsed && (
+                <ImageWithFallback
+                  src="/images/army logo.png"
+                  alt="Department of Land Warfare Logo"
+                  className="h-7 w-7 object-contain flex-shrink-0"
+                />
+              )}
+            </motion.div>
+          </Link>
 
           {onToggleCollapse && isDesktop && (
             <motion.button

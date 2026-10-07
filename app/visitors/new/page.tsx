@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth-client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import ImageWithFallback from '@/components/ui/ImageWithFallback'
+import { ArrowLeft } from 'lucide-react'
 
 export default function NewVisitorPage() {
   const router = useRouter()
@@ -36,6 +37,14 @@ export default function NewVisitorPage() {
   return (
     <div className="min-h-screen bg-[#0B0F08] py-8 px-4">
       <div className="mx-auto max-w-4xl">
+        <button
+          onClick={() => router.push('/dashboard')}
+          className="inline-flex items-center gap-2 text-sm font-medium text-[#9A9F87] hover:text-[#C8A646] transition-colors mb-4"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </button>
+
         <div className="flex items-center justify-between mb-6">
           <ImageWithFallback
             src="/images/afcsc-logo.png"

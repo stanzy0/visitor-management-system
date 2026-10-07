@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import { getCurrentUser } from '@/lib/auth-client'
 import { Loader2, CheckCircle2, ChevronRight, ChevronLeft, AlertCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import Step1VisitorType from '@/components/wizard/Step1VisitorType'
 import Step2PersonalInfo from '@/components/wizard/Step2PersonalInfo'
 import Step3Identification from '@/components/wizard/Step3Identification'
@@ -17,6 +18,7 @@ import { validateStep1, validateStep2, validateStep3, validateStep4, validateSte
 export type VisitorType = 'Visitor' | 'Contractor' | 'Vendor' | 'Guest Lecturer' | 'VIP' | 'Delivery Personnel'
 
 export default function VisitorRegistrationWizard({ onComplete }: { onComplete?: () => void }) {
+  const router = useRouter()
   const [step, setStep] = useState(1)
   const [submitting, setSubmitting] = useState(false)
   const [visitorType, setVisitorType] = useState<VisitorType>('Visitor')
@@ -151,7 +153,13 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
     setStep((s) => Math.min(s + 1, totalSteps))
   }
 
-  const back = () => setStep((s) => Math.max(s - 1, 1))
+  const back = () => {
+    if (step === 1) {
+      router.push('/dashboard')
+      return
+    }
+    setStep((s) => Math.max(s - 1, 1))
+  }
 
   const handleSubmit = async () => {
     const allErrors: Record<string, string | null> = {
@@ -449,12 +457,12 @@ export default function VisitorRegistrationWizard({ onComplete }: { onComplete?:
 
       <div className="flex items-center justify-between border-t border-gray-200 p-6">
         <button
+          type="button"
           onClick={back}
-          disabled={step === 1}
-          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           <ChevronLeft className="h-4 w-4" />
-          Previous
+          {step === 1 ? 'Back to Dashboard' : 'Previous'}
         </button>
 
         {step < totalSteps ? (
