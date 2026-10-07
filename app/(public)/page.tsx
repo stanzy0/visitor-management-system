@@ -190,7 +190,7 @@ export default function PublicLandingPage() {
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-xl sm:text-2xl font-bold text-[#F5F5DC] tracking-tight">About the Visitor Management System</h2>
               <p className="mt-4 text-sm sm:text-base text-[#9A9F87] leading-relaxed">
-                The Visitor Management System (VMS) is an integrated platform designed for the Armed Forces Command and Staff College, Department of Land Warfare. It provides secure visitor registration, host verification, access control, and real-time monitoring to maintain institutional security and accountability.
+                The Visitor Management System (VMS) is an integrated platform designed for the Department of Land Warfare. It provides secure visitor registration, host verification, access control, and real-time monitoring to maintain institutional security and accountability.
               </p>
             </div>
           </div>
