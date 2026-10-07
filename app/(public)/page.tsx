@@ -203,7 +203,7 @@ export default function PublicLandingPage() {
             <div className="text-center mb-10">
               <h2 className="text-xl sm:text-2xl font-bold text-[#F5F5DC] tracking-tight">Campus Gallery</h2>
                 <p className="mt-2 text-sm text-[#9A9F87] max-w-2xl mx-auto">
-                  A glimpse of the AFCSC and DLW facilities.
+                  A glimpse of AFCSC and DLW facilities.
                 </p>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
