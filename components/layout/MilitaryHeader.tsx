@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import ImageWithFallback from '@/components/ui/ImageWithFallback'
 import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
+import { getCurrentUser } from '@/lib/auth-client'
+import type { UserRole } from '@/lib/auth-types'
 
 const NAV_LINKS = [
   { href: '#home', label: 'Home' },
@@ -11,7 +13,7 @@ const NAV_LINKS = [
   { href: '#how-it-works', label: 'How It Works' },
   { href: '#departments', label: 'Departments' },
   { href: '#security', label: 'Security' },
-  { href: '/visitors/new', label: 'Register Visitor' },
+  { href: '/visitors/new', label: 'Register Visitor', roles: ['Admin', 'Receptionist'] as UserRole[] },
 ]
 
 export default function MilitaryHeader() {
@@ -24,6 +26,7 @@ export default function MilitaryHeader() {
     college_name: string
   } | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [userRole, setUserRole] = useState<UserRole | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -44,8 +47,20 @@ export default function MilitaryHeader() {
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    getCurrentUser().then(user => {
+      if (!cancelled && user) {
+        setUserRole(user.role)
+      }
+    })
+    return () => { cancelled = true }
+  }, [])
+
   const institutionLogo = branding?.logo_url || '/images/afcsc-logo.png'
   const armyLogo = '/images/army logo.png'
+
+  const filteredNavLinks = NAV_LINKS.filter(link => !link.roles || link.roles.includes(userRole as UserRole))
 
   return (
     <header className="sticky top-0 z-50 border-b border-[rgba(85,107,47,0.35)] bg-[#10150D]/95 backdrop-blur-sm">
@@ -73,7 +88,7 @@ export default function MilitaryHeader() {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-6">
-            {NAV_LINKS.map(link => (
+            {filteredNavLinks.map(link => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -101,7 +116,7 @@ export default function MilitaryHeader() {
       {mobileOpen && (
         <div className="lg:hidden border-t border-[rgba(85,107,47,0.35)] bg-[#0B0F08] py-4 px-4">
           <nav className="flex flex-col gap-1">
-            {NAV_LINKS.map(link => (
+            {filteredNavLinks.map(link => (
               <Link
                 key={link.href}
                 href={link.href}

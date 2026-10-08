@@ -11,6 +11,7 @@ import {
   FileText,
   ScanLine,
   Activity,
+  LayoutDashboard,
 } from 'lucide-react'
 
 const FEATURES = [
@@ -131,6 +132,13 @@ export default function PublicLandingPage() {
                   >
                     <UserCheck className="h-4 w-4" />
                     Register Visitor
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center gap-2 rounded border border-[#C8A646] bg-transparent px-8 py-3.5 text-sm font-bold text-[#C8A646] hover:bg-[#C8A646]/10 transition-colors min-h-[48px]"
+                  >
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
                   </Link>
                 </div>
               </div>

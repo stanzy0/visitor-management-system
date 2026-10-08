@@ -15,6 +15,127 @@ export default function Step3Identification({ data, onChange, errors = {}, touch
   const { doc_type, doc_number, expiry_date, doc_front_url, doc_back_url, issuing_country, doc_front_image, doc_back_image, id_verification } = data
   const [docError, setDocError] = useState<string | null>(null)
 
+  const COUNTRIES = [
+    { code: 'NG', name: 'Nigeria' },
+    { code: 'US', name: 'United States' },
+    { code: 'GB', name: 'United Kingdom' },
+    { code: 'GH', name: 'Ghana' },
+    { code: 'ZA', name: 'South Africa' },
+    { code: 'KE', name: 'Kenya' },
+    { code: 'EG', name: 'Egypt' },
+    { code: 'MA', name: 'Morocco' },
+    { code: 'ET', name: 'Ethiopia' },
+    { code: 'TZ', name: 'Tanzania' },
+    { code: 'UG', name: 'Uganda' },
+    { code: 'RW', name: 'Rwanda' },
+    { code: 'SN', name: 'Senegal' },
+    { code: 'CI', name: "Côte d'Ivoire" },
+    { code: 'CM', name: 'Cameroon' },
+    { code: 'BF', name: 'Burkina Faso' },
+    { code: 'ML', name: 'Mali' },
+    { code: 'NE', name: 'Niger' },
+    { code: 'TD', name: 'Chad' },
+    { code: 'CG', name: 'Congo' },
+    { code: 'CD', name: 'Democratic Republic of the Congo' },
+    { code: 'AO', name: 'Angola' },
+    { code: 'MZ', name: 'Mozambique' },
+    { code: 'ZW', name: 'Zimbabwe' },
+    { code: 'BW', name: 'Botswana' },
+    { code: 'NA', name: 'Namibia' },
+    { code: 'SZ', name: 'Eswatini' },
+    { code: 'LS', name: 'Lesotho' },
+    { code: 'MU', name: 'Mauritius' },
+    { code: 'SC', name: 'Seychelles' },
+    { code: 'KM', name: 'Comoros' },
+    { code: 'ST', name: 'São Tomé and Príncipe' },
+    { code: 'CV', name: 'Cape Verde' },
+    { code: 'GM', name: 'Gambia' },
+    { code: 'GW', name: 'Guinea-Bissau' },
+    { code: 'GN', name: 'Guinea' },
+    { code: 'SL', name: 'Sierra Leone' },
+    { code: 'LR', name: 'Liberia' },
+    { code: 'CA', name: 'Canada' },
+    { code: 'MX', name: 'Mexico' },
+    { code: 'BR', name: 'Brazil' },
+    { code: 'AR', name: 'Argentina' },
+    { code: 'CL', name: 'Chile' },
+    { code: 'CO', name: 'Colombia' },
+    { code: 'PE', name: 'Peru' },
+    { code: 'VE', name: 'Venezuela' },
+    { code: 'EC', name: 'Ecuador' },
+    { code: 'BO', name: 'Bolivia' },
+    { code: 'PY', name: 'Paraguay' },
+    { code: 'UY', name: 'Uruguay' },
+    { code: 'DE', name: 'Germany' },
+    { code: 'FR', name: 'France' },
+    { code: 'IT', name: 'Italy' },
+    { code: 'ES', name: 'Spain' },
+    { code: 'NL', name: 'Netherlands' },
+    { code: 'BE', name: 'Belgium' },
+    { code: 'AT', name: 'Austria' },
+    { code: 'CH', name: 'Switzerland' },
+    { code: 'SE', name: 'Sweden' },
+    { code: 'NO', name: 'Norway' },
+    { code: 'DK', name: 'Denmark' },
+    { code: 'FI', name: 'Finland' },
+    { code: 'IE', name: 'Ireland' },
+    { code: 'PT', name: 'Portugal' },
+    { code: 'GR', name: 'Greece' },
+    { code: 'PL', name: 'Poland' },
+    { code: 'CZ', name: 'Czech Republic' },
+    { code: 'HU', name: 'Hungary' },
+    { code: 'RO', name: 'Romania' },
+    { code: 'BG', name: 'Bulgaria' },
+    { code: 'HR', name: 'Croatia' },
+    { code: 'RS', name: 'Serbia' },
+    { code: 'SK', name: 'Slovakia' },
+    { code: 'SI', name: 'Slovenia' },
+    { code: 'LT', name: 'Lithuania' },
+    { code: 'LV', name: 'Latvia' },
+    { code: 'EE', name: 'Estonia' },
+    { code: 'CN', name: 'China' },
+    { code: 'JP', name: 'Japan' },
+    { code: 'KR', name: 'South Korea' },
+    { code: 'IN', name: 'India' },
+    { code: 'AU', name: 'Australia' },
+    { code: 'NZ', name: 'New Zealand' },
+    { code: 'SG', name: 'Singapore' },
+    { code: 'MY', name: 'Malaysia' },
+    { code: 'TH', name: 'Thailand' },
+    { code: 'VN', name: 'Vietnam' },
+    { code: 'PH', name: 'Philippines' },
+    { code: 'ID', name: 'Indonesia' },
+    { code: 'PK', name: 'Pakistan' },
+    { code: 'BD', name: 'Bangladesh' },
+    { code: 'LK', name: 'Sri Lanka' },
+    { code: 'MM', name: 'Myanmar' },
+    { code: 'KH', name: 'Cambodia' },
+    { code: 'LA', name: 'Laos' },
+    { code: 'MN', name: 'Mongolia' },
+    { code: 'TR', name: 'Turkey' },
+    { code: 'IL', name: 'Israel' },
+    { code: 'AE', name: 'United Arab Emirates' },
+    { code: 'SA', name: 'Saudi Arabia' },
+    { code: 'QA', name: 'Qatar' },
+    { code: 'KW', name: 'Kuwait' },
+    { code: 'BH', name: 'Bahrain' },
+    { code: 'OM', name: 'Oman' },
+    { code: 'JO', name: 'Jordan' },
+    { code: 'LB', name: 'Lebanon' },
+    { code: 'SY', name: 'Syria' },
+    { code: 'IQ', name: 'Iraq' },
+    { code: 'IR', name: 'Iran' },
+    { code: 'AF', name: 'Afghanistan' },
+    { code: 'TM', name: 'Turkmenistan' },
+    { code: 'UZ', name: 'Uzbekistan' },
+    { code: 'KZ', name: 'Kazakhstan' },
+    { code: 'KG', name: 'Kyrgyzstan' },
+    { code: 'TJ', name: 'Tajikistan' },
+    { code: 'GE', name: 'Georgia' },
+    { code: 'AM', name: 'Armenia' },
+    { code: 'AZ', name: 'Azerbaijan' },
+  ]
+
   const inputClasses = (field: string) => {
     const base = 'w-full rounded-lg border px-3 py-2'
     const touchedAndError = touched.has(field) && errors[field]
@@ -95,7 +216,20 @@ export default function Step3Identification({ data, onChange, errors = {}, touch
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Issuing Country *</label>
-            <input type="text" value={data.issuing_country || ''} onChange={(e) => onChange('issuing_country', e.target.value)} onBlur={() => onBlur?.('issuing_country')} className={inputClasses('issuing_country')} disabled={id_verification} />
+            <select
+              value={data.issuing_country || ''}
+              onChange={(e) => onChange('issuing_country', e.target.value)}
+              onBlur={() => onBlur?.('issuing_country')}
+              className={inputClasses('issuing_country')}
+              disabled={id_verification}
+            >
+              <option value="">Select Country</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
             {!id_verification && touched.has('issuing_country') && errors.issuing_country && <p className="text-sm text-red-600 mt-1">{errors.issuing_country}</p>}
           </div>
           <div className="md:col-span-2">

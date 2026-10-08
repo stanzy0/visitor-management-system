@@ -5,21 +5,37 @@ import { getCurrentUser } from '@/lib/auth-client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import ImageWithFallback from '@/components/ui/ImageWithFallback'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ShieldAlert } from 'lucide-react'
 
 export default function NewVisitorPage() {
   const router = useRouter()
   const [checking, setChecking] = useState(true)
-  const [user, setUser] = useState<Awaited<ReturnType<typeof getCurrentUser>> | null>(null)
+  const [user, setUser] = useState<import('@/lib/auth-client').UserWithRole | null>(null)
+  const [unauthorized, setUnauthorized] = useState(false)
 
   useEffect(() => {
-    getCurrentUser().then(u => {
-      setUser(u)
-      setChecking(false)
-      if (!u) {
-        router.replace('/login')
+    let cancelled = false
+    const checkAuth = async () => {
+      try {
+        const user = await getCurrentUser()
+        if (!user) {
+          if (!cancelled) router.replace('/login')
+          return
+        }
+        if (user.role !== 'Admin' && user.role !== 'Receptionist') {
+          if (!cancelled) setUnauthorized(true)
+          return
+        }
+        if (!cancelled) {
+          setUser(user)
+          setChecking(false)
+        }
+      } catch {
+        if (!cancelled) router.replace('/login')
       }
-    })
+    }
+    checkAuth()
+    return () => { cancelled = true }
   }, [router])
 
   if (checking) {
@@ -30,8 +46,24 @@ export default function NewVisitorPage() {
     )
   }
 
-  if (!user) {
-    return null
+  if (unauthorized || !user) {
+    return (
+      <div className="min-h-screen bg-[#0B0F08] flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <ShieldAlert className="h-16 w-16 mx-auto mb-4 text-[#8B3A3A]" />
+          <h1 className="text-2xl font-bold text-[#F5F5DC] mb-2">Access Denied</h1>
+          <p className="text-[#9A9F87] mb-6">
+            You don&apos;t have permission to register visitors. Only Administrators and Receptionists can register visitors.
+          </p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#C8A646] text-[#0B0F08] font-bold rounded-lg hover:bg-[#B89635] transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -63,4 +95,3 @@ export default function NewVisitorPage() {
     </div>
   )
 }
-
