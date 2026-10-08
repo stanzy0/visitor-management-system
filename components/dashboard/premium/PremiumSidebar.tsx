@@ -165,7 +165,7 @@ export default function PremiumSidebar({
           <Link
             href="/"
             className="flex items-center justify-center w-full transition-opacity duration-200 hover:opacity-85 focus:outline-none focus:ring-2 focus:ring-white/40 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
-             aria-label="AFCSC Visitor Management - Go to homepage"
+             aria-label="DLW Visitor Management - Go to homepage"
              title="Go to homepage"
           >
             <motion.div
@@ -179,7 +179,7 @@ export default function PremiumSidebar({
               />
               {!isCollapsed && (
                 <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="flex-1 text-center">
-                  <span className="text-sm font-bold text-white tracking-tight leading-tight">AFCSC Visitor Management</span>
+                  <span className="text-sm font-bold text-white tracking-tight leading-tight">DLW Visitor Management</span>
                   <span className="text-[10px] text-[#9A9F87] block leading-tight">Department of Land Warfare</span>
                 </motion.div>
               )}
