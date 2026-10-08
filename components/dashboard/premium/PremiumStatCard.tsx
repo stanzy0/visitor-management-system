@@ -73,9 +73,9 @@ export default function PremiumStatCard({
       tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
       onKeyDown={onClick ? handleKeyDown : undefined}
-       className="group relative overflow-hidden rounded-[20px] border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 sm:p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] transition-all duration-200 hover:shadow-[0_12px_35px_rgba(0,0,0,0.45)] focus:outline-none focus:ring-2 focus:ring-[#C8A646]/50 focus:ring-offset-2"
+       className="group relative overflow-hidden rounded-[20px] border border-gray-200/80 bg-white p-4 sm:p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-200 hover:shadow-[0_12px_35px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-2 focus:ring-[#C8A646]/50 focus:ring-offset-2"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-[#4B5320]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
       <div className="relative flex items-start justify-between">
         <div className="flex-1">

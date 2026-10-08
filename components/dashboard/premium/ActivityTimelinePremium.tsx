@@ -32,16 +32,16 @@ export default function ActivityTimelinePremium({ events }: ActivityTimelineProp
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[20px] border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+        className="rounded-[20px] border border-gray-200 bg-white p-6 shadow-sm"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[#F5F5DC]">Today&apos;s Activity</h2>
-          <span className="text-xs text-[#9A9F87] font-medium bg-[#4B5320]/10 px-2.5 py-1 rounded-full">0</span>
+          <h2 className="text-lg font-semibold text-gray-900">Today&apos;s Activity</h2>
+          <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-full">0</span>
         </div>
         <div className="p-8 text-center">
-          <Clock className="h-12 w-12 mx-auto mb-3 text-[#9A9F87]" />
-          <p className="text-sm text-[#F5F5DC]">No activity yet today</p>
-          <p className="text-xs text-[#9A9F87] mt-1">Events will appear here as they occur</p>
+          <Clock className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+          <p className="text-sm text-gray-500">No activity yet today</p>
+          <p className="text-xs text-gray-400 mt-1">Events will appear here as they occur</p>
         </div>
       </motion.div>
     )
@@ -51,16 +51,16 @@ export default function ActivityTimelinePremium({ events }: ActivityTimelineProp
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-[20px] border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-[0_10px_30px_rgba(0,0,0,0.35)] overflow-hidden"
+      className="rounded-[20px] border border-gray-200 bg-white shadow-sm overflow-hidden"
     >
-      <div className="p-4 sm:p-5 border-b border-[rgba(85,107,47,0.25)] flex items-center justify-between">
+      <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-[#F5F5DC]">Today&apos;s Activity</h2>
-          <p className="text-sm text-[#9A9F87] mt-0.5">Chronological timeline of events</p>
+          <h2 className="text-lg font-semibold text-gray-900">Today&apos;s Activity</h2>
+          <p className="text-sm text-gray-500 mt-0.5">Chronological timeline of events</p>
         </div>
         <motion.span
           layout
-          className="text-xs font-medium text-[#9A9F87] bg-[#4B5320]/10 px-2.5 py-1 rounded-full"
+          className="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full"
         >
           {events.length} events
         </motion.span>
@@ -68,7 +68,7 @@ export default function ActivityTimelinePremium({ events }: ActivityTimelineProp
 
       <div className="p-4 sm:p-5">
         <div className="relative">
-          <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-[#C8A646]/30 via-[rgba(85,107,47,0.35)] to-transparent" />
+          <div className="absolute left-6 top-2 bottom-2 w-px bg-gradient-to-b from-gray-200 via-gray-200 to-transparent" />
           <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-4">
             {events.slice(0, 10).map((event, index) => {
               const config = typeConfig[event.type] || typeConfig.other

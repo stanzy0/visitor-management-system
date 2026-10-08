@@ -54,25 +54,25 @@ export default function SystemStatus({ services = defaultServices }: SystemStatu
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-[20px] border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 sm:p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+      className="rounded-[20px] border border-gray-200 bg-white p-4 sm:p-6 shadow-sm"
     >
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-lg font-semibold text-[#F5F5DC]">System Status</h2>
-            <p className="text-sm text-[#9A9F87] mt-0.5">Real-time service health monitoring</p>
+            <h2 className="text-lg font-semibold text-gray-900">System Status</h2>
+            <p className="text-sm text-gray-500 mt-0.5">Real-time service health monitoring</p>
           </div>
           <div className="flex items-center gap-4 text-xs">
             <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-[#6B8E23]" />
-              <span className="text-[#9A9F87]">{operationalCount} Operational</span>
+              <div className="h-2 w-2 rounded-full bg-green-500" />
+              <span className="text-gray-600">{operationalCount} Operational</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-[#C8A646]" />
-              <span className="text-[#9A9F87]">{warningCount} Warning</span>
+              <div className="h-2 w-2 rounded-full bg-amber-500" />
+              <span className="text-gray-600">{warningCount} Warning</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="h-2 w-2 rounded-full bg-[#f87171]" />
-              <span className="text-[#9A9F87]">{offlineCount} Offline</span>
+              <div className="h-2 w-2 rounded-full bg-red-500" />
+              <span className="text-gray-600">{offlineCount} Offline</span>
             </div>
           </div>
         </div>
@@ -88,25 +88,25 @@ export default function SystemStatus({ services = defaultServices }: SystemStatu
           const Icon = service.icon
           const StatusIcon = config.icon
 
-          return (
-             <motion.div
-               key={service.id}
-               variants={fadeIn}
-               className="flex items-center gap-4 rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#4B5320]/5 p-4 transition-all duration-200 hover:bg-[#4B5320]/10 hover:border-[rgba(200,166,70,0.4)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.25)]"
+           return (
+              <motion.div
+                key={service.id}
+                variants={fadeIn}
+                className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 transition-all duration-200 hover:shadow-sm"
              >
-               <div className={`p-2.5 rounded-xl ${config.bg} ${config.color}`}>
-                 <Icon className="h-5 w-5" />
-               </div>
-               <div className="flex-1 min-w-0">
-                 <p className="text-sm font-semibold text-[#F5F5DC]">{service.name}</p>
-                 <p className="text-xs text-[#9A9F87] truncate">{service.description}</p>
-               </div>
-               <div className="flex items-center gap-1.5 flex-shrink-0">
-                 <StatusIcon className={`h-4 w-4 ${config.color}`} />
-                 <span className={`text-xs font-medium ${config.color}`}>{config.text}</span>
-               </div>
-             </motion.div>
-          )
+                <div className={`p-2.5 rounded-xl ${config.bg} ${config.color}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">{service.name}</p>
+                  <p className="text-xs text-gray-500 truncate">{service.description}</p>
+                </div>
+                <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <StatusIcon className={`h-4 w-4 ${config.color}`} />
+                  <span className={`text-xs font-medium ${config.color}`}>{config.text}</span>
+                </div>
+              </motion.div>
+           )
         })}
       </motion.div>
     </motion.div>

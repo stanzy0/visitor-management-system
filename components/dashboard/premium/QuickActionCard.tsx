@@ -42,40 +42,40 @@ export default function QuickActionCard({
   const router = useRouter()
   const colors = colorStyles[color] || colorStyles.army
 
-  return (
-    <motion.button
-      variants={fadeUp}
-      custom={index}
-      initial="hidden"
-      animate="visible"
-      whileHover={{ y: -4, scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick ? onClick : () => router.push(href)}
-      className={`group relative flex flex-col items-start gap-3 sm:gap-4 rounded-[20px] border ${colors.border} bg-[#10150D] p-4 sm:p-5 text-left transition-all duration-200 shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:shadow-[0_14px_38px_rgba(0,0,0,0.45)] hover:border-[rgba(200,166,70,0.4)] focus:outline-none focus:ring-2 focus:ring-[#C8A646]/50 focus:ring-offset-2`}
-    >
-      <div className={`p-4 rounded-xl ${colors.bg} ${colors.text} ${colors.hoverBg} transition-all duration-300 group-hover:scale-110`}>
-        <Icon className="h-6 w-6" />
-      </div>
-      <div className="flex-1">
-        <h3 className="text-sm font-semibold text-[#F5F5DC]">{label}</h3>
-        {description && (
-          <p className="text-sm text-[#9A9F87] mt-1 leading-relaxed">{description}</p>
-        )}
-      </div>
-      <div className="absolute top-5 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <svg
-          className="h-5 w-5 text-[#9A9F87]"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M9 18l6-6-6-6" />
-        </svg>
-      </div>
-    </motion.button>
-  )
+   return (
+     <motion.button
+       variants={fadeUp}
+       custom={index}
+       initial="hidden"
+       animate="visible"
+       whileHover={{ y: -4, scale: 1.02 }}
+       whileTap={{ scale: 0.98 }}
+       onClick={onClick ? onClick : () => router.push(href)}
+       className={`group relative flex flex-col items-start gap-3 sm:gap-4 rounded-[20px] border ${colors.border} bg-white p-4 sm:p-5 text-left transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#C8A646]/50 focus:ring-offset-2`}
+     >
+       <div className={`p-4 rounded-xl ${colors.bg} ${colors.text} ${colors.hoverBg} transition-all duration-300 group-hover:scale-110`}>
+         <Icon className="h-6 w-6" />
+       </div>
+       <div className="flex-1">
+         <h3 className="text-sm font-semibold text-gray-900">{label}</h3>
+         {description && (
+           <p className="text-sm text-gray-500 mt-1 leading-relaxed">{description}</p>
+         )}
+       </div>
+       <div className="absolute top-5 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+         <svg
+           className="h-5 w-5 text-gray-400"
+           viewBox="0 0 24 24"
+           fill="none"
+           stroke="currentColor"
+           strokeWidth="2"
+           strokeLinecap="round"
+           strokeLinejoin="round"
+           aria-hidden="true"
+         >
+           <path d="M9 18l6-6-6-6" />
+         </svg>
+       </div>
+     </motion.button>
+   )
 }

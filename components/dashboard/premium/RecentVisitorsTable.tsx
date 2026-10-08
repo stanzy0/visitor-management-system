@@ -56,11 +56,11 @@ export default function RecentVisitorsTable({ visitors, onViewProfile, onPrintBa
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[20px] border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
+        className="rounded-[20px] border border-gray-200 bg-white p-6 shadow-sm"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-[#F5F5DC]">Recent Visitors</h2>
-          <span className="text-xs text-[#9A9F87] font-medium bg-[#4B5320]/10 px-2.5 py-1 rounded-full">0</span>
+          <h2 className="text-lg font-semibold text-gray-900">Recent Visitors</h2>
+          <span className="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-full">0</span>
         </div>
         <div className="p-8 text-center">
           <Users className="h-12 w-12 mx-auto mb-3 text-[#9A9F87]" />
@@ -71,13 +71,13 @@ export default function RecentVisitorsTable({ visitors, onViewProfile, onPrintBa
     )
   }
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-[20px] border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-[0_10px_30px_rgba(0,0,0,0.35)] overflow-hidden"
-    >
-      <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between">
+   return (
+     <motion.div
+       initial={{ opacity: 0, y: 20 }}
+       animate={{ opacity: 1, y: 0 }}
+       className="rounded-[20px] border border-gray-200 bg-white shadow-sm overflow-hidden"
+     >
+       <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-gray-900">Recent Visitors</h2>
           <p className="text-sm text-gray-500 mt-0.5">Latest visitor activity</p>

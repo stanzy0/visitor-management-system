@@ -20,22 +20,22 @@ export default function ChartCard({ title, subtitle, children, onExport, exporti
       custom={index}
       initial="hidden"
       animate="visible"
-      className="rounded-2xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-[0_10px_30px_rgba(0,0,0,0.35)] overflow-hidden"
+      className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden"
     >
-      <div className="p-4 sm:p-5 border-b border-[rgba(85,107,47,0.25)] flex items-center justify-between bg-gradient-to-r from-[#4B5320]/10 to-[#10150D]">
+      <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-gray-50/50 to-white">
         <div>
-          <h3 className="text-base font-semibold text-[#F5F5DC]">{title}</h3>
-          {subtitle && <p className="text-xs text-[#9A9F87] mt-0.5 font-medium">{subtitle}</p>}
+          <h3 className="text-base font-semibold text-gray-900">{title}</h3>
+          {subtitle && <p className="text-xs text-gray-500 mt-0.5 font-medium">{subtitle}</p>}
         </div>
         {onExport && (
           <motion.button
             {...hoverScale}
             onClick={onExport}
             disabled={exporting}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[rgba(85,107,47,0.35)] bg-[#0B0F08] px-3 py-1.5 text-xs font-medium text-[#F5F5DC] hover:bg-[#4B5320]/10 hover:border-[#C8A646]/40 disabled:opacity-50 transition-all shadow-sm"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 transition-all shadow-sm"
           >
             {exporting ? (
-              <div className="h-3.5 w-3.5 border-2 border-[#9A9F87] border-t-[#C8A646] rounded-full animate-spin" />
+              <div className="h-3.5 w-3.5 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
             ) : (
               <Download className="h-3.5 w-3.5" />
             )}

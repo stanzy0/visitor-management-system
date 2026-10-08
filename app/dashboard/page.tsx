@@ -524,7 +524,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen bg-dashboard-bg">
+    <div className="flex h-screen bg-gray-50">
       <PremiumSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -745,7 +745,7 @@ export default function DashboardPage() {
 
             {showAllSections && (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold text-[#F5F5DC]">Visitor Analytics</h2>
+                <h2 className="text-xl font-bold text-gray-900">Visitor Analytics</h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <ChartCard title="Visitors by Day" subtitle="Last 30 days">
                     <ResponsiveContainer width="100%" height={300}>
@@ -822,7 +822,7 @@ export default function DashboardPage() {
 
             {showAllSections && (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold text-[#F5F5DC]">Badge Analytics</h2>
+                <h2 className="text-xl font-bold text-gray-900">Badge Analytics</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   <PremiumStatCard title="Generated" value={stats.badgesGenerated.toString()} icon={Printer} color="army" index={0} />
                   <PremiumStatCard title="Printed" value={stats.badgesPrinted.toString()} icon={Printer} color="olive-light" index={1} />
@@ -847,7 +847,7 @@ export default function DashboardPage() {
 
             {showAllSections && (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold text-[#F5F5DC]">Employee Analytics</h2>
+                <h2 className="text-xl font-bold text-gray-900">Employee Analytics</h2>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <ChartCard title="Employees by Department">
                     <ResponsiveContainer width="100%" height={300}>
