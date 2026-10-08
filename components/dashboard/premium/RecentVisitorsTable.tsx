@@ -22,32 +22,32 @@ interface RecentVisitorsTableProps {
 }
 
 const statusConfig: Record<string, { color: string; bg: string; border: string; text: string; icon: React.ComponentType<{ className?: string }> }> = {
-  pending: { color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', text: 'Pending', icon: Clock },
-  approved: { color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', text: 'Approved', icon: CheckCircle },
-  checked_in: { color: 'text-green-700', bg: 'bg-green-50', border: 'border-green-200', text: 'Checked In', icon: UserCheck },
-  checked_out: { color: 'text-gray-700', bg: 'bg-gray-50', border: 'border-gray-200', text: 'Checked Out', icon: LogOut },
-  completed: { color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'Completed', icon: CheckCircle },
-  cancelled: { color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', text: 'Cancelled', icon: XCircle },
-  rejected: { color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', text: 'Rejected', icon: XCircle },
-  expired: { color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', text: 'Expired', icon: AlertTriangle },
-  overstayed: { color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200', text: 'Overstayed', icon: AlertTriangle },
-  documents_verified: { color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200', text: 'Documents Verified', icon: ShieldAlert },
-  badge_issued: { color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-200', text: 'Badge Issued', icon: Printer },
+  pending: { color: 'text-[#C8A646]', bg: 'bg-[#C8A646]/10', border: 'border-[#C8A646]/30', text: 'Pending', icon: Clock },
+  approved: { color: 'text-[#6B8E23]', bg: 'bg-[#6B8E23]/10', border: 'border-[#6B8E23]/30', text: 'Approved', icon: CheckCircle },
+  checked_in: { color: 'text-[#6B8E23]', bg: 'bg-[#6B8E23]/10', border: 'border-[#6B8E23]/30', text: 'Checked In', icon: UserCheck },
+  checked_out: { color: 'text-[#9A9F87]', bg: 'bg-[#9A9F87]/10', border: 'border-[#9A9F87]/30', text: 'Checked Out', icon: LogOut },
+  completed: { color: 'text-[#6B8E23]', bg: 'bg-[#6B8E23]/10', border: 'border-[#6B8E23]/30', text: 'Completed', icon: CheckCircle },
+  cancelled: { color: 'text-[#f87171]', bg: 'bg-[#8B3A3A]/10', border: 'border-[#8B3A3A]/30', text: 'Cancelled', icon: XCircle },
+  rejected: { color: 'text-[#f87171]', bg: 'bg-[#8B3A3A]/10', border: 'border-[#8B3A3A]/30', text: 'Rejected', icon: XCircle },
+  expired: { color: 'text-[#f87171]', bg: 'bg-[#8B3A3A]/10', border: 'border-[#8B3A3A]/30', text: 'Expired', icon: AlertTriangle },
+  overstayed: { color: 'text-[#C8A646]', bg: 'bg-[#C8A646]/10', border: 'border-[#C8A646]/30', text: 'Overstayed', icon: AlertTriangle },
+  documents_verified: { color: 'text-[#C8A646]', bg: 'bg-[#C8A646]/10', border: 'border-[#C8A646]/30', text: 'Documents Verified', icon: ShieldAlert },
+  badge_issued: { color: 'text-[#6B8E23]', bg: 'bg-[#6B8E23]/10', border: 'border-[#6B8E23]/30', text: 'Badge Issued', icon: Printer },
 }
 
 const badgeConfig: Record<string, { text: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-  checked_in: { text: 'Active', color: 'text-green-600', icon: BadgeCheck },
-  badge_issued: { text: 'Issued', color: 'text-blue-600', icon: BadgeCheck },
-  checked_out: { text: 'Returned', color: 'text-gray-500', icon: BadgeMinus },
-  completed: { text: 'Completed', color: 'text-emerald-600', icon: BadgeCheck },
-  approved: { text: 'Pending Print', color: 'text-amber-600', icon: Printer },
-  documents_verified: { text: 'Pending Print', color: 'text-amber-600', icon: Printer },
-  pending: { text: 'Pending', color: 'text-amber-600', icon: Clock },
-  rejected: { text: 'N/A', color: 'text-red-600', icon: XCircle },
-  cancelled: { text: 'N/A', color: 'text-red-600', icon: XCircle },
-  expired: { text: 'Expired', color: 'text-red-600', icon: AlertTriangle },
-  overstayed: { text: 'Overstayed', color: 'text-orange-600', icon: AlertTriangle },
-  default: { text: '—', color: 'text-gray-400', icon: Clock },
+  checked_in: { text: 'Active', color: 'text-[#6B8E23]', icon: BadgeCheck },
+  badge_issued: { text: 'Issued', color: 'text-[#6B8E23]', icon: BadgeCheck },
+  checked_out: { text: 'Returned', color: 'text-[#9A9F87]', icon: BadgeMinus },
+  completed: { text: 'Completed', color: 'text-[#6B8E23]', icon: BadgeCheck },
+  approved: { text: 'Pending Print', color: 'text-[#C8A646]', icon: Printer },
+  documents_verified: { text: 'Pending Print', color: 'text-[#C8A646]', icon: Printer },
+  pending: { text: 'Pending', color: 'text-[#C8A646]', icon: Clock },
+  rejected: { text: 'N/A', color: 'text-[#f87171]', icon: XCircle },
+  cancelled: { text: 'N/A', color: 'text-[#f87171]', icon: XCircle },
+  expired: { text: 'Expired', color: 'text-[#f87171]', icon: AlertTriangle },
+  overstayed: { text: 'Overstayed', color: 'text-[#C8A646]', icon: AlertTriangle },
+  default: { text: '—', color: 'text-[#9A9F87]', icon: Clock },
 }
 
 export default function RecentVisitorsTable({ visitors, onViewProfile, onPrintBadge }: RecentVisitorsTableProps) {
@@ -56,16 +56,16 @@ export default function RecentVisitorsTable({ visitors, onViewProfile, onPrintBa
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-[20px] border border-gray-200/60 bg-white p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)]"
+        className="rounded-[20px] border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)]"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Visitors</h2>
-          <span className="text-xs text-gray-400 font-medium bg-gray-100 px-2.5 py-1 rounded-full">0</span>
+          <h2 className="text-lg font-semibold text-[#F5F5DC]">Recent Visitors</h2>
+          <span className="text-xs text-[#9A9F87] font-medium bg-[#4B5320]/10 px-2.5 py-1 rounded-full">0</span>
         </div>
         <div className="p-8 text-center">
-          <Users className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-          <p className="text-sm text-gray-500">No recent visitors</p>
-          <p className="text-xs text-gray-400 mt-1">Visitor activity will appear here</p>
+          <Users className="h-12 w-12 mx-auto mb-3 text-[#9A9F87]" />
+          <p className="text-sm text-[#F5F5DC]">No recent visitors</p>
+          <p className="text-xs text-[#9A9F87] mt-1">Visitor activity will appear here</p>
         </div>
       </motion.div>
     )
@@ -75,7 +75,7 @@ export default function RecentVisitorsTable({ visitors, onViewProfile, onPrintBa
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-[20px] border border-gray-200/60 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden"
+      className="rounded-[20px] border border-[rgba(85,107,47,0.35)] bg-[#10150D] shadow-[0_10px_30px_rgba(0,0,0,0.35)] overflow-hidden"
     >
       <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between">
         <div>

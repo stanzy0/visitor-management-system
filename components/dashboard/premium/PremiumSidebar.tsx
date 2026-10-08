@@ -42,25 +42,21 @@ import { useBranding } from '@/hooks/useBranding'
 const NAV_SECTIONS = [
   { title: 'MAIN', items: [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', permission: 'dashboard' },
-    { label: 'Reception Kiosk', icon: Monitor, href: '/reception/kiosk', permission: 'dashboard' },
     { label: 'Visitors', icon: Users, href: '/visitors', permission: 'visitors' },
     { label: 'Visits', icon: Clock, href: '/visits', permission: 'visits' },
-    { label: 'Employees', icon: UserCog, href: '/employees', permission: 'employees' },
     { label: 'Badges', icon: IdCard, href: '/badges', permission: 'badges' },
     { label: 'QR Scanner', icon: Scan, href: '/scanner', permission: 'scanner' },
   ]},
-  { title: 'SECURITY', items: [
-    { label: 'ID Verification', icon: FileText, href: '/documents', permission: 'documents' },
-    { label: 'Host Portal', icon: Users, href: '/host', permission: 'host' },
-  ]},
-  { title: 'ADMINISTRATION', items: [
+  { title: 'MANAGEMENT', items: [
+    { label: 'Employees', icon: UserCog, href: '/employees', permission: 'employees' },
     { label: 'Users', icon: UserPlus, href: '/users', permission: 'users' },
+  ]},
+  { title: 'REPORTING', items: [
     { label: 'Reports', icon: FileDown, href: '/reports', permission: 'reports' },
     { label: 'Audit Logs', icon: ScrollText, href: '/audit-logs', permission: 'audit-logs' },
-    { label: 'Settings', icon: Settings, href: '/settings', permission: 'settings' },
   ]},
-  { title: 'INVITATIONS', items: [
-    { label: 'Invitations', icon: FileText, href: '/invitations', permission: 'invitations' },
+  { title: 'SYSTEM', items: [
+    { label: 'Settings', icon: Settings, href: '/settings', permission: 'settings' },
   ]},
 ]
 
@@ -81,6 +77,7 @@ interface PremiumSidebarProps {
   onClose: () => void
   userRole: UserRole
   userEmail: string
+  userName?: string
   onLogout: () => void
   currentPath?: string
   collapsed?: boolean
@@ -116,6 +113,7 @@ export default function PremiumSidebar({
   onClose,
   userRole,
   userEmail,
+  userName,
   onLogout,
   currentPath,
   collapsed = false,
@@ -137,6 +135,7 @@ export default function PremiumSidebar({
 
   const isCollapsed = collapsed && isDesktop
   const institutionLogo = branding?.logo_url || '/images/afcsc-logo.png'
+  const displayName = userName || userEmail?.split('@')[0] || 'User'
 
   return (
     <>
@@ -160,14 +159,14 @@ export default function PremiumSidebar({
           width: isCollapsed ? 80 : 280,
         }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-        className="fixed inset-y-0 left-0 z-50 flex flex-col bg-slate-900 border-r border-slate-800 shadow-2xl lg:relative lg:translate-x-0 lg:w-[280px]"
+        className="fixed inset-y-0 left-0 z-50 flex flex-col bg-[#10150D] border-r border-[rgba(85,107,47,0.35)] shadow-2xl lg:relative lg:translate-x-0 lg:w-[280px]"
       >
-        <div className="flex items-center justify-between p-4 border-b border-slate-800 flex-shrink-0">
+        <div className="flex items-center justify-between p-4 border-b border-[rgba(85,107,47,0.35)] flex-shrink-0">
           <Link
-            href="/dashboard"
+            href="/"
             className="flex items-center justify-center w-full transition-opacity duration-200 hover:opacity-85 focus:outline-none focus:ring-2 focus:ring-white/40 focus:ring-offset-2 focus:ring-offset-slate-900 rounded"
-             aria-label="DLW Visitor Management - Go to dashboard"
-             title="Go to dashboard"
+             aria-label="AFCSC Visitor Management - Go to homepage"
+             title="Go to homepage"
           >
             <motion.div
               className="flex items-center gap-2.5 w-full"
@@ -180,7 +179,8 @@ export default function PremiumSidebar({
               />
               {!isCollapsed && (
                 <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="flex-1 text-center">
-                  <span className="text-sm font-bold text-white tracking-tight leading-tight">DLW Visitor Management</span>
+                  <span className="text-sm font-bold text-white tracking-tight leading-tight">AFCSC Visitor Management</span>
+                  <span className="text-[10px] text-[#9A9F87] block leading-tight">Department of Land Warfare</span>
                 </motion.div>
               )}
               {!isCollapsed && (
@@ -198,7 +198,7 @@ export default function PremiumSidebar({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={onToggleCollapse}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-1.5 rounded-lg text-[#9A9F87] hover:text-white hover:bg-[#4B5320]/10 transition-colors"
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -210,7 +210,7 @@ export default function PremiumSidebar({
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={onClose}
-              className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="lg:hidden p-1.5 rounded-lg text-[#9A9F87] hover:text-white hover:bg-[#4B5320]/10 transition-colors"
               aria-label="Close sidebar"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -224,18 +224,18 @@ export default function PremiumSidebar({
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="p-4 border-b border-slate-800 bg-gradient-to-br from-slate-900 to-slate-800"
+            className="p-4 border-b border-[rgba(85,107,47,0.35)] bg-gradient-to-br from-[#10150D] to-[#0B0F08]"
           >
-            <p className="text-sm font-medium text-white">
-               {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'}, {(userEmail || '').split('@')[0]}
-            </p>
+          <p className="text-sm font-medium text-[#F5F5DC]">
+             {new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening'}, {displayName}
+          </p>
             <div className="flex items-center gap-2 mt-1">
-              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              <p className="text-xs text-slate-400 font-mono">
+              <div className="h-2 w-2 rounded-full bg-[#6B8E23] animate-pulse" />
+              <p className="text-xs text-[#9A9F87] font-mono">
                 {liveTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
               </p>
             </div>
-            <p className="text-xs text-slate-500 mt-1 capitalize">{userRole}</p>
+            <p className="text-xs text-[#9A9F87] mt-1 capitalize">{userRole}</p>
           </motion.div>
         )}
 
@@ -247,7 +247,7 @@ export default function PremiumSidebar({
               return (
                 <div key={section.title}>
                   {!isCollapsed && (
-                    <h3 className="px-3 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    <h3 className="px-3 mb-2 text-[10px] font-bold text-[#9A9F87] uppercase tracking-widest">
                       {section.title}
                     </h3>
                   )}
@@ -256,20 +256,20 @@ export default function PremiumSidebar({
                       const isActive = currentPath === item.href || (item.href !== '/dashboard' && currentPath?.startsWith(item.href))
                       return (
                         <motion.li key={item.label} variants={fadeUp} custom={0}>
-                          <a
-                            href={item.href}
-                            onClick={() => { if (!isDesktop) onClose() }}
-                            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                              isActive
-                                ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                            } ${isCollapsed ? 'justify-center' : ''}`}
-                            aria-label={item.label}
-                            title={isCollapsed ? item.label : undefined}
-                          >
-                            <div className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
-                              isActive ? 'bg-primary/20 text-white' : 'text-slate-500 group-hover:text-slate-300'
-                            }`}>
+                           <a
+                             href={item.href}
+                             onClick={() => { if (!isDesktop) onClose() }}
+                             className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                               isActive
+                                 ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                                 : 'text-[#9A9F87] hover:bg-[#4B5320]/10 hover:text-white'
+                             } ${isCollapsed ? 'justify-center' : ''}`}
+                             aria-label={item.label}
+                             title={isCollapsed ? item.label : undefined}
+                           >
+                             <div className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
+                               isActive ? 'bg-primary/20 text-white' : 'text-[#9A9F87] group-hover:text-[#F5F5DC]'
+                             }`}>
                               <item.icon className="h-4 w-4" />
                             </div>
                             {!isCollapsed && <span>{item.label}</span>}
@@ -291,18 +291,18 @@ export default function PremiumSidebar({
           </motion.div>
         </nav>
 
-        <div className="flex-shrink-0 p-4 border-t border-slate-800">
+        <div className="flex-shrink-0 p-4 border-t border-[rgba(85,107,47,0.35)]">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={onLogout}
-            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-400 hover:bg-red-950/50 transition-colors ${
+            className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-[#f87171] hover:bg-[#8B3A3A]/20 transition-colors ${
               isCollapsed ? 'justify-center' : ''
             }`}
             aria-label="Logout"
             title={isCollapsed ? 'Logout' : undefined}
           >
-            <div className="p-1.5 rounded-lg bg-red-950/50 text-red-400 flex-shrink-0">
+            <div className="p-1.5 rounded-lg bg-[#8B3A3A]/20 text-[#f87171] flex-shrink-0">
               <LogOut className="h-4 w-4" />
             </div>
             {!isCollapsed && <span>Logout</span>}

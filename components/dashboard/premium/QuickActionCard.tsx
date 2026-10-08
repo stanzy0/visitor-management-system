@@ -5,19 +5,19 @@ import { useRouter } from 'next/navigation'
 import { LucideIcon } from 'lucide-react'
 import { fadeUp } from '@/lib/animations/variants'
 
-export type ActionColor = 'blue' | 'green' | 'orange' | 'red' | 'gray' | 'indigo' | 'amber' | 'emerald' | 'purple' | 'teal'
+export type ActionColor = 'army' | 'olive' | 'gold' | 'olive-light' | 'red' | 'gray' | 'gold-light' | 'olive-dark' | 'muted' | 'olive-mid'
 
 const colorStyles: Record<ActionColor, { bg: string; text: string; hoverBg: string; border: string }> = {
-  blue: { bg: 'bg-blue-50', text: 'text-blue-600', hoverBg: 'group-hover:bg-blue-100', border: 'border-blue-200/60' },
-  green: { bg: 'bg-green-50', text: 'text-green-600', hoverBg: 'group-hover:bg-green-100', border: 'border-green-200/60' },
-  orange: { bg: 'bg-orange-50', text: 'text-orange-600', hoverBg: 'group-hover:bg-orange-100', border: 'border-orange-200/60' },
-  red: { bg: 'bg-red-50', text: 'text-red-600', hoverBg: 'group-hover:bg-red-100', border: 'border-red-200/60' },
-  gray: { bg: 'bg-gray-50', text: 'text-gray-600', hoverBg: 'group-hover:bg-gray-100', border: 'border-gray-200/60' },
-  indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600', hoverBg: 'group-hover:bg-indigo-100', border: 'border-indigo-200/60' },
-  amber: { bg: 'bg-amber-50', text: 'text-amber-600', hoverBg: 'group-hover:bg-amber-100', border: 'border-amber-200/60' },
-  emerald: { bg: 'bg-emerald-50', text: 'text-emerald-600', hoverBg: 'group-hover:bg-emerald-100', border: 'border-emerald-200/60' },
-  purple: { bg: 'bg-purple-50', text: 'text-purple-600', hoverBg: 'group-hover:bg-purple-100', border: 'border-purple-200/60' },
-  teal: { bg: 'bg-teal-50', text: 'text-teal-600', hoverBg: 'group-hover:bg-teal-100', border: 'border-teal-200/60' },
+  army: { bg: 'bg-[#4B5320]/20', text: 'text-[#C8A646]', hoverBg: 'group-hover:bg-[#4B5320]/30', border: 'border-[rgba(85,107,47,0.35)]' },
+  olive: { bg: 'bg-[#556B2F]/20', text: 'text-[#C8A646]', hoverBg: 'group-hover:bg-[#556B2F]/30', border: 'border-[rgba(85,107,47,0.35)]' },
+  gold: { bg: 'bg-[#C8A646]/20', text: 'text-[#C8A646]', hoverBg: 'group-hover:bg-[#C8A646]/30', border: 'border-[rgba(200,166,70,0.35)]' },
+  'olive-light': { bg: 'bg-[#6B8E23]/20', text: 'text-[#C8A646]', hoverBg: 'group-hover:bg-[#6B8E23]/30', border: 'border-[rgba(85,107,47,0.35)]' },
+  red: { bg: 'bg-[#8B3A3A]/20', text: 'text-[#f87171]', hoverBg: 'group-hover:bg-[#8B3A3A]/30', border: 'border-[rgba(139,58,58,0.35)]' },
+  gray: { bg: 'bg-[#9A9F87]/20', text: 'text-[#9A9F87]', hoverBg: 'group-hover:bg-[#9A9F87]/30', border: 'border-[rgba(154,159,135,0.35)]' },
+  'gold-light': { bg: 'bg-[#B89635]/20', text: 'text-[#C8A646]', hoverBg: 'group-hover:bg-[#B89635]/30', border: 'border-[rgba(200,166,70,0.35)]' },
+  'olive-dark': { bg: 'bg-[#3D5A1E]/20', text: 'text-[#6B8E23]', hoverBg: 'group-hover:bg-[#3D5A1E]/30', border: 'border-[rgba(61,90,30,0.35)]' },
+  muted: { bg: 'bg-[#6B705A]/20', text: 'text-[#9A9F87]', hoverBg: 'group-hover:bg-[#6B705A]/30', border: 'border-[rgba(107,112,90,0.35)]' },
+  'olive-mid': { bg: 'bg-[#556B2F]/20', text: 'text-[#C8A646]', hoverBg: 'group-hover:bg-[#556B2F]/30', border: 'border-[rgba(85,107,47,0.35)]' },
 }
 
 interface QuickActionCardProps {
@@ -35,12 +35,12 @@ export default function QuickActionCard({
   icon: Icon,
   href,
   description,
-  color = 'blue',
+  color = 'army',
   index = 0,
   onClick,
 }: QuickActionCardProps) {
   const router = useRouter()
-  const colors = colorStyles[color] || colorStyles.blue
+  const colors = colorStyles[color] || colorStyles.army
 
   return (
     <motion.button
@@ -51,20 +51,20 @@ export default function QuickActionCard({
       whileHover={{ y: -4, scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick ? onClick : () => router.push(href)}
-      className={`group relative flex flex-col items-start gap-3 sm:gap-4 rounded-[20px] border ${colors.border} bg-white p-4 sm:p-5 text-left transition-all duration-200 shadow-[0_10px_30px_rgba(0,0,0,0.06)] hover:shadow-[0_14px_38px_rgba(0,0,0,0.12)] hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2`}
+      className={`group relative flex flex-col items-start gap-3 sm:gap-4 rounded-[20px] border ${colors.border} bg-[#10150D] p-4 sm:p-5 text-left transition-all duration-200 shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:shadow-[0_14px_38px_rgba(0,0,0,0.45)] hover:border-[rgba(200,166,70,0.4)] focus:outline-none focus:ring-2 focus:ring-[#C8A646]/50 focus:ring-offset-2`}
     >
       <div className={`p-4 rounded-xl ${colors.bg} ${colors.text} ${colors.hoverBg} transition-all duration-300 group-hover:scale-110`}>
         <Icon className="h-6 w-6" />
       </div>
       <div className="flex-1">
-        <h3 className="text-sm font-semibold text-gray-900">{label}</h3>
+        <h3 className="text-sm font-semibold text-[#F5F5DC]">{label}</h3>
         {description && (
-          <p className="text-sm text-gray-500 mt-1 leading-relaxed">{description}</p>
+          <p className="text-sm text-[#9A9F87] mt-1 leading-relaxed">{description}</p>
         )}
       </div>
       <div className="absolute top-5 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <svg
-          className="h-5 w-5 text-gray-300"
+          className="h-5 w-5 text-[#9A9F87]"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { ensureUserInDatabase } from '@/lib/auth-client'
 import { logAuditAction } from '@/lib/client/audit'
 import ImageWithFallback from '@/components/ui/ImageWithFallback'
 import Link from 'next/link'
-import { ShieldCheck, ArrowLeft } from 'lucide-react'
+import { ShieldCheck, ArrowLeft, Eye, EyeOff, AlertCircle } from 'lucide-react'
 
 const MAX_FAILED_ATTEMPTS = 6
 
@@ -18,6 +18,8 @@ export default function LoginPage() {
   const [failedAttempts, setFailedAttempts] = useState(0)
   const [rememberDevice, setRememberDevice] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [capsLockOn, setCapsLockOn] = useState(false)
+  const [touched, setTouched] = useState<{ email: boolean; password: boolean }>({ email: false, password: false })
   const [branding, setBranding] = useState<{
     logo_url: string | null
     department_logo_url: string | null
@@ -69,10 +71,33 @@ export default function LoginPage() {
     fetchBranding()
   }, [])
 
+  const validateEmail = useCallback((value: string) => {
+    if (!value.trim()) return 'Email address is required.'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email address.'
+    return null
+  }, [])
+
+  const validatePassword = useCallback((value: string) => {
+    if (!value) return 'Password is required.'
+    return null
+  }, [])
+
+  const emailError = touched.email ? validateEmail(email) : null
+  const passwordError = touched.password ? validatePassword(password) : null
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    setTouched({ email: true, password: true })
     setError(null)
+
+    const currentEmailError = validateEmail(email)
+    const currentPasswordError = validatePassword(password)
+    if (currentEmailError || currentPasswordError) {
+      setError(currentEmailError || currentPasswordError)
+      return
+    }
+
+    setLoading(true)
 
     try {
       const supabase = createClient()
@@ -88,9 +113,10 @@ export default function LoginPage() {
         if (failedAttempts + 1 >= MAX_FAILED_ATTEMPTS) {
           setError('Account locked due to too many failed attempts.')
         } else {
-          setError(authError?.message || 'Invalid email or password')
+          setError('Invalid email or password. Please check your credentials and try again.')
         }
         await logAuditAction('Failed Login', 'auth', null, `Failed login attempt for ${email}`)
+        setLoading(false)
         return
       }
 
@@ -128,8 +154,13 @@ export default function LoginPage() {
       }
     } catch {
       setError('An unexpected error occurred. Please try again.')
-    } finally {
       setLoading(false)
+    }
+  }
+
+  const handlePasswordKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (typeof e.getModifierState === 'function') {
+      setCapsLockOn(e.getModifierState('CapsLock'))
     }
   }
 
@@ -141,76 +172,80 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col lg:flex-row h-screen w-screen overflow-hidden bg-[#0B0F08]">
-      <div className="relative w-full lg:w-1/2 h-[40vh] lg:h-full flex-shrink-0 group">
+      <div className="relative w-full lg:w-1/2 h-[35vh] sm:h-[40vh] lg:h-full flex-shrink-0">
         <div
           className="absolute inset-0 z-10"
           style={{
-            background: 'linear-gradient(180deg, rgba(11,15,8,0.25) 0%, rgba(11,15,8,0.65) 55%, rgba(11,15,8,0.92) 100%)',
+            background: 'linear-gradient(180deg, rgba(11,15,8,0.30) 0%, rgba(11,15,8,0.60) 50%, rgba(11,15,8,0.92) 100%)',
           }}
         />
         <img
           src={loginBg}
           alt={collegeName}
-          className="absolute inset-0 object-cover transition-transform duration-[20s] ease-in-out group-hover:scale-105"
+          className="absolute inset-0 object-cover"
         />
         <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
-          <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C8A646]/40 to-transparent animate-vms-scan-line" />
+          <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#C8A646]/50 to-transparent animate-vms-scan-line" />
         </div>
-        <div className="absolute bottom-8 left-8 z-20 max-w-md hidden lg:block">
-          <div className="flex items-center gap-3 mb-2">
-            <ImageWithFallback
-              src={branding?.logo_url || '/images/afcsc-logo.png'}
-              alt="Armed Forces Command and Staff College Logo"
-              className="h-10 w-10 object-contain"
-            />
-            <ImageWithFallback
-              src="/images/army logo.png"
-              alt="Army Logo"
-              className="h-10 w-10 object-contain"
-            />
+
+        <div className="absolute inset-0 z-30 flex items-end">
+          <div className="w-full p-6 sm:p-8 lg:p-10">
+            <div className="flex items-center gap-3 mb-4">
+              <ImageWithFallback
+                src={branding?.logo_url || '/images/afcsc-logo.png'}
+                alt="Armed Forces Command and Staff College Logo"
+                className="h-9 w-9 sm:h-10 sm:w-10 object-contain"
+              />
+              <ImageWithFallback
+                src="/images/army logo.png"
+                alt="Department of Land Warfare Logo"
+                className="h-9 w-9 sm:h-10 sm:w-10 object-contain"
+              />
+            </div>
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white tracking-tight">
+              AFCSC Visitor Management
+            </h1>
+            <p className="text-xs sm:text-sm text-white/80 mt-1 max-w-md">
+              Secure Visitor Registration &amp; Access Management
+            </p>
+            <p className="text-[10px] sm:text-xs text-white/60 mt-1">
+              Department of Land Warfare
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-white mb-1 drop-shadow-lg tracking-tight">
-            Visitors Management System
-          </h2>
-          <p className="text-sm text-white/80 leading-relaxed drop-shadow-md">
-            Secure Visitor Registration &amp; Access Management
-          </p>
         </div>
       </div>
 
-      <div
-        className="relative w-full lg:w-1/2 flex-1 lg:h-full flex flex-col justify-start lg:justify-center px-6 lg:px-10 xl:px-12 overflow-y-auto bg-[#0B0F08]"
-      >
+      <div className="relative w-full lg:w-1/2 flex-1 lg:h-full flex flex-col justify-center px-6 sm:px-8 lg:px-10 xl:px-12 overflow-y-auto bg-[#0B0F08]">
         <Link
           href="/"
           aria-label="Back to Home"
-          className="absolute top-6 left-6 z-50 flex items-center gap-2 h-10 px-4 rounded-xl border border-[rgba(85,107,47,0.5)] bg-[#10150D] text-[#9A9F87] text-sm font-medium transition-colors duration-200 hover:bg-[#4B5320]/10 hover:border-[#C8A646]/40 hover:text-[#F5F5DC]"
+          className="absolute top-4 left-4 sm:top-6 sm:left-6 z-50 inline-flex items-center gap-2 h-10 px-4 rounded-xl border border-[rgba(85,107,47,0.5)] bg-[#10150D] text-[#9A9F87] text-sm font-medium transition-all duration-200 hover:bg-[#4B5320]/10 hover:border-[#C8A646]/40 hover:text-[#F5F5DC] focus:outline-none focus:ring-2 focus:ring-[#C8A646]/60"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-[-2px]" />
           Back to Home
         </Link>
 
-          <div className="mx-auto w-full max-w-[420px]">
-            <div className="text-center mb-6">
+        <div className="mx-auto w-full max-w-[420px]">
+          <div className="text-center mb-6">
+            <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 mb-4">
               <img
                 src="/images/visit.png"
-                alt="Visitor Management"
-                className="mx-auto h-32 w-auto object-contain"
+                alt="Visitor Management illustration"
+                className="w-full h-full object-contain"
               />
-              <p className="text-[#9A9F87] text-sm mt-4">
-                Sign in to continue
-              </p>
             </div>
-
-          <div className="h-px w-full bg-[rgba(85,107,47,0.35)] my-4" />
+            <h2 className="text-lg sm:text-xl font-bold text-[#F5F5DC]">Sign in to continue</h2>
+            <p className="text-sm text-[#9A9F87] mt-1">Access the AFCSC Visitor Management System</p>
+          </div>
 
           {error && (
-            <div className="mb-4 rounded-xl border border-[#8B3A3A]/40 bg-[#8B3A3A]/10 p-4 text-sm text-[#F5F5DC]" role="alert">
-              {error}
+            <div className="mb-5 flex items-start gap-3 rounded-xl border border-[#8B3A3A]/40 bg-[#8B3A3A]/10 p-4" role="alert">
+              <AlertCircle className="h-5 w-5 text-[#f87171] flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-[#F5F5DC]">{error}</p>
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="w-full space-y-4 lg:space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-[#9A9F87] mb-2">
                 Email Address
@@ -220,15 +255,22 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => setTouched(prev => ({ ...prev, email: true }))}
                 required
                 autoComplete="email"
                 aria-label="Email address"
+                aria-invalid={!!emailError}
+                aria-describedby={emailError ? 'email-error' : undefined}
                 placeholder="Enter your email"
                 className="w-full h-12 rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] px-4 text-[#F5F5DC] placeholder:text-[#6B705A] transition-all duration-200 hover:border-[#C8A646]/40 focus:outline-none focus:ring-2 text-base"
                 style={{
                   '--tw-ring-color': `${secondaryColor}33`,
+                  borderColor: emailError ? '#8B3A3A' : undefined,
                 } as React.CSSProperties}
               />
+              {emailError && (
+                <p id="email-error" className="mt-2 text-xs text-[#f87171]">{emailError}</p>
+              )}
             </div>
 
             <div>
@@ -241,91 +283,91 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => setTouched(prev => ({ ...prev, password: true }))}
+                  onKeyDown={handlePasswordKeyDown}
                   required
                   autoComplete="current-password"
                   aria-label="Password"
+                  aria-invalid={!!passwordError}
+                  aria-describedby={passwordError ? 'password-error' : undefined}
                   placeholder="Enter your password"
                   className="w-full h-12 rounded-xl border border-[rgba(85,107,47,0.35)] bg-[#10150D] px-4 pr-12 text-[#F5F5DC] placeholder:text-[#6B705A] transition-all duration-200 hover:border-[#C8A646]/40 focus:outline-none focus:ring-2 text-base"
                   style={{
                     '--tw-ring-color': `${secondaryColor}33`,
+                    borderColor: passwordError ? '#8B3A3A' : undefined,
                   } as React.CSSProperties}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  tabIndex={-1}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9A9F87] hover:text-[#F5F5DC] transition-colors duration-200">
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9A9F87] hover:text-[#F5F5DC] transition-colors duration-200"
+                >
                   {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.45 10.45 0 0 1 12 20c-3.35 0-6.37-1.3-8.7-3.56a17.2 17.2 0 0 1-2.59-2.46 1 1 0 0 1 0-1.28 17.2 17.2 0 0 1 2.59-2.46A10.45 10.45 0 0 1 12 4c1.5 0 2.9.4 4.06 1.07" />
-                      <path d="M1 1l22 22" />
-                      <path d="M9 9a3 3 0 1 0 4.24-.24" />
-                    </svg>
+                    <EyeOff className="h-5 w-5" />
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
+                    <Eye className="h-5 w-5" />
                   )}
                 </button>
               </div>
-
-              <div className="mt-4 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <input
-                    id="rememberDevice"
-                    type="checkbox"
-                    checked={rememberDevice}
-                    onChange={(e) => setRememberDevice(e.target.checked)}
-                    className="h-5 w-5 rounded border-[rgba(85,107,47,0.35)] focus:ring-2 transition-colors duration-200 bg-[#10150D]"
-                    style={{ color: primaryColor, accentColor: primaryColor }}
-                    aria-label="Remember this device"
-                  />
-                  <label htmlFor="rememberDevice" className="text-sm text-[#9A9F87]">
-                    Remember Me
-                  </label>
-                </div>
-                <a
-                  href="/forgot-password"
-                  className="text-sm hover:underline transition-colors duration-200"
-                  style={{ color: accentColor }}
-                  aria-label="Forgot password"
-                >
-                  Forgot Password?
-                </a>
-              </div>
+              {passwordError && (
+                <p id="password-error" className="mt-2 text-xs text-[#f87171]">{passwordError}</p>
+              )}
+              {capsLockOn && !passwordError && (
+                <p className="mt-2 text-xs text-[#C8A646]">Caps Lock is on</p>
+              )}
             </div>
 
-            <div className="mt-6">
-              <button
-                type="submit"
-                disabled={loading}
-                aria-label="Sign in"
-                className="group flex w-full justify-center items-center gap-2 h-12 rounded-xl px-4 text-sm font-medium text-[#0B0F08] transition-all duration-200 hover:brightness-110 hover:translate-y-[-2px] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
-                style={{
-                  background: `linear-gradient(to bottom, ${secondaryColor}, ${primaryColor})`,
-                  boxShadow: `0 10px 25px ${primaryColor}33`,
-                }}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <input
+                  id="rememberDevice"
+                  type="checkbox"
+                  checked={rememberDevice}
+                  onChange={(e) => setRememberDevice(e.target.checked)}
+                  className="h-4 w-4 rounded border-[rgba(85,107,47,0.35)] focus:ring-2 transition-colors duration-200 bg-[#10150D]"
+                  style={{ color: primaryColor, accentColor: primaryColor }}
+                  aria-label="Remember this device"
+                />
+                <label htmlFor="rememberDevice" className="text-sm text-[#9A9F87] cursor-pointer">
+                  Remember Me
+                </label>
+              </div>
+              <Link
+                href="/forgot-password"
+                className="text-sm transition-colors duration-200 hover:underline"
+                style={{ color: accentColor }}
+                aria-label="Forgot password"
               >
-                {loading ? (
+                Forgot Password?
+              </Link>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              aria-label="Sign in"
+              className="w-full h-12 rounded-xl px-4 text-sm font-bold text-[#0B0F08] transition-all duration-200 hover:brightness-110 disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#C8A646]/60"
+              style={{
+                background: `linear-gradient(to bottom, ${secondaryColor}, ${primaryColor})`,
+                boxShadow: `0 10px 25px ${primaryColor}33`,
+              }}
+            >
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
                   <svg className="-ml-1 h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                    <polyline points="10 17 15 12 10 7" />
-                    <line x1="15" y1="12" x2="3" y2="12" />
-                  </svg>
-                )}
-                {loading ? 'Signing In...' : 'Sign In'}
-              </button>
-            </div>
+                  Signing In...
+                </span>
+              ) : (
+                'Sign In'
+              )}
+            </button>
           </form>
 
-          <div className="my-4 flex items-center">
+          <div className="my-5 flex items-center">
             <div className="flex-1 border-t border-[rgba(85,107,47,0.35)]" />
             <span className="px-4 text-xs text-[#9A9F87]">Or</span>
             <div className="flex-1 border-t border-[rgba(85,107,47,0.35)]" />
@@ -343,7 +385,7 @@ export default function LoginPage() {
             </a>
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-2">
+          <div className="mt-5 flex items-center justify-center gap-2">
             <ShieldCheck className="h-4 w-4 text-[#C8A646]" />
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9A9F87]">
               Secure Access Only
@@ -358,4 +400,3 @@ export default function LoginPage() {
     </div>
   )
 }
-

@@ -60,14 +60,14 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 
-const COLORS = ['#1e40af', '#0f766e', '#b91c1c', '#a16207', '#6d28d9', '#be185d', '#0f766e', '#c2410c']
+const COLORS = ['#4B5320', '#556B2F', '#C8A646', '#6B8E23', '#8B3A3A', '#B89635', '#3D5A1E', '#9A9F87']
 
 const QUICK_ACTIONS = [
-  { label: 'Register Visitor', description: 'Add a new visitor to the system', icon: UserPlus, href: '/visitors/new', color: 'blue' as const, roles: ['Admin', 'Receptionist'] },
-  { label: 'Check In', description: 'Process visitor arrival and entry', icon: UserCheck, href: '/visits?status=checked_in', color: 'green' as const, roles: ['Admin', 'Receptionist', 'Security', 'PA_TO_DIRECTOR', 'PA_TO_CI'] },
+  { label: 'Register Visitor', description: 'Add a new visitor to the system', icon: UserPlus, href: '/visitors/new', color: 'gold' as const, roles: ['Admin', 'Receptionist'] },
+  { label: 'Check In', description: 'Process visitor arrival and entry', icon: UserCheck, href: '/visits?status=checked_in', color: 'olive-light' as const, roles: ['Admin', 'Receptionist', 'Security', 'PA_TO_DIRECTOR', 'PA_TO_CI'] },
   { label: 'Check Out', description: 'Process visitor departure', icon: LogOut, href: '/visits?status=checked_out', color: 'gray' as const, roles: ['Admin', 'Receptionist', 'Security', 'PA_TO_DIRECTOR', 'PA_TO_CI'] },
-  { label: 'Print Badge', description: 'Generate and print visitor badge', icon: Printer, href: '/badges', color: 'amber' as const, roles: ['Admin', 'Receptionist', 'Security'] },
-  { label: 'Search Visitor', description: 'Search visitor records', icon: Search, href: '/visitors', color: 'purple' as const, roles: ['Admin', 'Receptionist', 'Security', 'PA_TO_DIRECTOR', 'PA_TO_CI'] },
+  { label: 'Print Badge', description: 'Generate and print visitor badge', icon: Printer, href: '/badges', color: 'army' as const, roles: ['Admin', 'Receptionist', 'Security'] },
+  { label: 'Search Visitor', description: 'Search visitor records', icon: Search, href: '/visitors', color: 'olive' as const, roles: ['Admin', 'Receptionist', 'Security', 'PA_TO_DIRECTOR', 'PA_TO_CI'] },
 ]
 
 export default function DashboardPage() {
@@ -475,17 +475,17 @@ export default function DashboardPage() {
 
   const emergencyAlertCount = securityAlerts.filter(a => a.severity === 'critical').length
   const warningAlertCount = securityAlerts.filter(a => a.severity === 'warning').length
-  const emergencyColor: CardColor = emergencyAlertCount > 0 ? 'red' : warningAlertCount > 0 ? 'orange' : 'green'
+  const emergencyColor: CardColor = emergencyAlertCount > 0 ? 'red' : warningAlertCount > 0 ? 'gold' : 'olive-light'
   const emergencyDescription = securityAlerts.length > 0
     ? `${securityAlerts.length} active alert${securityAlerts.length !== 1 ? 's' : ''}`
     : 'All systems operational'
 
    const kpiCards = [
-     { title: 'Visitors Today', value: stats.visitorsToday, description: 'Visitor check-ins today', icon: Users, color: 'blue' as const, trend: stats.visitorsTrend },
-     { title: 'Currently Checked In', value: stats.visitorsCurrentlyInside, description: 'Visitors on premises', icon: UserCheck, color: 'green' as const },
-     { title: 'Pending Approvals', value: stats.pendingApprovals, description: 'Awaiting approval', icon: Clock, color: 'amber' as const },
-     { title: 'Badges Printed Today', value: stats.badgesPrinted, description: 'Badges issued today', icon: Printer, color: 'indigo' as const },
-     { title: 'Total Employees', value: stats.registeredEmployees, description: 'Active employee roster', icon: Crown, color: 'purple' as const },
+     { title: 'Visitors Today', value: stats.visitorsToday, description: 'Visitor check-ins today', icon: Users, color: 'army' as const, trend: stats.visitorsTrend },
+     { title: 'Currently Checked In', value: stats.visitorsCurrentlyInside, description: 'Visitors on premises', icon: UserCheck, color: 'olive-light' as const },
+     { title: 'Pending Approvals', value: stats.pendingApprovals, description: 'Awaiting approval', icon: Clock, color: 'gold' as const },
+     { title: 'Badges Printed Today', value: stats.badgesPrinted, description: 'Badges issued today', icon: Printer, color: 'olive-mid' as const },
+     { title: 'Total Employees', value: stats.registeredEmployees, description: 'Active employee roster', icon: Crown, color: 'olive' as const },
      { title: 'Emergency Alerts', value: emergencyAlertCount, description: emergencyDescription, icon: ShieldAlert, color: emergencyColor },
    ]
 
@@ -530,6 +530,7 @@ export default function DashboardPage() {
         onClose={() => setSidebarOpen(false)}
         userRole={userRole}
         userEmail={userEmail}
+        userName={userName}
         onLogout={handleLogout}
         currentPath="/dashboard"
         collapsed={sidebarCollapsed}
@@ -695,9 +696,9 @@ export default function DashboardPage() {
                 className="grid grid-cols-2 sm:grid-cols-4 gap-4"
               >
                 <PremiumStatCard title="Waiting at Gate" value={securityStats.visitorsWaitingAtGate} icon={Users} color="red" index={0} />
-                <PremiumStatCard title="Cleared" value={securityStats.visitorsCleared} icon={CheckCircle} color="green" index={1} />
+                <PremiumStatCard title="Cleared" value={securityStats.visitorsCleared} icon={CheckCircle} color="olive-light" index={1} />
                 <PremiumStatCard title="Denied" value={securityStats.visitorsDenied} icon={XCircle} color="red" index={2} />
-                <PremiumStatCard title="Vehicles Inside" value={securityStats.vehiclesInside} icon={Car} color="amber" index={3} />
+                <PremiumStatCard title="Vehicles Inside" value={securityStats.vehiclesInside} icon={Car} color="gold" index={3} />
               </motion.div>
             )}
 
@@ -823,11 +824,11 @@ export default function DashboardPage() {
               <div className="space-y-6">
                 <h2 className="text-xl font-bold text-[#F5F5DC]">Badge Analytics</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                  <PremiumStatCard title="Generated" value={stats.badgesGenerated.toString()} icon={Printer} color="blue" index={0} />
-                  <PremiumStatCard title="Printed" value={stats.badgesPrinted.toString()} icon={Printer} color="green" index={1} />
-                  <PremiumStatCard title="Reprints" value={stats.badgesReprinted.toString()} icon={RefreshCw} color="amber" index={2} />
+                  <PremiumStatCard title="Generated" value={stats.badgesGenerated.toString()} icon={Printer} color="army" index={0} />
+                  <PremiumStatCard title="Printed" value={stats.badgesPrinted.toString()} icon={Printer} color="olive-light" index={1} />
+                  <PremiumStatCard title="Reprints" value={stats.badgesReprinted.toString()} icon={RefreshCw} color="gold" index={2} />
                   <PremiumStatCard title="Cancelled" value={stats.cancelledBadges.toString()} icon={XCircle} color="red" index={3} />
-                  <PremiumStatCard title="Expired" value={stats.expiredBadges.toString()} icon={ShieldAlert} color="orange" index={4} />
+                  <PremiumStatCard title="Expired" value={stats.expiredBadges.toString()} icon={ShieldAlert} color="gold-light" index={4} />
                 </div>
                 <ChartCard title="Badge Status Distribution">
                   <ResponsiveContainer width="100%" height={300}>

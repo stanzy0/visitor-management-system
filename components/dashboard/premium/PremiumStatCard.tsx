@@ -6,19 +6,19 @@ import { LucideIcon } from 'lucide-react'
 import { useCountUp } from '@/hooks/useCountUp'
 import { fadeUp } from '@/lib/animations/variants'
 
-export type CardColor = 'blue' | 'green' | 'orange' | 'red' | 'gray' | 'indigo' | 'amber' | 'emerald' | 'purple' | 'teal'
+export type CardColor = 'army' | 'olive' | 'gold' | 'olive-light' | 'red' | 'gray' | 'gold-light' | 'olive-dark' | 'muted' | 'olive-mid'
 
 const colorMap: Record<CardColor, { bg: string; text: string; iconBg: string; trendColor: string; trendBg: string }> = {
-  blue: { bg: 'bg-blue-50', text: 'text-blue-700', iconBg: 'bg-blue-100 text-blue-600', trendColor: 'text-green-700', trendBg: 'bg-green-100' },
-  green: { bg: 'bg-green-50', text: 'text-green-700', iconBg: 'bg-green-100 text-green-600', trendColor: 'text-green-700', trendBg: 'bg-green-100' },
-  orange: { bg: 'bg-orange-50', text: 'text-orange-700', iconBg: 'bg-orange-100 text-orange-600', trendColor: 'text-green-700', trendBg: 'bg-green-100' },
-  red: { bg: 'bg-red-50', text: 'text-red-700', iconBg: 'bg-red-100 text-red-600', trendColor: 'text-green-700', trendBg: 'bg-green-100' },
-  gray: { bg: 'bg-gray-50', text: 'text-gray-700', iconBg: 'bg-gray-100 text-gray-600', trendColor: 'text-green-700', trendBg: 'bg-green-100' },
-  indigo: { bg: 'bg-indigo-50', text: 'text-indigo-700', iconBg: 'bg-indigo-100 text-indigo-600', trendColor: 'text-green-700', trendBg: 'bg-green-100' },
-  amber: { bg: 'bg-amber-50', text: 'text-amber-700', iconBg: 'bg-amber-100 text-amber-600', trendColor: 'text-green-700', trendBg: 'bg-green-100' },
-  emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', iconBg: 'bg-emerald-100 text-emerald-600', trendColor: 'text-green-700', trendBg: 'bg-green-100' },
-  purple: { bg: 'bg-purple-50', text: 'text-purple-700', iconBg: 'bg-purple-100 text-purple-600', trendColor: 'text-green-700', trendBg: 'bg-green-100' },
-  teal: { bg: 'bg-teal-50', text: 'text-teal-700', iconBg: 'bg-teal-100 text-teal-600', trendColor: 'text-green-700', trendBg: 'bg-green-100' },
+  army: { bg: 'bg-[#4B5320]/10', text: 'text-[#F5F5DC]', iconBg: 'bg-[#4B5320]/20 text-[#C8A646]', trendColor: 'text-[#6B8E23]', trendBg: 'bg-[#6B8E23]/20' },
+  olive: { bg: 'bg-[#556B2F]/10', text: 'text-[#F5F5DC]', iconBg: 'bg-[#556B2F]/20 text-[#C8A646]', trendColor: 'text-[#6B8E23]', trendBg: 'bg-[#6B8E23]/20' },
+  gold: { bg: 'bg-[#C8A646]/10', text: 'text-[#F5F5DC]', iconBg: 'bg-[#C8A646]/20 text-[#C8A646]', trendColor: 'text-[#6B8E23]', trendBg: 'bg-[#6B8E23]/20' },
+  'olive-light': { bg: 'bg-[#6B8E23]/10', text: 'text-[#F5F5DC]', iconBg: 'bg-[#6B8E23]/20 text-[#C8A646]', trendColor: 'text-[#6B8E23]', trendBg: 'bg-[#6B8E23]/20' },
+  red: { bg: 'bg-[#8B3A3A]/10', text: 'text-[#F5F5DC]', iconBg: 'bg-[#8B3A3A]/20 text-[#f87171]', trendColor: 'text-[#6B8E23]', trendBg: 'bg-[#6B8E23]/20' },
+  gray: { bg: 'bg-[#9A9F87]/10', text: 'text-[#F5F5DC]', iconBg: 'bg-[#9A9F87]/20 text-[#9A9F87]', trendColor: 'text-[#6B8E23]', trendBg: 'bg-[#6B8E23]/20' },
+  'gold-light': { bg: 'bg-[#B89635]/10', text: 'text-[#F5F5DC]', iconBg: 'bg-[#B89635]/20 text-[#C8A646]', trendColor: 'text-[#6B8E23]', trendBg: 'bg-[#6B8E23]/20' },
+  'olive-dark': { bg: 'bg-[#3D5A1E]/10', text: 'text-[#F5F5DC]', iconBg: 'bg-[#3D5A1E]/20 text-[#6B8E23]', trendColor: 'text-[#6B8E23]', trendBg: 'bg-[#6B8E23]/20' },
+  muted: { bg: 'bg-[#6B705A]/10', text: 'text-[#F5F5DC]', iconBg: 'bg-[#6B705A]/20 text-[#9A9F87]', trendColor: 'text-[#6B8E23]', trendBg: 'bg-[#6B8E23]/20' },
+  'olive-mid': { bg: 'bg-[#556B2F]/10', text: 'text-[#F5F5DC]', iconBg: 'bg-[#556B2F]/20 text-[#C8A646]', trendColor: 'text-[#6B8E23]', trendBg: 'bg-[#6B8E23]/20' },
 }
 
 interface StatCardProps {
@@ -39,14 +39,14 @@ export default function PremiumStatCard({
   value,
   description,
   icon: Icon,
-  color = 'blue',
+  color = 'army',
   trend,
   subtitle,
   onClick,
   index = 0,
   loading = false,
 }: StatCardProps) {
-  const c = colorMap[color] || colorMap.blue
+  const c = colorMap[color] || colorMap.army
   const numericValue = typeof value === 'number' ? value : parseInt(value as string, 10) || 0
   const animatedValue = useCountUp(numericValue, 1200)
   const trendUp = trend !== undefined && trend > 0
@@ -73,9 +73,9 @@ export default function PremiumStatCard({
       tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
       onKeyDown={onClick ? handleKeyDown : undefined}
-       className="group relative overflow-hidden rounded-[20px] border border-gray-200/60 bg-white p-4 sm:p-6 shadow-[0_10px_30px_rgba(0,0,0,0.06)] transition-all duration-200 hover:shadow-[0_12px_35px_rgba(0,0,0,0.10)] focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-2"
+       className="group relative overflow-hidden rounded-[20px] border border-[rgba(85,107,47,0.35)] bg-[#10150D] p-4 sm:p-6 shadow-[0_10px_30px_rgba(0,0,0,0.35)] transition-all duration-200 hover:shadow-[0_12px_35px_rgba(0,0,0,0.45)] focus:outline-none focus:ring-2 focus:ring-[#C8A646]/50 focus:ring-offset-2"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#4B5320]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
       <div className="relative flex items-start justify-between">
         <div className="flex-1">
