@@ -289,17 +289,34 @@ export default function ReportsDashboardPage() {
 
   const statusColors: Record<string, string> = { pending: '#f59e0b', approved: '#0B3D91', rejected: '#ef4444', checked_in: '#10b981', checked_out: '#6b7280' }
 
-  if (authChecking) {
+if (authChecking) {
     return (
-      <div className="flex h-screen bg-dashboard-bg items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex h-screen bg-[#0B0F08] relative items-center justify-center">
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/images/afcsc-login.jpg"
+            alt="Armed Forces Command and Staff College background"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F08]/90 via-[#0B0F08]/70 to-[#0B0F08]/40" />
+        </div>
+        <Loader2 className="h-8 w-8 animate-spin text-[#C8A646]" />
       </div>
     )
   }
 
-  return (
-    <div className="min-h-screen bg-dashboard-bg">
-      <div className="max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
+return (
+    <div className="min-h-screen bg-[#0B0F08] relative">
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/images/afcsc-login.jpg"
+          alt="Armed Forces Command and Staff College background"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F08]/90 via-[#0B0F08]/70 to-[#0B0F08]/40" />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto p-4 lg:p-6 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-[#F5F5DC]">Reports & Analytics</h1>

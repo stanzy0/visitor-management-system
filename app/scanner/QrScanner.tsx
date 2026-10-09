@@ -321,7 +321,7 @@ export default function QrScanner() {
 
         await scannerRef.current.start(
           { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 250, height: 250 } },
+          { fps: 10, qrbox: { width: 320, height: 320 } },
           (decodedText) => handleScan(decodedText),
           () => {}
         )
@@ -348,6 +348,22 @@ export default function QrScanner() {
         void scannerRef.current.stop()
         scannerRef.current.clear()
       }
+    }
+  }, [])
+
+  // Inject styles to make the camera preview wider
+  useEffect(() => {
+    const style = document.createElement('style')
+    style.textContent = `
+      #qr-reader video.html5-qrcode-video {
+        width: 100% !important;
+        height: auto !important;
+        min-width: 500px;
+      }
+    `
+    document.head.appendChild(style)
+    return () => {
+      document.head.removeChild(style)
     }
   }, [])
 
@@ -430,7 +446,7 @@ export default function QrScanner() {
 
         {scanning && (
           <div className="flex justify-center">
-            <div id="qr-reader" className="w-full max-w-md mx-auto rounded-lg overflow-hidden border" />
+            <div id="qr-reader" className="w-full max-w-xl mx-auto rounded-lg overflow-hidden border" />
           </div>
         )}
 

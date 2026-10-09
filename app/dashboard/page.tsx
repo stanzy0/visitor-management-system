@@ -619,11 +619,11 @@ export default function DashboardPage() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {loading ? (
                 <SkeletonActivity />
               ) : (
-                <ActivityTimelinePremium events={activityTimelineEvents} />
+                userRole === 'Admin' && <ActivityTimelinePremium events={activityTimelineEvents} />
               )}
               {loading ? (
                 <SkeletonChart />
